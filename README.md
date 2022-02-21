@@ -21,3 +21,6 @@ TBD
 
 TBD
 
+- Browse automatically generated program documentation:
+    - `godoc --http=localhost:8080`
+
