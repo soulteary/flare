@@ -13,11 +13,12 @@ type Flags struct {
 	EnableMinimumRequest   bool
 	EnableDeprecatedNotice bool
 
-	DisableLoginMode     bool
-	FlareUser            string
-	FlareUserIsGenerated bool
-	FlarePass            string
-	FlarePassIsGenerated bool
+	Visibility       string
+	DisableLoginMode bool
+	User             string
+	Pass             string
+	UserIsGenerated  bool
+	PassIsGenerated  bool
 }
 
 // Application Envs Data Model
@@ -29,7 +30,8 @@ type Envs struct {
 	EnableMinimumRequest   bool `env:"FLARE_MINI_REQUEST"`
 	EnableDeprecatedNotice bool `env:"FLARE_DEPRECATED_NOTICE"`
 
+	Visibility       string `env:"FLARE_VISIBILITY"`
 	DisableLoginMode bool   `env:"FLARE_DISABLE_LOGIN"`
-	FlareUser        string `env:"FLARE_USER,unset"`
-	FlarePass        string `env:"FLARE_PASS,unset"`
+	User             string `env:"FLARE_USER,unset"`
+	Pass             string `env:"FLARE_PASS,unset"`
 }
