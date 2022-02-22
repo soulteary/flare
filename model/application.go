@@ -19,4 +19,5 @@ type Application struct {
 	ShowWeather             bool   `yaml:"ShowWeather"`
 	Location                string `yaml:"Location"`
 	EnableEncryptedLink     bool   `yaml:"EnableEncryptedLink"`
+	IconMode                bool   `yaml:"IconMode"`
 }

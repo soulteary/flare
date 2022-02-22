@@ -40,6 +40,8 @@ HideSettingButton: false
 HideHelpButton: false
 # 加密展示链接
 EnableEncryptedLink: false
+# 链接图标展示模式
+IconMode: "DEFAULT"
 # 应用主体
 Theme: "blackboard"
 # 是否启用天气组件
