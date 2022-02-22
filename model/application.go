@@ -13,6 +13,8 @@ type Application struct {
 	ShowDateTime            bool   `yaml:"ShowDateTime"`
 	ShowApps                bool   `yaml:"ShowApps"`
 	ShowBookmarks           bool   `yaml:"ShowBookmarks"`
+	ShowSettingsButton      bool   `yaml:"ShowSettingButton"`
+	ShowHelpButton          bool   `yaml:"ShowHelpButton"`
 	Theme                   string `yaml:"Theme"`
 	ShowWeather             bool   `yaml:"ShowWeather"`
 	Location                string `yaml:"Location"`
