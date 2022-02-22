@@ -38,6 +38,8 @@ ShowBookmarks: true
 HideSettingButton: false
 # 隐藏界面中的帮助按钮
 HideHelpButton: false
+# 加密展示链接
+EnableEncryptedLink: false
 # 应用主体
 Theme: "blackboard"
 # 是否启用天气组件

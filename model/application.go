@@ -18,5 +18,5 @@ type Application struct {
 	Theme                   string `yaml:"Theme"`
 	ShowWeather             bool   `yaml:"ShowWeather"`
 	Location                string `yaml:"Location"`
-	Visibility              string `yaml:"Visibility"`
+	EnableEncryptedLink     string `yaml:"EnableEncryptedLink"`
 }
