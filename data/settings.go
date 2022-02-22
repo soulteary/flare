@@ -58,6 +58,7 @@ func UpdateAppearance(update FlareModel.Application) bool {
 	options.ShowBookmarks = update.ShowBookmarks
 	options.HideSettingsButton = update.HideSettingsButton
 	options.HideHelpButton = update.HideHelpButton
+	options.EnableEncryptedLink = update.EnableEncryptedLink
 
 	return saveAppConfigToYamlFile("config", options)
 }
