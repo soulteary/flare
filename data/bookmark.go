@@ -88,14 +88,13 @@ func initBookmarks(filePath string, isFavorite bool) (result FlareModel.Bookmark
 }
 
 func saveBookmarksToYamlFile(name string, data FlareModel.Bookmarks) (bool, error) {
-	filePath := getConfigPath(name)
-
 	out, err := yaml.Marshal(data)
 	if err != nil {
 		log.Println("转换数据格式失败", name)
 		return false, err
 	}
 
+	filePath := getConfigPath(name)
 	ok := saveFile(filePath, out)
 	if !ok {
 		log.Println("保存数据为书签失败")
