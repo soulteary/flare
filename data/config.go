@@ -34,6 +34,10 @@ ShowDateTime: true
 ShowApps: true
 # 展示书签组件
 ShowBookmarks: true
+# 隐藏界面中的设置按钮
+HideSettingButton: false
+# 隐藏界面中的帮助按钮
+HideHelpButton: false
 # 应用主体
 Theme: "blackboard"
 # 是否启用天气组件

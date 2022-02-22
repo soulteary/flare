@@ -56,8 +56,8 @@ func UpdateAppearance(update FlareModel.Application) bool {
 	options.ShowDateTime = update.ShowDateTime
 	options.ShowApps = update.ShowApps
 	options.ShowBookmarks = update.ShowBookmarks
-	options.ShowSettingsButton = update.ShowSettingsButton
-	options.ShowHelpButton = update.ShowHelpButton
+	options.HideSettingsButton = update.HideSettingsButton
+	options.HideHelpButton = update.HideHelpButton
 
 	return saveAppConfigToYamlFile("config", options)
 }
