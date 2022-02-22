@@ -16,13 +16,8 @@ type Category struct {
 	Name string `yaml:"title"`
 }
 
-// Generic Ordinary Bookmarks Data Model
-type OrdinaryBookmarks struct {
-	Categories []Category `yaml:"categories"`
+// Generic Bookmarks Data Model
+type Bookmarks struct {
+	Categories []Category `yaml:"categories,omitempty"`
 	Items      []Bookmark `yaml:"links"`
-}
-
-// Generic Favorite Bookmarks Data Model
-type FavoriteBookmarks struct {
-	Items []Bookmark `yaml:"links"`
 }
