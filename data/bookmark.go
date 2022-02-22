@@ -1,7 +1,6 @@
 package data
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"strconv"
@@ -72,10 +71,6 @@ func initBookmarks(filePath string, isFavorite bool) (result FlareModel.Bookmark
 	if err != nil {
 		log.Println("初始化程序时出错。")
 		return result, err
-	}
-
-	if isFavorite {
-		out = bytes.Replace(out, []byte("categories: []"), []byte("# Favorite Bookmarks"), 1)
 	}
 
 	ok := saveFile(filePath, out)
