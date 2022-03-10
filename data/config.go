@@ -48,6 +48,8 @@ Theme: "blackboard"
 ShowWeather: true
 # 天气组件使用的位置，仅在程序自动识别出错时，需要修改
 Location: "北京市"
+# 保持界面中链接大小写和配置中一致
+KeepLetterCase: false
 `)
 
 	ok := saveFile(filePath, out)

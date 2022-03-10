@@ -60,6 +60,7 @@ func UpdateAppearance(update FlareModel.Application) bool {
 	options.HideHelpButton = update.HideHelpButton
 	options.EnableEncryptedLink = update.EnableEncryptedLink
 	options.IconMode = update.IconMode
+	options.KeepLetterCase = update.KeepLetterCase
 
 	return saveAppConfigToYamlFile("config", options)
 }
