@@ -20,4 +20,5 @@ type Application struct {
 	Location                string `yaml:"Location"`
 	EnableEncryptedLink     bool   `yaml:"EnableEncryptedLink"`
 	IconMode                string `yaml:"IconMode"`
+	KeepLetterCase          bool   `yaml:"KeepLetterCase"`
 }
