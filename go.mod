@@ -5,9 +5,12 @@ go 1.17
 require gopkg.in/yaml.v2 v2.4.0
 
 require (
+	github.com/caarlos0/env/v6 v6.9.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/jszwec/csvutil v1.6.0
 	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/pflag v1.0.5
+	gopkg.in/ini.v1 v1.66.4
 )
 
 require (
