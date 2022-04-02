@@ -22,6 +22,7 @@ import (
 
 	FlareAppearance "github.com/soulteary/flare/pkg/appearance"
 	FlareDeprecated "github.com/soulteary/flare/pkg/deprecated"
+	FlareEditor "github.com/soulteary/flare/pkg/editor"
 )
 
 func startDaemon(AppFlags *FlareModel.Flags) {
@@ -54,6 +55,11 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 
 	if !AppFlags.DisableLoginMode {
 		FlareAuth.RequestHandle(router)
+	}
+
+	if AppFlags.EnableEditor {
+		FlareEditor.RegisterRouting(router)
+		log.Println("在线编辑模块启用，可以访问 " + FlareState.RegularPages.Editor.Path + " 来进行数据编辑。")
 	}
 
 	srv := &http.Server{
