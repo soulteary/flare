@@ -14,6 +14,7 @@ import (
 
 	FlareModel "github.com/soulteary/flare/model"
 	FlareAssets "github.com/soulteary/flare/pkg/assets"
+	FlareAuth "github.com/soulteary/flare/pkg/auth"
 	FlareMDI "github.com/soulteary/flare/pkg/mdi"
 	FlareTemplates "github.com/soulteary/flare/pkg/templates"
 	FlareState "github.com/soulteary/flare/state"
@@ -44,6 +45,10 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 	FlareMDI.RegisterRouting(router)
 
 	FlareTemplates.RegisterRouting(router)
+
+	if !AppFlags.DisableLoginMode {
+		FlareAuth.RequestHandle(router)
+	}
 
 	srv := &http.Server{
 		Addr:    ":" + strconv.Itoa(AppFlags.Port),
