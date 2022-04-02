@@ -13,3 +13,21 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+
+database
+pkg/assets/icons
+pkg/assets/favicon.ico
+pkg/assets/css
+pkg/templates/html/*
+pkg/mdi/mdi-cheat-sheets
+pkg/guide/guide-assets
+pkg/editor/editor-assets
+pkg/weather/icons
+.DS_Store
+tmp
+apps.yml
+bookmarks.yml
+config.yml
+
+RELEASE_*
