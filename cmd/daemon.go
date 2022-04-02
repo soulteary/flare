@@ -24,6 +24,7 @@ import (
 	FlareDeprecated "github.com/soulteary/flare/pkg/deprecated"
 	FlareEditor "github.com/soulteary/flare/pkg/editor"
 	FlareGuide "github.com/soulteary/flare/pkg/guide"
+	FlareHealth "github.com/soulteary/flare/pkg/health"
 )
 
 func startDaemon(AppFlags *FlareModel.Flags) {
@@ -53,6 +54,7 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 	FlareTemplates.RegisterRouting(router)
 	FlareAppearance.RegisterRouting(router)
 	FlareDeprecated.RegisterRouting(router)
+	FlareHealth.RegisterRouting(router)
 
 	if !AppFlags.DisableLoginMode {
 		FlareAuth.RequestHandle(router)
