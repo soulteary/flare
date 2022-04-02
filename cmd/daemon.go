@@ -28,6 +28,7 @@ import (
 	FlareHome "github.com/soulteary/flare/pkg/home"
 	FlareWeather "github.com/soulteary/flare/pkg/weather"
 	FlareOthers "github.com/soulteary/flare/pkg/others"
+	FlareRedir "github.com/soulteary/flare/pkg/redir"
 )
 
 func startDaemon(AppFlags *FlareModel.Flags) {
@@ -61,6 +62,7 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 	FlareWeather.RegisterRouting(router)
 	FlareHome.RegisterRouting(router)
 	FlareOthers.RegisterRouting(router)
+	FlareRedir.RegisterRouting(router)
 
 	if !AppFlags.DisableLoginMode {
 		FlareAuth.RequestHandle(router)
