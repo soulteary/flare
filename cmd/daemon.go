@@ -13,11 +13,14 @@ import (
 	"github.com/soulteary/flare/internal/logger"
 
 	FlareModel "github.com/soulteary/flare/model"
+	FlareState "github.com/soulteary/flare/state"
+
 	FlareAssets "github.com/soulteary/flare/pkg/assets"
 	FlareAuth "github.com/soulteary/flare/pkg/auth"
 	FlareMDI "github.com/soulteary/flare/pkg/mdi"
 	FlareTemplates "github.com/soulteary/flare/pkg/templates"
-	FlareState "github.com/soulteary/flare/state"
+
+	FlareAppearance "github.com/soulteary/flare/pkg/appearance"
 )
 
 func startDaemon(AppFlags *FlareModel.Flags) {
@@ -45,6 +48,7 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 	FlareMDI.RegisterRouting(router)
 
 	FlareTemplates.RegisterRouting(router)
+	FlareAppearance.RegisterRouting(router)
 
 	if !AppFlags.DisableLoginMode {
 		FlareAuth.RequestHandle(router)
