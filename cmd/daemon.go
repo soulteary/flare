@@ -15,6 +15,7 @@ import (
 	FlareModel "github.com/soulteary/flare/model"
 	FlareAssets "github.com/soulteary/flare/pkg/assets"
 	FlareMDI "github.com/soulteary/flare/pkg/mdi"
+	FlareTemplates "github.com/soulteary/flare/pkg/templates"
 	FlareState "github.com/soulteary/flare/state"
 )
 
@@ -41,6 +42,8 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 
 	FlareMDI.Init()
 	FlareMDI.RegisterRouting(router)
+
+	FlareTemplates.RegisterRouting(router)
 
 	srv := &http.Server{
 		Addr:    ":" + strconv.Itoa(AppFlags.Port),
