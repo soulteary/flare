@@ -6,13 +6,12 @@ import (
 	"io/fs"
 	"net/http"
 
-	FlareAuth "github.com/soulteary/flare/pkg/auth"
-	FlareState "github.com/soulteary/flare/state"
-
-	FlareData "github.com/soulteary/flare/data"
-
 	"github.com/gin-gonic/gin"
 	"github.com/soulteary/memfs"
+
+	FlareAuth "github.com/soulteary/flare/pkg/auth"
+	FlareState "github.com/soulteary/flare/state"
+	FlareData "github.com/soulteary/flare/data"
 )
 
 var MemFs *memfs.FS

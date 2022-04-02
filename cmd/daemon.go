@@ -23,6 +23,7 @@ import (
 	FlareAppearance "github.com/soulteary/flare/pkg/appearance"
 	FlareDeprecated "github.com/soulteary/flare/pkg/deprecated"
 	FlareEditor "github.com/soulteary/flare/pkg/editor"
+	FlareGuide "github.com/soulteary/flare/pkg/guide"
 )
 
 func startDaemon(AppFlags *FlareModel.Flags) {
@@ -60,6 +61,11 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 	if AppFlags.EnableEditor {
 		FlareEditor.RegisterRouting(router)
 		log.Println("在线编辑模块启用，可以访问 " + FlareState.RegularPages.Editor.Path + " 来进行数据编辑。")
+	}
+
+	if AppFlags.EnableGuide {
+		FlareGuide.RegisterRouting(router)
+		log.Println("向导模块启用，可以访问 " + FlareState.RegularPages.Guide.Path + " 来获取程序使用帮助。")
 	}
 
 	srv := &http.Server{
