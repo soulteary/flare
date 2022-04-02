@@ -1,0 +1,20 @@
+FROM golang:1.18.0-alpine3.15 AS Builder
+
+RUN echo '' > /etc/apk/repositories && \
+    echo "https://mirror.tuna.tsinghua.edu.cn/alpine/v3.15/main"         >> /etc/apk/repositories && \
+    echo "https://mirror.tuna.tsinghua.edu.cn/alpine/v3.15/community"    >> /etc/apk/repositories && \
+    echo "Asia/Shanghai" > /etc/timezone
+RUN apk add git bash gcc musl-dev upx
+ENV TZ=Asia/Shanghai
+RUN apk add tzdata && \
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+WORKDIR /app
+
+ENV GO111MODULE=on
+ENV GOPROXY=https://goproxy.cn
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+COPY . .

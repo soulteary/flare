@@ -1,0 +1,18 @@
+ARG FLARE_BASE_IMAGE
+FROM $FLARE_BASE_IMAGE AS Builder
+RUN go run build/build.go
+RUN VERSION=$(cat RELEASE_VERSION) && \
+    COMMIT=$(cat RELEASE_COMMIT) && \
+    BUILD_DATE=`date +%FT%T%z` && \
+    GOARCH=amd64 go build -ldflags "-w -s -X 'xflare/version.Version=$VERSION' -X 'xflare/version.Commit=$COMMIT' -X 'xflare/version.BuildDate=$BUILD_DATE' " -o flare main.go
+RUN upx -9 -o flare.minify flare && mv flare.minify flare
+
+
+FROM alpine:3.15
+COPY --from=Builder /app/flare /bin/flare
+ENV TZ=Asia/Shanghai
+RUN apk add tzdata && \
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
+    rm -rf /var/cache/apk/*
+WORKDIR /app
+CMD ["flare"]
