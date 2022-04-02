@@ -11,6 +11,7 @@ require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/jszwec/csvutil v1.6.0
 	github.com/sirupsen/logrus v1.8.1
+	github.com/soulteary/funny-china-weather v0.1.1
 	github.com/soulteary/memfs v0.1.0
 	github.com/spf13/pflag v1.0.5
 	gopkg.in/ini.v1 v1.66.4
