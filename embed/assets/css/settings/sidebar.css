@@ -1,0 +1,28 @@
+#page-settings .sidebar {
+  position: absolute;
+  left: 0;
+  width: 100px;
+  list-style: none;
+}
+
+#page-settings .sidebar a {
+  padding-left: 7px;
+  border-left: 3px solid transparent;
+  display: block;
+  height: 40px;
+  line-height: 40px;
+  transition: all 0.3s;
+}
+
+#page-settings .sidebar a.active {
+  border-left: 3px solid var(--color-primary);
+}
+
+#page-settings .sidebar:hover a.active {
+  border-left: 3px solid transparent;
+}
+
+#page-settings .sidebar a:hover,
+#page-settings .sidebar a.active:hover {
+  border-left: 3px solid var(--color-primary);
+}

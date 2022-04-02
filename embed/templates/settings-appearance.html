@@ -1,0 +1,202 @@
+{{ define "settings-appearance.html" }}
+<div class="setting-group-container">
+
+    <form method="POST" action="{{ .SettingPages.Appearance.Path }}">
+        <h2>通用设置</h2>
+        <div class="form-group">
+            <label for="settings-title">自定义标题</label>
+            <input type="text" name="title" id="settings-title" class="option-input" placeholder="站点标题" value="{{.OptionTitle}}">
+        </div>
+
+        <div class="form-group">
+            <label for="settings-footer">自定义页脚</label>
+            <textarea name="footer" id="settings-footer" class="option-input" cols="30" rows="10" placeholder="输入你自己的文本或 HTML 片段">{{.OptionFooter}}</textarea>
+            <p class="help-text">如不希望展示页脚，可以将内容清空</p>
+        </div>
+
+        <div class="form-group">
+            <label for="settings-open-app-newtab">总是在新窗口打开应用</label>
+            {{ if .OptionOpenAppNewTab }}
+            <select name="open-app-newtab" id="settings-open-app-newtab">
+                <option value="1" selected>是</option>
+                <option value="0">否</option>
+            </select>
+            {{ else }}
+            <select name="open-app-newtab" id="settings-open-app-newtab">
+                <option value="0" selected>否</option>
+                <option value="1">是</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <div class="form-group">
+            <label for="settings-open-bookmark-newtab">总是在新窗口打开书签</label>
+            {{ if .OptionOpenBookmarkNewTab }}
+            <select name="open-bookmark-newtab" id="settings-open-bookmark-newtab">
+                <option value="1" selected>是</option>
+                <option value="0">否</option>
+            </select>
+            {{ else }}
+            <select name="open-bookmark-newtab" id="settings-open-bookmark-newtab">
+                <option value="0" selected>否</option>
+                <option value="1">是</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <div class="form-group">
+            <label for="settings-enable-encrypted-link">展示加密链接</label>
+            {{ if .OptionEnableEncryptedLink }}
+            <select name="enable-encrypted-link" id="settings-enable-encrypted-link">
+                <option value="1" selected>是</option>
+                <option value="0">否</option>
+            </select>
+            {{ else }}
+            <select name="enable-encrypted-link" id="settings-enable-encrypted-link">
+                <option value="0" selected>否</option>
+                <option value="1">是</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <div class="form-group">
+            <label for="settings-keep-letter-case">保持配置和界面链接大小写一致</label>
+            {{ if .OptionKeepLetterCase }}
+            <select name="keep-letter-case" id="settings-keep-letter-case">
+                <option value="1" selected>是</option>
+                <option value="0">否</option>
+            </select>
+            {{ else }}
+            <select name="keep-letter-case" id="settings-keep-letter-case">
+                <option value="0" selected>否</option>
+                <option value="1">是</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <div class="form-group">
+            <label for="settings-icon-mode">链接图标的获取和展示</label>
+            {{ if .OptionIconModeDefault }}
+            <select name="icon-mode" id="settings-icon-mode">
+                <option value="DEFAULT" selected>默认</option>
+                <option value="FILLING">针对没有图标的内容，使用公共服务抓取</option>
+            </select>
+            {{ end }}
+            {{ if .OptionIconModeFilling }}
+            <select name="icon-mode" id="settings-icon-mode">
+                <option value="DEFAULT">默认</option>
+                <option value="FILLING" selected>针对没有图标的内容，使用公共服务抓取</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <h2>模块设置</h2>
+
+        <div class="form-group">
+            <label for="settings-show-title">展示标题组件（问候语和天气）</label>
+            {{ if .OptionShowTitle }}
+            <select name="show-title" id="settings-show-title">
+                <option value="1" selected>是</option>
+                <option value="0">否</option>
+            </select>
+            {{ else }}
+            <select name="show-title" id="settings-show-title">
+                <option value="0" selected>否</option>
+                <option value="1">是</option>
+            </select>
+            {{ end }}
+        </div>
+
+        {{ if .OptionShowTitle }}
+        <div class="form-group">
+            <label for="settings-custom-greetings">自定义问候语</label>
+            <input type="text" name="greetings" id="settings-custom-greetings" class="option-input" placeholder="你好" value="{{.OptionGreetings}}">
+            <p class="help-text">如果你希望展示固定内容，可以输入：“你好”；<br />如果你希望根据时段展示不同内容，可以将多个内容用英文;号进行分割：“早上好;中午好;下午好;晚上好”</p>
+        </div>
+        {{ end }}
+
+        <div class="form-group">
+            <label for="settings-show-datetime">展示首页日期</label>
+            {{ if .OptionShowDateTime }}
+            <select name="show-datetime" id="settings-show-datetime">
+                <option value="1" selected>是</option>
+                <option value="0">否</option>
+            </select>
+            {{ else }}
+            <select name="show-datetime" id="settings-show-datetime">
+                <option value="1">是</option>
+                <option value="0" selected>否</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <div class="form-group">
+            <label for="settings-show-apps">展示应用模块</label>
+            {{ if .OptionShowApps }}
+            <select name="show-apps" id="settings-show-apps">
+                <option value="1" selected>是</option>
+                <option value="0">否</option>
+            </select>
+            {{ else }}
+            <select name="show-apps" id="settings-show-apps">
+                <option value="0" selected>否</option>
+                <option value="1">是</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <div class="form-group">
+            <label for="settings-show-bookmarks">展示书签模块</label>
+            {{ if .OptionShowBookmarks }}
+            <select name="show-bookmarks" id="settings-show-bookmarks">
+                <option value="1" selected>是</option>
+                <option value="0">否</option>
+            </select>
+            {{ else }}
+            <select name="show-bookmarks" id="settings-show-bookmarks">
+                <option value="0" selected>否</option>
+                <option value="1">是</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <div class="form-group">
+            <label for="settings-hide-settings-button">隐藏首页设置按钮</label>
+            {{ if .OptionHideSettingsButton }}
+            <select name="hide-settings-button" id="settings-hide-settings-button">
+                <option value="1" selected>是</option>
+                <option value="0">否</option>
+            </select>
+            {{ else }}
+            <select name="hide-settings-button" id="settings-hide-settings-button">
+                <option value="0" selected>否</option>
+                <option value="1">是</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <div class="form-group">
+            <label for="settings-hide-help-button">隐藏首页帮助按钮</label>
+            {{ if .OptionHideHelpButton }}
+            <select name="hide-help-button" id="settings-hide-help-button">
+                <option value="1" selected>是</option>
+                <option value="0">否</option>
+            </select>
+            {{ else }}
+            <select name="hide-help-button" id="settings-hide-help-button">
+                <option value="0" selected>否</option>
+                <option value="1">是</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <div class="form-group">
+            <input class="btn-submit" type="submit" value="保存修改" />
+        </div>
+    </form>
+
+
+
+
+</div>
+{{ end }}

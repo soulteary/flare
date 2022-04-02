@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.OptionTitle}} - Settings</title>
+  {{ if .DebugMode }}
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/settings/sidebar.css">
+  <link rel="stylesheet" href="/assets/css/settings/layout.css">
+  <link rel="stylesheet" href="/assets/css/settings/theme.css">
+  {{ else }}
+  <style type="text/css">{{.PageInlineStyle}}</style>
+  {{ end }}
+</head>
+<body style="{{.PageAppearance}}" >
+  <div class="pageview" id="page-settings">
+    <div class="container">
+      {{ template "settings-header.html" . }}
+      <div class="main-container clearfix">
+        {{ template "settings-sidebar.html" . }}
+
+        {{ if eq .PageName "Theme" }}
+          {{ template "settings-theme.html" . }}
+        {{ end }}
+
+        {{ if eq .PageName "Weather" }}
+          {{ template "settings-weather.html" . }}
+        {{ end }}
+        
+        {{ if eq .PageName "Search" }}
+          {{ template "settings-search.html" . }}
+        {{ end }}
+
+        {{ if eq .PageName "Appearance" }}
+        {{ template "settings-appearance.html" . }}
+        {{ end }}
+
+        {{ if eq .PageName "Others" }}
+        {{ template "settings-others.html" . }}
+        {{ end }}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

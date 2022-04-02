@@ -1,0 +1,144 @@
+#page-settings .form-group label,
+#page-settings .form-group select,
+#page-settings .form-group input.btn-submit,
+#page-settings .form-group input.option-input {
+  display: block;
+}
+
+#page-settings .form-group select {
+  margin: 8px 0;
+  width: 100%;
+  border: none;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: var(--color-primary);
+  color: var(--color-background);
+}
+
+#page-settings .form-group input.option-input {
+  margin: 8px 0;
+  width: 100%;
+  border: none;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: var(--color-primary);
+  color: var(--color-background);
+}
+
+#page-settings .form-group .help-text {
+  font-size: 12px;
+  color: var(--color-primary);
+}
+
+#page-settings .form-group input.btn-submit {
+  padding: 8px 15px;
+  border: 1px solid var(--color-accent);
+  background-color: var(--color-background);
+  color: var(--color-primary);
+  border-radius: 4px;
+}
+
+#page-settings .container {
+  padding: 25px 20px;
+  width: 100%;
+  margin: 0;
+}
+
+#page-settings h1 {
+  font-size: 30px;
+}
+
+#page-settings .main-container {
+  margin: 20px 0;
+  position: relative;
+}
+
+#page-settings .main-container .setting-group-container {
+  margin-left: 110px;
+}
+
+#page-settings.pageview .container {
+  min-width: 375px;
+}
+
+@media (min-width: 1201px) {
+  #page-settings.pageview .container {
+    width: 90%;
+    padding: 50px 250px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 1200px) {
+  #page-settings.pageview .container {
+    width: 90%;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  #page-settings.pageview .container {
+    width: 90%;
+    padding: 20px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 375px) {
+  #page-settings.pageview .container {
+    width: 100%;
+    padding: 20px;
+    margin: 0 auto;
+  }
+}
+
+.setting-group-container h2 {
+  margin-bottom: 10px;
+}
+
+.setting-group-container .form-group .help-text {
+  margin-bottom: 12px;
+  text-decoration: underline;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.setting-group-container .form-group input.btn-submit {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+#page-settings .form-group label {
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+
+#page-settings .form-group select,
+#page-settings .form-group input.option-input {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+#page-settings .form-group textarea {
+  resize: none;
+  width: 100%;
+  height: 80px;
+  border: none;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+#page-settings .form-about p {
+  line-height: 2;
+}
+#page-settings .form-about a {
+  margin: 0 4px;
+  border-bottom: 1px dotted #ccc;
+}
+#page-settings .form-about hr {
+  margin: 10px 0;
+}

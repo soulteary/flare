@@ -1,0 +1,79 @@
+.theme-groups .theme {
+  display: inline-block;
+  width: 30%;
+}
+
+.theme-groups .theme .theme-container {
+  width: 120px;
+  border: 1px solid silver;
+  position: relative;
+}
+
+.theme-groups .theme .theme-color {
+  width: 33.33%;
+  height: 40px;
+}
+
+.theme-groups .theme .theme-title {
+  text-transform: capitalize;
+  margin: 8px 0;
+  color: var(--color-primary);
+  cursor: default;
+}
+
+.theme-groups .theme .theme-choose {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.theme-blackboard .theme-color.color-background {
+  background-color: rgb(26, 26, 26);
+}
+
+.theme-blackboard .theme-color.color-primary {
+  background-color: rgb(255, 253, 234);
+}
+
+.theme-blackboard .theme-color.color-accent {
+  background-color: rgb(92, 92, 92);
+}
+
+
+@media (max-width: 768px) {
+  
+  .theme-groups .theme {
+    display: inline-block;
+    width: 100px;
+    margin-right: 1.5%;
+  }
+  .theme-groups .theme .theme-container {
+    width: 92px;
+  }
+  .theme-groups .theme .theme-color {
+    width: 30px;
+    height: 30px;
+  }
+  
+}
+
+@media (max-width: 375px) {
+  .theme-groups .theme {
+    display: inline-block;
+    width: 47%;
+    margin-right: 1.5%;
+  }
+  .theme-groups .theme .theme-container {
+    width: 92px;
+  }
+  .theme-groups .theme .theme-color {
+    width: 30px;
+    height: 30px;
+  }
+}

@@ -1,0 +1,71 @@
+.app-content-uppercase #container-bookmakrs .bookmark-group-container h3.bookmark-group-title {
+  text-transform: uppercase;
+}
+
+#container-bookmakrs .bookmark-group-container h3.bookmark-group-title {
+  color: var(--color-accent);
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+#container-bookmakrs .bookmark-group-container {
+  display: inline-block;
+  width: 23.99%;
+}
+
+#container-bookmakrs .bookmark-group-container h3{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#container-bookmakrs .bookmark-group-container .bookmark-list {
+  list-style: none;
+  margin: 5px 0;
+}
+
+#container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark {
+  line-height: 2;
+  transition: all 0.25s;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+
+#container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark:hover {
+  text-decoration: underline;
+  padding-left: 10px;
+  }
+
+
+#container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark img {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  color: var(--color-primary);
+  vertical-align: middle;
+}
+#container-bookmakrs .bookmark-group-container .bookmark svg,
+#container-bookmakrs .bookmark-group-container .bookmark span {
+  display: inline;
+  vertical-align: middle;
+}
+
+#container-bookmakrs .bookmark-group-container .bookmark span {
+  margin-left: 4px;
+}
+
+#container-bookmakrs .bookmark-group-container .bookmark svg {
+  width: 24px;
+}
+
+@media (max-width: 767px) {
+  #container-bookmakrs .bookmark-group-container {
+    width: 30%;
+    float: none;
+  }
+}

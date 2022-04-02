@@ -1,0 +1,82 @@
+#container-apps .apps-container {
+  width: 100%;
+}
+
+#container-apps .apps-container .app-container {
+  float: left;
+  width: 25%;
+}
+
+#container-apps .apps-container .app-item {
+  display: block;
+  padding: 2px 4px;
+  margin: 12px 0;
+  height: 40px;
+  overflow: hidden;
+  position: relative;
+}
+
+#container-apps .apps-container .app-item:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  transition: all .1s;
+}
+
+#container-apps .apps-container .app-icon {
+  width: 35px;
+  height: 35px;
+  position: absolute;
+  left: 5px;
+}
+
+#container-apps .apps-container .app-icon * {
+  width: 90%;
+  color: var(--color-primary);
+}
+
+/* 非inline模式 */
+#container-apps .apps-container .app-icon img{
+  display: block;
+  width: 32px;
+  height: 32px;
+  color: var(--color-primary);
+}
+
+.app-content-uppercase #container-apps .apps-container .app-text {
+  text-transform: uppercase;
+}
+
+#container-apps .apps-container .app-text {
+  margin-left: 35px;
+}
+
+#container-apps .apps-container .app-title {
+  font-size: 1em;
+  font-weight: 500;
+  margin-bottom: -4px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#container-apps .apps-container .app-desc {
+  color: var(--color-accent);
+  font-weight: 400;
+  font-size: 0.8em;
+  opacity: 1;
+
+
+  margin-top: 4px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+@media (max-width: 767px) {
+  #container-apps .apps-container .app-container {
+    width: 50%;
+  }
+}

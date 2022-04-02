@@ -1,0 +1,30 @@
+#page-home #hero-container {
+  position: relative;
+}
+
+#plugin-datetime {
+}
+
+#plugin-weather{
+  position: absolute;
+  right: 20px;
+  top: 30px;
+}
+
+#page-home #hero-container p {
+  font-weight: 300;
+  text-transform: uppercase;
+  height: 30px;
+}
+
+#hero-container .weather-value-container {
+  justify-content: center;
+  font-size: 16px;
+  margin-left: 10px;
+  font-weight: 500;
+}
+
+#hero-container .weather-value-container p:first-child {
+  border-bottom: 1px solid var(--color-primary);
+  padding-bottom: 5px;
+}
