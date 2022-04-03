@@ -11,14 +11,8 @@ import (
 )
 
 func RegisterRouting(router *gin.Engine) {
-	router.GET(FlareState.SettingPages.Theme.Path, FlareAuth.AuthRequired, pageHome)
+	router.GET(FlareState.SettingPages.Theme.Path, FlareAuth.AuthRequired, pageTheme)
 	router.POST(FlareState.SettingPages.Theme.Path, FlareAuth.AuthRequired, updateThemes)
-}
-
-func pageHome(c *gin.Context) {
-
-	render(c)
-
 }
 
 func updateThemes(c *gin.Context) {
@@ -40,10 +34,10 @@ func updateThemes(c *gin.Context) {
 	FlareState.ThemeCurrent = body.Theme
 	FlareState.ThemePrimaryColor = FlareState.GetThemePrimaryColor(body.Theme)
 
-	render(c)
+	pageTheme(c)
 }
 
-func render(c *gin.Context) {
+func pageTheme(c *gin.Context) {
 	// themes := getThemePalettes()
 	themes := FlareState.ThemePalettes
 	options := FlareData.GetAllSettingsOptions()

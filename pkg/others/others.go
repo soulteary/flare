@@ -12,23 +12,10 @@ import (
 )
 
 func RegisterRouting(router *gin.Engine) {
-
-	router.GET(FlareState.SettingPages.Others.Path, pageHome)
-	router.POST(FlareState.SettingPages.Others.Path, updateSearchOptions)
-
+	router.GET(FlareState.SettingPages.Others.Path, pageOthers)
 }
 
-func pageHome(c *gin.Context) {
-
-	render(c, "")
-
-}
-
-func updateSearchOptions(c *gin.Context) {
-	render(c, "")
-}
-
-func render(c *gin.Context, testResult string) {
+func pageOthers(c *gin.Context) {
 	options := FlareData.GetAllSettingsOptions()
 
 	isLogined := false

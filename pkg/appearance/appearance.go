@@ -14,16 +14,8 @@ import (
 )
 
 func RegisterRouting(router *gin.Engine) {
-
-	router.GET(FlareState.SettingPages.Appearance.Path, FlareAuth.AuthRequired, pageHome)
+	router.GET(FlareState.SettingPages.Appearance.Path, FlareAuth.AuthRequired, pageAppearance)
 	router.POST(FlareState.SettingPages.Appearance.Path, FlareAuth.AuthRequired, updateAppearanceOptions)
-
-}
-
-func pageHome(c *gin.Context) {
-
-	render(c)
-
 }
 
 func updateAppearanceOptions(c *gin.Context) {
@@ -80,10 +72,10 @@ func updateAppearanceOptions(c *gin.Context) {
 
 	FlareData.UpdateAppearance(update)
 
-	render(c)
+	pageAppearance(c)
 }
 
-func render(c *gin.Context) {
+func pageAppearance(c *gin.Context) {
 	options := FlareData.GetAllSettingsOptions()
 
 	IconModeDefault := options.IconMode == "DEFAULT"

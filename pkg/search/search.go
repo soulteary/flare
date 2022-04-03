@@ -12,14 +12,8 @@ import (
 
 func RegisterRouting(router *gin.Engine) {
 
-	router.GET(FlareState.SettingPages.Search.Path, FlareAuth.AuthRequired, pageHome)
+	router.GET(FlareState.SettingPages.Search.Path, FlareAuth.AuthRequired, pageSearch)
 	router.POST(FlareState.SettingPages.Search.Path, FlareAuth.AuthRequired, updateSearchOptions)
-
-}
-
-func pageHome(c *gin.Context) {
-
-	render(c, "")
 
 }
 
@@ -38,10 +32,10 @@ func updateSearchOptions(c *gin.Context) {
 
 	FlareData.UpdateSearch(body.ShowSearchComponent, body.DisabledSearchAutoFocus)
 
-	render(c, "")
+	pageSearch(c)
 }
 
-func render(c *gin.Context, testResult string) {
+func pageSearch(c *gin.Context) {
 	options := FlareData.GetAllSettingsOptions()
 
 	c.HTML(
