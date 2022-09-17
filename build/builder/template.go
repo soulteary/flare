@@ -2,7 +2,6 @@ package builder
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	Minify "github.com/tdewolff/minify/v2"
@@ -35,7 +34,7 @@ func minifyFilesByPathAndType(filePath string, fileFilter string, mimeType strin
 	files, _ := _WalkMatch(filePath, fileFilter)
 
 	for _, file := range files {
-		fileRaw, err := ioutil.ReadFile(file)
+		fileRaw, err := os.ReadFile(file)
 		if err != nil {
 			fmt.Println("读取文件出错", file)
 		} else {

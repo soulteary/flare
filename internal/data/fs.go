@@ -1,7 +1,6 @@
 package data
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -21,12 +20,12 @@ func getConfigPath(config string) string {
 }
 
 func saveFile(filePath string, data []byte) bool {
-	err := ioutil.WriteFile(filePath, data, os.ModePerm)
+	err := os.WriteFile(filePath, data, os.ModePerm)
 	return err == nil
 }
 
 func readFile(filePath string, crashOnError bool) []byte {
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		if crashOnError {
 			log.Fatalf("程序不能读取配置文件" + filePath + "，请检查文件权限是否正常")

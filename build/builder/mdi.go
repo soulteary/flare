@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/format"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -19,7 +18,7 @@ func TaskForMdi(src string, dest string, res string, gofile string) {
 func initMdiResourceTemplate(src string, dest string) {
 	// https://www.npmjs.com/package/@mdi/js
 	file := src
-	fileRaw, err := ioutil.ReadFile(file)
+	fileRaw, err := os.ReadFile(file)
 	mdiJSON := ""
 	if err != nil {
 		fmt.Println("读取文件出错", file)
@@ -40,7 +39,7 @@ func initMdiResourceTemplate(src string, dest string) {
 	goFile = strings.Replace(goFile, "\"\n}", "\",\n}", 1)
 	content, _ := format.Source([]byte(goFile))
 
-	err = ioutil.WriteFile(dest, content, os.ModePerm)
+	err = os.WriteFile(dest, content, os.ModePerm)
 	if err != nil {
 		fmt.Println("保存文件出错", err)
 	} else {

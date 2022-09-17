@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -39,7 +38,7 @@ func initInlineStyle(data string, gofile string) {
 	if err != nil {
 		fmt.Println("序列化内容失败", err)
 	}
-	err = ioutil.WriteFile(gofile, fmtContent, os.ModePerm)
+	err = os.WriteFile(gofile, fmtContent, os.ModePerm)
 	if err != nil {
 		fmt.Println("保存文件出错", err)
 	}
@@ -80,7 +79,7 @@ func concatenateCSS(cssPathes []string) []byte {
 	var cssAll []byte
 	for _, cssPath := range cssPathes {
 		println("concatenating " + cssPath + " ...")
-		b, err := ioutil.ReadFile(cssPath)
+		b, err := os.ReadFile(cssPath)
 		if err != nil {
 			panic(err)
 		}
