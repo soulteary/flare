@@ -12,26 +12,26 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/soulteary/flare/pkg/logger"
 
-	FlareModel "github.com/soulteary/flare/model"
-	FlareState "github.com/soulteary/flare/state"
+	FlareModel "github.com/soulteary/flare/internal/model"
+	FlareState "github.com/soulteary/flare/internal/state"
 
-	FlareAssets "github.com/soulteary/flare/internal/assets"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
-	FlareMDI "github.com/soulteary/flare/internal/mdi"
-	FlareTemplates "github.com/soulteary/flare/internal/templates"
+	FlareAssets "github.com/soulteary/flare/internal/resources/assets"
+	FlareMDI "github.com/soulteary/flare/internal/resources/mdi"
+	FlareTemplates "github.com/soulteary/flare/internal/resources/templates"
 
-	FlareAppearance "github.com/soulteary/flare/internal/appearance"
 	FlareDeprecated "github.com/soulteary/flare/internal/deprecated"
 	FlareEditor "github.com/soulteary/flare/internal/editor"
 	FlareGuide "github.com/soulteary/flare/internal/guide"
 	FlareHealth "github.com/soulteary/flare/internal/health"
-	FlareHome "github.com/soulteary/flare/internal/home"
-	FlareOthers "github.com/soulteary/flare/internal/others"
+	FlareHome "github.com/soulteary/flare/internal/pages/home"
 	FlareRedir "github.com/soulteary/flare/internal/redir"
-	FlareSearch "github.com/soulteary/flare/internal/search"
 	FlareSettings "github.com/soulteary/flare/internal/settings"
-	FlareTheme "github.com/soulteary/flare/internal/theme"
-	FlareWeather "github.com/soulteary/flare/internal/weather"
+	FlareAppearance "github.com/soulteary/flare/internal/settings/appearance"
+	FlareOthers "github.com/soulteary/flare/internal/settings/others"
+	FlareSearch "github.com/soulteary/flare/internal/settings/search"
+	FlareTheme "github.com/soulteary/flare/internal/settings/theme"
+	FlareWeather "github.com/soulteary/flare/internal/settings/weather"
 )
 
 func startDaemon(AppFlags *FlareModel.Flags) {

@@ -1,0 +1,159 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=google content="notranslate"><meta name=viewport content="width=device-width,initial-scale=1"><title>Flare 在线数据编辑</title><link rel=stylesheet href=/assets/editor/handsontable.full.min.css><script src=/assets/editor/handsontable.full.min.js></script>
+<script src=/assets/editor/zh-CN.min.js></script><style>body{--color-background:#1a1a1a;--color-primary:#FFFDEA;--color-accent:#5c5c5c;--spacing-ui:10px;background-color:var(--color-background);transition:background-color .3s;font-family:Roboto,sans-serif;font-size:14px}h1,h2,h3,h4,h5,.notice{color:var(--color-primary)}.bookmark-icon{background-color:var(--color-background)!important}.bookmark-icon img{height:90%}#search-container{background-color:#fff;padding:10px}</style></head><body><h1>Flare 在线数据编辑</h1><p class=notice>嗨👋，在线编辑功能还在开发中，目前已满足基本功能，故开放使用。<p class=notice>在使用本编辑器前，强烈建议先手动保存您的数据文件（如使用 Git 进行版本管理、或定时进行数据备份），避免因浏览器兼容性差异导致的极小概率的糟糕状况出现。<p class=notice>使用方法：在页面中的 “Excel” 中完成你想要的数据更新，或内容添加（右键添加“新行”）之后，点击任意保存按钮，即可完成书签数据的修改。<h2>分类管理</h2><div id=container-category></div><div class=controls><input type=submit value=保存数据 class=update-data style=margin-top:10px><form action=/editor method=post id=form-categories><input type=hidden name=categories id=field-categories>
+<input type=hidden name=bookmarks id=field-bookmarks></form></div><h2>应用编辑</h2><div id=search-container><span>高亮筛选:</span>
+<input id=search>
+<input style="float:right;margin:0 10px" type=submit value=返回首页 id=back-home>
+<input style=float:right type=submit value=保存数据 class=update-data></div><div id=container-bookmarks></div><script type=text/html id=data-categories>{{.DataCategories}}</script><script type=text/html id=data-bookmarks>{{.DataBookmarks}}</script><script>
+        let categories = JSON.parse(document.getElementById("data-categories").innerHTML) || [];
+        const dataBookmarks = JSON.parse(document.getElementById("data-bookmarks").innerHTML) || [];
+
+        let categoriesMap = categories.reduce((prev, item) => {
+            prev[item.ID] = item.Name; return prev;
+        }, {})
+        const FLARE_FIX_CATEGORY = ["[Flare 应用]"];
+        let bookmarks = dataBookmarks.filter(item => item.Category && item.Name && item.URL).map(item => {
+            if (item.Category === '_FLARE_FIXED_CATEGORY') {
+                item.Category = FLARE_FIX_CATEGORY[0];
+            } else {
+                item.Category = categoriesMap[item.Category]
+            }
+            return item;
+        }).sort((a, b) => (a.Category + "").localeCompare(b.Category + ""));
+    </script><script>
+        const instanceCategories = new Handsontable(document.getElementById('container-category'), {
+            language: 'zh-CN',
+            data: categories,
+            colHeaders: ['书签名称'],
+            rowHeaders: true,
+            contextMenu: ["row_above", "row_below", "---------", "undo", "redo", "---------", "cut", "copy"],
+            columns: [
+                { data: 'Name' },
+            ],
+            height: 'auto',
+            afterChange: (changes) => {
+                if (!changes) { return }
+                changes.forEach(function ([row, prop, oldValue, newValue]) {
+                    categoriesMap = Object.keys(categoriesMap).reduce(function (prev, key) {
+                        if (categoriesMap[key] == oldValue) {
+                            prev[key] = newValue;
+                        } else {
+                            prev[key] = categoriesMap[key]
+                        }
+                        return prev;
+                    }, {});
+
+                    bookmarks = bookmarks.map(function (bookmark) {
+                        if (bookmark.Category == oldValue) {
+                            bookmark.Category = newValue;
+                        }
+                        return bookmark;
+                    });
+                });
+                updateDataTable()
+            },
+            licenseKey: 'non-commercial-and-evaluation'
+        });
+
+        function coverRenderer(instance, td, row, col, prop, value, cellProperties) {
+            const stringifiedValue = Handsontable.helper.stringify(value);
+
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            return;
+
+            if (stringifiedValue.startsWith('http')) {
+                const img = document.createElement('IMG');
+
+                img.src = value;
+
+                Handsontable.dom.addEvent(img, 'mousedown', event => {
+                    event.preventDefault(); // prevent selection quirk
+                });
+
+                Handsontable.dom.empty(td);
+                td.appendChild(img);
+            } else if (stringifiedValue !== '') {
+
+                const img = document.createElement('IMG');
+
+                img.src = '/assets/mdi/blackboard-' + (value + '').toLowerCase() + '.svg';
+
+                Handsontable.dom.addEvent(img, 'mousedown', event => {
+                    event.preventDefault(); // prevent selection quirk
+                });
+
+                Handsontable.dom.empty(td);
+                td.className = 'bookmark-icon'
+                td.appendChild(img);
+
+            } else {
+                Handsontable.renderers.TextRenderer.apply(this, arguments);
+            }
+        }
+
+
+        const searchField = document.querySelector('#search');
+        const container = document.getElementById('container-bookmarks');
+        const dataTableColumns = buildDataTableColumns();
+        let instanceBookmarks = new Handsontable(container, {
+            language: 'zh-CN',
+            data: Array.from(bookmarks),
+            colHeaders: ['书签名称', '书签地址', /*'私密'*/, '类型', '图标', '描述'],
+            rowHeaders: true,
+            contextMenu: ["row_above", "row_below", "---------", "undo", "redo", "---------", "cut", "copy"],
+            columns: dataTableColumns,
+            // hiddenColumns: true,
+            // hiddenColumns: {
+            //     columns: [2],
+            //     copyPasteEnabled: false,
+            //     indicators: false
+            // },
+            height: 'auto',
+            stretchH: 'all',
+            search: true,
+            licenseKey: 'non-commercial-and-evaluation'
+        });
+        Handsontable.dom.addEvent(searchField, 'keyup', function (event) {
+            const queryResult = instanceBookmarks.getPlugin('search').query(this.value);
+            instanceBookmarks.render();
+        });
+
+
+        function bindData() {
+            const options = { bom: false, columnDelimiter: ',', columnHeaders: false, exportHiddenColumns: true, exportHiddenRows: true, rowDelimiter: '\r\n', rowHeaders: true };
+            const exportedCategories = instanceCategories.getPlugin('exportFile').exportAsString('csv', options);
+            const exportedBookmarks = instanceBookmarks.getPlugin('exportFile').exportAsString('csv', options);
+            document.getElementById('field-categories').value = exportedCategories;
+            document.getElementById('field-bookmarks').value = exportedBookmarks;
+        }
+
+        Array.from(document.getElementsByClassName('update-data')).forEach(function (btn) {
+            btn.addEventListener('click', function (event) {
+                event.preventDefault();
+                bindData();
+                document.getElementById('form-categories').submit();
+            });
+        });
+
+        function buildDataTableColumns() {
+            return [
+                { data: 'Name' },
+                { data: 'URL' },
+                // { data: 'Private', type: 'checkbox' },
+                { data: 'Category', editor: 'select', selectOptions: FLARE_FIX_CATEGORY.concat(categories.map(item => item.Name)), allowInvalid: false },
+                { data: 'Icon', renderer: coverRenderer },
+                { data: 'Desc' }
+            ]
+        }
+
+        document.getElementById('back-home').addEventListener('click', function (e) {
+            e.preventDefault();
+            location.href = "/";
+        })
+
+
+        function updateDataTable() {
+            instanceBookmarks.updateData(bookmarks)
+            instanceBookmarks.updateSettings({ columns: buildDataTableColumns() })
+        }
+
+    </script></body></html>

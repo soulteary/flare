@@ -11,8 +11,8 @@ import (
 	"github.com/soulteary/flare/version"
 
 	env "github.com/caarlos0/env/v6"
-	FlareData "github.com/soulteary/flare/data"
-	FlareModel "github.com/soulteary/flare/model"
+	FlareData "github.com/soulteary/flare/internal/data"
+	FlareModel "github.com/soulteary/flare/internal/model"
 	flags "github.com/spf13/pflag"
 	"gopkg.in/ini.v1"
 )

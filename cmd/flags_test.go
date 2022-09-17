@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	env "github.com/caarlos0/env/v6"
-	FlareModel "github.com/soulteary/flare/model"
+	FlareModel "github.com/soulteary/flare/internal/model"
 )
 
 func TestParseEnvVars(t *testing.T) {

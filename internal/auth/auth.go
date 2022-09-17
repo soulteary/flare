@@ -9,7 +9,7 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 
-	FlareState "github.com/soulteary/flare/state"
+	FlareState "github.com/soulteary/flare/internal/state"
 )
 
 const (
