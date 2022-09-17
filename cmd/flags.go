@@ -26,6 +26,7 @@ const (
 	_DEFAULT_USER_NAME                = "flare"
 	_DEFAULT_ENABLE_EDITOR            = true
 	_DEFAULT_VISIBILITY               = "DEFAULT"
+	_DEFAULT_DISABLE_CSP              = false
 )
 
 func parseEnvVars() (stor FlareModel.Flags) {
@@ -41,6 +42,7 @@ func parseEnvVars() (stor FlareModel.Flags) {
 		EnableOfflineMode:      _DEFAULT_ENABLE_OFFLINE,
 		EnableEditor:           _DEFAULT_ENABLE_EDITOR,
 		Visibility:             _DEFAULT_VISIBILITY,
+		DisableCSP:             _DEFAULT_DISABLE_CSP,
 	}
 
 	// 2. overwrite with user input
@@ -70,6 +72,7 @@ func parseEnvVars() (stor FlareModel.Flags) {
 	stor.Visibility = defaults.Visibility
 	stor.EnableOfflineMode = defaults.EnableOfflineMode
 	stor.EnableEditor = defaults.EnableEditor
+	stor.DisableCSP = defaults.DisableCSP
 
 	return stor
 }
@@ -117,6 +120,7 @@ func parseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 		EnableOfflineMode:      _DEFAULT_ENABLE_OFFLINE,
 		EnableEditor:           _DEFAULT_ENABLE_EDITOR,
 		Visibility:             _DEFAULT_VISIBILITY,
+		DisableCSP:             _DEFAULT_DISABLE_CSP,
 	}
 
 	err = envs.MapTo(&defaults)
@@ -164,6 +168,9 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 
 		_KEY_ENABLE_EDITOR       = "enable_editor"
 		_KEY_ENABLE_EDITOR_SHORT = "e"
+
+		_KEY_DISABLE_CSP       = "disable_csp"
+		_KEY_DISABLE_CSP_SHORT = "c"
 	)
 
 	// port
@@ -182,10 +189,12 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 	options.BoolVarP(&cliFlags.DisableLoginMode, _KEY_DISABLE_LOGIN, _KEY_DISABLE_LOGIN_SHORT, _DEFAULT_DISABLE_LOGIN, "禁用账号登陆")
 	options.BoolVar(&cliFlags.DisableLoginMode, _KEY_DISABLE_LOGIN_OLD, _DEFAULT_DISABLE_LOGIN, "禁用账号登陆")
 	_ = options.MarkDeprecated(_KEY_DISABLE_LOGIN_OLD, "please use --"+_KEY_DISABLE_LOGIN+" instead")
-	// deprecated notice
+	// 启用废弃日志警告
 	options.BoolVarP(&cliFlags.EnableDeprecatedNotice, _KEY_ENABLE_DEPRECATED_NOTICE, _KEY_ENABLE_DEPRECATED_NOTICE_SHORT, _DEFAULT_ENABLE_DEPRECATED_NOTICE, "启用废弃日志警告")
 	options.BoolVarP(&cliFlags.EnableEditor, _KEY_ENABLE_EDITOR, _KEY_ENABLE_EDITOR_SHORT, _DEFAULT_ENABLE_EDITOR, "启用编辑器")
-
+	// 禁用 CSP
+	options.BoolVarP(&cliFlags.DisableCSP, _KEY_DISABLE_CSP, _KEY_DISABLE_CSP_SHORT, _DEFAULT_DISABLE_CSP, "禁用CSP")
+	// 其他
 	options.BoolVarP(&cliFlags.ShowVersion, "version", "v", false, "显示应用版本号")
 	options.BoolVarP(&cliFlags.ShowHelp, "help", "h", false, "显示帮助")
 
@@ -218,6 +227,10 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 
 	if keys[_KEY_DISABLE_LOGIN] || keys[_KEY_DISABLE_LOGIN_SHORT] || keys[_KEY_DISABLE_LOGIN_OLD] {
 		baseFlags.DisableLoginMode = cliFlags.DisableLoginMode
+	}
+
+	if keys[_KEY_DISABLE_CSP] || keys[_KEY_DISABLE_CSP_SHORT] {
+		baseFlags.DisableCSP = cliFlags.DisableCSP
 	}
 
 	if keys[_KEY_VISIBILITY] || keys[_KEY_VISIBILITY_SHORT] {

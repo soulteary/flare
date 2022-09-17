@@ -12,6 +12,7 @@ type Flags struct {
 	EnableOfflineMode      bool
 	EnableMinimumRequest   bool
 	EnableDeprecatedNotice bool
+	DisableCSP             bool
 
 	Visibility       string
 	DisableLoginMode bool
@@ -29,6 +30,7 @@ type Envs struct {
 	EnableOfflineMode      bool `env:"FLARE_OFFLINE"`
 	EnableMinimumRequest   bool `env:"FLARE_MINI_REQUEST"`
 	EnableDeprecatedNotice bool `env:"FLARE_DEPRECATED_NOTICE"`
+	DisableCSP             bool `env:"FLARE_DISABLE_CSP,unset"`
 
 	Visibility       string `env:"FLARE_VISIBILITY"`
 	DisableLoginMode bool   `env:"FLARE_DISABLE_LOGIN"`
@@ -44,6 +46,7 @@ type EnvFile struct {
 	EnableOfflineMode      bool `ini:"FLARE_OFFLINE,omitempty"`
 	EnableMinimumRequest   bool `ini:"FLARE_MINI_REQUEST,omitempty"`
 	EnableDeprecatedNotice bool `ini:"FLARE_DEPRECATED_NOTICE,omitempty"`
+	DisableCSP             bool `env:"FLARE_DISABLE_CSP,unset"`
 
 	Visibility       string `ini:"FLARE_VISIBILITY,omitempty"`
 	DisableLoginMode bool   `ini:"FLARE_DISABLE_LOGIN,omitempty"`
