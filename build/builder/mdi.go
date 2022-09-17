@@ -12,7 +12,7 @@ import (
 func TaskForMdi(src string, dest string, res string, gofile string) {
 	initMdiResourceTemplate(res, gofile)
 	_PrepareDirectory(dest)
-	_CopyDirectory(src, dest)
+	_CopyDirectoryWithoutSymlink(src, dest)
 }
 
 func initMdiResourceTemplate(src string, dest string) {

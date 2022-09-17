@@ -3,17 +3,15 @@ package builder
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"syscall"
 )
 
 // https://stackoverflow.com/questions/51779243/copy-a-folder-in-go
 
-func _CopyDirectory(scrDir, dest string) error {
-	entries, err := ioutil.ReadDir(scrDir)
+func _CopyDirectoryWithoutSymlink(scrDir, dest string) error {
+	entries, err := os.ReadDir(scrDir)
 	if err != nil {
 		return err
 	}
@@ -26,36 +24,18 @@ func _CopyDirectory(scrDir, dest string) error {
 			return err
 		}
 
-		stat, ok := fileInfo.Sys().(*syscall.Stat_t)
-		if !ok {
-			return fmt.Errorf("failed to get raw syscall.Stat_t data for '%s'", sourcePath)
-		}
-
 		switch fileInfo.Mode() & os.ModeType {
 		case os.ModeDir:
 			if err := _CreateIfNotExists(destPath, 0755); err != nil {
 				return err
 			}
-			if err := _CopyDirectory(sourcePath, destPath); err != nil {
+			if err := _CopyDirectoryWithoutSymlink(sourcePath, destPath); err != nil {
 				return err
 			}
 		case os.ModeSymlink:
-			if err := _CopySymLink(sourcePath, destPath); err != nil {
-				return err
-			}
+			return fmt.Errorf("no need to copy symlink'%s'", sourcePath)
 		default:
 			if err := _Copy(sourcePath, destPath); err != nil {
-				return err
-			}
-		}
-
-		if err := os.Lchown(destPath, int(stat.Uid), int(stat.Gid)); err != nil {
-			return err
-		}
-
-		isSymlink := entry.Mode()&os.ModeSymlink != 0
-		if !isSymlink {
-			if err := os.Chmod(destPath, entry.Mode()); err != nil {
 				return err
 			}
 		}
@@ -103,14 +83,6 @@ func _CreateIfNotExists(dir string, perm os.FileMode) error {
 	}
 
 	return nil
-}
-
-func _CopySymLink(source, dest string) error {
-	link, err := os.Readlink(source)
-	if err != nil {
-		return err
-	}
-	return os.Symlink(link, dest)
 }
 
 // https://stackoverflow.com/questions/55300117/how-do-i-find-all-files-that-have-a-certain-extension-in-go-regardless-of-depth
