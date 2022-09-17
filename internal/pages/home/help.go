@@ -9,7 +9,8 @@ import (
 )
 
 func GenerateHelpTemplate() template.HTML {
-	apps := []FlareModel.Bookmark{
+	apps := []FlareModel.Bookmark{}
+	apps = append(apps, []FlareModel.Bookmark{
 		{
 			Name: "程序首页",
 			URL:  FlareState.RegularPages.Home.Path,
@@ -28,22 +29,31 @@ func GenerateHelpTemplate() template.HTML {
 			Icon: "fireCircle",
 			Desc: "",
 		},
-		{
+	}...)
+
+	if FlareState.AppFlags.EnableGuide {
+		apps = append(apps, FlareModel.Bookmark{
 			Name: "向导页面",
 			URL:  FlareState.RegularPages.Guide.Path,
 			Icon: "radioactiveCircleOutline",
 			Desc: "",
-		},
+		})
+	}
+
+	if FlareState.AppFlags.EnableEditor {
+		apps = append(apps, FlareModel.Bookmark{
+			Name: "内容编辑",
+			URL:  FlareState.RegularPages.Editor.Path,
+			Icon: "pencilCircle",
+			Desc: "",
+		})
+	}
+
+	apps = append(apps, []FlareModel.Bookmark{
 		{
 			Name: "图标挑选",
 			URL:  FlareState.RegularPages.Icons.Path,
 			Icon: "heartCircle",
-			Desc: "",
-		},
-		{
-			Name: "内容编辑",
-			URL:  FlareState.RegularPages.Editor.Path,
-			Icon: "pencilCircle",
 			Desc: "",
 		},
 		{
@@ -88,7 +98,7 @@ func GenerateHelpTemplate() template.HTML {
 			Icon: "crownCircle",
 			Desc: "GitHub Issues",
 		},
-	}
+	}...)
 
 	tpl := ""
 
