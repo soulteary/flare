@@ -36,6 +36,7 @@ func GenerateRandomString(size int) string {
 	id := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, id); err != nil {
 		data := []byte(time.Now().String())
+		/* #nosec */
 		hash := md5.Sum(data)
 		return hex.EncodeToString(hash[0:size])
 	}
