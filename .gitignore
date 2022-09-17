@@ -16,14 +16,14 @@
 
 
 database
-pkg/assets/icons
-pkg/assets/favicon.ico
-pkg/assets/css
-pkg/templates/html/*
-pkg/mdi/mdi-cheat-sheets
-pkg/guide/guide-assets
-pkg/editor/editor-assets
-pkg/weather/icons
+internal/assets/icons
+internal/assets/favicon.ico
+internal/assets/css
+internal/templates/html/*
+internal/mdi/mdi-cheat-sheets
+internal/guide/guide-assets
+internal/editor/editor-assets
+internal/weather/icons
 .DS_Store
 tmp
 apps.yml

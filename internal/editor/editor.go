@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/soulteary/memfs"
 
-	FlareAuth "github.com/soulteary/flare/pkg/auth"
+	FlareAuth "github.com/soulteary/flare/internal/auth"
 	FlareState "github.com/soulteary/flare/state"
 	FlareData "github.com/soulteary/flare/data"
 )

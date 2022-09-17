@@ -12,8 +12,8 @@ import (
 
 	FlareData "github.com/soulteary/flare/data"
 	FlareModel "github.com/soulteary/flare/model"
-	FlareAuth "github.com/soulteary/flare/pkg/auth"
-	FlareWeather "github.com/soulteary/flare/pkg/weather"
+	FlareAuth "github.com/soulteary/flare/internal/auth"
+	FlareWeather "github.com/soulteary/flare/internal/weather"
 	FlareState "github.com/soulteary/flare/state"
 	weather "github.com/soulteary/funny-china-weather"
 )

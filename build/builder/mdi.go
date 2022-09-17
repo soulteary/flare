@@ -12,9 +12,9 @@ import (
 )
 
 func TaskForMdi() {
-	initMdiResourceTemplate("embed/assets/vendor/mdi/mdi.js", "pkg/mdi/icons.json", "pkg/mdi/icons.go")
-	_PrepareDirectory("pkg/mdi/mdi-cheat-sheets")
-	_CopyDirectory("embed/assets/vendor/mdi-cheat-sheets", "pkg/mdi/mdi-cheat-sheets")
+	initMdiResourceTemplate("embed/assets/vendor/mdi/mdi.js", "internal/mdi/icons.json", "internal/mdi/icons.go")
+	_PrepareDirectory("internal/mdi/mdi-cheat-sheets")
+	_CopyDirectory("embed/assets/vendor/mdi-cheat-sheets", "internal/mdi/mdi-cheat-sheets")
 }
 
 func initMdiResourceTemplate(src string, dest string, gofile string) {

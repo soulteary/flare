@@ -12,12 +12,12 @@ import (
 )
 
 func TaskForTemplates() {
-	os.RemoveAll("pkg/templates/html")
-	_PrepareDirectory("pkg/templates/html")
-	_CopyDirectory("embed/templates", "pkg/templates/html")
+	os.RemoveAll("internal/templates/html")
+	_PrepareDirectory("internal/templates/html")
+	_CopyDirectory("embed/templates", "internal/templates/html")
 	fmt.Println("复制模版文件 ... [OK]")
 
-	minifyFilesByPathAndType("pkg/templates/html", "*.html", "text/html")
+	minifyFilesByPathAndType("internal/templates/html", "*.html", "text/html")
 	os.RemoveAll("tmp")
 }
 

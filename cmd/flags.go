@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/soulteary/flare/internal/logger"
+	"github.com/soulteary/flare/pkg/logger"
 	"github.com/soulteary/flare/version"
 
 	env "github.com/caarlos0/env/v6"

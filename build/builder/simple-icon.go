@@ -1,5 +1,5 @@
 package builder
 
 func TaskForSimpleIcons() {
-	_PrepareDirectory("pkg/simpleicon")
+	_PrepareDirectory("internal/simpleicon")
 }

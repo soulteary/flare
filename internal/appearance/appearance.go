@@ -9,7 +9,7 @@ import (
 
 	FlareData "github.com/soulteary/flare/data"
 	FlareModel "github.com/soulteary/flare/model"
-	FlareAuth "github.com/soulteary/flare/pkg/auth"
+	FlareAuth "github.com/soulteary/flare/internal/auth"
 	FlareState "github.com/soulteary/flare/state"
 )
 

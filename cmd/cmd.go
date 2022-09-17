@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/soulteary/flare/internal/logger"
+	"github.com/soulteary/flare/pkg/logger"
 
 	FlareData "github.com/soulteary/flare/data"
 	FlareState "github.com/soulteary/flare/state"
