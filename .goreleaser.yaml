@@ -27,7 +27,7 @@ dockers:
   - image_templates:
       - "soulteary/flare:linux-amd64-{{ .Tag }}"
       - "soulteary/flare:linux-amd64"
-    dockerfile: docker/Dockerfile.gorelease
+    dockerfile: docker/goreleaser/Dockerfile.amd64
     use: buildx
     goarch: amd64
     build_flag_templates:
@@ -45,7 +45,7 @@ dockers:
   - image_templates:
       - "soulteary/flare:linux-arm64-{{ .Tag }}"
       - "soulteary/flare:linux-arm64"
-    dockerfile: docker/Dockerfile.gorelease
+    dockerfile: docker/goreleaser/Dockerfile.arm64v8
     use: buildx
     goos: linux
     goarch: arm64
@@ -65,7 +65,7 @@ dockers:
   - image_templates:
       - "soulteary/flare:linux-armv7-{{ .Tag }}"
       - "soulteary/flare:linux-armv7"
-    dockerfile: docker/Dockerfile.gorelease
+    dockerfile: docker/goreleaser/Dockerfile.arm32v7
     use: buildx
     goos: linux
     goarch: arm
@@ -85,7 +85,7 @@ dockers:
   - image_templates:
       - "soulteary/flare:linux-armv6-{{ .Tag }}"
       - "soulteary/flare:linux-armv6"
-    dockerfile: docker/Dockerfile.gorelease
+    dockerfile: docker/goreleaser/Dockerfile.arm32v6
     use: buildx
     goos: linux
     goarch: arm
