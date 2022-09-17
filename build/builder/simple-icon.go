@@ -1,5 +1,5 @@
 package builder
 
-func TaskForSimpleIcons() {
-	_PrepareDirectory("internal/simpleicon")
+func TaskForSimpleIcons(dest string) {
+	_PrepareDirectory(dest)
 }

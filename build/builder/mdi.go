@@ -11,10 +11,10 @@ import (
 	"strings"
 )
 
-func TaskForMdi() {
-	initMdiResourceTemplate("embed/assets/vendor/mdi/mdi.js", "internal/mdi/icons.json", "internal/mdi/icons.go")
-	_PrepareDirectory("internal/mdi/mdi-cheat-sheets")
-	_CopyDirectory("embed/assets/vendor/mdi-cheat-sheets", "internal/mdi/mdi-cheat-sheets")
+func TaskForMdi(src string, dest string, res string, gofile string) {
+	initMdiResourceTemplate(res, "internal/mdi/icons.json", gofile)
+	_PrepareDirectory(dest)
+	_CopyDirectory(src, dest)
 }
 
 func initMdiResourceTemplate(src string, dest string, gofile string) {

@@ -1,6 +1,6 @@
 package builder
 
-func TaskForEditorAssets() {
-	_PrepareDirectory("internal/editor/editor-assets")
-	_CopyDirectory("embed/assets/vendor/editor-assets", "internal/editor/editor-assets")
+func TaskForEditorAssets(src string, dest string) {
+	_PrepareDirectory(dest)
+	_CopyDirectory(src, dest)
 }

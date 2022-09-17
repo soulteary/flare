@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func TaskForStyles() {
+func TaskForStyles(gofile string) {
 
 	content := doMinifyCSS([]string{
 		"embed/assets/css/base.css",
@@ -27,7 +27,7 @@ func TaskForStyles() {
 		"embed/assets/css/settings/theme.css",
 	})
 
-	initInlineStyle("/** 月出惊山鸟，时鸣春涧中。**/ "+content, "state/style.go")
+	initInlineStyle("/** 月出惊山鸟，时鸣春涧中。**/ "+content, gofile)
 
 	fmt.Println("打包样式文件 ... [OK]")
 

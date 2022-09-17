@@ -1,6 +1,6 @@
 package builder
 
-func TaskForGuideAssets() {
-	_PrepareDirectory("internal/guide/guide-assets")
-	_CopyDirectory("embed/assets/vendor/guide-assets", "internal/guide/guide-assets")
+func TaskForGuideAssets(src string, dest string) {
+	_PrepareDirectory(dest)
+	_CopyDirectory(src, dest)
 }

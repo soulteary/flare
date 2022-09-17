@@ -11,13 +11,13 @@ import (
 	MinifySVG "github.com/tdewolff/minify/v2/svg"
 )
 
-func TaskForTemplates() {
-	os.RemoveAll("internal/templates/html")
-	_PrepareDirectory("internal/templates/html")
-	_CopyDirectory("embed/templates", "internal/templates/html")
+func TaskForTemplates(src string, dest string) {
+	os.RemoveAll(dest)
+	_PrepareDirectory(dest)
+	_CopyDirectory(src, dest)
 	fmt.Println("复制模版文件 ... [OK]")
 
-	minifyFilesByPathAndType("internal/templates/html", "*.html", "text/html")
+	minifyFilesByPathAndType(dest, "*.html", "text/html")
 	os.RemoveAll("tmp")
 }
 
