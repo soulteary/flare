@@ -41,6 +41,7 @@ jobs:
       -
         name: Tests
         run: |
+          go run build/build.go
           go mod tidy
           go test -v ./...
       # Login against a Docker registry except on PR
