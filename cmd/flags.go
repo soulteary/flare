@@ -175,13 +175,13 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 	// mini_request
 	options.BoolVarP(&cliFlags.EnableMinimumRequest, _KEY_MINI_REQUEST, _KEY_MINI_REQUEST_SHORT, _DEFAULT_ENABLE_MINI_REQUEST, "使用请求最小化模式")
 	options.BoolVar(&cliFlags.EnableMinimumRequest, _KEY_MINI_REQUEST_OLD, _DEFAULT_ENABLE_MINI_REQUEST, "使用请求最小化模式")
-	options.MarkDeprecated(_KEY_MINI_REQUEST_OLD, "please use --"+_KEY_MINI_REQUEST+" instead")
+	_ = options.MarkDeprecated(_KEY_MINI_REQUEST_OLD, "please use --"+_KEY_MINI_REQUEST+" instead")
 	// offline
 	options.BoolVarP(&cliFlags.EnableOfflineMode, _KEY_ENABLE_OFFLINE, _KEY_ENABLE_OFFLINE_SHORT, _DEFAULT_ENABLE_OFFLINE, "启用离线模式")
 	// disable_login
 	options.BoolVarP(&cliFlags.DisableLoginMode, _KEY_DISABLE_LOGIN, _KEY_DISABLE_LOGIN_SHORT, _DEFAULT_DISABLE_LOGIN, "禁用账号登陆")
 	options.BoolVar(&cliFlags.DisableLoginMode, _KEY_DISABLE_LOGIN_OLD, _DEFAULT_DISABLE_LOGIN, "禁用账号登陆")
-	options.MarkDeprecated(_KEY_DISABLE_LOGIN_OLD, "please use --"+_KEY_DISABLE_LOGIN+" instead")
+	_ = options.MarkDeprecated(_KEY_DISABLE_LOGIN_OLD, "please use --"+_KEY_DISABLE_LOGIN+" instead")
 	// deprecated notice
 	options.BoolVarP(&cliFlags.EnableDeprecatedNotice, _KEY_ENABLE_DEPRECATED_NOTICE, _KEY_ENABLE_DEPRECATED_NOTICE_SHORT, _DEFAULT_ENABLE_DEPRECATED_NOTICE, "启用废弃日志警告")
 	options.BoolVarP(&cliFlags.EnableEditor, _KEY_ENABLE_EDITOR, _KEY_ENABLE_EDITOR_SHORT, _DEFAULT_ENABLE_EDITOR, "启用编辑器")
@@ -189,7 +189,7 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 	options.BoolVarP(&cliFlags.ShowVersion, "version", "v", false, "显示应用版本号")
 	options.BoolVarP(&cliFlags.ShowHelp, "help", "h", false, "显示帮助")
 
-	options.Parse(os.Args)
+	_ = options.Parse(os.Args)
 
 	exit := excuteCLI(cliFlags, options)
 	if exit {

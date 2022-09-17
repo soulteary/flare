@@ -13,15 +13,15 @@ import (
 )
 
 func TaskForTemplates(src string, dest string) {
-	os.RemoveAll(dest)
+	if err := os.RemoveAll(dest); err != nil {
+		log.Fatal(err)
+	}
 	_PrepareDirectory(dest)
 	if err := _CopyDirectoryWithoutSymlink(src, dest); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("复制模版文件 ... [OK]")
-
 	minifyFilesByPathAndType(dest, "*.html", "text/html")
-	os.RemoveAll("tmp")
 }
 
 func minifyFilesByPathAndType(filePath string, fileFilter string, mimeType string) {

@@ -2,8 +2,8 @@ package mdi
 
 import (
 	"embed"
-	"fmt"
 	"io/fs"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -75,7 +75,7 @@ func GetIconByName(name string) string {
 
 		err := MemFs.WriteFile(svgFile, []byte(content), 0755)
 		if err != nil {
-			fmt.Errorf("写入内存失败", err)
+			log.Println("缓存内置图标出错:", err)
 		}
 
 		_, err = fs.ReadFile(MemFs, svgFile)
