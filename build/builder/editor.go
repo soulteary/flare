@@ -1,6 +1,10 @@
 package builder
 
+import "log"
+
 func TaskForEditorAssets(src string, dest string) {
 	_PrepareDirectory(dest)
-	_CopyDirectoryWithoutSymlink(src, dest)
+	if err := _CopyDirectoryWithoutSymlink(src, dest); err != nil {
+		log.Fatal(err)
+	}
 }

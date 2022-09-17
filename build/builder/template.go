@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -14,7 +15,9 @@ import (
 func TaskForTemplates(src string, dest string) {
 	os.RemoveAll(dest)
 	_PrepareDirectory(dest)
-	_CopyDirectoryWithoutSymlink(src, dest)
+	if err := _CopyDirectoryWithoutSymlink(src, dest); err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("复制模版文件 ... [OK]")
 
 	minifyFilesByPathAndType(dest, "*.html", "text/html")

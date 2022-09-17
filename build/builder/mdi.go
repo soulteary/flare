@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/format"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -13,7 +14,9 @@ import (
 func TaskForMdi(src string, dest string, res string, gofile string) {
 	initMdiResourceTemplate(res, gofile)
 	_PrepareDirectory(dest)
-	_CopyDirectoryWithoutSymlink(src, dest)
+	if err := _CopyDirectoryWithoutSymlink(src, dest); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func initMdiResourceTemplate(src string, dest string) {
