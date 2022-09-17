@@ -42,7 +42,7 @@ func AuthRequired(c *gin.Context) {
 		session := sessions.Default(c)
 		user := session.Get(SESSION_KEY_USER_NAME)
 		if user == nil {
-			c.Redirect(http.StatusTemporaryRedirect, FlareState.SettingPages.Others.Path)
+			c.Redirect(http.StatusFound, FlareState.SettingPages.Others.Path)
 			c.Abort()
 			return
 		}
@@ -109,7 +109,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusTemporaryRedirect, FlareState.SettingPages.Others.Path)
+	c.Redirect(http.StatusFound, FlareState.SettingPages.Others.Path)
 	c.Abort()
 }
 
@@ -118,7 +118,7 @@ func logout(c *gin.Context) {
 	user := session.Get(SESSION_KEY_USER_NAME)
 	if user == nil {
 		// 直接跳转登陆页面
-		c.Redirect(http.StatusTemporaryRedirect, FlareState.SettingPages.Others.Path)
+		c.Redirect(http.StatusFound, FlareState.SettingPages.Others.Path)
 		c.Abort()
 		return
 	}
@@ -130,6 +130,6 @@ func logout(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.Redirect(http.StatusTemporaryRedirect, FlareState.SettingPages.Others.Path)
+	c.Redirect(http.StatusFound, FlareState.SettingPages.Others.Path)
 	c.Abort()
 }

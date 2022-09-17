@@ -34,7 +34,7 @@ func RegisterRouting(router *gin.Engine) {
 		if FlareState.AppFlags.EnableDeprecatedNotice {
 			c.Data(http.StatusOK, "text/html; charset=utf-8", makeLandingPage(urlMDI, FlareState.RegularPages.Icons.Path, "5"))
 		} else {
-			c.Redirect(http.StatusTemporaryRedirect, FlareState.RegularPages.Icons.Path)
+			c.Redirect(http.StatusFound, FlareState.RegularPages.Icons.Path)
 		}
 		c.Abort()
 	})

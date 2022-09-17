@@ -48,6 +48,10 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 
 	router.Use(logger.Logger(log), gin.Recovery())
 
+	if !AppFlags.DisableLoginMode {
+		FlareAuth.RequestHandle(router)
+	}
+
 	if !AppFlags.DebugMode {
 		router.Use(gzip.Gzip(gzip.DefaultCompression))
 	}
@@ -69,10 +73,6 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 	FlareSearch.RegisterRouting(router)
 	FlareSettings.RegisterRouting(router)
 	FlareTheme.RegisterRouting(router)
-
-	if !AppFlags.DisableLoginMode {
-		FlareAuth.RequestHandle(router)
-	}
 
 	if AppFlags.EnableEditor {
 		FlareEditor.RegisterRouting(router)

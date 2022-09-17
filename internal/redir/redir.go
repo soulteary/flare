@@ -18,7 +18,7 @@ func RegisterRouting(router *gin.Engine) {
 	internalError := []byte(`<html><p>找不到匹配的跳转地址，请确认地址未被人为修改。</p><p>或前往 <a href="https://github.com/soulteary/docker-flare/issues/" target="_blank">https://github.com/soulteary/docker-flare/issues/</a> 反馈使用中的问题，谢谢！</html>`)
 
 	router.GET(FlareState.MiscPages.RedirHome.Path, func(c *gin.Context) {
-		c.Redirect(http.StatusTemporaryRedirect, FlareState.RegularPages.Home.Path)
+		c.Redirect(http.StatusFound, FlareState.RegularPages.Home.Path)
 		c.Abort()
 	})
 
@@ -35,7 +35,7 @@ func RegisterRouting(router *gin.Engine) {
 		appsData := FlareData.LoadFavoriteBookmarks()
 		for _, bookmark := range appsData.Items {
 			if bookmark.URL == decodeURL {
-				c.Redirect(http.StatusTemporaryRedirect, string(decoded))
+				c.Redirect(http.StatusFound, string(decoded))
 				c.Abort()
 				return
 			}
@@ -44,7 +44,7 @@ func RegisterRouting(router *gin.Engine) {
 		bookmarksData := FlareData.LoadNormalBookmarks()
 		for _, bookmark := range bookmarksData.Items {
 			if bookmark.URL == decodeURL {
-				c.Redirect(http.StatusTemporaryRedirect, string(decoded))
+				c.Redirect(http.StatusFound, string(decoded))
 				c.Abort()
 				return
 			}

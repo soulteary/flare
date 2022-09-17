@@ -14,5 +14,5 @@ func RegisterRouting(router *gin.Engine) {
 }
 
 func pageHome(c *gin.Context) {
-	c.Redirect(http.StatusTemporaryRedirect, FlareState.SettingPages.Theme.Path)
+	c.Redirect(http.StatusFound, FlareState.SettingPages.Theme.Path)
 }
