@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/format"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -18,7 +19,7 @@ func TaskForMdi(src string, dest string, res string, gofile string) {
 func initMdiResourceTemplate(src string, dest string) {
 	// https://www.npmjs.com/package/@mdi/js
 	file := src
-	fileRaw, err := os.ReadFile(file)
+	fileRaw, err := os.ReadFile(filepath.Clean(file))
 	mdiJSON := ""
 	if err != nil {
 		fmt.Println("读取文件出错", file)

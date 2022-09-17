@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go/format"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -79,7 +80,7 @@ func concatenateCSS(cssPathes []string) []byte {
 	var cssAll []byte
 	for _, cssPath := range cssPathes {
 		println("concatenating " + cssPath + " ...")
-		b, err := os.ReadFile(cssPath)
+		b, err := os.ReadFile(filepath.Clean(cssPath))
 		if err != nil {
 			panic(err)
 		}

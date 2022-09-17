@@ -44,7 +44,7 @@ func _CopyDirectoryWithoutSymlink(scrDir, dest string) error {
 }
 
 func _Copy(srcFile, dstFile string) error {
-	out, err := os.Create(dstFile)
+	out, err := os.Create(filepath.Clean(dstFile))
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func _Copy(srcFile, dstFile string) error {
 		}
 	}()
 
-	in, err := os.Open(srcFile)
+	in, err := os.Open(filepath.Clean(srcFile))
 	if err != nil {
 		return err
 	}
