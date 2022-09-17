@@ -5,22 +5,22 @@ import (
 	"fmt"
 	"go/format"
 	"io/ioutil"
-	"log"
 	"os"
 	"regexp"
 	"strings"
 )
 
 func TaskForMdi(src string, dest string, res string, gofile string) {
-	initMdiResourceTemplate(res, "internal/mdi/icons.json", gofile)
+	initMdiResourceTemplate(res, gofile)
 	_PrepareDirectory(dest)
 	_CopyDirectory(src, dest)
 }
 
-func initMdiResourceTemplate(src string, dest string, gofile string) {
+func initMdiResourceTemplate(src string, dest string) {
 	// https://www.npmjs.com/package/@mdi/js
 	file := src
 	fileRaw, err := ioutil.ReadFile(file)
+	mdiJSON := ""
 	if err != nil {
 		fmt.Println("读取文件出错", file)
 	} else {
@@ -33,30 +33,17 @@ func initMdiResourceTemplate(src string, dest string, gofile string) {
 		}
 
 		file, _ := json.MarshalIndent(icons, "", " ")
-		err = ioutil.WriteFile(dest, file, os.ModePerm)
-
-		if err != nil {
-			fmt.Println("保存文件出错", err)
-		} else {
-			fmt.Println("保存 MDI 文件完毕", dest)
-		}
+		mdiJSON = string(file)
 	}
 
-	jsonRaw, err := ioutil.ReadFile(dest)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	goFile := "package mdi\nvar iconMap = map[string]string" + string(jsonRaw)
+	goFile := "package mdi\nvar iconMap = map[string]string" + mdiJSON
 	goFile = strings.Replace(goFile, "\"\n}", "\",\n}", 1)
 	content, _ := format.Source([]byte(goFile))
 
-	err = ioutil.WriteFile(gofile, content, os.ModePerm)
+	err = ioutil.WriteFile(dest, content, os.ModePerm)
 	if err != nil {
 		fmt.Println("保存文件出错", err)
 	} else {
-		fmt.Println("保存 Weather 文件完毕", dest)
+		fmt.Println("保存 MDI 资源文件完毕", dest)
 	}
-	os.Remove(dest)
 }

@@ -6,13 +6,13 @@ import (
 
 func main() {
 	builder.TaskForMdi(
-		"embed/assets/vendor/mdi-cheat-sheets", "internal/mdi/mdi-cheat-sheets",
-		"embed/assets/vendor/mdi/mdi.js", "internal/mdi/icons.go",
+		"embed/assets/vendor/mdi-cheat-sheets", "internal/resources/mdi/mdi-cheat-sheets",
+		"embed/assets/vendor/mdi/mdi.js", "internal/resources/mdi/icons.go",
 	)
-	builder.TaskForSimpleIcons("internal/simpleicon")
+	builder.TaskForSimpleIcons("internal/resources/simpleicon")
 	builder.TaskForGuideAssets("embed/assets/vendor/guide-assets", "internal/guide/guide-assets")
 	builder.TaskForEditorAssets("embed/assets/vendor/editor-assets", "internal/editor/editor-assets")
-	builder.TaskForStyles("state/style.go")
-	builder.TaskForFavicon("embed/assets/favicon.ico", "internal/assets/favicon.ico")
-	builder.TaskForTemplates("embed/templates", "internal/templates/html")
+	builder.TaskForStyles("internal/state/style.go")
+	builder.TaskForFavicon("embed/assets/favicon.ico", "internal/assets/resources/favicon.ico")
+	builder.TaskForTemplates("embed/templates", "internal/resources/templates/html")
 }
