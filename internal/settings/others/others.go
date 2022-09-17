@@ -1,6 +1,7 @@
 package others
 
 import (
+	"html/template"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -48,6 +49,8 @@ func pageOthers(c *gin.Context) {
 			"Version":      FlareVersion.Version,
 			"BuildDate":    FlareVersion.BuildDate,
 			"COMMIT":       FlareVersion.Commit,
+
+			"OptionFooter": template.HTML(options.Footer),
 		},
 	)
 }
