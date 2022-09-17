@@ -31,6 +31,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -64,15 +65,15 @@ func Logger(logger logrus.FieldLogger, notLogged ...string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		// other handler can change c.Path so:
-		path := c.Request.URL.Path
+		path := inputSanitized(c.Request.URL.Path)
 		start := time.Now()
 		c.Next()
 		stop := time.Since(start)
 		latency := int(math.Ceil(float64(stop.Nanoseconds()) / 1000000.0))
 		statusCode := c.Writer.Status()
-		clientIP := c.ClientIP()
-		clientUserAgent := c.Request.UserAgent()
-		referer := c.Request.Referer()
+		clientIP := inputSanitized(c.ClientIP())
+		clientUserAgent := inputSanitized(c.Request.UserAgent())
+		referer := inputSanitized(c.Request.Referer())
 		dataLength := c.Writer.Size()
 		if dataLength < 0 {
 			dataLength = 0
@@ -107,4 +108,8 @@ func Logger(logger logrus.FieldLogger, notLogged ...string) gin.HandlerFunc {
 			}
 		}
 	}
+}
+
+func inputSanitized(input string) string {
+	return strings.Replace(strings.Replace(input, "\n", "", -1), "\r", "", -1)
 }
