@@ -40,7 +40,6 @@
       </div>
       {{ end }}
 
-      {{ if .OptionShowTitle }}
       <div class="module-container" id="hero-container">
         <div id="plugin-datetime">
           {{ if .OptionShowDateTime }}
@@ -48,10 +47,12 @@
             <span>{{.HeroDate}}</span> <span>{{.HeroDay}}</span> <span>{{.HeroTime}}</span>
           </p>
           {{ end }}
-
+          {{ if .OptionShowTitle }}
           <h1 class="plugin-container" id="plugin-greetings">{{.Greetings}}</h1>
+          {{ end }}
         </div>
 
+        {{ if .OptionShowTitle }}
         {{ if .ShowWeatherModule }}
         <div class="plugin-container clearfix" id="plugin-weather">
           <div class="pull-left">
@@ -63,9 +64,8 @@
           </div>
         </div>
         {{ end }}
-
+        {{ end }}
       </div>
-      {{ end }}
 
       {{ if .SubPage }}
       <div class="sub-page-header">
