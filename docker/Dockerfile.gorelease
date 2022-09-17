@@ -1,4 +1,4 @@
-FROM alpine:3.16.0 as Builder
+FROM alpine:3.15 as Builder
 WORKDIR /app
 COPY flare ./
 RUN ls -al
@@ -7,7 +7,7 @@ RUN apk add upx && \
     mv flare.minify flare
 RUN ls -al
 
-FROM alpine:3.16
+FROM alpine:3.15
 COPY --from=Builder /app/flare /bin/flare
 ENV TZ=Asia/Shanghai
 RUN apk add tzdata && \
