@@ -2,7 +2,7 @@ package data
 
 import (
 	"bytes"
-	"crypto/md5"
+	"crypto/md5" //#nosec
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"

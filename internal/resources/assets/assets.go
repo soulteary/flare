@@ -1,7 +1,7 @@
 package assets
 
 import (
-	"crypto/md5"
+	"crypto/md5" //#nosec
 	"embed"
 	"fmt"
 	"net/http"
