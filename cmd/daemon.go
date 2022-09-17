@@ -85,8 +85,10 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 	}
 
 	srv := &http.Server{
-		Addr:    ":" + strconv.Itoa(AppFlags.Port),
-		Handler: router,
+		Addr:              ":" + strconv.Itoa(AppFlags.Port),
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       5 * time.Second,
 	}
 
 	go func() {
