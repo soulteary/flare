@@ -8,7 +8,7 @@ import (
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 	FlareData "github.com/soulteary/flare/internal/data"
 	FlareState "github.com/soulteary/flare/internal/state"
-	FlareVersion "github.com/soulteary/flare/version"
+	FlareVersion "github.com/soulteary/flare/internal/version"
 )
 
 func RegisterRouting(router *gin.Engine) {
