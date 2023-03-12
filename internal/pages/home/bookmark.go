@@ -36,7 +36,7 @@ func GenerateBookmarkTemplate(filter string) template.HTML {
 			tpl += renderBookmarksWithCategories(&bookmarks, &category, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
 		}
 	} else {
-		tpl += `<div class="bookmark-group-container pull-left"><ul class="bookmark-list">` + renderBookmarksWithoutCategories(&bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode) + `</ul></div>`
+		tpl += renderBookmarksWithoutCategories(&bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
 	}
 
 	return template.HTML(tpl)
