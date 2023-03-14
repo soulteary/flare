@@ -242,6 +242,7 @@ func pageBookmark(c *gin.Context) {
 
 			"BookmarksURI":    FlareState.RegularPages.Bookmarks.Path,
 			"ApplicationsURI": FlareState.RegularPages.Applications.Path,
+			"SettingsURI":     FlareState.RegularPages.Settings.Path,
 
 			"Bookmarks": GenerateBookmarkTemplate(""),
 
@@ -264,6 +265,7 @@ func pageApplication(c *gin.Context) {
 
 			"BookmarksURI":    FlareState.RegularPages.Bookmarks.Path,
 			"ApplicationsURI": FlareState.RegularPages.Applications.Path,
+			"SettingsURI":     FlareState.RegularPages.Settings.Path,
 			"Applications":    GenerateApplicationsTemplate(""),
 
 			"PageName":       "应用",
