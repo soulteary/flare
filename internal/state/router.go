@@ -119,7 +119,7 @@ func getMiscPages() FlareModel.RouteMaps {
 		},
 		RedirHelper: FlareModel.API{
 			Name: "RedirHelper",
-			Path: "/redir/:url",
+			Path: "/redir/url",
 		},
 
 		Login: FlareModel.API{
