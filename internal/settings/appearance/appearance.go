@@ -105,6 +105,7 @@ func pageAppearance(c *gin.Context) {
 			"OptionHideSettingsButton":  options.HideSettingsButton,
 			"OptionHideHelpButton":      options.HideHelpButton,
 			"OptionEnableEncryptedLink": options.EnableEncryptedLink,
+			"OptionKeepLetterCase":      options.KeepLetterCase,
 			"OptionIconModeDefault":     IconModeDefault,
 			"OptionIconModeFilling":     IconModeFilling,
 		},
