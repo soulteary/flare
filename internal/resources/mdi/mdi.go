@@ -69,7 +69,7 @@ func GetIconByName(name string) string {
 		return _CACHE_MDI_ICON_DATA[name]
 	}
 
-	svgFile := filepath.Join(_ASSETS_BASE_DIR, (FlareState.ThemeCurrent + "-" + name + ".svg"))
+	svgFile := filepath.ToSlash(filepath.Join(_ASSETS_BASE_DIR, (FlareState.ThemeCurrent + "-" + name + ".svg")))
 	if !_CACHE_MDI_ICON_EXIST[FlareState.ThemeCurrent+"-"+name] {
 		content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="` + icon + `" style="fill:` + FlareState.ThemePrimaryColor + `;"></path></svg>`
 
