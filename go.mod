@@ -10,7 +10,7 @@ require (
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.0
 	github.com/jszwec/csvutil v1.8.0
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.2
 	github.com/soulteary/funny-china-weather v0.1.1
 	github.com/soulteary/memfs v0.1.0
 	github.com/spf13/pflag v1.0.5
