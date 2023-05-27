@@ -1,7 +1,6 @@
 package redir
 
 import (
-	"encoding/base64"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -23,8 +22,14 @@ func RegisterRouting(router *gin.Engine) {
 	})
 
 	router.GET(FlareState.MiscPages.RedirHelper.Path, func(c *gin.Context) {
-		encoded := c.Param("url")
-		decoded, err := base64.StdEncoding.DecodeString(encoded)
+		encoded := c.Query("go")
+		if len(encoded) < 1 {
+			c.Data(http.StatusBadRequest, "text/html; charset=utf-8", internalError)
+			c.Abort()
+			return
+		}
+
+		decoded, err := FlareData.Base64DecodeUrl(encoded)
 		if err != nil {
 			c.Data(http.StatusBadRequest, "text/html; charset=utf-8", internalError)
 			c.Abort()
