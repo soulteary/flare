@@ -89,13 +89,13 @@ func login(c *gin.Context) {
 	password := c.PostForm("password")
 
 	if strings.Trim(username, " ") == "" || strings.Trim(password, " ") == "" {
-		c.Data(http.StatusBadRequest, _HTMLContentType, internalErrorInput)
+		c.Data(http.StatusBadRequest, _HTMLContentType, internalErrorEmpty)
 		c.Abort()
 		return
 	}
 
 	if username != FlareState.AppFlags.User || password != FlareState.AppFlags.Pass {
-		c.Data(http.StatusBadRequest, _HTMLContentType, internalErrorEmpty)
+		c.Data(http.StatusBadRequest, _HTMLContentType, internalErrorInput)
 		c.Abort()
 		return
 	}
