@@ -127,6 +127,8 @@ func parseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 
 	if envs.Section("").Key("FLARE_PASS") != nil {
 		baseFlags.User = defaults.Pass
+		baseFlags.UserIsGenerated = false
+		baseFlags.PassIsGenerated = false
 	}
 
 	if err != nil {
