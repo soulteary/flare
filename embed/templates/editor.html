@@ -98,8 +98,9 @@
         const instanceCategories = new Handsontable(document.getElementById('container-category'), {
             language: 'zh-CN',
             data: categories,
-            colHeaders: ['书签名称'],
+            colHeaders: ['分类名称'],
             rowHeaders: true,
+            manualRowMove: true,
             contextMenu: ["row_above", "row_below", "---------", "undo", "redo", "---------", "cut", "copy"],
             columns: [
                 { data: 'Name' },
@@ -174,6 +175,7 @@
             data: Array.from(bookmarks),
             colHeaders: ['书签名称', '书签地址', /*'私密'*/, '类型', '图标', '描述'],
             rowHeaders: true,
+            manualRowMove: true,
             contextMenu: ["row_above", "row_below", "---------", "undo", "redo", "---------", "cut", "copy"],
             columns: dataTableColumns,
             // hiddenColumns: true,
