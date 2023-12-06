@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,7 +23,7 @@ func RequestHandle(router *gin.Engine) {
 	// TODO: 剥离逻辑
 	// TODO：替换密钥为用户相关数据
 	store := cookie.NewStore([]byte("secret"))
-	router.Use(sessions.Sessions("flare", store))
+	router.Use(sessions.Sessions("flare_"+strconv.Itoa(FlareState.AppFlags.Port), store))
 
 	// 非离线模式注册路由
 	if !FlareState.AppFlags.DisableLoginMode {
