@@ -14,6 +14,12 @@ func TestJSONStringify(t *testing.T) {
 	if src != dest {
 		t.Fatal("JSON Stringify Error")
 	}
+
+	// mock incorrect data
+	errTest := jsonStringify(make(chan int))
+	if errTest != "{}" {
+		t.Fatal("JSON Stringify Error")
+	}
 }
 
 func TestMaskTextWithStars(t *testing.T) {

@@ -17,7 +17,10 @@ func jsonStringify(data interface{}) string {
 	buff := bytes.NewBuffer([]byte{})
 	encoder := json.NewEncoder(buff)
 	encoder.SetEscapeHTML(false)
-	encoder.Encode(data)
+	err := encoder.Encode(data)
+	if err != nil {
+		return "{}"
+	}
 	return strings.TrimSpace(buff.String())
 }
 
@@ -55,5 +58,4 @@ func Base64DecodeUrl(input string) ([]byte, error) {
 		return []byte{}, err
 	}
 	return base64.StdEncoding.DecodeString(unescaped)
-
 }
