@@ -15,18 +15,24 @@ func GenerateBookmarkTemplate(filter string) template.HTML {
 	bookmarksData := FlareData.LoadNormalBookmarks()
 	tpl := ""
 
+	var parseBookmarks []FlareModel.Bookmark
+	for _, bookmark := range bookmarksData.Items {
+		bookmark.URL = FlareState.ParseDynamicUrl(bookmark.URL)
+		parseBookmarks = append(parseBookmarks, bookmark)
+	}
+
 	var bookmarks []FlareModel.Bookmark
 
 	if filter != "" {
 		filterLower := strings.ToLower(filter)
 
-		for _, bookmark := range bookmarksData.Items {
+		for _, bookmark := range parseBookmarks {
 			if strings.Contains(strings.ToLower(bookmark.Name), filterLower) || strings.Contains(strings.ToLower(bookmark.URL), filterLower) {
 				bookmarks = append(bookmarks, bookmark)
 			}
 		}
 	} else {
-		bookmarks = bookmarksData.Items
+		bookmarks = parseBookmarks
 	}
 
 	if len(bookmarksData.Categories) > 0 {

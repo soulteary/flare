@@ -226,6 +226,7 @@ func getGreeting(greeting string) string {
 
 func pageBookmark(c *gin.Context) {
 	options := FlareData.GetAllSettingsOptions()
+	FlareState.ParseRequestURL(c.Request)
 
 	c.HTML(
 		http.StatusOK,
@@ -257,6 +258,7 @@ func pageBookmark(c *gin.Context) {
 
 func pageApplication(c *gin.Context) {
 	options := FlareData.GetAllSettingsOptions()
+	FlareState.ParseRequestURL(c.Request)
 
 	c.HTML(
 		http.StatusOK,
@@ -287,6 +289,7 @@ func pageApplication(c *gin.Context) {
 
 func render(c *gin.Context, filter string) {
 	options := FlareData.GetAllSettingsOptions()
+	FlareState.ParseRequestURL(c.Request)
 
 	hasKeyword := false
 	searchKeyword := ""
