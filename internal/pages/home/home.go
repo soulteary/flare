@@ -113,7 +113,7 @@ func renderHelp(c *gin.Context) {
 			"ApplicationsURI": FlareState.RegularPages.Applications.Path,
 			"SettingsURI":     FlareState.RegularPages.Settings.Path,
 			"Applications":    GenerateHelpTemplate(),
-			"SearchKeyword":   template.HTML(""),
+			"SearchKeyword":   template.HTML(" "),
 			"HasKeyword":      false,
 
 			// SearchProvider          string // 默认的搜索引擎
@@ -292,7 +292,7 @@ func render(c *gin.Context, filter string) {
 	FlareState.ParseRequestURL(c.Request)
 
 	hasKeyword := false
-	searchKeyword := ""
+	searchKeyword := " "
 	if filter != "" {
 		searchKeyword = "搜索结果: " + filter
 		hasKeyword = true
