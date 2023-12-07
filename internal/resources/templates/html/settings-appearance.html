@@ -1,4 +1,4 @@
-{{ define "settings-appearance.html" }}<div class=setting-group-container><form method=post action="{{ .SettingPages.Appearance.Path }}"><h2>通用设置</h2><div class=form-group><label for=settings-title>自定义标题</label>
+{{ define "settings-appearance.html" }}<div class=setting-group-container><form method=POST action="{{ .SettingPages.Appearance.Path }}"><h2>通用设置</h2><div class=form-group><label for=settings-title>自定义标题</label>
 <input name=title id=settings-title class=option-input placeholder=站点标题 value={{.OptionTitle}}></div><div class=form-group><label for=settings-footer>自定义页脚</label>
 <textarea name=footer id=settings-footer class=option-input cols=30 rows=10 placeholder="输入你自己的文本或 HTML 片段">{{.OptionFooter}}</textarea><p class=help-text>如不希望展示页脚，可以将内容清空</div><div class=form-group><label for=settings-open-app-newtab>总是在新窗口打开应用</label>
 {{ if .OptionOpenAppNewTab }}

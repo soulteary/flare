@@ -1,4 +1,4 @@
-{{ define "settings-weather.html" }}<div class=setting-group-container><h2>设置天气</h2><form method=post action="{{ .SettingPages.Weather.Path }}"><div class=form-group><label for=show-weather-component>启用天气功能</label>
+{{ define "settings-weather.html" }}<div class=setting-group-container><h2>设置天气</h2><form method=POST action="{{ .SettingPages.Weather.Path }}"><div class=form-group><label for=show-weather-component>启用天气功能</label>
 {{ if .ShowWeather }}
 <select name=show id=show-weather-component><option value=1 selected>是<option value=0>否</select>
 {{ else }}
@@ -12,5 +12,5 @@
 {{ else }}
 <input name=location id=settings-location class=option-input placeholder=山西省太原市 value={{.Location}}><p class=help-text>如需使用天气功能，请选择“启用天气功能”。</p><input class=btn-submit type=submit value=保存修改>
 {{ end }}
-{{ end }}</div></form>{{ if .ShowWeatherModule }}<form method=post action="{{ .SettingPagesAPI.WeatherTest.Path }}"><div class=form-group><label for=settings-weather-tester>测试接口</label>
+{{ end }}</div></form>{{ if .ShowWeatherModule }}<form method=POST action="{{ .SettingPagesAPI.WeatherTest.Path }}"><div class=form-group><label for=settings-weather-tester>测试接口</label>
 <input name=location id=settings-weather-tester class=option-input placeholder=点击按钮，进行测试 value={{.TestResult}} readonly><p class=help-text>你可以点击按钮，对上面设置的地理位置进行获取天气测试</p><input class=btn-submit type=submit value=测试接口></div></form>{{ end }}</div>{{ end }}

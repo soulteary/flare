@@ -1,4 +1,5 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=google content="notranslate"><meta name=viewport content="width=device-width,initial-scale=1"><title>{{.OptionTitle}} - Settings</title>{{ if .DebugMode }}
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=google content="notranslate"><meta name=viewport content="width=device-width,initial-scale=1"><title>{{.OptionTitle}} - Settings</title>
+{{ if .DebugMode }}
 <link rel=stylesheet href=/assets/css/base.css><link rel=stylesheet href=/assets/css/settings/sidebar.css><link rel=stylesheet href=/assets/css/settings/layout.css><link rel=stylesheet href=/assets/css/settings/theme.css>{{ else }}<style>{{.PageInlineStyle}}</style>{{ end }}</head><body style={{.PageAppearance}}><div class=pageview id=page-settings><div class=container>{{ template "settings-header.html" . }}<div class="main-container clearfix">{{ template "settings-sidebar.html" . }}
 {{ if eq .PageName "Theme" }}
 {{ template "settings-theme.html" . }}

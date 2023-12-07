@@ -1,4 +1,4 @@
-{{ define "settings-search.html" }}<div class=setting-group-container><form method=post action="{{ .SettingPages.Search.Path }}"><h2>页面搜索</h2><div class=form-group><label for=show-search-component>展示搜索工具栏</label>
+{{ define "settings-search.html" }}<div class=setting-group-container><form method=POST action="{{ .SettingPages.Search.Path }}"><h2>页面搜索</h2><div class=form-group><label for=show-search-component>展示搜索工具栏</label>
 {{ if .ShowSearchComponent }}
 <select name=show-search-component id=show-search-component><option value=1 selected>是<option value=0>否</select>
 {{ else }}
