@@ -111,7 +111,7 @@ h2 a {
 }
 
 #page-home.pageview .container {
-  min-width: 375px;
+  min-width: 360px;
 }
 
 @media (max-width: 1200px) {
