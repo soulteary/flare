@@ -1,6 +1,6 @@
 package version
 
-// 用于构建时进行替换的变量
+// Will be automatically updated by CI at build time
 var (
 	Version   = "dev"
 	Commit    = "HEAD"
