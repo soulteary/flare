@@ -1,24 +1,27 @@
 package logger
 
 import (
+	"log/slog"
 	"os"
-
-	"github.com/sirupsen/logrus"
+	"strings"
 )
 
-var instance = logrus.New()
+var instance *slog.Logger
 
 func init() {
-	instance.Formatter = new(logrus.TextFormatter)
-	instance.Formatter.(*logrus.TextFormatter).DisableColors = false
-	instance.Formatter.(*logrus.TextFormatter).DisableTimestamp = false
-	instance.Formatter.(*logrus.TextFormatter).FullTimestamp = true
+	isDebug := strings.ToLower(strings.TrimSpace(os.Getenv("FLARE_DEBUG"))) == "on"
+	logLevel := slog.LevelInfo
+	if isDebug {
+		logLevel = slog.LevelDebug
+	}
 
-	// TODO Automatically adjust log output level based on environment startup configuration
-	instance.Level = logrus.TraceLevel
-	instance.Out = os.Stdout
+	opts := PrettyHandlerOptions{
+		SlogOpts: slog.HandlerOptions{Level: logLevel},
+	}
+	handler := NewPrettyHandler(os.Stdout, opts)
+	instance = slog.New(handler)
 }
 
-func GetLogger() *logrus.Logger {
+func GetLogger() *slog.Logger {
 	return instance
 }
