@@ -1,4 +1,4 @@
-package deprecated
+package FlareDeprecated
 
 import (
 	"net/http"

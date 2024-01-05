@@ -22,8 +22,8 @@ import (
 	FlareMDI "github.com/soulteary/flare/internal/resources/mdi"
 	FlareTemplates "github.com/soulteary/flare/internal/resources/templates"
 
-	FlareDeprecated "github.com/soulteary/flare/internal/deprecated"
 	FlareHealth "github.com/soulteary/flare/internal/health"
+	FlareDeprecated "github.com/soulteary/flare/internal/misc/deprecated"
 	FlareEditor "github.com/soulteary/flare/internal/pages/editor"
 	FlareGuide "github.com/soulteary/flare/internal/pages/guide"
 	FlareHome "github.com/soulteary/flare/internal/pages/home"
