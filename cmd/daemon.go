@@ -45,11 +45,9 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	router := gin.Default()
 	log := logger.GetLogger()
-
-	// router.Use(logger.GetLogger(), gin.Recovery())
-	// TODO
+	router := gin.New()
+	router.Use(logger.New(log))
 	router.Use(gin.Recovery())
 
 	if !AppFlags.DisableLoginMode {
