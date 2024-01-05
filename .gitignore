@@ -22,7 +22,7 @@ internal/assets/favicon.ico
 internal/assets/css
 internal/templates/html/*
 internal/mdi/mdi-cheat-sheets
-internal/guide/guide-assets
+internal/pages/guide/guide-assets
 internal/editor/editor-assets
 internal/weather/icons
 .DS_Store

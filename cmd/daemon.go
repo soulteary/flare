@@ -24,8 +24,8 @@ import (
 
 	FlareDeprecated "github.com/soulteary/flare/internal/deprecated"
 	FlareEditor "github.com/soulteary/flare/internal/editor"
-	FlareGuide "github.com/soulteary/flare/internal/guide"
 	FlareHealth "github.com/soulteary/flare/internal/health"
+	FlareGuide "github.com/soulteary/flare/internal/pages/guide"
 	FlareHome "github.com/soulteary/flare/internal/pages/home"
 	FlareRedir "github.com/soulteary/flare/internal/redir"
 	FlareSettings "github.com/soulteary/flare/internal/settings"
