@@ -1,4 +1,4 @@
-package cmd
+package FlareCMD
 
 const (
 	DEFAULT_PORT                     = 5005

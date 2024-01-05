@@ -1,4 +1,4 @@
-package cmd
+package FlareCMD
 
 import (
 	"log/slog"

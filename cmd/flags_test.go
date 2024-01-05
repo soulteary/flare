@@ -1,4 +1,4 @@
-package cmd_test
+package FlareCMD_test
 
 import (
 	"bytes"
