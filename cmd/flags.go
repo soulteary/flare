@@ -13,7 +13,7 @@ import (
 	flags "github.com/spf13/pflag"
 	"gopkg.in/ini.v1"
 
-	FlareData "github.com/soulteary/flare/internal/data"
+	FlareData "github.com/soulteary/flare/config/data"
 	FlareLogger "github.com/soulteary/flare/internal/logger"
 	FlareModel "github.com/soulteary/flare/internal/model"
 )

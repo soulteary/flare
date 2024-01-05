@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	FlareData "github.com/soulteary/flare/config/data"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
-	FlareData "github.com/soulteary/flare/internal/data"
 	FlareModel "github.com/soulteary/flare/internal/model"
 	FlareState "github.com/soulteary/flare/internal/state"
 )

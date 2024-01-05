@@ -5,7 +5,7 @@ package state
 import (
 	"html/template"
 
-	FlareData "github.com/soulteary/flare/internal/data"
+	FlareData "github.com/soulteary/flare/config/data"
 	FlareModel "github.com/soulteary/flare/internal/model"
 )
 

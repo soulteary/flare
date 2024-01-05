@@ -1,4 +1,4 @@
-package data
+package FlareData
 
 import (
 	FlareModel "github.com/soulteary/flare/internal/model"

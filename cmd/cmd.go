@@ -3,7 +3,7 @@ package cmd
 import (
 	"log/slog"
 
-	FlareData "github.com/soulteary/flare/internal/data"
+	FlareData "github.com/soulteary/flare/config/data"
 	FlareLogger "github.com/soulteary/flare/internal/logger"
 	FlareState "github.com/soulteary/flare/internal/state"
 )

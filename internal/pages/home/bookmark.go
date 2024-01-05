@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"strings"
 
-	FlareData "github.com/soulteary/flare/internal/data"
+	FlareData "github.com/soulteary/flare/config/data"
 	FlareModel "github.com/soulteary/flare/internal/model"
 	FlareMDI "github.com/soulteary/flare/internal/resources/mdi"
 	FlareState "github.com/soulteary/flare/internal/state"
