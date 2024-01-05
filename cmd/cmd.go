@@ -4,8 +4,8 @@ import (
 	"log/slog"
 
 	FlareData "github.com/soulteary/flare/config/data"
+	FlareState "github.com/soulteary/flare/config/state"
 	FlareLogger "github.com/soulteary/flare/internal/logger"
-	FlareState "github.com/soulteary/flare/internal/state"
 )
 
 func Parse() {

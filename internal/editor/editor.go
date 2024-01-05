@@ -10,8 +10,8 @@ import (
 	"github.com/soulteary/memfs"
 
 	FlareData "github.com/soulteary/flare/config/data"
+	FlareState "github.com/soulteary/flare/config/state"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
-	FlareState "github.com/soulteary/flare/internal/state"
 )
 
 var MemFs *memfs.FS

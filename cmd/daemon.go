@@ -13,9 +13,9 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 
+	FlareState "github.com/soulteary/flare/config/state"
 	FlareLogger "github.com/soulteary/flare/internal/logger"
 	FlareModel "github.com/soulteary/flare/internal/model"
-	FlareState "github.com/soulteary/flare/internal/state"
 
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 	FlareAssets "github.com/soulteary/flare/internal/resources/assets"

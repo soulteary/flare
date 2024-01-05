@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	FlareState "github.com/soulteary/flare/internal/state"
+	FlareState "github.com/soulteary/flare/config/state"
 )
 
 //go:embed html

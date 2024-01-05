@@ -1,4 +1,4 @@
-package state
+package FlareState
 
 // TODO：挪到合适地方，拆分 assets
 

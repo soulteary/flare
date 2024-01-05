@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	FlareData "github.com/soulteary/flare/config/data"
-	FlareState "github.com/soulteary/flare/internal/state"
+	FlareState "github.com/soulteary/flare/config/state"
 )
 
 // TODO 错误提示统一处理

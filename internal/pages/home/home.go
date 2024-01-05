@@ -11,10 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	FlareData "github.com/soulteary/flare/config/data"
+	FlareState "github.com/soulteary/flare/config/state"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 	FlareModel "github.com/soulteary/flare/internal/model"
 	FlareWeather "github.com/soulteary/flare/internal/settings/weather"
-	FlareState "github.com/soulteary/flare/internal/state"
 	weather "github.com/soulteary/funny-china-weather"
 )
 

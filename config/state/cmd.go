@@ -1,4 +1,4 @@
-package state
+package FlareState
 
 import (
 	FlareModel "github.com/soulteary/flare/internal/model"

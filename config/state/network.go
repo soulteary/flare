@@ -1,4 +1,4 @@
-package state
+package FlareState
 
 import (
 	"encoding/json"
