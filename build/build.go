@@ -12,7 +12,7 @@ func main() {
 	builder.TaskForSimpleIcons("internal/resources/simpleicon")
 	builder.TaskForGuideAssets("embed/assets/vendor/guide-assets", "internal/guide/guide-assets")
 	builder.TaskForEditorAssets("embed/assets/vendor/editor-assets", "internal/editor/editor-assets")
-	builder.TaskForStyles("internal/state/style.go")
+	builder.TaskForStyles("config/state/style.go")
 	builder.TaskForFavicon("embed/assets/favicon.ico", "internal/resources/assets/favicon.ico")
 	builder.TaskForTemplates("embed/templates", "internal/resources/templates/html")
 }
