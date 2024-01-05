@@ -4,11 +4,12 @@ import (
 	"log/slog"
 
 	FlareData "github.com/soulteary/flare/config/data"
+	FlareModel "github.com/soulteary/flare/config/model"
 	FlareState "github.com/soulteary/flare/config/state"
 	FlareLogger "github.com/soulteary/flare/internal/logger"
 )
 
-func Parse() {
+func Parse() FlareModel.Flags {
 	envs := ParseEnvFile(ParseEnvVars())
 	flags := parseCLI(envs)
 
@@ -36,5 +37,5 @@ func Parse() {
 	}
 
 	FlareState.AppFlags = flags
-	startDaemon(&flags)
+	return flags
 }

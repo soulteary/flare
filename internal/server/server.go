@@ -1,4 +1,4 @@
-package cmd
+package FlareServer
 
 import (
 	"context"
@@ -36,7 +36,7 @@ import (
 	FlareWeather "github.com/soulteary/flare/internal/settings/weather"
 )
 
-func startDaemon(AppFlags *FlareModel.Flags) {
+func StartDaemon(AppFlags *FlareModel.Flags) {
 
 	if !AppFlags.DebugMode {
 		gin.SetMode(gin.ReleaseMode)
