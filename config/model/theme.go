@@ -1,4 +1,4 @@
-package model
+package FlareModel
 
 // Theme color Data Model
 type Palette struct {

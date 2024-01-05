@@ -1,7 +1,7 @@
 package FlareState
 
 import (
-	FlareModel "github.com/soulteary/flare/internal/model"
+	FlareModel "github.com/soulteary/flare/config/model"
 )
 
 var AppFlags FlareModel.Flags

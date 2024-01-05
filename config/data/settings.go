@@ -1,7 +1,7 @@
 package FlareData
 
 import (
-	FlareModel "github.com/soulteary/flare/internal/model"
+	FlareModel "github.com/soulteary/flare/config/model"
 )
 
 func GetThemeName() string {

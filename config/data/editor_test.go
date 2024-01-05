@@ -3,7 +3,7 @@ package FlareData
 import (
 	"testing"
 
-	FlareModel "github.com/soulteary/flare/internal/model"
+	FlareModel "github.com/soulteary/flare/config/model"
 )
 
 func TestGetBookmarksDataAsJSON(t *testing.T) {

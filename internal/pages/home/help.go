@@ -3,8 +3,8 @@ package home
 import (
 	"html/template"
 
+	FlareModel "github.com/soulteary/flare/config/model"
 	FlareState "github.com/soulteary/flare/config/state"
-	FlareModel "github.com/soulteary/flare/internal/model"
 	FlareMDI "github.com/soulteary/flare/internal/resources/mdi"
 )
 

@@ -1,4 +1,4 @@
-package model
+package FlareModel
 
 // Application Flags Data Model
 type Flags struct {

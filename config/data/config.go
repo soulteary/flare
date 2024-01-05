@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	FlareModel "github.com/soulteary/flare/internal/model"
-
 	"gopkg.in/yaml.v2"
+
+	FlareModel "github.com/soulteary/flare/config/model"
 )
 
 func initAppConfig(filePath string) (result FlareModel.Application, err error) {

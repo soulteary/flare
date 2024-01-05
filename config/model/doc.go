@@ -3,4 +3,4 @@ Flare
 
 Define all program data models
 */
-package model
+package FlareModel

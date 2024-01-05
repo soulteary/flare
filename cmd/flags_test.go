@@ -8,7 +8,7 @@ import (
 
 	env "github.com/caarlos0/env/v6"
 	FlareCMD "github.com/soulteary/flare/cmd"
-	FlareModel "github.com/soulteary/flare/internal/model"
+	FlareModel "github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/version"
 	flags "github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"

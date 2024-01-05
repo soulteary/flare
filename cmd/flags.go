@@ -14,8 +14,8 @@ import (
 	"gopkg.in/ini.v1"
 
 	FlareData "github.com/soulteary/flare/config/data"
+	FlareModel "github.com/soulteary/flare/config/model"
 	FlareLogger "github.com/soulteary/flare/internal/logger"
-	FlareModel "github.com/soulteary/flare/internal/model"
 )
 
 func ParseEnvVars() (stor FlareModel.Flags) {

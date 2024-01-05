@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	FlareModel "github.com/soulteary/flare/internal/model"
+	FlareModel "github.com/soulteary/flare/config/model"
 )
 
 func TestGetAndSetThemeName(t *testing.T) {

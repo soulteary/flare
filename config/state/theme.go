@@ -6,7 +6,7 @@ import (
 	"html/template"
 
 	FlareData "github.com/soulteary/flare/config/data"
-	FlareModel "github.com/soulteary/flare/internal/model"
+	FlareModel "github.com/soulteary/flare/config/model"
 )
 
 // 程序运行默认使用内置的主题配色
