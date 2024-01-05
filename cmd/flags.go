@@ -18,33 +18,20 @@ import (
 	FlareModel "github.com/soulteary/flare/internal/model"
 )
 
-const (
-	_DEFAULT_PORT                     = 5005
-	_DEFAULT_ENABLE_GUIDE             = true
-	_DEFAULT_ENABLE_DEPRECATED_NOTICE = true
-	_DEFAULT_ENABLE_MINI_REQUEST      = false
-	_DEFAULT_DISABLE_LOGIN            = true
-	_DEFAULT_ENABLE_OFFLINE           = false
-	_DEFAULT_USER_NAME                = "flare"
-	_DEFAULT_ENABLE_EDITOR            = true
-	_DEFAULT_VISIBILITY               = "DEFAULT"
-	_DEFAULT_DISABLE_CSP              = false
-)
-
-func parseEnvVars() (stor FlareModel.Flags) {
+func ParseEnvVars() (stor FlareModel.Flags) {
 	log := FlareLogger.GetLogger()
 
 	// 1. init default values
 	defaults := FlareModel.Envs{
-		Port:                   _DEFAULT_PORT,
-		EnableGuide:            _DEFAULT_ENABLE_GUIDE,
-		EnableDeprecatedNotice: _DEFAULT_ENABLE_DEPRECATED_NOTICE,
-		EnableMinimumRequest:   _DEFAULT_ENABLE_MINI_REQUEST,
-		DisableLoginMode:       _DEFAULT_DISABLE_LOGIN,
-		EnableOfflineMode:      _DEFAULT_ENABLE_OFFLINE,
-		EnableEditor:           _DEFAULT_ENABLE_EDITOR,
-		Visibility:             _DEFAULT_VISIBILITY,
-		DisableCSP:             _DEFAULT_DISABLE_CSP,
+		Port:                   DEFAULT_PORT,
+		EnableGuide:            DEFAULT_ENABLE_GUIDE,
+		EnableDeprecatedNotice: DEFAULT_ENABLE_DEPRECATED_NOTICE,
+		EnableMinimumRequest:   DEFAULT_ENABLE_MINI_REQUEST,
+		DisableLoginMode:       DEFAULT_DISABLE_LOGIN,
+		EnableOfflineMode:      DEFAULT_ENABLE_OFFLINE,
+		EnableEditor:           DEFAULT_ENABLE_EDITOR,
+		Visibility:             DEFAULT_VISIBILITY,
+		DisableCSP:             DEFAULT_DISABLE_CSP,
 	}
 
 	// 2. overwrite with user input
@@ -54,12 +41,12 @@ func parseEnvVars() (stor FlareModel.Flags) {
 	}
 
 	// 3. update username and password
-	initAccountFromEnvVars(
+	InitAccountFromEnvVars(
 		defaults.User,
 		defaults.Pass,
 		&stor.User,
 		&stor.Pass,
-		_DEFAULT_USER_NAME,
+		DEFAULT_USER_NAME,
 		&stor.UserIsGenerated,
 		&stor.PassIsGenerated,
 		&stor.DisableLoginMode,
@@ -79,7 +66,7 @@ func parseEnvVars() (stor FlareModel.Flags) {
 	return stor
 }
 
-func initAccountFromEnvVars(
+func InitAccountFromEnvVars(
 	username string, password string, targetUser *string, targetPass *string, defaultName string,
 	isUserGenerate *bool, isPassGenerate *bool, disableLogin *bool) {
 
@@ -100,7 +87,7 @@ func initAccountFromEnvVars(
 	}
 }
 
-func parseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
+func ParseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 	log := FlareLogger.GetLogger()
 
 	if _, err := os.Stat(".env"); os.IsNotExist(err) {
@@ -116,15 +103,15 @@ func parseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 	}
 
 	defaults := FlareModel.EnvFile{
-		Port:                   _DEFAULT_PORT,
-		EnableGuide:            _DEFAULT_ENABLE_GUIDE,
-		EnableDeprecatedNotice: _DEFAULT_ENABLE_DEPRECATED_NOTICE,
-		EnableMinimumRequest:   _DEFAULT_ENABLE_MINI_REQUEST,
-		DisableLoginMode:       _DEFAULT_DISABLE_LOGIN,
-		EnableOfflineMode:      _DEFAULT_ENABLE_OFFLINE,
-		EnableEditor:           _DEFAULT_ENABLE_EDITOR,
-		Visibility:             _DEFAULT_VISIBILITY,
-		DisableCSP:             _DEFAULT_DISABLE_CSP,
+		Port:                   DEFAULT_PORT,
+		EnableGuide:            DEFAULT_ENABLE_GUIDE,
+		EnableDeprecatedNotice: DEFAULT_ENABLE_DEPRECATED_NOTICE,
+		EnableMinimumRequest:   DEFAULT_ENABLE_MINI_REQUEST,
+		DisableLoginMode:       DEFAULT_DISABLE_LOGIN,
+		EnableOfflineMode:      DEFAULT_ENABLE_OFFLINE,
+		EnableEditor:           DEFAULT_ENABLE_EDITOR,
+		Visibility:             DEFAULT_VISIBILITY,
+		DisableCSP:             DEFAULT_DISABLE_CSP,
 	}
 
 	err = envs.MapTo(&defaults)
@@ -155,37 +142,6 @@ func parseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 	return baseFlags
 }
 
-const (
-	_KEY_PORT       = "port"
-	_KEY_PORT_SHORT = "p"
-
-	_KEY_MINI_REQUEST       = "mini_request"
-	_KEY_MINI_REQUEST_SHORT = "m"
-	_KEY_MINI_REQUEST_OLD   = "mr"
-
-	_KEY_DISABLE_LOGIN       = "disable_login"
-	_KEY_DISABLE_LOGIN_SHORT = "l"
-	_KEY_DISABLE_LOGIN_OLD   = "nologin"
-
-	_KEY_ENABLE_OFFLINE       = "offline"
-	_KEY_ENABLE_OFFLINE_SHORT = "o"
-
-	_KEY_ENABLE_GUIDE       = "guide"
-	_KEY_ENABLE_GUIDE_SHORT = "g"
-
-	_KEY_VISIBILITY       = "visibility"
-	_KEY_VISIBILITY_SHORT = "s"
-
-	_KEY_ENABLE_DEPRECATED_NOTICE       = "enable_notice"
-	_KEY_ENABLE_DEPRECATED_NOTICE_SHORT = "n"
-
-	_KEY_ENABLE_EDITOR       = "enable_editor"
-	_KEY_ENABLE_EDITOR_SHORT = "e"
-
-	_KEY_DISABLE_CSP       = "disable_csp"
-	_KEY_DISABLE_CSP_SHORT = "c"
-)
-
 func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 
 	var cliFlags = new(FlareModel.Flags)
@@ -193,37 +149,37 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 	options.SortFlags = false
 
 	// port
-	options.IntVarP(&cliFlags.Port, _KEY_PORT, _KEY_PORT_SHORT, _DEFAULT_PORT, "指定监听端口")
+	options.IntVarP(&cliFlags.Port, _KEY_PORT, _KEY_PORT_SHORT, DEFAULT_PORT, "指定监听端口")
 	// guide
-	options.BoolVarP(&cliFlags.EnableGuide, _KEY_ENABLE_GUIDE, _KEY_ENABLE_GUIDE_SHORT, _DEFAULT_ENABLE_GUIDE, "启用应用向导")
+	options.BoolVarP(&cliFlags.EnableGuide, _KEY_ENABLE_GUIDE, _KEY_ENABLE_GUIDE_SHORT, DEFAULT_ENABLE_GUIDE, "启用应用向导")
 	// visibility
-	options.StringVarP(&cliFlags.Visibility, _KEY_VISIBILITY, _KEY_VISIBILITY_SHORT, _DEFAULT_VISIBILITY, "调整网站整体可见性")
+	options.StringVarP(&cliFlags.Visibility, _KEY_VISIBILITY, _KEY_VISIBILITY_SHORT, DEFAULT_VISIBILITY, "调整网站整体可见性")
 	// mini_request
-	options.BoolVarP(&cliFlags.EnableMinimumRequest, _KEY_MINI_REQUEST, _KEY_MINI_REQUEST_SHORT, _DEFAULT_ENABLE_MINI_REQUEST, "使用请求最小化模式")
-	options.BoolVar(&cliFlags.EnableMinimumRequest, _KEY_MINI_REQUEST_OLD, _DEFAULT_ENABLE_MINI_REQUEST, "使用请求最小化模式")
+	options.BoolVarP(&cliFlags.EnableMinimumRequest, _KEY_MINI_REQUEST, _KEY_MINI_REQUEST_SHORT, DEFAULT_ENABLE_MINI_REQUEST, "使用请求最小化模式")
+	options.BoolVar(&cliFlags.EnableMinimumRequest, _KEY_MINI_REQUEST_OLD, DEFAULT_ENABLE_MINI_REQUEST, "使用请求最小化模式")
 	_ = options.MarkDeprecated(_KEY_MINI_REQUEST_OLD, "please use --"+_KEY_MINI_REQUEST+" instead")
 	// offline
-	options.BoolVarP(&cliFlags.EnableOfflineMode, _KEY_ENABLE_OFFLINE, _KEY_ENABLE_OFFLINE_SHORT, _DEFAULT_ENABLE_OFFLINE, "启用离线模式")
+	options.BoolVarP(&cliFlags.EnableOfflineMode, _KEY_ENABLE_OFFLINE, _KEY_ENABLE_OFFLINE_SHORT, DEFAULT_ENABLE_OFFLINE, "启用离线模式")
 	// disable_login
-	options.BoolVarP(&cliFlags.DisableLoginMode, _KEY_DISABLE_LOGIN, _KEY_DISABLE_LOGIN_SHORT, _DEFAULT_DISABLE_LOGIN, "禁用账号登陆")
-	options.BoolVar(&cliFlags.DisableLoginMode, _KEY_DISABLE_LOGIN_OLD, _DEFAULT_DISABLE_LOGIN, "禁用账号登陆")
+	options.BoolVarP(&cliFlags.DisableLoginMode, _KEY_DISABLE_LOGIN, _KEY_DISABLE_LOGIN_SHORT, DEFAULT_DISABLE_LOGIN, "禁用账号登陆")
+	options.BoolVar(&cliFlags.DisableLoginMode, _KEY_DISABLE_LOGIN_OLD, DEFAULT_DISABLE_LOGIN, "禁用账号登陆")
 	_ = options.MarkDeprecated(_KEY_DISABLE_LOGIN_OLD, "please use --"+_KEY_DISABLE_LOGIN+" instead")
 	// 启用废弃日志警告
-	options.BoolVarP(&cliFlags.EnableDeprecatedNotice, _KEY_ENABLE_DEPRECATED_NOTICE, _KEY_ENABLE_DEPRECATED_NOTICE_SHORT, _DEFAULT_ENABLE_DEPRECATED_NOTICE, "启用废弃日志警告")
-	options.BoolVarP(&cliFlags.EnableEditor, _KEY_ENABLE_EDITOR, _KEY_ENABLE_EDITOR_SHORT, _DEFAULT_ENABLE_EDITOR, "启用编辑器")
+	options.BoolVarP(&cliFlags.EnableDeprecatedNotice, _KEY_ENABLE_DEPRECATED_NOTICE, _KEY_ENABLE_DEPRECATED_NOTICE_SHORT, DEFAULT_ENABLE_DEPRECATED_NOTICE, "启用废弃日志警告")
+	options.BoolVarP(&cliFlags.EnableEditor, _KEY_ENABLE_EDITOR, _KEY_ENABLE_EDITOR_SHORT, DEFAULT_ENABLE_EDITOR, "启用编辑器")
 	// 禁用 CSP
-	options.BoolVarP(&cliFlags.DisableCSP, _KEY_DISABLE_CSP, _KEY_DISABLE_CSP_SHORT, _DEFAULT_DISABLE_CSP, "禁用CSP")
+	options.BoolVarP(&cliFlags.DisableCSP, _KEY_DISABLE_CSP, _KEY_DISABLE_CSP_SHORT, DEFAULT_DISABLE_CSP, "禁用CSP")
 	// 其他
 	options.BoolVarP(&cliFlags.ShowVersion, "version", "v", false, "显示应用版本号")
 	options.BoolVarP(&cliFlags.ShowHelp, "help", "h", false, "显示帮助")
 
 	_ = options.Parse(os.Args)
 
-	exit := excuteCLI(cliFlags, options)
+	exit := ExcuteCLI(cliFlags, options)
 	if exit {
 		os.Exit(0)
 	}
-	getVersion(true)
+	GetVersion(true)
 
 	// 用于判断参数是否存在
 	keys := make(map[string]bool)
@@ -255,9 +211,9 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 	if keys[_KEY_VISIBILITY] || keys[_KEY_VISIBILITY_SHORT] {
 		baseFlags.Visibility = cliFlags.Visibility
 		// 判断是否为白名单中的词，以及强制转换内容为大写
-		if strings.ToUpper(cliFlags.Visibility) != _DEFAULT_VISIBILITY &&
+		if strings.ToUpper(cliFlags.Visibility) != DEFAULT_VISIBILITY &&
 			strings.ToUpper(cliFlags.Visibility) != "PRIVATE" {
-			baseFlags.Visibility = _DEFAULT_VISIBILITY
+			baseFlags.Visibility = DEFAULT_VISIBILITY
 		} else {
 			baseFlags.Visibility = strings.ToUpper(cliFlags.Visibility)
 		}
@@ -293,8 +249,8 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 	return baseFlags
 }
 
-func excuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
-	programVersion := getVersion(false)
+func ExcuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
+	programVersion := GetVersion(false)
 	if cliFlags.ShowHelp {
 		fmt.Println(programVersion)
 		fmt.Println()
@@ -309,7 +265,7 @@ func excuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
 	return false
 }
 
-func getVersion(echo bool) string {
+func GetVersion(echo bool) string {
 	programVersion := fmt.Sprintf("Flare v%s-%s %s/%s BuildDate=%s", version.Version, strings.ToUpper(version.Commit), runtime.GOOS, runtime.GOARCH, version.BuildDate)
 	if echo {
 		log := FlareLogger.GetLogger()

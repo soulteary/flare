@@ -9,7 +9,7 @@ import (
 )
 
 func Parse() {
-	envs := parseEnvFile(parseEnvVars())
+	envs := ParseEnvFile(ParseEnvVars())
 	flags := parseCLI(envs)
 
 	log := FlareLogger.GetLogger()
@@ -23,7 +23,7 @@ func Parse() {
 		log.Info("当前内容整体可见性为：", slog.String(_KEY_VISIBILITY, flags.Visibility))
 
 		if flags.UserIsGenerated {
-			log.Info("用户未指定 `FLARE_USER`，使用默认用户名", slog.String("username", _DEFAULT_USER_NAME))
+			log.Info("用户未指定 `FLARE_USER`，使用默认用户名", slog.String("username", DEFAULT_USER_NAME))
 		} else {
 			log.Info("应用用户设置为", slog.String("username", flags.User))
 		}
