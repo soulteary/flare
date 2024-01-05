@@ -24,10 +24,10 @@ import (
 
 	FlareDeprecated "github.com/soulteary/flare/internal/misc/deprecated"
 	FlareHealth "github.com/soulteary/flare/internal/misc/health"
+	FlareRedir "github.com/soulteary/flare/internal/misc/redir"
 	FlareEditor "github.com/soulteary/flare/internal/pages/editor"
 	FlareGuide "github.com/soulteary/flare/internal/pages/guide"
 	FlareHome "github.com/soulteary/flare/internal/pages/home"
-	FlareRedir "github.com/soulteary/flare/internal/redir"
 	FlareSettings "github.com/soulteary/flare/internal/settings"
 	FlareAppearance "github.com/soulteary/flare/internal/settings/appearance"
 	FlareOthers "github.com/soulteary/flare/internal/settings/others"

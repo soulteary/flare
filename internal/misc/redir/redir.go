@@ -1,4 +1,4 @@
-package redir
+package FlareRedir
 
 import (
 	"net/http"
