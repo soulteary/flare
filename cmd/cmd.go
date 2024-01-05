@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"log/slog"
+
 	"github.com/soulteary/flare/pkg/logger"
 
 	FlareData "github.com/soulteary/flare/internal/data"
@@ -8,32 +10,29 @@ import (
 )
 
 func Parse() {
-
 	envs := parseEnvFile(parseEnvVars())
 	flags := parseCLI(envs)
 
 	log := logger.GetLogger()
-	log.Println()
-	log.Println("程序服务端口", flags.Port)
-	log.Println("页面请求合并", flags.EnableMinimumRequest)
-	log.Println("启用离线模式", flags.EnableOfflineMode)
+	log.Info("程序服务端口", slog.Int(_KEY_PORT, flags.Port))
+	log.Info("页面请求合并", slog.Bool(_KEY_MINI_REQUEST, flags.EnableMinimumRequest))
+	log.Info("启用离线模式", slog.Bool(_KEY_ENABLE_OFFLINE, flags.EnableOfflineMode))
 	if flags.DisableLoginMode {
-		log.Println("已禁用登陆模式，用户可直接调整应用设置。")
+		log.Info("已禁用登陆模式，用户可直接调整应用设置。")
 	} else {
-		log.Println("启用登陆模式，调整应用设置需要先进行登陆。")
-		log.Println("当前内容整体可见性为：", flags.Visibility)
+		log.Info("启用登陆模式，调整应用设置需要先进行登陆。")
+		log.Info("当前内容整体可见性为：", slog.String(_KEY_VISIBILITY, flags.Visibility))
 
 		if flags.UserIsGenerated {
-			log.Println("用户未指定 `FLARE_USER`，使用默认用户名", _DEFAULT_USER_NAME)
+			log.Info("用户未指定 `FLARE_USER`，使用默认用户名", slog.String("username", _DEFAULT_USER_NAME))
 		} else {
-			log.Println("应用用户设置为", flags.User)
-
+			log.Info("应用用户设置为", slog.String("username", flags.User))
 		}
 
 		if flags.PassIsGenerated {
-			log.Println("用户未指定 `FLARE_PASS`，自动生成应用密码", flags.Pass)
+			log.Info("用户未指定 `FLARE_PASS`，自动生成应用密码", slog.String("password", flags.Pass))
 		} else {
-			log.Println("应用登陆密码已设置为", FlareData.MaskTextWithStars(flags.Pass))
+			log.Info("应用登陆密码已设置为", slog.String("password", FlareData.MaskTextWithStars(flags.Pass)))
 		}
 	}
 

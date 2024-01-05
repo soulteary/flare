@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"regexp"
 	"runtime"
@@ -47,7 +48,7 @@ func parseEnvVars() (stor FlareModel.Flags) {
 
 	// 2. overwrite with user input
 	if err := env.Parse(&defaults); err != nil {
-		log.Errorln(fmt.Sprintf("%+v\n", err))
+		log.Error(fmt.Sprintf("%+v\n", err))
 		return
 	}
 
@@ -99,15 +100,17 @@ func initAccountFromEnvVars(
 }
 
 func parseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
+	log := logger.GetLogger()
 
 	if _, err := os.Stat(".env"); os.IsNotExist(err) {
-		fmt.Println(".env file does not exist")
+		log.Debug("默认的 .env 文件不存在，跳过解析。")
 		return baseFlags
 	}
 
 	envs, err := ini.Load(".env")
 	if err != nil {
-		fmt.Println("Parse .env file error", envs)
+		log.Error("解析 .env 文件出错，请检查文件格式或程序是否具备文件读取权限。", slog.Any("error", err))
+		os.Exit(1)
 		return baseFlags
 	}
 
@@ -132,7 +135,8 @@ func parseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 	}
 
 	if err != nil {
-		fmt.Println("Parse .env file error", err)
+		log.Error("解析 .env 文件出错，请检查文件内容是否正确。", slog.Any("error", err))
+		os.Exit(1)
 	} else {
 		baseFlags.Port = defaults.Port
 		baseFlags.EnableGuide = defaults.EnableGuide
@@ -150,42 +154,42 @@ func parseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 	return baseFlags
 }
 
+const (
+	_KEY_PORT       = "port"
+	_KEY_PORT_SHORT = "p"
+
+	_KEY_MINI_REQUEST       = "mini_request"
+	_KEY_MINI_REQUEST_SHORT = "m"
+	_KEY_MINI_REQUEST_OLD   = "mr"
+
+	_KEY_DISABLE_LOGIN       = "disable_login"
+	_KEY_DISABLE_LOGIN_SHORT = "l"
+	_KEY_DISABLE_LOGIN_OLD   = "nologin"
+
+	_KEY_ENABLE_OFFLINE       = "offline"
+	_KEY_ENABLE_OFFLINE_SHORT = "o"
+
+	_KEY_ENABLE_GUIDE       = "guide"
+	_KEY_ENABLE_GUIDE_SHORT = "g"
+
+	_KEY_VISIBILITY       = "visibility"
+	_KEY_VISIBILITY_SHORT = "s"
+
+	_KEY_ENABLE_DEPRECATED_NOTICE       = "enable_notice"
+	_KEY_ENABLE_DEPRECATED_NOTICE_SHORT = "n"
+
+	_KEY_ENABLE_EDITOR       = "enable_editor"
+	_KEY_ENABLE_EDITOR_SHORT = "e"
+
+	_KEY_DISABLE_CSP       = "disable_csp"
+	_KEY_DISABLE_CSP_SHORT = "c"
+)
+
 func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 
 	var cliFlags = new(FlareModel.Flags)
 	options := flags.NewFlagSet("appFlags", flags.ContinueOnError)
 	options.SortFlags = false
-
-	const (
-		_KEY_PORT       = "port"
-		_KEY_PORT_SHORT = "p"
-
-		_KEY_MINI_REQUEST       = "mini_request"
-		_KEY_MINI_REQUEST_SHORT = "m"
-		_KEY_MINI_REQUEST_OLD   = "mr"
-
-		_KEY_DISABLE_LOGIN       = "disable_login"
-		_KEY_DISABLE_LOGIN_SHORT = "l"
-		_KEY_DISABLE_LOGIN_OLD   = "nologin"
-
-		_KEY_ENABLE_OFFLINE       = "offline"
-		_KEY_ENABLE_OFFLINE_SHORT = "o"
-
-		_KEY_ENABLE_GUIDE       = "guide"
-		_KEY_ENABLE_GUIDE_SHORT = "g"
-
-		_KEY_VISIBILITY       = "visibility"
-		_KEY_VISIBILITY_SHORT = "s"
-
-		_KEY_ENABLE_DEPRECATED_NOTICE       = "enable_notice"
-		_KEY_ENABLE_DEPRECATED_NOTICE_SHORT = "n"
-
-		_KEY_ENABLE_EDITOR       = "enable_editor"
-		_KEY_ENABLE_EDITOR_SHORT = "e"
-
-		_KEY_DISABLE_CSP       = "disable_csp"
-		_KEY_DISABLE_CSP_SHORT = "c"
-	)
 
 	// port
 	options.IntVarP(&cliFlags.Port, _KEY_PORT, _KEY_PORT_SHORT, _DEFAULT_PORT, "指定监听端口")
@@ -292,22 +296,29 @@ func excuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
 	programVersion := getVersion(false)
 	if cliFlags.ShowHelp {
 		fmt.Println(programVersion)
-		fmt.Println("支持命令:")
+		fmt.Println()
+		fmt.Println("支持命令：")
 		options.PrintDefaults()
 		return true
 	}
 	if cliFlags.ShowVersion {
-		fmt.Println(programVersion)
+		fmt.Println(version.Version)
 		return true
 	}
 	return false
 }
 
 func getVersion(echo bool) string {
-	programVersion := fmt.Sprintf("Flare v%s-%s %s/%s BuildDate=%s\n", version.Version, strings.ToUpper(version.Commit), runtime.GOOS, runtime.GOARCH, version.BuildDate)
+	programVersion := fmt.Sprintf("Flare v%s-%s %s/%s BuildDate=%s", version.Version, strings.ToUpper(version.Commit), runtime.GOOS, runtime.GOARCH, version.BuildDate)
 	if echo {
 		log := logger.GetLogger()
-		log.Println(programVersion)
+		log.Info("Flare - 🏂 Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.")
+		log.Info("程序信息：",
+			slog.String("version", version.Version),
+			slog.String("commit", strings.ToUpper(version.Commit)),
+			slog.String("GOGS/ARCH", fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)),
+			slog.String("date", version.BuildDate),
+		)
 	}
 	return programVersion
 }

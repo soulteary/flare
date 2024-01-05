@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
+	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
@@ -46,7 +48,9 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 	router := gin.Default()
 	log := logger.GetLogger()
 
-	router.Use(logger.Logger(log), gin.Recovery())
+	// router.Use(logger.GetLogger(), gin.Recovery())
+	// TODO
+	router.Use(gin.Recovery())
 
 	if !AppFlags.DisableLoginMode {
 		FlareAuth.RequestHandle(router)
@@ -76,12 +80,12 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 
 	if AppFlags.EnableEditor {
 		FlareEditor.RegisterRouting(router)
-		log.Println("在线编辑模块启用，可以访问 " + FlareState.RegularPages.Editor.Path + " 来进行数据编辑。")
+		log.Info("在线编辑模块启用，可以访问 " + FlareState.RegularPages.Editor.Path + " 来进行数据编辑。")
 	}
 
 	if AppFlags.EnableGuide {
 		FlareGuide.RegisterRouting(router)
-		log.Println("向导模块启用，可以访问 " + FlareState.RegularPages.Guide.Path + " 来获取程序使用帮助。")
+		log.Info("向导模块启用，可以访问 " + FlareState.RegularPages.Guide.Path + " 来获取程序使用帮助。")
 	}
 
 	srv := &http.Server{
@@ -93,21 +97,23 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("程序启动出错: %s\n", err)
+			log.Error("程序启动出错：", slog.Any("error", err))
+			os.Exit(1)
 		}
 	}()
-	log.Println("程序已启动完毕 🚀")
+	log.Info("程序已启动完毕 🚀")
 
 	<-ctx.Done()
 
 	stop()
-	log.Println("程序正在关闭中，如需立即结束请按 CTRL+C")
+	log.Info("程序正在关闭中，如需立即结束请按 CTRL+C")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("程序强制关闭: ", err)
+		log.Error("程序强制关闭：", slog.Any("error", err))
+		os.Exit(1)
 	}
 
-	log.Println("期待与你的再次相遇 ❤️")
+	log.Info("期待与你的再次相遇 ❤️")
 }
