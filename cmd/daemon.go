@@ -23,8 +23,8 @@ import (
 	FlareTemplates "github.com/soulteary/flare/internal/resources/templates"
 
 	FlareDeprecated "github.com/soulteary/flare/internal/deprecated"
-	FlareEditor "github.com/soulteary/flare/internal/editor"
 	FlareHealth "github.com/soulteary/flare/internal/health"
+	FlareEditor "github.com/soulteary/flare/internal/pages/editor"
 	FlareGuide "github.com/soulteary/flare/internal/pages/guide"
 	FlareHome "github.com/soulteary/flare/internal/pages/home"
 	FlareRedir "github.com/soulteary/flare/internal/redir"
