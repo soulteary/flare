@@ -38,7 +38,8 @@ func GenerateBookmarkTemplate(filter string) template.HTML {
 	if len(bookmarksData.Categories) > 0 {
 		defaultCategory := bookmarksData.Categories[0]
 		for _, category := range bookmarksData.Categories {
-			tpl += renderBookmarksWithCategories(&bookmarks, &category, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
+			categoryCopy := category
+			tpl += renderBookmarksWithCategories(&bookmarks, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
 		}
 	} else {
 		tpl += renderBookmarksWithoutCategories(&bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
