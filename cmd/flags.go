@@ -9,12 +9,13 @@ import (
 	"strings"
 
 	env "github.com/caarlos0/env/v6"
-	FlareData "github.com/soulteary/flare/internal/data"
-	FlareModel "github.com/soulteary/flare/internal/model"
 	"github.com/soulteary/flare/internal/version"
-	"github.com/soulteary/flare/pkg/logger"
 	flags "github.com/spf13/pflag"
 	"gopkg.in/ini.v1"
+
+	FlareData "github.com/soulteary/flare/internal/data"
+	FlareLogger "github.com/soulteary/flare/internal/logger"
+	FlareModel "github.com/soulteary/flare/internal/model"
 )
 
 const (
@@ -31,7 +32,7 @@ const (
 )
 
 func parseEnvVars() (stor FlareModel.Flags) {
-	log := logger.GetLogger()
+	log := FlareLogger.GetLogger()
 
 	// 1. init default values
 	defaults := FlareModel.Envs{
@@ -100,7 +101,7 @@ func initAccountFromEnvVars(
 }
 
 func parseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
-	log := logger.GetLogger()
+	log := FlareLogger.GetLogger()
 
 	if _, err := os.Stat(".env"); os.IsNotExist(err) {
 		log.Debug("默认的 .env 文件不存在，跳过解析。")
@@ -311,7 +312,7 @@ func excuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
 func getVersion(echo bool) string {
 	programVersion := fmt.Sprintf("Flare v%s-%s %s/%s BuildDate=%s", version.Version, strings.ToUpper(version.Commit), runtime.GOOS, runtime.GOARCH, version.BuildDate)
 	if echo {
-		log := logger.GetLogger()
+		log := FlareLogger.GetLogger()
 		log.Info("Flare - 🏂 Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.")
 		log.Info("程序信息：",
 			slog.String("version", version.Version),

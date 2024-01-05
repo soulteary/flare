@@ -12,8 +12,8 @@ import (
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	"github.com/soulteary/flare/pkg/logger"
 
+	FlareLogger "github.com/soulteary/flare/internal/logger"
 	FlareModel "github.com/soulteary/flare/internal/model"
 	FlareState "github.com/soulteary/flare/internal/state"
 
@@ -45,9 +45,9 @@ func startDaemon(AppFlags *FlareModel.Flags) {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	log := logger.GetLogger()
+	log := FlareLogger.GetLogger()
 	router := gin.New()
-	router.Use(logger.New(log))
+	router.Use(FlareLogger.New(log))
 	router.Use(gin.Recovery())
 
 	if !AppFlags.DisableLoginMode {

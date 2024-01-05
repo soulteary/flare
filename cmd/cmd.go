@@ -3,9 +3,8 @@ package cmd
 import (
 	"log/slog"
 
-	"github.com/soulteary/flare/pkg/logger"
-
 	FlareData "github.com/soulteary/flare/internal/data"
+	FlareLogger "github.com/soulteary/flare/internal/logger"
 	FlareState "github.com/soulteary/flare/internal/state"
 )
 
@@ -13,7 +12,7 @@ func Parse() {
 	envs := parseEnvFile(parseEnvVars())
 	flags := parseCLI(envs)
 
-	log := logger.GetLogger()
+	log := FlareLogger.GetLogger()
 	log.Info("程序服务端口", slog.Int(_KEY_PORT, flags.Port))
 	log.Info("页面请求合并", slog.Bool(_KEY_MINI_REQUEST, flags.EnableMinimumRequest))
 	log.Info("启用离线模式", slog.Bool(_KEY_ENABLE_OFFLINE, flags.EnableOfflineMode))
