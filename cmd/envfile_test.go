@@ -2,90 +2,139 @@ package FlareCMD_test
 
 import (
 	"os"
-	"path"
 	"testing"
 
 	FlareCMD "github.com/soulteary/flare/cmd"
 	FlareDefine "github.com/soulteary/flare/config/define"
+	FlareFn "github.com/soulteary/flare/internal/fn"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestCheckDotEnvFileExist(t *testing.T) {
+	envPath := FlareFn.GetWorkDirFile(".env")
+
+	// test .env not exist
+	os.Remove(envPath)
+	assert.Equal(t, FlareCMD.CheckDotEnvFileExist(envPath), false)
+
+	// test .env exist
+	f, _ := os.Create(envPath)
+	defer os.Remove(f.Name())
+	assert.Equal(t, FlareCMD.CheckDotEnvFileExist(envPath), true)
+}
 
 func TestParseEnvFile_NotExist(t *testing.T) {
 	os.Setenv("FLARE_DEBUG", "true")
 	defer os.Unsetenv("FLARE_DEBUG")
 
 	envParsed := FlareCMD.ParseEnvVars()
-
-	workDir, _ := os.Getwd()
-	envPath := path.Join(workDir, ".env")
+	envPath := FlareFn.GetWorkDirFile(".env")
 
 	// test .env not exist
 	os.Remove(envPath)
 	flags := FlareCMD.ParseEnvFile(envParsed)
-	defaultEnvs := FlareDefine.GetDefaultEnvVars()
-
-	assert.Equal(t, flags.Port, defaultEnvs.Port)
-	assert.Equal(t, flags.EnableGuide, defaultEnvs.EnableGuide)
-	assert.Equal(t, flags.EnableDeprecatedNotice, defaultEnvs.EnableDeprecatedNotice)
-	assert.Equal(t, flags.EnableMinimumRequest, defaultEnvs.EnableMinimumRequest)
-	assert.Equal(t, flags.DisableLoginMode, defaultEnvs.DisableLoginMode)
-	assert.Equal(t, flags.Visibility, defaultEnvs.Visibility)
-	assert.Equal(t, flags.EnableOfflineMode, defaultEnvs.EnableOfflineMode)
-	assert.Equal(t, flags.EnableEditor, defaultEnvs.EnableEditor)
+	assert.Equal(t, flags, envParsed)
 }
 
-// func TestParseEnvFile_Normal(t *testing.T) {
-// 	os.Setenv("FLARE_DEBUG", "true")
-// 	defer os.Unsetenv("FLARE_DEBUG")
+func TestParseEnvFile_NotParsed(t *testing.T) {
+	os.Setenv("FLARE_DEBUG", "true")
+	defer os.Unsetenv("FLARE_DEBUG")
 
-// 	envParsed := FlareCMD.ParseEnvVars()
+	envParsed := FlareCMD.ParseEnvVars()
+	envPath := FlareFn.GetWorkDirFile(".env")
 
-// 	workDir, _ := os.Getwd()
-// 	envPath := path.Join(workDir, ".env")
+	// test .env not exist
+	os.Mkdir(envPath, 0755)
+	defer os.Remove(envPath)
+	flags := FlareCMD.ParseEnvFile(envParsed)
+	assert.Equal(t, flags, envParsed)
+}
 
-// 	// test normal
-// 	os.Remove(envPath)
-// 	f, _ := os.Create(envPath)
-// 	defer os.Remove(f.Name())
-// 	f.Write([]byte("FLARE_PORT=5000\nFLARE_GUIDE=false\nFLARE_OFFLINE=true\nFLARE_VISIBILITY=private"))
-// 	flags := FlareCMD.ParseEnvFile(envParsed)
-// 	assert.Equal(t, flags.Port, 5000)
-// 	assert.Equal(t, flags.EnableGuide, false)
-// 	assert.Equal(t, flags.EnableOfflineMode, true)
-// 	assert.Equal(t, flags.Visibility, "private")
-// }
+func TestParseEnvFile_ParseErr(t *testing.T) {
+	os.Setenv("FLARE_DEBUG", "true")
+	defer os.Unsetenv("FLARE_DEBUG")
 
-// func TestParseEnvFile_EmptyConfig(t *testing.T) {
-// 	os.Setenv("FLARE_DEBUG", "true")
-// 	defer os.Unsetenv("FLARE_DEBUG")
+	envParsed := FlareCMD.ParseEnvVars()
+	envPath := FlareFn.GetWorkDirFile(".env")
+	envParsed.Port = 1234
+	envParsed.User = "123"
+	envParsed.UserIsGenerated = true
+	envParsed.Pass = "123"
+	envParsed.PassIsGenerated = true
 
-// 	envParsed := FlareCMD.ParseEnvVars()
-// 	defaultEnvs := FlareDefine.GetDefaultEnvVars()
+	// test .env auto correct
+	f, _ := os.Create(envPath)
+	defer os.Remove(envPath)
+	f.Write([]byte("FLARE_PORT=true\nFLARE_USER=\nFLARE_PASS=\nFLARE_GUIDE=1111"))
+	flags := FlareCMD.ParseEnvFile(envParsed)
+	assert.Equal(t, flags, envParsed)
+}
 
-// 	workDir, _ := os.Getwd()
-// 	envPath := path.Join(workDir, ".env")
+func TestParseEnvFile_ParseOverwrite(t *testing.T) {
+	os.Setenv("FLARE_DEBUG", "true")
+	defer os.Unsetenv("FLARE_DEBUG")
 
-// 	// test empty .env
-// 	os.Remove(envPath)
-// 	f, _ := os.Create(envPath)
-// 	defer os.Remove(f.Name())
-// 	f.Write([]byte(""))
-// 	flags := FlareCMD.ParseEnvFile(envParsed)
-// 	assert.Equal(t, flags.Port, defaultEnvs.Port)
-// 	assert.Equal(t, flags.EnableGuide, defaultEnvs.EnableGuide)
-// 	assert.Equal(t, flags.EnableDeprecatedNotice, defaultEnvs.EnableDeprecatedNotice)
-// 	assert.Equal(t, flags.EnableMinimumRequest, defaultEnvs.EnableMinimumRequest)
-// 	assert.Equal(t, flags.DisableLoginMode, defaultEnvs.DisableLoginMode)
-// 	assert.Equal(t, flags.Visibility, defaultEnvs.Visibility)
-// 	assert.Equal(t, flags.EnableOfflineMode, defaultEnvs.EnableOfflineMode)
-// 	assert.Equal(t, flags.EnableEditor, defaultEnvs.EnableEditor)
-// }
+	envParsed := FlareCMD.ParseEnvVars()
+	envPath := FlareFn.GetWorkDirFile(".env")
+	envParsed.Port = 1234
+	envParsed.User = "123"
+	envParsed.UserIsGenerated = true
+	envParsed.Pass = "123"
+	envParsed.PassIsGenerated = true
 
-// func TestParseEnvFile(t *testing.T) {
-// 	// test unmarshal error
-// 	// os.MkdirAll(".env", 0755)
-// 	// defer os.Remove(".env")
-// 	// flags := FlareCMD.ParseEnvFile(envParsed)
-// 	// defaultEnvs := FlareDefine.GetDefaultEnvVars()
-// 	// assert.Equal(t, flags.Port, defaultEnvs.Port)
-// }
+	// test .env auto correct
+	f, _ := os.Create(envPath)
+	defer os.Remove(envPath)
+	f.Write([]byte("FLARE_PORT=2345\nFLARE_USER=\nFLARE_PASS=\nFLARE_GUIDE=false"))
+	flags := FlareCMD.ParseEnvFile(envParsed)
+
+	envParsed.Port = 2345
+	envParsed.EnableGuide = false
+
+	assert.Equal(t, flags, envParsed)
+}
+
+func TestParseEnvFile_PortError(t *testing.T) {
+	os.Setenv("FLARE_DEBUG", "true")
+	defer os.Unsetenv("FLARE_DEBUG")
+
+	envParsed := FlareCMD.ParseEnvVars()
+	envPath := FlareFn.GetWorkDirFile(".env")
+	envParsed.Port = 1234
+	envParsed.User = "123"
+	envParsed.UserIsGenerated = true
+	envParsed.Pass = "123"
+	envParsed.PassIsGenerated = true
+
+	// test .env auto correct
+	f, _ := os.Create(envPath)
+	defer os.Remove(envPath)
+	f.Write([]byte("FLARE_PORT=9999999\nFLARE_USER=\nFLARE_PASS=\nFLARE_GUIDE=false"))
+	flags := FlareCMD.ParseEnvFile(envParsed)
+
+	envParsed.EnableGuide = false
+
+	assert.Equal(t, flags, envParsed)
+}
+
+func TestParseEnvFile_User(t *testing.T) {
+	os.Setenv("FLARE_DEBUG", "true")
+	defer os.Unsetenv("FLARE_DEBUG")
+
+	defaults := FlareDefine.GetDefaultEnvVars()
+
+	envParsed := FlareCMD.ParseEnvVars()
+	envPath := FlareFn.GetWorkDirFile(".env")
+	envParsed.User = defaults.User
+	envParsed.Pass = defaults.Pass
+	envParsed.UserIsGenerated = false
+	envParsed.PassIsGenerated = false
+
+	// test .env auto correct
+	f, _ := os.Create(envPath)
+	defer os.Remove(envPath)
+	f.Write([]byte("FLARE_PORT=5005\nFLARE_USER=flare\nFLARE_PASS=\n"))
+	flags := FlareCMD.ParseEnvFile(envParsed)
+
+	assert.Equal(t, flags, envParsed)
+}

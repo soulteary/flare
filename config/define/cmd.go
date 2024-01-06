@@ -28,5 +28,8 @@ func GetDefaultEnvVars() FlareModel.Envs {
 		EnableEditor:           DEFAULT_ENABLE_EDITOR,
 		Visibility:             DEFAULT_VISIBILITY,
 		DisableCSP:             DEFAULT_DISABLE_CSP,
+
+		User: DEFAULT_USER_NAME,
+		Pass: "",
 	}
 }
