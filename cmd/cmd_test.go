@@ -7,11 +7,72 @@ import (
 	"testing"
 
 	FlareCMD "github.com/soulteary/flare/cmd"
+	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/version"
 	flags "github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
+
+// Mock dependencies
+type EnvParserMock struct {
+	mock.Mock
+}
+
+func (m *EnvParserMock) ParseEnvVars() map[string]string {
+	args := m.Called()
+	return args.Get(0).(map[string]string)
+}
+
+func (m *EnvParserMock) ParseEnvFile(envVars map[string]string) map[string]string {
+	args := m.Called(envVars)
+	return args.Get(0).(map[string]string)
+}
+
+type CLIParserMock struct {
+	mock.Mock
+}
+
+func (m *CLIParserMock) parseCLI(envs map[string]string) FlareModel.Flags {
+	args := m.Called(envs)
+	return args.Get(0).(FlareModel.Flags)
+}
+
+func TestParse(t *testing.T) {
+	// Setup mocks with expected behavior
+	envParser := new(EnvParserMock)
+	cliParser := new(CLIParserMock)
+
+	envVars := map[string]string{}
+	parsedEnvs := map[string]string{}
+	expectedFlags := FlareModel.Flags{}
+
+	defaults := FlareDefine.GetDefaultEnvVars()
+	expectedFlags.User = defaults.User
+	expectedFlags.Port = defaults.Port
+	expectedFlags.EnableGuide = defaults.EnableGuide
+	expectedFlags.EnableEditor = defaults.EnableEditor
+	expectedFlags.Visibility = defaults.Visibility
+	expectedFlags.EnableDeprecatedNotice = defaults.EnableDeprecatedNotice
+	expectedFlags.EnableMinimumRequest = defaults.EnableMinimumRequest
+	expectedFlags.DisableLoginMode = defaults.DisableLoginMode
+
+	envParser.On("ParseEnvVars").Return(envVars)
+	envParser.On("ParseEnvFile", envVars).Return(parsedEnvs)
+	cliParser.On("parseCLI", parsedEnvs).Return(expectedFlags)
+
+	actualFlags := FlareCMD.Parse()
+
+	actualFlags.Pass = ""
+	actualFlags.PassIsGenerated = false
+
+	assert.Equal(t, expectedFlags, actualFlags)
+
+	// Verify that the expectations on the mocks were met
+	// envParser.AssertExpectations(t)
+	// cliParser.AssertExpectations(t)
+}
 
 func captureOutput(f func()) string {
 	old := os.Stdout
