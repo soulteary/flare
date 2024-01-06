@@ -1,4 +1,4 @@
-package FlareState
+package FlareFn
 
 import (
 	"net/http"

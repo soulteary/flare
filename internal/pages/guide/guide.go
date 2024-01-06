@@ -11,6 +11,7 @@ import (
 	"github.com/soulteary/memfs"
 
 	FlareState "github.com/soulteary/flare/config/state"
+	FlareFn "github.com/soulteary/flare/internal/fn"
 )
 
 var MemFs *memfs.FS
@@ -45,7 +46,7 @@ func render(c *gin.Context) {
 func getUserHomePage() string {
 	port := strconv.Itoa(FlareState.AppFlags.Port)
 
-	body, err := FlareState.GetHTML("http://localhost:" + port + "/")
+	body, err := FlareFn.GetHTML("http://localhost:" + port + "/")
 	if err != nil {
 		return ""
 	}

@@ -6,7 +6,7 @@ import (
 
 	FlareData "github.com/soulteary/flare/config/data"
 	FlareModel "github.com/soulteary/flare/config/model"
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareFn "github.com/soulteary/flare/internal/fn"
 	FlareMDI "github.com/soulteary/flare/internal/resources/mdi"
 )
 
@@ -17,7 +17,7 @@ func GenerateBookmarkTemplate(filter string) template.HTML {
 
 	var parseBookmarks []FlareModel.Bookmark
 	for _, bookmark := range bookmarksData.Items {
-		bookmark.URL = FlareState.ParseDynamicUrl(bookmark.URL)
+		bookmark.URL = FlareFn.ParseDynamicUrl(bookmark.URL)
 		parseBookmarks = append(parseBookmarks, bookmark)
 	}
 
@@ -72,7 +72,7 @@ func renderBookmarksWithoutCategories(bookmarks *[]FlareModel.Bookmark, OpenBook
 			templateIcon = FlareMDI.GetIconByName(bookmark.Icon)
 		} else {
 			if IconMode == "FILLING" {
-				templateIcon = FlareState.GetYandexFavicon(bookmark.URL, FlareMDI.GetIconByName(bookmark.Icon))
+				templateIcon = FlareFn.GetYandexFavicon(bookmark.URL, FlareMDI.GetIconByName(bookmark.Icon))
 			} else {
 				templateIcon = FlareMDI.GetIconByName(bookmark.Icon)
 			}
@@ -113,7 +113,7 @@ func renderBookmarksWithCategories(bookmarks *[]FlareModel.Bookmark, category *F
 			templateIcon = FlareMDI.GetIconByName(bookmark.Icon)
 		} else {
 			if IconMode == "FILLING" {
-				templateIcon = FlareState.GetYandexFavicon(bookmark.URL, FlareMDI.GetIconByName(bookmark.Icon))
+				templateIcon = FlareFn.GetYandexFavicon(bookmark.URL, FlareMDI.GetIconByName(bookmark.Icon))
 			} else {
 				templateIcon = FlareMDI.GetIconByName(bookmark.Icon)
 			}

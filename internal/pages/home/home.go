@@ -14,6 +14,7 @@ import (
 	FlareModel "github.com/soulteary/flare/config/model"
 	FlareState "github.com/soulteary/flare/config/state"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
+	FlareFn "github.com/soulteary/flare/internal/fn"
 	FlareWeather "github.com/soulteary/flare/internal/settings/weather"
 	weather "github.com/soulteary/funny-china-weather"
 )
@@ -226,7 +227,7 @@ func getGreeting(greeting string) string {
 
 func pageBookmark(c *gin.Context) {
 	options := FlareData.GetAllSettingsOptions()
-	FlareState.ParseRequestURL(c.Request)
+	FlareFn.ParseRequestURL(c.Request)
 
 	c.HTML(
 		http.StatusOK,
@@ -258,7 +259,7 @@ func pageBookmark(c *gin.Context) {
 
 func pageApplication(c *gin.Context) {
 	options := FlareData.GetAllSettingsOptions()
-	FlareState.ParseRequestURL(c.Request)
+	FlareFn.ParseRequestURL(c.Request)
 
 	c.HTML(
 		http.StatusOK,
@@ -289,7 +290,7 @@ func pageApplication(c *gin.Context) {
 
 func render(c *gin.Context, filter string) {
 	options := FlareData.GetAllSettingsOptions()
-	FlareState.ParseRequestURL(c.Request)
+	FlareFn.ParseRequestURL(c.Request)
 
 	hasKeyword := false
 	searchKeyword := " "

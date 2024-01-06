@@ -6,7 +6,7 @@ import (
 
 	FlareData "github.com/soulteary/flare/config/data"
 	FlareModel "github.com/soulteary/flare/config/model"
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareFn "github.com/soulteary/flare/internal/fn"
 	FlareMDI "github.com/soulteary/flare/internal/resources/mdi"
 )
 
@@ -17,7 +17,7 @@ func GenerateApplicationsTemplate(filter string) template.HTML {
 
 	var parseApps []FlareModel.Bookmark
 	for _, app := range appsData.Items {
-		app.URL = FlareState.ParseDynamicUrl(app.URL)
+		app.URL = FlareFn.ParseDynamicUrl(app.URL)
 		parseApps = append(parseApps, app)
 	}
 
@@ -63,7 +63,7 @@ func GenerateApplicationsTemplate(filter string) template.HTML {
 			templateIcon = FlareMDI.GetIconByName(app.Icon)
 		} else {
 			if options.IconMode == "FILLING" {
-				templateIcon = FlareState.GetYandexFavicon(app.URL, FlareMDI.GetIconByName(app.Icon))
+				templateIcon = FlareFn.GetYandexFavicon(app.URL, FlareMDI.GetIconByName(app.Icon))
 			} else {
 				templateIcon = FlareMDI.GetIconByName(app.Icon)
 			}
