@@ -24,3 +24,34 @@ TBD
 - Browse automatically generated program documentation:
     - `godoc --http=localhost:8080`
 
+
+
+## Directory
+
+```bash
+├── build                   build script
+├── cmd                     user cli/env parser
+├── config                  config for app
+│   ├── data                    data for app running
+│   ├── define                  define for app launch
+│   └── model                   data model for app
+├── docker                  docker
+├── embed                   resource (assets, template) for web
+├── internal
+│   ├── auth                user login
+│   ├── fn                  fn utils
+│   ├── logger              logger
+│   ├── misc
+│   │   ├── deprecated
+│   │   ├── health
+│   │   └── redir
+│   ├── pages
+│   │   ├── editor
+│   │   ├── guide
+│   │   └── home
+│   ├── resources           static resource after minify
+│   ├── server
+│   ├── settings
+│   └── version
+└── main.go
+```
