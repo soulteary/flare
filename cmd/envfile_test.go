@@ -19,7 +19,9 @@ func TestCheckDotEnvFileExist(t *testing.T) {
 
 	// test .env exist
 	f, _ := os.Create(envPath)
-	defer os.Remove(f.Name())
+	filename := f.Name()
+	defer os.Remove(filename)
+	defer f.Close()
 	assert.Equal(t, FlareCMD.CheckDotEnvFileExist(envPath), true)
 }
 
@@ -65,6 +67,7 @@ func TestParseEnvFile_ParseErr(t *testing.T) {
 	// test .env auto correct
 	f, _ := os.Create(envPath)
 	defer os.Remove(envPath)
+	defer f.Close()
 	f.Write([]byte("FLARE_PORT=true\nFLARE_USER=\nFLARE_PASS=\nFLARE_GUIDE=1111"))
 	flags := FlareCMD.ParseEnvFile(envParsed)
 	assert.Equal(t, flags, envParsed)
@@ -85,6 +88,7 @@ func TestParseEnvFile_ParseOverwrite(t *testing.T) {
 	// test .env auto correct
 	f, _ := os.Create(envPath)
 	defer os.Remove(envPath)
+	defer f.Close()
 	f.Write([]byte("FLARE_PORT=2345\nFLARE_USER=\nFLARE_PASS=\nFLARE_GUIDE=false"))
 	flags := FlareCMD.ParseEnvFile(envParsed)
 
@@ -109,6 +113,7 @@ func TestParseEnvFile_PortError(t *testing.T) {
 	// test .env auto correct
 	f, _ := os.Create(envPath)
 	defer os.Remove(envPath)
+	defer f.Close()
 	f.Write([]byte("FLARE_PORT=9999999\nFLARE_USER=\nFLARE_PASS=\nFLARE_GUIDE=false"))
 	flags := FlareCMD.ParseEnvFile(envParsed)
 
@@ -133,6 +138,7 @@ func TestParseEnvFile_User(t *testing.T) {
 	// test .env auto correct
 	f, _ := os.Create(envPath)
 	defer os.Remove(envPath)
+	defer f.Close()
 	f.Write([]byte("FLARE_PORT=5005\nFLARE_USER=flare\nFLARE_PASS=\n"))
 	flags := FlareCMD.ParseEnvFile(envParsed)
 
