@@ -12,8 +12,7 @@ import (
 	FlareModel "github.com/soulteary/flare/config/model"
 )
 
-func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
-
+func GetCliFlags() (*FlareModel.Flags, *flags.FlagSet) {
 	var cliFlags = new(FlareModel.Flags)
 	options := flags.NewFlagSet("appFlags", flags.ContinueOnError)
 	options.SortFlags = false
@@ -45,14 +44,14 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 
 	_ = options.Parse(os.Args)
 
-	exit := ExcuteCLI(cliFlags, options)
-	if exit {
-		os.Exit(0)
-	}
-	GetVersion(true)
+	return cliFlags, options
+}
 
-	// 用于判断参数是否存在
+func GetFlagsMaps() map[string]bool {
 	keys := make(map[string]bool)
+	if len(os.Args) <= 1 {
+		return keys
+	}
 	trimValue := regexp.MustCompile(`=.*`)
 	for _, key := range os.Args[1:] {
 		if key[:2] == "--" {
@@ -61,24 +60,48 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 			keys[trimValue.ReplaceAllString(key[1:], "")] = true
 		}
 	}
+	return keys
+}
 
-	if keys[_KEY_PORT] || keys[_KEY_PORT_SHORT] {
+func CheckFlagsExists(dict map[string]bool, keys []string) bool {
+	for _, key := range keys {
+		if dict[key] {
+			return true
+		}
+	}
+	return false
+}
+
+func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
+	userOptionsFromCLI, originFlags := GetCliFlags()
+	exit := ExcuteCLI(userOptionsFromCLI, originFlags)
+	if exit {
+		os.Exit(0)
+	}
+	GetVersion(true)
+
+	// 用于判断参数是否存在
+	keys := GetFlagsMaps()
+
+	cliFlags := userOptionsFromCLI
+
+	if CheckFlagsExists(keys, []string{_KEY_PORT, _KEY_PORT_SHORT}) {
 		baseFlags.Port = cliFlags.Port
 	}
 
-	if keys[_KEY_MINI_REQUEST] || keys[_KEY_MINI_REQUEST_SHORT] || keys[_KEY_MINI_REQUEST_OLD] {
+	if CheckFlagsExists(keys, []string{_KEY_MINI_REQUEST, _KEY_MINI_REQUEST_SHORT, _KEY_MINI_REQUEST_OLD}) {
 		baseFlags.EnableMinimumRequest = cliFlags.EnableMinimumRequest
 	}
 
-	if keys[_KEY_DISABLE_LOGIN] || keys[_KEY_DISABLE_LOGIN_SHORT] || keys[_KEY_DISABLE_LOGIN_OLD] {
+	if CheckFlagsExists(keys, []string{_KEY_DISABLE_LOGIN, _KEY_DISABLE_LOGIN_SHORT, _KEY_DISABLE_LOGIN_OLD}) {
 		baseFlags.DisableLoginMode = cliFlags.DisableLoginMode
 	}
 
-	if keys[_KEY_DISABLE_CSP] || keys[_KEY_DISABLE_CSP_SHORT] {
+	if CheckFlagsExists(keys, []string{_KEY_DISABLE_CSP, _KEY_DISABLE_CSP_SHORT}) {
 		baseFlags.DisableCSP = cliFlags.DisableCSP
 	}
 
-	if keys[_KEY_VISIBILITY] || keys[_KEY_VISIBILITY_SHORT] {
+	if CheckFlagsExists(keys, []string{_KEY_VISIBILITY, _KEY_VISIBILITY_SHORT}) {
 		baseFlags.Visibility = cliFlags.Visibility
 		// 判断是否为白名单中的词，以及强制转换内容为大写
 		if strings.ToUpper(cliFlags.Visibility) != FlareDefine.DEFAULT_VISIBILITY &&
@@ -91,19 +114,19 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 		baseFlags.Visibility = strings.ToUpper(baseFlags.Visibility)
 	}
 
-	if keys[_KEY_ENABLE_OFFLINE] || keys[_KEY_ENABLE_OFFLINE_SHORT] {
+	if CheckFlagsExists(keys, []string{_KEY_ENABLE_OFFLINE, _KEY_ENABLE_OFFLINE_SHORT}) {
 		baseFlags.EnableOfflineMode = cliFlags.EnableOfflineMode
 	}
 
-	if keys[_KEY_ENABLE_DEPRECATED_NOTICE] || keys[_KEY_ENABLE_DEPRECATED_NOTICE_SHORT] {
+	if CheckFlagsExists(keys, []string{_KEY_ENABLE_DEPRECATED_NOTICE, _KEY_ENABLE_DEPRECATED_NOTICE_SHORT}) {
 		baseFlags.EnableDeprecatedNotice = cliFlags.EnableDeprecatedNotice
 	}
 
-	if keys[_KEY_ENABLE_GUIDE] || keys[_KEY_ENABLE_GUIDE_SHORT] {
+	if CheckFlagsExists(keys, []string{_KEY_ENABLE_GUIDE, _KEY_ENABLE_GUIDE_SHORT}) {
 		baseFlags.EnableGuide = cliFlags.EnableGuide
 	}
 
-	if keys[_KEY_ENABLE_EDITOR] || keys[_KEY_ENABLE_EDITOR_SHORT] {
+	if CheckFlagsExists(keys, []string{_KEY_ENABLE_EDITOR, _KEY_ENABLE_EDITOR_SHORT}) {
 		baseFlags.EnableEditor = cliFlags.EnableEditor
 	}
 
