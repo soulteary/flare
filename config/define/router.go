@@ -1,4 +1,4 @@
-package FlareState
+package FlareDefine
 
 import (
 	FlareModel "github.com/soulteary/flare/config/model"

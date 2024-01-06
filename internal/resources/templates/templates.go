@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 )
 
 //go:embed html
@@ -14,7 +14,7 @@ var TPL embed.FS
 
 func RegisterRouting(router *gin.Engine) {
 
-	if FlareState.AppFlags.DebugMode {
+	if FlareDefine.AppFlags.DebugMode {
 		router.LoadHTMLGlob("embed/templates/*.html")
 		return
 	}

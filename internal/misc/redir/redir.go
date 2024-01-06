@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	FlareData "github.com/soulteary/flare/config/data"
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 )
 
 // TODO 错误提示统一处理
@@ -16,12 +16,12 @@ func RegisterRouting(router *gin.Engine) {
 
 	internalError := []byte(`<html><p>找不到匹配的跳转地址，请确认地址未被人为修改。</p><p>或前往 <a href="https://github.com/soulteary/docker-flare/issues/" target="_blank">https://github.com/soulteary/docker-flare/issues/</a> 反馈使用中的问题，谢谢！</html>`)
 
-	router.GET(FlareState.MiscPages.RedirHome.Path, func(c *gin.Context) {
-		c.Redirect(http.StatusFound, FlareState.RegularPages.Home.Path)
+	router.GET(FlareDefine.MiscPages.RedirHome.Path, func(c *gin.Context) {
+		c.Redirect(http.StatusFound, FlareDefine.RegularPages.Home.Path)
 		c.Abort()
 	})
 
-	router.GET(FlareState.MiscPages.RedirHelper.Path, func(c *gin.Context) {
+	router.GET(FlareDefine.MiscPages.RedirHelper.Path, func(c *gin.Context) {
 		encoded := c.Query("go")
 		if len(encoded) < 1 {
 			c.Data(http.StatusBadRequest, "text/html; charset=utf-8", internalError)

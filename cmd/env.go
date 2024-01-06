@@ -36,7 +36,7 @@ func ParseEnvVars() (stor FlareModel.Flags) {
 	log := FlareLogger.GetLogger()
 
 	// 1. init default values
-	defaults := FlareDefine.GetDefaultEnvVars()
+	defaults := FlareDefine.DefaultEnvVars
 
 	// 2. overwrite with user input
 	if err := env.Parse(&defaults); err != nil {

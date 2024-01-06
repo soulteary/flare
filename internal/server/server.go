@@ -13,8 +13,8 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 
+	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
-	FlareState "github.com/soulteary/flare/config/state"
 	FlareLogger "github.com/soulteary/flare/internal/logger"
 
 	FlareAuth "github.com/soulteary/flare/internal/auth"
@@ -58,7 +58,7 @@ func StartDaemon(AppFlags *FlareModel.Flags) {
 		router.Use(gzip.Gzip(gzip.DefaultCompression))
 	}
 
-	FlareState.Init()
+	FlareDefine.Init()
 	FlareAssets.RegisterRouting(router)
 
 	FlareMDI.Init()
@@ -78,12 +78,12 @@ func StartDaemon(AppFlags *FlareModel.Flags) {
 
 	if AppFlags.EnableEditor {
 		FlareEditor.RegisterRouting(router)
-		log.Info("在线编辑模块启用，可以访问 " + FlareState.RegularPages.Editor.Path + " 来进行数据编辑。")
+		log.Info("在线编辑模块启用，可以访问 " + FlareDefine.RegularPages.Editor.Path + " 来进行数据编辑。")
 	}
 
 	if AppFlags.EnableGuide {
 		FlareGuide.RegisterRouting(router)
-		log.Info("向导模块启用，可以访问 " + FlareState.RegularPages.Guide.Path + " 来获取程序使用帮助。")
+		log.Info("向导模块启用，可以访问 " + FlareDefine.RegularPages.Guide.Path + " 来获取程序使用帮助。")
 	}
 
 	srv := &http.Server{

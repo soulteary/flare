@@ -17,6 +17,7 @@ const (
 	DEFAULT_DISABLE_CSP              = false
 )
 
+// get default env config
 func GetDefaultEnvVars() FlareModel.Envs {
 	return FlareModel.Envs{
 		Port:                   DEFAULT_PORT,
@@ -33,3 +34,12 @@ func GetDefaultEnvVars() FlareModel.Envs {
 		Pass: "",
 	}
 }
+
+var DefaultEnvVars = GetDefaultEnvVars()
+
+var AppFlags FlareModel.Flags
+
+// VISIABLE Levels
+// - "DEFAULT"
+// - "PRIVATE"
+var FLARE_VISIABLE = "PRIVATE"

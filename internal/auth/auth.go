@@ -10,7 +10,7 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 )
 
 const (
@@ -23,27 +23,27 @@ func RequestHandle(router *gin.Engine) {
 	// TODO: 剥离逻辑
 	// TODO：替换密钥为用户相关数据
 	store := cookie.NewStore([]byte("secret"))
-	router.Use(sessions.Sessions("flare_"+strconv.Itoa(FlareState.AppFlags.Port), store))
+	router.Use(sessions.Sessions("flare_"+strconv.Itoa(FlareDefine.AppFlags.Port), store))
 
 	// 非离线模式注册路由
-	if !FlareState.AppFlags.DisableLoginMode {
-		router.POST(FlareState.MiscPages.Login.Path, login)
-		router.POST(FlareState.MiscPages.Logout.Path, logout)
+	if !FlareDefine.AppFlags.DisableLoginMode {
+		router.POST(FlareDefine.MiscPages.Login.Path, login)
+		router.POST(FlareDefine.MiscPages.Logout.Path, logout)
 	}
 }
 
-var commonText = `<a href="` + FlareState.SettingPages.Others.Path + `">返回重试</a></p><p>或前往 <a href="https://github.com/soulteary/docker-flare/issues/" target="_blank">https://github.com/soulteary/docker-flare/issues/</a> 反馈使用中的问题，谢谢！`
+var commonText = `<a href="` + FlareDefine.SettingPages.Others.Path + `">返回重试</a></p><p>或前往 <a href="https://github.com/soulteary/docker-flare/issues/" target="_blank">https://github.com/soulteary/docker-flare/issues/</a> 反馈使用中的问题，谢谢！`
 var internalErrorInput = []byte(`<html><p>请填写正确的用户名和密码 ` + commonText + `</html>`)
 var internalErrorEmpty = []byte(`<html><p>用户名或密码不能为空 ` + commonText + `</html>`)
 var internalErrorSave = []byte(`<html><p>程序内部错误，保存登陆状态失败 ` + commonText + `</html>`)
 
 func AuthRequired(c *gin.Context) {
 
-	if !FlareState.AppFlags.DisableLoginMode {
+	if !FlareDefine.AppFlags.DisableLoginMode {
 		session := sessions.Default(c)
 		user := session.Get(SESSION_KEY_USER_NAME)
 		if user == nil {
-			c.Redirect(http.StatusFound, FlareState.SettingPages.Others.Path)
+			c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
 			c.Abort()
 			return
 		}
@@ -53,7 +53,7 @@ func AuthRequired(c *gin.Context) {
 }
 
 func CheckUserIsLogin(c *gin.Context) bool {
-	if !FlareState.AppFlags.DisableLoginMode {
+	if !FlareDefine.AppFlags.DisableLoginMode {
 		session := sessions.Default(c)
 		user := session.Get(SESSION_KEY_USER_NAME)
 		return user != nil
@@ -62,7 +62,7 @@ func CheckUserIsLogin(c *gin.Context) bool {
 }
 
 func GetUserName(c *gin.Context) interface{} {
-	if !FlareState.AppFlags.DisableLoginMode {
+	if !FlareDefine.AppFlags.DisableLoginMode {
 		session := sessions.Default(c)
 		data := session.Get(SESSION_KEY_USER_NAME)
 		return data
@@ -71,7 +71,7 @@ func GetUserName(c *gin.Context) interface{} {
 }
 
 func GetUserLoginDate(c *gin.Context) interface{} {
-	if !FlareState.AppFlags.DisableLoginMode {
+	if !FlareDefine.AppFlags.DisableLoginMode {
 		session := sessions.Default(c)
 		data := session.Get(SESSION_KEY_LOGIN_DATE)
 		return data
@@ -95,7 +95,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	if username != FlareState.AppFlags.User || password != FlareState.AppFlags.Pass {
+	if username != FlareDefine.AppFlags.User || password != FlareDefine.AppFlags.Pass {
 		c.Data(http.StatusBadRequest, _HTMLContentType, internalErrorInput)
 		c.Abort()
 		return
@@ -110,7 +110,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusFound, FlareState.SettingPages.Others.Path)
+	c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
 	c.Abort()
 }
 
@@ -119,7 +119,7 @@ func logout(c *gin.Context) {
 	user := session.Get(SESSION_KEY_USER_NAME)
 	if user == nil {
 		// 直接跳转登陆页面
-		c.Redirect(http.StatusFound, FlareState.SettingPages.Others.Path)
+		c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
 		c.Abort()
 		return
 	}
@@ -131,6 +131,6 @@ func logout(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.Redirect(http.StatusFound, FlareState.SettingPages.Others.Path)
+	c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
 	c.Abort()
 }

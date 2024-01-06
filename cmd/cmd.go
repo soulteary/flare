@@ -11,7 +11,6 @@ import (
 	FlareData "github.com/soulteary/flare/config/data"
 	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
-	FlareState "github.com/soulteary/flare/config/state"
 	FlareLogger "github.com/soulteary/flare/internal/logger"
 	"github.com/soulteary/flare/internal/version"
 )
@@ -43,7 +42,7 @@ func Parse() FlareModel.Flags {
 		}
 	}
 
-	FlareState.AppFlags = flags
+	FlareDefine.AppFlags = flags
 	return flags
 }
 

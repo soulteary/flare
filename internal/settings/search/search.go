@@ -6,14 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 
 	FlareData "github.com/soulteary/flare/config/data"
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 )
 
 func RegisterRouting(router *gin.Engine) {
 
-	router.GET(FlareState.SettingPages.Search.Path, FlareAuth.AuthRequired, pageSearch)
-	router.POST(FlareState.SettingPages.Search.Path, FlareAuth.AuthRequired, updateSearchOptions)
+	router.GET(FlareDefine.SettingPages.Search.Path, FlareAuth.AuthRequired, pageSearch)
+	router.POST(FlareDefine.SettingPages.Search.Path, FlareAuth.AuthRequired, updateSearchOptions)
 
 }
 
@@ -42,13 +42,13 @@ func pageSearch(c *gin.Context) {
 		http.StatusOK,
 		"settings.html",
 		gin.H{
-			"DebugMode":       FlareState.AppFlags.DebugMode,
-			"PageInlineStyle": FlareState.GetPageInlineStyle(),
+			"DebugMode":       FlareDefine.AppFlags.DebugMode,
+			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
 
 			"PageName":       "Search",
-			"PageAppearance": FlareState.GetAppBodyStyle(),
-			"SettingPages":   FlareState.SettingPages,
-			"SettingsURI":    FlareState.RegularPages.Settings.Path,
+			"PageAppearance": FlareDefine.GetAppBodyStyle(),
+			"SettingPages":   FlareDefine.SettingPages,
+			"SettingsURI":    FlareDefine.RegularPages.Settings.Path,
 
 			"ShowSearchComponent":     options.ShowSearchComponent,
 			"DisabledSearchAutoFocus": options.DisabledSearchAutoFocus,

@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 )
 
 //go:embed favicon.ico
@@ -25,7 +25,7 @@ func RegisterRouting(router *gin.Engine) {
 		c.FileFromFS("favicon.ico", http.FS(Favicon))
 	})
 
-	if FlareState.AppFlags.DebugMode {
+	if FlareDefine.AppFlags.DebugMode {
 		router.StaticFS("/assets/css", http.Dir("embed/assets/css"))
 		return
 	}

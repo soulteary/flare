@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 )
 
 // TODO：样式优化
@@ -31,10 +31,10 @@ func makeLandingPage(originURL string, currentURL string, delay string) []byte {
 func RegisterRouting(router *gin.Engine) {
 	const urlMDI = "/resources/mdi-cheat-sheets/"
 	router.GET(urlMDI, func(c *gin.Context) {
-		if FlareState.AppFlags.EnableDeprecatedNotice {
-			c.Data(http.StatusOK, "text/html; charset=utf-8", makeLandingPage(urlMDI, FlareState.RegularPages.Icons.Path, "5"))
+		if FlareDefine.AppFlags.EnableDeprecatedNotice {
+			c.Data(http.StatusOK, "text/html; charset=utf-8", makeLandingPage(urlMDI, FlareDefine.RegularPages.Icons.Path, "5"))
 		} else {
-			c.Redirect(http.StatusFound, FlareState.RegularPages.Icons.Path)
+			c.Redirect(http.StatusFound, FlareDefine.RegularPages.Icons.Path)
 		}
 		c.Abort()
 	})

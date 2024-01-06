@@ -78,7 +78,7 @@ func ParseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 	user := GetDotEnvFileStringOrDefault(envs, "FLARE_USER", baseFlags.User)
 	baseFlags.User = user
 
-	defaults := FlareDefine.GetDefaultEnvVars()
+	defaults := FlareDefine.DefaultEnvVars
 
 	if user == defaults.User {
 		baseFlags.UserIsGenerated = false

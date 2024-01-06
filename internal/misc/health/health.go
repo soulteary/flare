@@ -5,11 +5,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 )
 
 func RegisterRouting(router *gin.Engine) {
-	router.GET(FlareState.MiscPages.HealthCheck.Path, func(c *gin.Context) {
+	router.GET(FlareDefine.MiscPages.HealthCheck.Path, func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong"})
 	})
 }

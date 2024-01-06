@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/soulteary/memfs"
 
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareFn "github.com/soulteary/flare/internal/fn"
 )
 
@@ -35,7 +35,7 @@ func RegisterRouting(router *gin.Engine) {
 	introAssets, _ := fs.Sub(IntroAssets, "guide-assets")
 	router.StaticFS(_ASSETS_WEB_URI, http.FS(introAssets))
 
-	router.GET(FlareState.RegularPages.Guide.Path, render)
+	router.GET(FlareDefine.RegularPages.Guide.Path, render)
 }
 
 func render(c *gin.Context) {
@@ -44,7 +44,7 @@ func render(c *gin.Context) {
 }
 
 func getUserHomePage() string {
-	port := strconv.Itoa(FlareState.AppFlags.Port)
+	port := strconv.Itoa(FlareDefine.AppFlags.Port)
 
 	body, err := FlareFn.GetHTML("http://localhost:" + port + "/")
 	if err != nil {

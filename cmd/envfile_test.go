@@ -121,7 +121,7 @@ func TestParseEnvFile_User(t *testing.T) {
 	os.Setenv("FLARE_DEBUG", "true")
 	defer os.Unsetenv("FLARE_DEBUG")
 
-	defaults := FlareDefine.GetDefaultEnvVars()
+	defaults := FlareDefine.DefaultEnvVars
 
 	envParsed := FlareCMD.ParseEnvVars()
 	envPath := FlareFn.GetWorkDirFile(".env")

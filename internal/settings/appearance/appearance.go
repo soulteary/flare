@@ -8,14 +8,14 @@ import (
 	"github.com/gin-gonic/gin"
 
 	FlareData "github.com/soulteary/flare/config/data"
+	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
-	FlareState "github.com/soulteary/flare/config/state"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 )
 
 func RegisterRouting(router *gin.Engine) {
-	router.GET(FlareState.SettingPages.Appearance.Path, FlareAuth.AuthRequired, pageAppearance)
-	router.POST(FlareState.SettingPages.Appearance.Path, FlareAuth.AuthRequired, updateAppearanceOptions)
+	router.GET(FlareDefine.SettingPages.Appearance.Path, FlareAuth.AuthRequired, pageAppearance)
+	router.POST(FlareDefine.SettingPages.Appearance.Path, FlareAuth.AuthRequired, updateAppearanceOptions)
 }
 
 func updateAppearanceOptions(c *gin.Context) {
@@ -85,13 +85,13 @@ func pageAppearance(c *gin.Context) {
 		http.StatusOK,
 		"settings.html",
 		gin.H{
-			"DebugMode":       FlareState.AppFlags.DebugMode,
-			"PageInlineStyle": FlareState.GetPageInlineStyle(),
+			"DebugMode":       FlareDefine.AppFlags.DebugMode,
+			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
 
 			"PageName":       "Appearance",
-			"PageAppearance": FlareState.GetAppBodyStyle(),
-			"SettingPages":   FlareState.SettingPages,
-			"SettingsURI":    FlareState.RegularPages.Settings.Path,
+			"PageAppearance": FlareDefine.GetAppBodyStyle(),
+			"SettingPages":   FlareDefine.SettingPages,
+			"SettingsURI":    FlareDefine.RegularPages.Settings.Path,
 
 			"OptionTitle":               options.Title,
 			"OptionFooter":              template.HTML(options.Footer),

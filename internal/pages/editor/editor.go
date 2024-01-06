@@ -10,7 +10,7 @@ import (
 	"github.com/soulteary/memfs"
 
 	FlareData "github.com/soulteary/flare/config/data"
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 )
 
@@ -35,8 +35,8 @@ func RegisterRouting(router *gin.Engine) {
 	introAssets, _ := fs.Sub(editorAssets, "editor-assets")
 	router.StaticFS(_ASSETS_WEB_URI, http.FS(introAssets))
 
-	router.GET(FlareState.RegularPages.Editor.Path, FlareAuth.AuthRequired, render)
-	router.POST(FlareState.RegularPages.Editor.Path, FlareAuth.AuthRequired, updateData)
+	router.GET(FlareDefine.RegularPages.Editor.Path, FlareAuth.AuthRequired, render)
+	router.POST(FlareDefine.RegularPages.Editor.Path, FlareAuth.AuthRequired, updateData)
 }
 
 func updateData(c *gin.Context) {
@@ -65,11 +65,11 @@ func render(c *gin.Context) {
 		"editor.html",
 		gin.H{
 			"PageName":       "Editor",
-			"PageAppearance": FlareState.GetAppBodyStyle(),
-			"SettingPages":   FlareState.SettingPages,
+			"PageAppearance": FlareDefine.GetAppBodyStyle(),
+			"SettingPages":   FlareDefine.SettingPages,
 
-			"DebugMode":       FlareState.AppFlags.DebugMode,
-			"PageInlineStyle": FlareState.GetPageInlineStyle(),
+			"DebugMode":       FlareDefine.AppFlags.DebugMode,
+			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
 
 			"DataCategories": template.HTML(dataCategories),
 			"DataBookmarks":  template.HTML(dataBookmarks),

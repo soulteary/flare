@@ -7,13 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	FlareData "github.com/soulteary/flare/config/data"
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 	FlareVersion "github.com/soulteary/flare/internal/version"
 )
 
 func RegisterRouting(router *gin.Engine) {
-	router.GET(FlareState.SettingPages.Others.Path, pageOthers)
+	router.GET(FlareDefine.SettingPages.Others.Path, pageOthers)
 }
 
 func pageOthers(c *gin.Context) {
@@ -21,7 +21,7 @@ func pageOthers(c *gin.Context) {
 
 	isLogined := false
 
-	if !FlareState.AppFlags.DisableLoginMode {
+	if !FlareDefine.AppFlags.DisableLoginMode {
 		isLogined = FlareAuth.CheckUserIsLogin(c)
 	} else {
 		isLogined = true
@@ -31,20 +31,20 @@ func pageOthers(c *gin.Context) {
 		http.StatusOK,
 		"settings.html",
 		gin.H{
-			"DebugMode":        FlareState.AppFlags.DebugMode,
-			"DisableLoginMode": FlareState.AppFlags.DisableLoginMode,
+			"DebugMode":        FlareDefine.AppFlags.DebugMode,
+			"DisableLoginMode": FlareDefine.AppFlags.DisableLoginMode,
 			"UserIsLogin":      isLogined,
 			"UserName":         FlareAuth.GetUserName(c),
 			"LoginDate":        FlareAuth.GetUserLoginDate(c),
 
-			"PageInlineStyle": FlareState.GetPageInlineStyle(),
-			"PageAppearance":  FlareState.GetAppBodyStyle(),
-			"SettingsURI":     FlareState.RegularPages.Settings.Path,
-			"LoginURI":        FlareState.MiscPages.Login.Path,
-			"LogoutURI":       FlareState.MiscPages.Logout.Path,
+			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
+			"PageAppearance":  FlareDefine.GetAppBodyStyle(),
+			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
+			"LoginURI":        FlareDefine.MiscPages.Login.Path,
+			"LogoutURI":       FlareDefine.MiscPages.Logout.Path,
 
 			"PageName":     "Others",
-			"SettingPages": FlareState.SettingPages,
+			"SettingPages": FlareDefine.SettingPages,
 			"OptionTitle":  options.Title,
 			"Version":      FlareVersion.Version,
 			"BuildDate":    FlareVersion.BuildDate,

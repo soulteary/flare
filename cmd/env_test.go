@@ -39,12 +39,12 @@ func TestParseEnvVars(t *testing.T) {
 	os.Setenv("FLARE_OFFLINE", ")))))))@#$%^&*()")
 	defer os.Unsetenv("FLARE_OFFLINE")
 	flags = FlareCMD.ParseEnvVars()
-	defaultEnvs := FlareDefine.GetDefaultEnvVars()
+	defaultEnvs := FlareDefine.DefaultEnvVars
 	assert.Equal(t, flags.EnableOfflineMode, defaultEnvs.EnableOfflineMode)
 }
 
 func TestInitAccountFromEnvVars_normal(t *testing.T) {
-	defaultEnvs := FlareDefine.GetDefaultEnvVars()
+	defaultEnvs := FlareDefine.DefaultEnvVars
 
 	err := env.Parse(&defaultEnvs)
 	assert.Nil(t, err, "TestInitAccountFromEnvVars Faild")
@@ -68,7 +68,7 @@ func TestInitAccountFromEnvVars_normal(t *testing.T) {
 }
 
 func TestInitAccountFromEnvVars_EmptyUser(t *testing.T) {
-	defaultEnvs := FlareDefine.GetDefaultEnvVars()
+	defaultEnvs := FlareDefine.DefaultEnvVars
 
 	err := env.Parse(&defaultEnvs)
 	assert.Nil(t, err, "TestInitAccountFromEnvVars Faild")
@@ -92,10 +92,11 @@ func TestInitAccountFromEnvVars_EmptyUser(t *testing.T) {
 }
 
 func TestInitAccountFromEnvVars_EmptyPass(t *testing.T) {
-	defaultEnvs := FlareDefine.GetDefaultEnvVars()
+	defaultEnvs := FlareDefine.DefaultEnvVars
 
 	err := env.Parse(&defaultEnvs)
 	assert.Nil(t, err, "TestInitAccountFromEnvVars Faild")
+
 	var target FlareModel.Flags
 
 	// 4. test empty password
@@ -115,7 +116,7 @@ func TestInitAccountFromEnvVars_EmptyPass(t *testing.T) {
 }
 
 func TestInitAccountFromEnvVars_Pass(t *testing.T) {
-	defaultEnvs := FlareDefine.GetDefaultEnvVars()
+	defaultEnvs := FlareDefine.DefaultEnvVars
 
 	err := env.Parse(&defaultEnvs)
 	assert.Nil(t, err, "TestInitAccountFromEnvVars Faild")

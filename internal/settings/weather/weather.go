@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	FlareData "github.com/soulteary/flare/config/data"
+	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
-	FlareState "github.com/soulteary/flare/config/state"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 	weather "github.com/soulteary/funny-china-weather"
 )
@@ -64,10 +64,10 @@ func GetWeatherInfo(location string) (response FlareModel.Weather, desc string, 
 }
 
 func RegisterRouting(router *gin.Engine) {
-	router.GET(FlareState.SettingPages.Weather.Path, FlareAuth.AuthRequired, pageHome)
-	if !FlareState.AppFlags.EnableOfflineMode {
-		router.POST(FlareState.SettingPages.Weather.Path, FlareAuth.AuthRequired, updateWeatherOptions)
-		router.POST(FlareState.SettingPagesAPI.WeatherTest.Path, FlareAuth.AuthRequired, testWeatherFetch)
+	router.GET(FlareDefine.SettingPages.Weather.Path, FlareAuth.AuthRequired, pageHome)
+	if !FlareDefine.AppFlags.EnableOfflineMode {
+		router.POST(FlareDefine.SettingPages.Weather.Path, FlareAuth.AuthRequired, updateWeatherOptions)
+		router.POST(FlareDefine.SettingPagesAPI.WeatherTest.Path, FlareAuth.AuthRequired, testWeatherFetch)
 	}
 }
 
@@ -111,18 +111,18 @@ func render(c *gin.Context, testResult string) {
 		http.StatusOK,
 		"settings.html",
 		gin.H{
-			"DebugMode":         FlareState.AppFlags.DebugMode,
-			"PageInlineStyle":   FlareState.GetPageInlineStyle(),
-			"ShowWeatherModule": !FlareState.AppFlags.EnableOfflineMode && showWeather,
+			"DebugMode":         FlareDefine.AppFlags.DebugMode,
+			"PageInlineStyle":   FlareDefine.GetPageInlineStyle(),
+			"ShowWeatherModule": !FlareDefine.AppFlags.EnableOfflineMode && showWeather,
 			"ShowWeather":       showWeather,
 
 			"PageName":       "Weather",
-			"PageAppearance": FlareState.GetAppBodyStyle(),
-			"SettingPages":   FlareState.SettingPages,
-			"SettingsURI":    FlareState.RegularPages.Settings.Path,
+			"PageAppearance": FlareDefine.GetAppBodyStyle(),
+			"SettingPages":   FlareDefine.SettingPages,
+			"SettingsURI":    FlareDefine.RegularPages.Settings.Path,
 			"OptionTitle":    options.Title,
 
-			"SettingPagesAPI": FlareState.SettingPagesAPI,
+			"SettingPagesAPI": FlareDefine.SettingPagesAPI,
 			"Location":        location,
 			"TestResult":      testResult,
 		},

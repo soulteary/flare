@@ -6,13 +6,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	FlareData "github.com/soulteary/flare/config/data"
-	FlareState "github.com/soulteary/flare/config/state"
+	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 )
 
 func RegisterRouting(router *gin.Engine) {
-	router.GET(FlareState.SettingPages.Theme.Path, FlareAuth.AuthRequired, pageTheme)
-	router.POST(FlareState.SettingPages.Theme.Path, FlareAuth.AuthRequired, updateThemes)
+	router.GET(FlareDefine.SettingPages.Theme.Path, FlareAuth.AuthRequired, pageTheme)
+	router.POST(FlareDefine.SettingPages.Theme.Path, FlareAuth.AuthRequired, updateThemes)
 }
 
 func updateThemes(c *gin.Context) {
@@ -28,32 +28,32 @@ func updateThemes(c *gin.Context) {
 	}
 
 	FlareData.UpdateThemeName(body.Theme)
-	FlareState.UpdatePagePalettes()
+	FlareDefine.UpdatePagePalettes()
 
 	// 中转变量
-	FlareState.ThemeCurrent = body.Theme
-	FlareState.ThemePrimaryColor = FlareState.GetThemePrimaryColor(body.Theme)
+	FlareDefine.ThemeCurrent = body.Theme
+	FlareDefine.ThemePrimaryColor = FlareDefine.GetThemePrimaryColor(body.Theme)
 
 	pageTheme(c)
 }
 
 func pageTheme(c *gin.Context) {
 	// themes := getThemePalettes()
-	themes := FlareState.ThemePalettes
+	themes := FlareDefine.ThemePalettes
 	options := FlareData.GetAllSettingsOptions()
 
 	c.HTML(
 		http.StatusOK,
 		"settings.html",
 		gin.H{
-			"DebugMode":       FlareState.AppFlags.DebugMode,
-			"PageInlineStyle": FlareState.GetPageInlineStyle(),
-			"PageAppearance":  FlareState.GetAppBodyStyle(),
-			"SettingsURI":     FlareState.RegularPages.Settings.Path,
+			"DebugMode":       FlareDefine.AppFlags.DebugMode,
+			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
+			"PageAppearance":  FlareDefine.GetAppBodyStyle(),
+			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
 
 			"PageName": "Theme",
 			// 当前选择主题
-			"SettingPages": FlareState.SettingPages,
+			"SettingPages": FlareDefine.SettingPages,
 			// "Themes":       themes.Themes,
 			"Themes": themes,
 

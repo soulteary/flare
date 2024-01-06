@@ -48,7 +48,7 @@ func TestParse(t *testing.T) {
 	parsedEnvs := map[string]string{}
 	expectedFlags := FlareModel.Flags{}
 
-	defaults := FlareDefine.GetDefaultEnvVars()
+	defaults := FlareDefine.DefaultEnvVars
 	expectedFlags.User = defaults.User
 	expectedFlags.Port = defaults.Port
 	expectedFlags.EnableGuide = defaults.EnableGuide

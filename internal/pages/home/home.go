@@ -11,8 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	FlareData "github.com/soulteary/flare/config/data"
+	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
-	FlareState "github.com/soulteary/flare/config/state"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 	FlareFn "github.com/soulteary/flare/internal/fn"
 	FlareWeather "github.com/soulteary/flare/internal/settings/weather"
@@ -20,7 +20,7 @@ import (
 )
 
 func init() {
-	if FlareState.AppFlags.EnableOfflineMode {
+	if FlareDefine.AppFlags.EnableOfflineMode {
 		return
 	}
 
@@ -38,20 +38,20 @@ func init() {
 
 func RegisterRouting(router *gin.Engine) {
 
-	if FlareState.AppFlags.Visibility != "PRIVATE" {
-		router.GET(FlareState.RegularPages.Home.Path, pageHome)
-		router.GET(FlareState.RegularPages.Help.Path, renderHelp)
-		router.POST(FlareState.RegularPages.Home.Path, pageSearch)
+	if FlareDefine.AppFlags.Visibility != "PRIVATE" {
+		router.GET(FlareDefine.RegularPages.Home.Path, pageHome)
+		router.GET(FlareDefine.RegularPages.Help.Path, renderHelp)
+		router.POST(FlareDefine.RegularPages.Home.Path, pageSearch)
 
-		router.GET(FlareState.RegularPages.Applications.Path, pageApplication)
-		router.GET(FlareState.RegularPages.Bookmarks.Path, pageBookmark)
+		router.GET(FlareDefine.RegularPages.Applications.Path, pageApplication)
+		router.GET(FlareDefine.RegularPages.Bookmarks.Path, pageBookmark)
 	} else {
-		router.GET(FlareState.RegularPages.Home.Path, FlareAuth.AuthRequired, pageHome)
-		router.GET(FlareState.RegularPages.Help.Path, FlareAuth.AuthRequired, renderHelp)
-		router.POST(FlareState.RegularPages.Home.Path, FlareAuth.AuthRequired, pageSearch)
+		router.GET(FlareDefine.RegularPages.Home.Path, FlareAuth.AuthRequired, pageHome)
+		router.GET(FlareDefine.RegularPages.Help.Path, FlareAuth.AuthRequired, renderHelp)
+		router.POST(FlareDefine.RegularPages.Home.Path, FlareAuth.AuthRequired, pageSearch)
 
-		router.GET(FlareState.RegularPages.Applications.Path, FlareAuth.AuthRequired, pageApplication)
-		router.GET(FlareState.RegularPages.Bookmarks.Path, FlareAuth.AuthRequired, pageBookmark)
+		router.GET(FlareDefine.RegularPages.Applications.Path, FlareAuth.AuthRequired, pageApplication)
+		router.GET(FlareDefine.RegularPages.Bookmarks.Path, FlareAuth.AuthRequired, pageBookmark)
 	}
 }
 
@@ -66,7 +66,7 @@ func renderHelp(c *gin.Context) {
 
 	configWeatherShow := true
 	var weatherData FlareModel.Weather
-	if !FlareState.AppFlags.EnableOfflineMode {
+	if !FlareDefine.AppFlags.EnableOfflineMode {
 		_, weatherShow := FlareData.GetLocationAndWeatherShow()
 		if weatherShow {
 			weatherData = GetWeatherData()
@@ -85,7 +85,7 @@ func renderHelp(c *gin.Context) {
 		"星期六",
 	}
 
-	if !FlareState.AppFlags.DisableCSP {
+	if !FlareDefine.AppFlags.DisableCSP {
 		c.Header("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';")
 	}
 
@@ -94,13 +94,13 @@ func renderHelp(c *gin.Context) {
 		"home.html",
 		gin.H{
 			"PageName":       "Home",
-			"PageAppearance": FlareState.GetAppBodyStyle(),
-			"SettingPages":   FlareState.SettingPages,
+			"PageAppearance": FlareDefine.GetAppBodyStyle(),
+			"SettingPages":   FlareDefine.SettingPages,
 
-			"DebugMode":       FlareState.AppFlags.DebugMode,
-			"PageInlineStyle": FlareState.GetPageInlineStyle(),
+			"DebugMode":       FlareDefine.AppFlags.DebugMode,
+			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
 
-			"ShowWeatherModule": !FlareState.AppFlags.EnableOfflineMode && configWeatherShow,
+			"ShowWeatherModule": !FlareDefine.AppFlags.EnableOfflineMode && configWeatherShow,
 			"Location":          options.Location,
 			"WeatherData":       weatherData,
 			"WeatherIcon":       weather.GetSVGCodeByName(weatherData.ConditionCode),
@@ -110,9 +110,9 @@ func renderHelp(c *gin.Context) {
 			"HeroDay":   fmt.Sprintf(`%s`, days[now.Weekday()]),
 			"Greetings": "帮助",
 
-			"BookmarksURI":    FlareState.RegularPages.Bookmarks.Path,
-			"ApplicationsURI": FlareState.RegularPages.Applications.Path,
-			"SettingsURI":     FlareState.RegularPages.Settings.Path,
+			"BookmarksURI":    FlareDefine.RegularPages.Bookmarks.Path,
+			"ApplicationsURI": FlareDefine.RegularPages.Applications.Path,
+			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
 			"Applications":    GenerateHelpTemplate(),
 			"SearchKeyword":   template.HTML(" "),
 			"HasKeyword":      false,
@@ -233,18 +233,18 @@ func pageBookmark(c *gin.Context) {
 		http.StatusOK,
 		"home.html",
 		gin.H{
-			"DebugMode":       FlareState.AppFlags.DebugMode,
-			"PageInlineStyle": FlareState.GetPageInlineStyle(),
+			"DebugMode":       FlareDefine.AppFlags.DebugMode,
+			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
 
 			"PageName": "书签",
 			"SubPage":  true,
 
-			"PageAppearance": FlareState.GetAppBodyStyle(),
-			"SettingPages":   FlareState.SettingPages,
+			"PageAppearance": FlareDefine.GetAppBodyStyle(),
+			"SettingPages":   FlareDefine.SettingPages,
 
-			"BookmarksURI":    FlareState.RegularPages.Bookmarks.Path,
-			"ApplicationsURI": FlareState.RegularPages.Applications.Path,
-			"SettingsURI":     FlareState.RegularPages.Settings.Path,
+			"BookmarksURI":    FlareDefine.RegularPages.Bookmarks.Path,
+			"ApplicationsURI": FlareDefine.RegularPages.Applications.Path,
+			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
 
 			"Bookmarks": GenerateBookmarkTemplate(""),
 
@@ -265,17 +265,17 @@ func pageApplication(c *gin.Context) {
 		http.StatusOK,
 		"home.html",
 		gin.H{
-			"DebugMode":       FlareState.AppFlags.DebugMode,
-			"PageInlineStyle": FlareState.GetPageInlineStyle(),
+			"DebugMode":       FlareDefine.AppFlags.DebugMode,
+			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
 
-			"BookmarksURI":    FlareState.RegularPages.Bookmarks.Path,
-			"ApplicationsURI": FlareState.RegularPages.Applications.Path,
-			"SettingsURI":     FlareState.RegularPages.Settings.Path,
+			"BookmarksURI":    FlareDefine.RegularPages.Bookmarks.Path,
+			"ApplicationsURI": FlareDefine.RegularPages.Applications.Path,
+			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
 			"Applications":    GenerateApplicationsTemplate(""),
 
 			"PageName":       "应用",
 			"SubPage":        true,
-			"PageAppearance": FlareState.GetAppBodyStyle(),
+			"PageAppearance": FlareDefine.GetAppBodyStyle(),
 
 			// "SettingPages": FlareState.SettingPages,
 
@@ -303,7 +303,7 @@ func render(c *gin.Context, filter string) {
 
 	configWeatherShow := true
 	var weatherData FlareModel.Weather
-	if !FlareState.AppFlags.EnableOfflineMode {
+	if !FlareDefine.AppFlags.EnableOfflineMode {
 		_, weatherShow := FlareData.GetLocationAndWeatherShow()
 		if weatherShow {
 			weatherData = GetWeatherData()
@@ -322,7 +322,7 @@ func render(c *gin.Context, filter string) {
 		"星期六",
 	}
 
-	if !FlareState.AppFlags.DisableCSP {
+	if !FlareDefine.AppFlags.DisableCSP {
 		c.Header("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';")
 	}
 
@@ -336,13 +336,13 @@ func render(c *gin.Context, filter string) {
 		"home.html",
 		gin.H{
 			"PageName":       "Home",
-			"PageAppearance": FlareState.GetAppBodyStyle(),
-			"SettingPages":   FlareState.SettingPages,
+			"PageAppearance": FlareDefine.GetAppBodyStyle(),
+			"SettingPages":   FlareDefine.SettingPages,
 
-			"DebugMode":       FlareState.AppFlags.DebugMode,
-			"PageInlineStyle": FlareState.GetPageInlineStyle(),
+			"DebugMode":       FlareDefine.AppFlags.DebugMode,
+			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
 
-			"ShowWeatherModule": !FlareState.AppFlags.EnableOfflineMode && configWeatherShow,
+			"ShowWeatherModule": !FlareDefine.AppFlags.EnableOfflineMode && configWeatherShow,
 			"Location":          options.Location,
 			"WeatherData":       weatherData,
 			"WeatherIcon":       weather.GetSVGCodeByName(weatherData.ConditionCode),
@@ -352,9 +352,9 @@ func render(c *gin.Context, filter string) {
 			"HeroDay":   fmt.Sprintf(`%s`, days[now.Weekday()]),
 			"Greetings": getGreeting(options.Greetings),
 
-			"BookmarksURI":    FlareState.RegularPages.Bookmarks.Path,
-			"ApplicationsURI": FlareState.RegularPages.Applications.Path,
-			"SettingsURI":     FlareState.RegularPages.Settings.Path,
+			"BookmarksURI":    FlareDefine.RegularPages.Bookmarks.Path,
+			"ApplicationsURI": FlareDefine.RegularPages.Applications.Path,
+			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
 			"Applications":    GenerateApplicationsTemplate(filter),
 			"Bookmarks":       GenerateBookmarkTemplate(filter),
 			"SearchKeyword":   template.HTML(searchKeyword),
