@@ -15,7 +15,7 @@ require (
 	github.com/soulteary/memfs v0.1.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
-	github.com/tdewolff/minify/v2 v2.20.10
+	github.com/tdewolff/minify/v2 v2.20.12
 	gopkg.in/ini.v1 v1.67.0
 )
 
