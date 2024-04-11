@@ -2,7 +2,67 @@
 <div class="setting-group-container">
     <form method="POST" action="{{ .SettingPages.Theme.Path }}">
         <h2>设置主题</h2>
+        <div class="theme-groups theme-group-actived clearfix">
+        {{ if .ThemeLocked }}
+            {{ if .ThemeLockedInEmbededTheme }}
+            <p class="help-text">通过配置锁定的内置主题</p>
+            <div class="theme theme-{{.ThemeSelected.Name}}">
+                <div class="theme-container clearfix">
+                    <div class="pull-left theme-color color-background"
+                        style="background-color: {{.ThemeSelected.Colors.Background}};">
+                    </div>
+                    <div class="pull-left theme-color color-primary" style="background-color: {{.ThemeSelected.Colors.Primary}};">
+                    </div>
+                    <div class="pull-left theme-color color-accent" style="background-color: {{.ThemeSelected.Colors.Accent}};"></div>
+                </div>
+                <p class="theme-title">{{ .ThemeSelected.Name }}</p>
+            </div>
+            {{ else }}
+            <p class="help-text">当前启用主题名称</p>
+            <div class="theme theme-{{.CustomTheme}}">
+                <div class="theme-container clearfix">
+                    <div class="pull-left theme-color color-background"
+                        style="background-color: {{.ThemeSelected.Colors.Background}};">
+                    </div>
+                    <div class="pull-left theme-color color-primary" style="background-color: {{.ThemeSelected.Colors.Primary}};">
+                    </div>
+                    <div class="pull-left theme-color color-accent" style="background-color: {{.ThemeSelected.Colors.Accent}};"></div>
+                </div>
+                <p class="theme-title">{{ .CustomTheme }}</p>
+            </div>
+            {{ end }}
+        {{ else }}
+            <p class="help-text">当前启用主题名称</p>
+            <div class="theme theme-{{.ThemeSelected.Name}}">
+                <div class="theme-container clearfix">
+                    <div class="pull-left theme-color color-background"
+                        style="background-color: {{.ThemeSelected.Colors.Background}};">
+                    </div>
+                    <div class="pull-left theme-color color-primary" style="background-color: {{.ThemeSelected.Colors.Primary}};">
+                    </div>
+                    <div class="pull-left theme-color color-accent" style="background-color: {{.ThemeSelected.Colors.Accent}};"></div>
+                </div>
+                <p class="theme-title">{{ .ThemeSelected.Name }}</p>
+            </div>
+        {{ end }}
+        </div>
+
         <div class="theme-groups clearfix">
+        {{ if .ThemeLocked }}
+            {{range .Themes}}
+            <div class="pull-left theme theme-{{.Name}} theme-disabled">
+                <div class="theme-container clearfix">
+                    <div class="pull-left theme-color color-background"
+                        style="background-color: {{.Colors.Background}};">
+                    </div>
+                    <div class="pull-left theme-color color-primary" style="background-color: {{.Colors.Primary}};">
+                    </div>
+                    <div class="pull-left theme-color color-accent" style="background-color: {{.Colors.Accent}};"></div>
+                </div>
+                <p class="theme-title">{{.Name}}</p>
+            </div>
+            {{end}}
+        {{ else }}
             {{range .Themes}}
             <div class="pull-left theme theme-{{.Name}}">
                 <div class="theme-container clearfix">
@@ -17,6 +77,7 @@
                 <p class="theme-title">{{.Name}}</p>
             </div>
             {{end}}
+        {{end}}
         </div>
     </form>
 </div>
