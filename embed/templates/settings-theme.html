@@ -19,7 +19,7 @@
             </div>
             {{ else }}
             <p class="help-text">当前启用主题名称</p>
-            <div class="theme theme-{{.CustomTheme}}">
+            <div class="theme theme-{{.CustomThemeName}}">
                 <div class="theme-container clearfix">
                     <div class="pull-left theme-color color-background"
                         style="background-color: {{.ThemeSelected.Colors.Background}};">
@@ -28,7 +28,7 @@
                     </div>
                     <div class="pull-left theme-color color-accent" style="background-color: {{.ThemeSelected.Colors.Accent}};"></div>
                 </div>
-                <p class="theme-title">{{ .CustomTheme }}</p>
+                <p class="theme-title">{{ .CustomThemeName }}</p>
             </div>
             {{ end }}
         {{ else }}
@@ -46,6 +46,41 @@
             </div>
         {{ end }}
         </div>
+
+        {{ if .CustomThemeAlived }}
+            <div class="theme-groups clearfix">
+                {{ if .ThemeLocked }}
+                {{range .CustomThemes}}
+                <div class="pull-left theme theme-{{.Name}} theme-disabled">
+                    <div class="theme-container clearfix">
+                        <div class="pull-left theme-color color-background"
+                            style="background-color: #fff;">
+                        </div>
+                        <div class="pull-left theme-color color-primary" style="background-color: #fff;">
+                        </div>
+                        <div class="pull-left theme-color color-accent" style="background-color: #fff;"></div>
+                    </div>
+                    <p class="theme-title">{{.Name}}</p>
+                </div>
+                {{end}}
+            {{ else }}
+                {{range .CustomThemes}}
+                <div class="pull-left theme theme-{{.Name}} theme-disabled">
+                    <div class="theme-container clearfix">
+                        <input class="theme-choose" name="theme" type="submit" value="{{.Name}}">
+                        <div class="pull-left theme-color color-background"
+                            style="background-color: #fff;">
+                        </div>
+                        <div class="pull-left theme-color color-primary" style="background-color: #fff;">
+                        </div>
+                        <div class="pull-left theme-color color-accent" style="background-color: #fff;"></div>
+                    </div>
+                    <p class="theme-title">{{.Name}}</p>
+                </div>
+                {{end}}
+            {{end}}
+            </div>
+        {{end}}
 
         <div class="theme-groups clearfix">
         {{ if .ThemeLocked }}

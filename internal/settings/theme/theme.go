@@ -1,6 +1,7 @@
 package theme
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +10,7 @@ import (
 	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
+	FlareFn "github.com/soulteary/flare/internal/fn"
 )
 
 func RegisterRouting(router *gin.Engine) {
@@ -66,6 +68,10 @@ func pageTheme(c *gin.Context) {
 		}
 	}
 
+	customThemes := FlareFn.GetAllCustomThemes()
+	customThemeAlived := len(customThemes) > 0
+	fmt.Println(customThemes)
+
 	c.HTML(
 		http.StatusOK,
 		"settings.html",
@@ -85,7 +91,10 @@ func pageTheme(c *gin.Context) {
 			"OptionTitle": options.Title,
 
 			// 自定义主题
-			"CustomTheme": FlareDefine.AppFlags.CustomTheme,
+			"CustomThemeName":   FlareDefine.AppFlags.CustomTheme,
+			"CustomThemes":      customThemes,
+			"CustomThemeAlived": customThemeAlived,
+
 			// 主题锁定
 			"ThemeLocked": themeLocked,
 			// 主题锁定在内置主题
