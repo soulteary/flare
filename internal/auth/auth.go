@@ -1,8 +1,8 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -19,11 +19,8 @@ const (
 )
 
 func RequestHandle(router *gin.Engine) {
-	// 共享 store
-	// TODO: 剥离逻辑
-	// TODO：替换密钥为用户相关数据
-	store := cookie.NewStore([]byte("secret"))
-	router.Use(sessions.Sessions("flare_"+strconv.Itoa(FlareDefine.AppFlags.Port), store))
+	store := cookie.NewStore([]byte(FlareDefine.AppFlags.CookieSecret))
+	router.Use(sessions.Sessions(fmt.Sprintf("%s_%d", FlareDefine.AppFlags.CookieName, FlareDefine.AppFlags.Port), store))
 
 	// 非离线模式注册路由
 	if !FlareDefine.AppFlags.DisableLoginMode {

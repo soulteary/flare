@@ -102,6 +102,8 @@ func ParseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 	baseFlags.EnableEditor = GetDotEnvFileBoolOrDefault(envs, "FLARE_EDITOR", baseFlags.EnableEditor)
 	baseFlags.EnableGuide = GetDotEnvFileBoolOrDefault(envs, "FLARE_GUIDE", baseFlags.EnableGuide)
 	baseFlags.Visibility = GetDotEnvFileStringOrDefault(envs, "FLARE_VISIBILITY", baseFlags.Visibility)
+	baseFlags.CookieName = GetDotEnvFileStringOrDefault(envs, "FLARE_COOKIE_NAME", baseFlags.CookieName)
+	baseFlags.CookieSecret = GetDotEnvFileStringOrDefault(envs, "FLARE_COOKIE_SECRET", baseFlags.CookieSecret)
 
 	return baseFlags
 }

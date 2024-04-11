@@ -20,6 +20,9 @@ type Flags struct {
 	Pass             string
 	UserIsGenerated  bool
 	PassIsGenerated  bool
+
+	CookieName   string
+	CookieSecret string
 }
 
 // Application Envs Data Model
@@ -36,6 +39,9 @@ type Envs struct {
 	DisableLoginMode bool   `env:"FLARE_DISABLE_LOGIN"`
 	User             string `env:"FLARE_USER,unset"`
 	Pass             string `env:"FLARE_PASS,unset"`
+
+	CookieName   string `env:"FLARE_COOKIE_NAME"`
+	CookieSecret string `env:"FLARE_COOKIE_SECRET"`
 }
 
 // Application Envfile Data Model
@@ -52,4 +58,7 @@ type EnvFile struct {
 	DisableLoginMode bool   `ini:"FLARE_DISABLE_LOGIN,omitempty"`
 	User             string `ini:"FLARE_USER,omitempty"`
 	Pass             string `ini:"FLARE_PASS,omitempty"`
+
+	CookieName   string `ini:"FLARE_COOKIE_NAME,omitempty"`
+	CookieSecret string `ini:"FLARE_COOKIE_SECRET,omitempty"`
 }

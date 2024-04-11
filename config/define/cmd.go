@@ -15,6 +15,9 @@ const (
 	DEFAULT_ENABLE_EDITOR            = true
 	DEFAULT_VISIBILITY               = "DEFAULT"
 	DEFAULT_DISABLE_CSP              = false
+
+	DEFAULT_COOKIE_NAME   = "flare"
+	DEFAULT_COOKIE_SECRET = "secret"
 )
 
 // get default env config
@@ -32,6 +35,9 @@ func GetDefaultEnvVars() FlareModel.Envs {
 
 		User: DEFAULT_USER_NAME,
 		Pass: "",
+
+		CookieName:   DEFAULT_COOKIE_NAME,
+		CookieSecret: DEFAULT_COOKIE_SECRET,
 	}
 }
 

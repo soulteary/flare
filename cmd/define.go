@@ -29,4 +29,10 @@ const (
 
 	_KEY_DISABLE_CSP       = "disable_csp"
 	_KEY_DISABLE_CSP_SHORT = "c"
+
+	_KEY_COOKIE_NAME       = "cookie_name"
+	_KEY_COOKIE_NAME_SHORT = "k"
+
+	_KEY_COOKIE_SECRET       = "cookie_secret"
+	_KEY_COOKIE_SECRET_SHORT = "r"
 )

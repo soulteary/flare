@@ -41,6 +41,9 @@ func GetCliFlags() (*FlareModel.Flags, *flags.FlagSet) {
 	// 其他
 	options.BoolVarP(&cliFlags.ShowVersion, "version", "v", false, "显示应用版本号")
 	options.BoolVarP(&cliFlags.ShowHelp, "help", "h", false, "显示帮助")
+	// Cookie
+	options.StringVarP(&cliFlags.CookieName, _KEY_COOKIE_NAME, _KEY_COOKIE_NAME_SHORT, FlareDefine.DEFAULT_COOKIE_NAME, "调整 Cookie 字段名称")
+	options.StringVarP(&cliFlags.CookieSecret, _KEY_COOKIE_SECRET, _KEY_COOKIE_SECRET_SHORT, FlareDefine.DEFAULT_COOKIE_SECRET, "调整 Cookie 密钥")
 
 	_ = options.Parse(os.Args)
 
@@ -128,6 +131,15 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 
 	if CheckFlagsExists(keys, []string{_KEY_ENABLE_EDITOR, _KEY_ENABLE_EDITOR_SHORT}) {
 		baseFlags.EnableEditor = cliFlags.EnableEditor
+	}
+
+	// 设置 Cookie 相关信息
+	if CheckFlagsExists(keys, []string{_KEY_COOKIE_NAME, _KEY_COOKIE_NAME_SHORT}) {
+		baseFlags.CookieName = cliFlags.CookieName
+	}
+
+	if CheckFlagsExists(keys, []string{_KEY_COOKIE_SECRET, _KEY_COOKIE_SECRET_SHORT}) {
+		baseFlags.CookieSecret = cliFlags.CookieSecret
 	}
 
 	// Forcibly disable `debug mode` in non-development mode
