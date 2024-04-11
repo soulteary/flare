@@ -15,11 +15,12 @@
   margin-bottom: 20px;
 }
 
-.theme-groups .theme-custom {
-  width: 180px;
-}
-.theme-groups .theme-custom img {
-  width: 100%;
+.theme-groups .theme-custom .theme-container {
+  width: 120px;
+  height: 120px;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
 }
 
 .theme-groups .theme .theme-container {

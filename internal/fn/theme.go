@@ -70,7 +70,7 @@ type FlareCustomTheme struct {
 
 	Preview    string `yaml:"-"`
 	PreviewURL string `yaml:"-"`
-	Dir        string `yaml:"-"`
+	DirPath    string `yaml:"-"`
 }
 
 type FlareCustomThemeAuthor struct {
@@ -99,13 +99,13 @@ func GetAllCustomThemes() (result []FlareCustomTheme) {
 			continue
 		}
 		themes = append(themes, FlareCustomTheme{
-			Name: themeDirFile.Name(),
-			Dir:  path.Join(themeDir, themeDirFile.Name()),
+			Name:    themeDirFile.Name(),
+			DirPath: path.Join(themeDir, themeDirFile.Name()),
 		})
 	}
 
 	for _, theme := range themes {
-		yamlFile, err := os.ReadFile(path.Join(theme.Dir, "theme.yaml"))
+		yamlFile, err := os.ReadFile(path.Join(theme.DirPath, "theme.yaml"))
 		if err != nil {
 			continue
 		}
@@ -114,7 +114,7 @@ func GetAllCustomThemes() (result []FlareCustomTheme) {
 		if err != nil {
 			continue
 		}
-		themeInfo.Dir = theme.Dir
+		themeInfo.DirPath = theme.DirPath
 		themeInfo.Preview = GetThemePreview(theme.Name)
 		themeInfo.PreviewURL = strings.ReplaceAll(themeInfo.Preview, GetWorkDir(), "")
 

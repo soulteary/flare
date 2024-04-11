@@ -34,7 +34,7 @@ func RegisterRouting(router *gin.Engine) {
 
 func updateThemes(c *gin.Context) {
 	// 如果自定义主题存在，且未锁定主题则允许修改主题
-	if FlareDefine.ThemeCurrent != "" && FlareFn.IsCustomThemeExist(FlareDefine.ThemeCurrent) {
+	if FlareFn.IsCustomThemeExist(FlareDefine.ThemeCurrent) {
 		type UpdateThemeBody struct {
 			Theme string `form:"theme"`
 		}
@@ -63,8 +63,10 @@ func pageTheme(c *gin.Context) {
 	themeLocked := false
 	themeLockedInEmbededTheme := false
 	var themeSelected FlareModel.Theme
+	previewURL := ""
+	enablePreview := false
 
-	if FlareDefine.AppFlags.CustomTheme != "" {
+	if FlareFn.IsCustomThemeExist(FlareDefine.ThemeCurrent) {
 		themeLocked = true
 		for _, theme := range themes {
 			if theme.Name == FlareDefine.AppFlags.CustomTheme {
@@ -83,8 +85,16 @@ func pageTheme(c *gin.Context) {
 	}
 
 	customThemes := FlareFn.GetAllCustomThemes()
+	for _, theme := range customThemes {
+		if filepath.Base(theme.DirPath) == FlareFn.CustomThemeNameTransform(theme.Name) {
+			previewURL = theme.PreviewURL
+			enablePreview = true
+			break
+		}
+	}
 	customThemeAlived := len(customThemes) > 0
 
+	// TODO 拆分模版，减少模版复杂度
 	c.HTML(
 		http.StatusOK,
 		"settings.html",
@@ -107,6 +117,8 @@ func pageTheme(c *gin.Context) {
 			"CustomThemeName":   FlareDefine.AppFlags.CustomTheme,
 			"CustomThemes":      customThemes,
 			"CustomThemeAlived": customThemeAlived,
+			"PreviewURL":        previewURL,
+			"EnablePreview":     enablePreview,
 
 			// 主题锁定
 			"ThemeLocked": themeLocked,

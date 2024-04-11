@@ -19,20 +19,25 @@
             </div>
             {{ else }}
             <p class="help-text">当前启用主题名称</p>
-            <div class="theme theme-{{.CustomThemeName}}">
-                <div class="theme-container clearfix">
-                    <div class="pull-left theme-color color-background"
-                        style="background-color: {{.ThemeSelected.Colors.Background}};">
-                    </div>
-                    <div class="pull-left theme-color color-primary" style="background-color: {{.ThemeSelected.Colors.Primary}};">
-                    </div>
-                    <div class="pull-left theme-color color-accent" style="background-color: {{.ThemeSelected.Colors.Accent}};"></div>
-                </div>
-                <p class="theme-title">{{ .CustomThemeName }}</p>
+            <div class="theme theme-custom">
+                <div class="theme-container clearfix" style="background-image: url({{ .PreviewURL }});"></div>
+                <p class="theme-title">{{.CustomThemeName}}</p>
             </div>
             {{ end }}
         {{ else }}
             <p class="help-text">当前启用主题名称</p>
+            {{if .CustomThemeAlived}}
+            <div class="theme theme-custom">
+                {{ if .EnablePreview }}
+                <div class="theme-container clearfix" style="background-image: url({{ .PreviewURL }});"></div>
+                {{ else }}
+                <div class="pull-left theme-color color-background" style="background-color: {{.ThemeSelected.Colors.Background}};"></div>
+                <div class="pull-left theme-color color-primary" style="background-color: {{.ThemeSelected.Colors.Primary}};"></div>
+                <div class="pull-left theme-color color-accent" style="background-color: {{.ThemeSelected.Colors.Accent}};"></div>
+                {{ end }}
+                <p class="theme-title">{{.ThemeSelected.Name}}</p>
+            </div>
+            {{ else }}
             <div class="theme theme-{{.ThemeSelected.Name}}">
                 <div class="theme-container clearfix">
                     <div class="pull-left theme-color color-background"
@@ -44,6 +49,7 @@
                 </div>
                 <p class="theme-title">{{ .ThemeSelected.Name }}</p>
             </div>
+            {{ end }}
         {{ end }}
         </div>
 
@@ -52,15 +58,7 @@
                 {{ if .ThemeLocked }}
                 {{range .CustomThemes}}
                 <div class="pull-left theme theme-custom theme-disabled">
-                    <div class="theme-container clearfix">
-                        <img src="{{ .PreviewURL }}" alt="{{.Name}}">
-                        <div class="pull-left theme-color color-background"
-                            style="background-color: #fff;">
-                        </div>
-                        <div class="pull-left theme-color color-primary" style="background-color: #fff;">
-                        </div>
-                        <div class="pull-left theme-color color-accent" style="background-color: #fff;"></div>
-                    </div>
+                    <div class="theme-container clearfix" style="background-image: url({{ .PreviewURL }});"></div>
                     <p class="theme-title">{{.Name}}</p>
                 </div>
                 {{end}}
