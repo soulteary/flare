@@ -23,6 +23,11 @@ func Parse() FlareModel.Flags {
 	log.Info("程序服务端口", slog.Int(_KEY_PORT, flags.Port))
 	log.Info("页面请求合并", slog.Bool(_KEY_MINI_REQUEST, flags.EnableMinimumRequest))
 	log.Info("启用离线模式", slog.Bool(_KEY_ENABLE_OFFLINE, flags.EnableOfflineMode))
+
+	if flags.CustomTheme != "" {
+		log.Info("启用自定义主题", slog.String(_KEY_CUSTOM_THEME, flags.CustomTheme))
+	}
+
 	if flags.DisableLoginMode {
 		log.Info("已禁用登陆模式，用户可直接调整应用设置。")
 	} else {
