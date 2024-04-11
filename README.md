@@ -8,10 +8,19 @@ Challenge all bookmarking apps and websites directories, Aim to Be a best perfor
 
 **Simple**, **Fast**, **Lightweight** and super **Easy** to install and use.
 
-- Written in Go (Golang) and a little Modern vanilla Javascript only.
-- Doesn't depend any database or any complicated framework.
-- Single executable, no dependencies required, good docker support.
-- You can choose whether to enable various functions according to your needs: offline mode, weather, editor, account, and so on.
+- Simple and efficient:
+  - Optimize resource loading and rendering logic to make it faster.
+  - Written by Golang, keep the latest version of the runtime build.
+  - Avoid introducing complex frameworks.
+  - No database dependencies.
+  - With a little Modern vanilla Javascript only.
+- forward compatible:
+  - Supports pure server rendering, and can still be used in an environment where JavaScript is disabled.
+- Easy to deploy:
+    - One executable file, no libraries dependencies required.
+    - Good docker support.
+- And more:
+    - You can choose whether to enable various functions according to your needs: offline mode, weather, editor, account, and so on.
 
 ## ScreenShot
 
