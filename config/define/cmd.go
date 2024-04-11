@@ -18,6 +18,8 @@ const (
 
 	DEFAULT_COOKIE_NAME   = "flare"
 	DEFAULT_COOKIE_SECRET = "secret"
+
+	DEFAULT_CUSTOM_THEME = ""
 )
 
 // get default env config
@@ -38,6 +40,8 @@ func GetDefaultEnvVars() FlareModel.Envs {
 
 		CookieName:   DEFAULT_COOKIE_NAME,
 		CookieSecret: DEFAULT_COOKIE_SECRET,
+
+		CustomTheme: DEFAULT_CUSTOM_THEME,
 	}
 }
 

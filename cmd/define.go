@@ -35,4 +35,7 @@ const (
 
 	_KEY_COOKIE_SECRET       = "cookie_secret"
 	_KEY_COOKIE_SECRET_SHORT = "r"
+
+	_KEY_CUSTOM_THEME       = "theme"
+	_KEY_CUSTOM_THEME_SHORT = "t"
 )

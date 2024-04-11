@@ -66,6 +66,9 @@ func ParseEnvVars() (stor FlareModel.Flags) {
 	stor.EnableOfflineMode = defaults.EnableOfflineMode
 	stor.EnableEditor = defaults.EnableEditor
 	stor.DisableCSP = defaults.DisableCSP
+	stor.CookieName = defaults.CookieName
+	stor.CookieSecret = defaults.CookieSecret
+	stor.CustomTheme = defaults.CustomTheme
 
 	return stor
 }

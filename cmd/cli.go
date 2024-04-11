@@ -44,6 +44,8 @@ func GetCliFlags() (*FlareModel.Flags, *flags.FlagSet) {
 	// Cookie
 	options.StringVarP(&cliFlags.CookieName, _KEY_COOKIE_NAME, _KEY_COOKIE_NAME_SHORT, FlareDefine.DEFAULT_COOKIE_NAME, "调整 Cookie 字段名称")
 	options.StringVarP(&cliFlags.CookieSecret, _KEY_COOKIE_SECRET, _KEY_COOKIE_SECRET_SHORT, FlareDefine.DEFAULT_COOKIE_SECRET, "调整 Cookie 密钥")
+	// Theme
+	options.StringVarP(&cliFlags.CustomTheme, _KEY_CUSTOM_THEME, _KEY_CUSTOM_THEME_SHORT, FlareDefine.DEFAULT_CUSTOM_THEME, "指定主题")
 
 	_ = options.Parse(os.Args)
 
@@ -140,6 +142,11 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 
 	if CheckFlagsExists(keys, []string{_KEY_COOKIE_SECRET, _KEY_COOKIE_SECRET_SHORT}) {
 		baseFlags.CookieSecret = cliFlags.CookieSecret
+	}
+
+	// 设置主题
+	if CheckFlagsExists(keys, []string{_KEY_CUSTOM_THEME, _KEY_CUSTOM_THEME_SHORT}) {
+		baseFlags.CustomTheme = cliFlags.CustomTheme
 	}
 
 	// Forcibly disable `debug mode` in non-development mode

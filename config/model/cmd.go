@@ -23,6 +23,8 @@ type Flags struct {
 
 	CookieName   string
 	CookieSecret string
+
+	CustomTheme string
 }
 
 // Application Envs Data Model
@@ -42,6 +44,8 @@ type Envs struct {
 
 	CookieName   string `env:"FLARE_COOKIE_NAME"`
 	CookieSecret string `env:"FLARE_COOKIE_SECRET"`
+
+	CustomTheme string `env:"FLARE_CUSTOM_THEME"`
 }
 
 // Application Envfile Data Model
@@ -61,4 +65,6 @@ type EnvFile struct {
 
 	CookieName   string `ini:"FLARE_COOKIE_NAME,omitempty"`
 	CookieSecret string `ini:"FLARE_COOKIE_SECRET,omitempty"`
+
+	CustomTheme string `ini:"FLARE_CUSTOM_THEME,omitempty"`
 }
