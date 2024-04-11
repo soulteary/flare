@@ -1,4 +1,4 @@
-FROM alpine:3.16 as Builder
+FROM alpine:3.11 as Builder
 WORKDIR /app
 COPY flare ./
 RUN ls -al
