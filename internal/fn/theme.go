@@ -5,11 +5,40 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
+
+// TODO 添加错误日志输出
 
 // 获取主题存放目录
 func GetThemeDir() string {
 	return path.Join(GetWorkDir(), "themes")
+}
+
+// 获取主题预览图
+func GetThemePreview(themeName string) string {
+	baseDir := GetThemeDir()
+	themeDir := path.Join(baseDir, CustomThemeNameTransform(themeName))
+
+	if !IsCustomThemeExist(themeName) {
+		return ""
+	}
+
+	files, err := os.ReadDir(themeDir)
+	if err != nil {
+		return ""
+	}
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		if file.Name() == "preview.png" || file.Name() == "preview.jpg" || file.Name() == "preview.webp" {
+			return path.Join(themeDir, file.Name())
+		}
+	}
+	return ""
 }
 
 // 自定义主题名称转换
@@ -34,21 +63,37 @@ func IsCustomThemeExist(themeName string) bool {
 
 // TODO 完善结构（作者等），移动到 model 中
 type FlareCustomTheme struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Dir         string `json:"dir"`
+	Name        string                    `yaml:"Name"`
+	Description string                    `yaml:"Description"`
+	Version     string                    `yaml:"Version"`
+	Author      []FlareCustomThemeAuthor  `yaml:"Author"`
+	Original    FlareCustomThemeExtraInfo `yaml:"Original,omitempty"`
+
+	Preview string `yaml:"-"`
+	Dir     string `yaml:"-"`
+}
+
+type FlareCustomThemeAuthor struct {
+	Name string `yaml:"Name"`
+	URL  string `yaml:"URL"`
+}
+
+type FlareCustomThemeExtraInfo struct {
+	Author   string `yaml:"Author"`
+	URL      string `yaml:"URL"`
+	Download string `yaml:"Download"`
 }
 
 // 获取所有自定义主题信息
-func GetAllCustomThemes() []FlareCustomTheme {
-	var themes []FlareCustomTheme
+func GetAllCustomThemes() (result []FlareCustomTheme) {
 	themeDir := GetThemeDir()
 
 	themeDirFiles, err := os.ReadDir(themeDir)
 	if err != nil {
-		return themes
+		return result
 	}
 
+	var themes []FlareCustomTheme
 	for _, themeDirFile := range themeDirFiles {
 		if !themeDirFile.IsDir() {
 			continue
@@ -59,13 +104,21 @@ func GetAllCustomThemes() []FlareCustomTheme {
 		})
 	}
 
-	// TODO 读取主题信息
-	for i, theme := range themes {
+	for _, theme := range themes {
 		fmt.Println(theme)
-		// TODO 从文件中读取主题信息
-		themes[i].Description = "TODO"
-		// TODO 判断主题完整性
-	}
+		yamlFile, err := os.ReadFile(path.Join(theme.Dir, "theme.yaml"))
+		if err != nil {
+			continue
+		}
+		var themeInfo FlareCustomTheme
+		err = yaml.Unmarshal(yamlFile, &themeInfo)
+		if err != nil {
+			continue
+		}
+		themeInfo.Dir = theme.Dir
+		themeInfo.Preview = GetThemePreview(theme.Name)
 
-	return themes
+		result = append(result, themeInfo)
+	}
+	return result
 }
