@@ -1,7 +1,6 @@
 package FlareFn
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -69,8 +68,9 @@ type FlareCustomTheme struct {
 	Author      []FlareCustomThemeAuthor  `yaml:"Author"`
 	Original    FlareCustomThemeExtraInfo `yaml:"Original,omitempty"`
 
-	Preview string `yaml:"-"`
-	Dir     string `yaml:"-"`
+	Preview    string `yaml:"-"`
+	PreviewURL string `yaml:"-"`
+	Dir        string `yaml:"-"`
 }
 
 type FlareCustomThemeAuthor struct {
@@ -105,7 +105,6 @@ func GetAllCustomThemes() (result []FlareCustomTheme) {
 	}
 
 	for _, theme := range themes {
-		fmt.Println(theme)
 		yamlFile, err := os.ReadFile(path.Join(theme.Dir, "theme.yaml"))
 		if err != nil {
 			continue
@@ -117,6 +116,7 @@ func GetAllCustomThemes() (result []FlareCustomTheme) {
 		}
 		themeInfo.Dir = theme.Dir
 		themeInfo.Preview = GetThemePreview(theme.Name)
+		themeInfo.PreviewURL = strings.ReplaceAll(themeInfo.Preview, GetWorkDir(), "")
 
 		result = append(result, themeInfo)
 	}

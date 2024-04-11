@@ -3,6 +3,7 @@ package theme
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 
@@ -16,11 +17,24 @@ import (
 func RegisterRouting(router *gin.Engine) {
 	router.GET(FlareDefine.SettingPages.Theme.Path, FlareAuth.AuthRequired, pageTheme)
 	router.POST(FlareDefine.SettingPages.Theme.Path, FlareAuth.AuthRequired, updateThemes)
+
+	// TODO 优化主题静态资源加载，地址、缓存等
+	customThemes := FlareFn.GetAllCustomThemes()
+	fmt.Println("Get themes", len(customThemes))
+	for _, theme := range customThemes {
+		fmt.Println(theme.Name, theme.Author[0].Name, "!")
+		themeDir := FlareFn.CustomThemeNameTransform(theme.Name)
+		baseDir := FlareFn.GetThemeDir()
+		router.GET("/themes/"+themeDir+"/*filepath", func(c *gin.Context) {
+			reqFile := filepath.Join(baseDir, themeDir, c.Param("filepath"))
+			c.File(reqFile)
+		})
+	}
 }
 
 func updateThemes(c *gin.Context) {
-	// only allow to change theme when custom theme is not set
-	if FlareDefine.AppFlags.CustomTheme == "" {
+	// 如果自定义主题存在，且未锁定主题则允许修改主题
+	if FlareDefine.ThemeCurrent != "" && FlareFn.IsCustomThemeExist(FlareDefine.ThemeCurrent) {
 		type UpdateThemeBody struct {
 			Theme string `form:"theme"`
 		}
@@ -70,7 +84,6 @@ func pageTheme(c *gin.Context) {
 
 	customThemes := FlareFn.GetAllCustomThemes()
 	customThemeAlived := len(customThemes) > 0
-	fmt.Println(customThemes)
 
 	c.HTML(
 		http.StatusOK,

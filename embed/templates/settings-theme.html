@@ -51,8 +51,9 @@
             <div class="theme-groups clearfix">
                 {{ if .ThemeLocked }}
                 {{range .CustomThemes}}
-                <div class="pull-left theme theme-{{.Name}} theme-disabled">
+                <div class="pull-left theme theme-custom theme-disabled">
                     <div class="theme-container clearfix">
+                        <img src="{{ .PreviewURL }}" alt="{{.Name}}">
                         <div class="pull-left theme-color color-background"
                             style="background-color: #fff;">
                         </div>
@@ -65,7 +66,7 @@
                 {{end}}
             {{ else }}
                 {{range .CustomThemes}}
-                <div class="pull-left theme theme-{{.Name}} theme-disabled">
+                <div class="pull-left theme theme-custom theme-disabled">
                     <div class="theme-container clearfix">
                         <input class="theme-choose" name="theme" type="submit" value="{{.Name}}">
                         <div class="pull-left theme-color color-background"

@@ -7,12 +7,19 @@
   opacity: 0.5;
 }
 
-.theme-groups .help-text{
+.theme-groups .help-text {
   margin: 20px 0;
 }
 
-.theme-group-actived{
+.theme-group-actived {
   margin-bottom: 20px;
+}
+
+.theme-groups .theme-custom {
+  width: 180px;
+}
+.theme-groups .theme-custom img {
+  width: 100%;
 }
 
 .theme-groups .theme .theme-container {
