@@ -23,8 +23,18 @@
       <div class="main-container clearfix">
         {{ template "settings-sidebar.html" . }}
 
-        {{ if eq .PageName "Theme" }}
-          {{ template "settings-theme.html" . }}
+        {{ if eq .Type "Theme" }}
+          {{ if eq .TemplateName "General" }}
+            {{ template "theme-general.html" . }}
+          {{ end }}
+          {{ if eq .TemplateName "Locked" }}
+            {{ template "theme-locked.html" . }}
+          {{ end }}
+          {{ if eq .TemplateName "Embed-Locked" }}
+            {{ template "theme-embed-locked.html" . }}
+          {{ end }}
+
+          
         {{ end }}
 
         {{ if eq .PageName "Weather" }}

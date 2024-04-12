@@ -1,7 +1,6 @@
 package theme
 
 import (
-	"fmt"
 	"net/http"
 	"path/filepath"
 
@@ -18,15 +17,19 @@ func RegisterRouting(router *gin.Engine) {
 	router.GET(FlareDefine.SettingPages.Theme.Path, FlareAuth.AuthRequired, pageTheme)
 	router.POST(FlareDefine.SettingPages.Theme.Path, FlareAuth.AuthRequired, updateThemes)
 
+	RegisterThemeStaticRouting(router)
+}
+
+func RegisterThemeStaticRouting(router *gin.Engine) {
 	// TODO 优化主题静态资源加载，地址、缓存等
-	customThemes := FlareFn.GetAllCustomThemes()
-	fmt.Println("Get themes", len(customThemes))
-	for _, theme := range customThemes {
-		fmt.Println(theme.Name, theme.Author[0].Name, "!")
-		themeDir := FlareFn.CustomThemeNameTransform(theme.Name)
-		baseDir := FlareFn.GetThemeDir()
+	// 将所有的自定义主题静态资源加载到路由中
+	themes := FlareFn.GetAllCustomThemes()
+	for _, theme := range themes {
+		themeBaseDir := FlareFn.GetThemeDir()
+		themeName := FlareFn.CustomThemeNameTransform(theme.Name)
+		themeDir := filepath.Join(themeBaseDir, themeName)
 		router.GET("/themes/"+themeDir+"/*filepath", func(c *gin.Context) {
-			reqFile := filepath.Join(baseDir, themeDir, c.Param("filepath"))
+			reqFile := filepath.Join(themeDir, c.Param("filepath"))
 			c.File(reqFile)
 		})
 	}
@@ -34,7 +37,7 @@ func RegisterRouting(router *gin.Engine) {
 
 func updateThemes(c *gin.Context) {
 	// 如果自定义主题存在，且未锁定主题则允许修改主题
-	if FlareFn.IsCustomThemeExist(FlareDefine.ThemeCurrent) {
+	if FlareDefine.ThemeCurrent != "" && FlareFn.IsCustomThemeExist(FlareDefine.ThemeCurrent) {
 		type UpdateThemeBody struct {
 			Theme string `form:"theme"`
 		}
@@ -63,10 +66,8 @@ func pageTheme(c *gin.Context) {
 	themeLocked := false
 	themeLockedInEmbededTheme := false
 	var themeSelected FlareModel.Theme
-	previewURL := ""
-	enablePreview := false
 
-	if FlareFn.IsCustomThemeExist(FlareDefine.ThemeCurrent) {
+	if FlareDefine.ThemeCurrent != "" && FlareFn.IsCustomThemeExist(FlareDefine.ThemeCurrent) {
 		themeLocked = true
 		for _, theme := range themes {
 			if theme.Name == FlareDefine.AppFlags.CustomTheme {
@@ -87,12 +88,21 @@ func pageTheme(c *gin.Context) {
 	customThemes := FlareFn.GetAllCustomThemes()
 	for _, theme := range customThemes {
 		if filepath.Base(theme.DirPath) == FlareFn.CustomThemeNameTransform(theme.Name) {
-			previewURL = theme.PreviewURL
-			enablePreview = true
+			themeSelected.PreviewEnable = true
+			themeSelected.PreviewURL = theme.PreviewURL
 			break
 		}
 	}
 	customThemeAlived := len(customThemes) > 0
+
+	templateName := "General"
+	if themeLocked {
+		if themeLockedInEmbededTheme {
+			templateName = "Locked-EmbededTheme"
+		} else {
+			templateName = "Locked"
+		}
+	}
 
 	// TODO 拆分模版，减少模版复杂度
 	c.HTML(
@@ -104,7 +114,9 @@ func pageTheme(c *gin.Context) {
 			"PageAppearance":  FlareDefine.GetAppBodyStyle(),
 			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
 
-			"PageName":     "Theme",
+			"Type":         "Theme",
+			"TemplateName": templateName,
+
 			"SettingPages": FlareDefine.SettingPages,
 			// "Themes":       themes.Themes,
 			"Themes": themes,
@@ -117,13 +129,6 @@ func pageTheme(c *gin.Context) {
 			"CustomThemeName":   FlareDefine.AppFlags.CustomTheme,
 			"CustomThemes":      customThemes,
 			"CustomThemeAlived": customThemeAlived,
-			"PreviewURL":        previewURL,
-			"EnablePreview":     enablePreview,
-
-			// 主题锁定
-			"ThemeLocked": themeLocked,
-			// 主题锁定在内置主题
-			"ThemeLockedInEmbededTheme": themeLockedInEmbededTheme,
 		},
 	)
 }

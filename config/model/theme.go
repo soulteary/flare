@@ -11,4 +11,7 @@ type Palette struct {
 type Theme struct {
 	Name   string  `json:"name"`
 	Colors Palette `json:"colors"`
+
+	PreviewEnable bool
+	PreviewURL    string
 }
