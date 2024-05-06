@@ -8,7 +8,7 @@ require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/fatih/color v1.16.0
 	github.com/gin-contrib/gzip v1.0.0
-	github.com/gin-contrib/sessions v1.0.0
+	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/jszwec/csvutil v1.10.0
 	github.com/soulteary/funny-china-weather v0.1.1
