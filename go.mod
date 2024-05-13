@@ -6,7 +6,7 @@ require gopkg.in/yaml.v2 v2.4.0
 
 require (
 	github.com/caarlos0/env/v6 v6.10.1
-	github.com/fatih/color v1.16.0
+	github.com/fatih/color v1.17.0
 	github.com/gin-contrib/gzip v1.0.0
 	github.com/gin-contrib/sessions v1.0.0
 	github.com/gin-gonic/gin v1.9.1
