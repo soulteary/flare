@@ -72,7 +72,7 @@ func GenerateApplicationsTemplate(filter string) template.HTML {
 		if options.OpenAppNewTab {
 			tpl = tpl + `
 			<div class="app-container" data-id="` + app.Icon + `">
-			<a target="_blank" rel="noopener" href="` + templateURL + `" class="app-item" title="` + app.Name + `">
+			<a target="_blank" rel="noopener noreferrer" href="` + templateURL + `" class="app-item" title="` + app.Name + `">
 			  <div class="app-icon">` + templateIcon + `</div>
 			  <div class="app-text">
 				<p class="app-title">` + app.Name + `</p>
@@ -84,7 +84,7 @@ func GenerateApplicationsTemplate(filter string) template.HTML {
 		} else {
 			tpl = tpl + `
 			<div class="app-container" data-id="` + app.Icon + `">
-			<a rel="noopener" href="` + templateURL + `" class="app-item" title="` + app.Name + `">
+			<a rel="noopener noreferrer" href="` + templateURL + `" class="app-item" title="` + app.Name + `">
 			  <div class="app-icon">` + templateIcon + `</div>
 			  <div class="app-text">
 				<p class="app-title">` + app.Name + `</p>
