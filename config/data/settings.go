@@ -40,7 +40,11 @@ func UpdateSearch(showSearchComponent bool, disabledSearchAutoFocus bool) bool {
 }
 
 func GetAllSettingsOptions() (options FlareModel.Application) {
-	return loadAppConfigFromYaml("config")
+	options = loadAppConfigFromYaml("config")
+	if options.Locale == "" {
+		options.Locale = "zh"
+	}
+	return options
 }
 
 func UpdateAppearance(update FlareModel.Application) bool {
@@ -61,6 +65,7 @@ func UpdateAppearance(update FlareModel.Application) bool {
 	options.EnableEncryptedLink = update.EnableEncryptedLink
 	options.IconMode = update.IconMode
 	options.KeepLetterCase = update.KeepLetterCase
+	options.Locale = update.Locale
 
 	return saveAppConfigToYamlFile("config", options)
 }

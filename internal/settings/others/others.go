@@ -19,6 +19,10 @@ func RegisterRouting(e *echo.Echo) {
 
 func pageOthers(c *echo.Context) error {
 	options := FlareData.GetAllSettingsOptions()
+	locale := options.Locale
+	if locale == "" {
+		locale = "zh"
+	}
 	isLogined := false
 	if !FlareDefine.AppFlags.DisableLoginMode {
 		isLogined = FlareAuth.CheckUserIsLogin(c)
@@ -27,6 +31,7 @@ func pageOthers(c *echo.Context) error {
 	}
 	m := FlarePool.GetTemplateMap()
 	defer FlarePool.PutTemplateMap(m)
+	m["Locale"] = locale
 	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
 	m["DisableLoginMode"] = FlareDefine.AppFlags.DisableLoginMode
 	m["UserIsLogin"] = isLogined

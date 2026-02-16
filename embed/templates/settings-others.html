@@ -1,38 +1,37 @@
 {{ define "settings-others.html" }}
 <div class="setting-group-container">
 
-
      {{ if .DisableLoginMode }}
      {{else}}
         {{ if .UserIsLogin }}
         <form method="POST" action="{{.LogoutURI}}">
             <div class="form-group form-about">
-                <h2>登录</h2>
+                <h2>{{ T .Locale "login" }}</h2>
 
                 <div class="form-group">
-                    <p>当前用户 {{.UserName}}</p>
-                    <p>登录时间 {{.LoginDate}}</p>
+                    <p>{{ T .Locale "current_user" }} {{.UserName}}</p>
+                    <p>{{ T .Locale "login_time" }} {{.LoginDate}}</p>
                 </div>
                 <div class="form-group">
-                    <input class="btn-submit" type="submit" value="退出" />
+                    <input class="btn-submit" type="submit" value="{{ T .Locale "logout" }}" />
                 </div>
             </div>
         </form>
         {{ else }}
         <form method="POST" action="{{.LoginURI}}">
             <div class="form-group form-about">
-                <h2>登录</h2>
+                <h2>{{ T .Locale "login" }}</h2>
 
                 <div class="form-group">
-                    <label for="user-name">用户名</label>
-                    <input type="text" name="username" id="user-name" class="option-input" placeholder="请输入用户名">
+                    <label for="user-name">{{ T .Locale "username" }}</label>
+                    <input type="text" name="username" id="user-name" class="option-input" placeholder="{{ T .Locale "username_placeholder" }}">
                 </div>
                 <div class="form-group">
-                    <label for="user-pass">密码</label>
-                    <input type="password" name="password" id="user-pass" class="option-input" placeholder="请输入密码">
+                    <label for="user-pass">{{ T .Locale "password" }}</label>
+                    <input type="password" name="password" id="user-pass" class="option-input" placeholder="{{ T .Locale "password_placeholder" }}">
                 </div>
                 <div class="form-group">
-                    <input class="btn-submit" type="submit" value="登录" />
+                    <input class="btn-submit" type="submit" value="{{ T .Locale "login" }}" />
                 </div>
                 <br />
             </div>
@@ -44,18 +43,17 @@
             <br />
     {{ end }}
 
-
     <form method="POST" action="{{ .SettingPages.Others.Path }}">
         <div class="form-group form-about">
-            <h2>关于 Flare</h2>
-            <p>轻量、快速、美观的个人导航页面，适用于 HomeLab 或其他注重私密的场景。</p>
-            <p>无任何数据库依赖，应用数据完全开放透明，100% 属于用户自己。</p>
+            <h2>{{ T .Locale "about_flare" }}</h2>
+            <p>{{ T .Locale "about_desc_1" }}</p>
+            <p>{{ T .Locale "about_desc_2" }}</p>
 
             <br />
 
-            <p>项目地址：<a href="https://github.com/soulteary/docker-flare" target="_blank">soulteary/docker-flare</a> </p>
-            <p>程序版本：{{ .Version }} / {{.COMMIT}}</p>
-            <p>构建时间：{{ .BuildDate }}</p>
+            <p>{{ T .Locale "project_link" }}：<a href="https://github.com/soulteary/docker-flare" target="_blank">soulteary/docker-flare</a> </p>
+            <p>{{ T .Locale "version" }}：{{ .Version }} / {{.COMMIT}}</p>
+            <p>{{ T .Locale "build_date" }}：{{ .BuildDate }}</p>
         </div>
     </form>
 

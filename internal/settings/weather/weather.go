@@ -90,8 +90,13 @@ func testWeatherFetch(c *echo.Context) error {
 func render(c *echo.Context, testResult string) error {
 	location, showWeather := FlareData.GetLocationAndWeatherShow()
 	options := FlareData.GetAllSettingsOptions()
+	locale := options.Locale
+	if locale == "" {
+		locale = "zh"
+	}
 	m := FlarePool.GetTemplateMap()
 	defer FlarePool.PutTemplateMap(m)
+	m["Locale"] = locale
 	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
 	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
 	m["ShowWeatherModule"] = !FlareDefine.AppFlags.EnableOfflineMode && showWeather

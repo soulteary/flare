@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v5"
 
 	FlareDefine "github.com/soulteary/flare/config/define"
+	FlareI18n "github.com/soulteary/flare/internal/i18n"
 )
 
 //go:embed html
@@ -42,12 +43,20 @@ func (r *Renderer) Render(c *echo.Context, w io.Writer, templateName string, dat
 	return err
 }
 
+var templateFuncMap = template.FuncMap{
+	"T": FlareI18n.T,
+}
+
 func RegisterRouting(e *echo.Echo) {
 	var t *template.Template
+	var err error
 	if FlareDefine.AppFlags.DebugMode {
-		t = template.Must(template.ParseGlob("embed/templates/*.html"))
+		t, err = template.New("").Funcs(templateFuncMap).ParseGlob("embed/templates/*.html")
 	} else {
-		t = template.Must(template.New("").ParseFS(TPL, "html/*.html"))
+		t, err = template.New("").Funcs(templateFuncMap).ParseFS(TPL, "html/*.html")
+	}
+	if err != nil {
+		panic(err)
 	}
 	e.Renderer = &Renderer{templates: t}
 }

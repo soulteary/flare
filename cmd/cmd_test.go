@@ -34,6 +34,9 @@ type CLIParserMock struct {
 	mock.Mock
 }
 
+// parseCLI is used by testify/mock when On("parseCLI", ...) is set.
+//
+//nolint:unused
 func (m *CLIParserMock) parseCLI(envs map[string]string) FlareModel.Flags {
 	args := m.Called(envs)
 	return args.Get(0).(FlareModel.Flags)
@@ -81,7 +84,7 @@ func captureOutput(f func()) string {
 	outC := make(chan string)
 	go func() {
 		var buf bytes.Buffer
-		io.Copy(&buf, r)
+		_, _ = io.Copy(&buf, r)
 		outC <- buf.String()
 	}()
 	f()

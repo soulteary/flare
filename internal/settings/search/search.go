@@ -30,8 +30,13 @@ func updateSearchOptions(c *echo.Context) error {
 
 func pageSearch(c *echo.Context) error {
 	options := FlareData.GetAllSettingsOptions()
+	locale := options.Locale
+	if locale == "" {
+		locale = "zh"
+	}
 	m := FlarePool.GetTemplateMap()
 	defer FlarePool.PutTemplateMap(m)
+	m["Locale"] = locale
 	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
 	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
 	m["PageName"] = "Search"

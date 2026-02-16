@@ -1,7 +1,6 @@
 package home
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 	FlareModel "github.com/soulteary/flare/config/model"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 	FlareFn "github.com/soulteary/flare/internal/fn"
+	FlareI18n "github.com/soulteary/flare/internal/i18n"
 	FlarePool "github.com/soulteary/flare/internal/pool"
 	FlareWeather "github.com/soulteary/flare/internal/settings/weather"
 	weather "github.com/soulteary/funny-china-weather"
@@ -70,14 +70,16 @@ func renderHelp(c *echo.Context) error {
 			configWeatherShow = weatherShow
 		}
 	}
-	var days = [...]string{
-		"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六",
+	locale := options.Locale
+	if locale == "" {
+		locale = "zh"
 	}
 	if !FlareDefine.AppFlags.DisableCSP {
 		c.Response().Header().Set("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';")
 	}
 	m := FlarePool.GetTemplateMap()
 	defer FlarePool.PutTemplateMap(m)
+	m["Locale"] = locale
 	m["PageName"] = "Home"
 	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
 	m["SettingPages"] = FlareDefine.SettingPages
@@ -87,15 +89,15 @@ func renderHelp(c *echo.Context) error {
 	m["Location"] = options.Location
 	m["WeatherData"] = weatherData
 	m["WeatherIcon"] = weather.GetSVGCodeByName(weatherData.ConditionCode)
-	m["HeroDate"] = now.Format("2006年01月02日")
+	m["HeroDate"] = now.Format(FlareI18n.DateFormat(locale))
 	m["HeroTime"] = now.Format("15:04:05")
-	m["HeroDay"] = fmt.Sprintf(`%s`, days[now.Weekday()])
-	m["Greetings"] = "帮助"
+	m["HeroDay"] = FlareI18n.Weekday(locale, now.Weekday())
+	m["Greetings"] = FlareI18n.T(locale, "page_help")
 	m["BookmarksURI"] = FlareDefine.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = FlareDefine.RegularPages.Applications.Path
 	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
 	m["Applications"] = GenerateHelpTemplate()
-	m["SearchKeyword"] = template.HTML(" ")
+	m["SearchKeyword"] = template.HTML(FlareI18n.T(locale, "search_placeholder"))
 	m["HasKeyword"] = false
 	m["ShowSearchComponent"] = options.ShowSearchComponent
 	m["DisabledSearchAutoFocus"] = true
@@ -153,10 +155,10 @@ func updateWeatherData(location string) {
 	}
 }
 
-func getGreeting(greeting string) string {
+func getGreeting(greeting, locale string) string {
 	words := strings.Split(greeting, ";")
 	count := len(words)
-	defaultWord := "你好"
+	defaultWord := FlareI18n.T(locale, "greetings_placeholder")
 	if count == 1 {
 		if len(words[0]) > 0 {
 			return words[0]
@@ -181,12 +183,17 @@ func getGreeting(greeting string) string {
 
 func pageBookmark(c *echo.Context) error {
 	options := FlareData.GetAllSettingsOptions()
+	locale := options.Locale
+	if locale == "" {
+		locale = "zh"
+	}
 	FlareFn.ParseRequestURL(c.Request())
 	m := FlarePool.GetTemplateMap()
 	defer FlarePool.PutTemplateMap(m)
+	m["Locale"] = locale
 	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
 	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
-	m["PageName"] = "书签"
+	m["PageName"] = FlareI18n.T(locale, "page_bookmarks")
 	m["SubPage"] = true
 	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
 	m["SettingPages"] = FlareDefine.SettingPages
@@ -204,16 +211,21 @@ func pageBookmark(c *echo.Context) error {
 
 func pageApplication(c *echo.Context) error {
 	options := FlareData.GetAllSettingsOptions()
+	locale := options.Locale
+	if locale == "" {
+		locale = "zh"
+	}
 	FlareFn.ParseRequestURL(c.Request())
 	m := FlarePool.GetTemplateMap()
 	defer FlarePool.PutTemplateMap(m)
+	m["Locale"] = locale
 	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
 	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
 	m["BookmarksURI"] = FlareDefine.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = FlareDefine.RegularPages.Applications.Path
 	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
 	m["Applications"] = GenerateApplicationsTemplate("", &options)
-	m["PageName"] = "应用"
+	m["PageName"] = FlareI18n.T(locale, "page_apps")
 	m["SubPage"] = true
 	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
 	m["OptionTitle"] = options.Title
@@ -227,10 +239,14 @@ func pageApplication(c *echo.Context) error {
 func render(c *echo.Context, filter string) error {
 	options := FlareData.GetAllSettingsOptions()
 	FlareFn.ParseRequestURL(c.Request())
+	locale := options.Locale
+	if locale == "" {
+		locale = "zh"
+	}
 	hasKeyword := false
-	searchKeyword := " "
+	searchKeyword := FlareI18n.T(locale, "search_placeholder")
 	if filter != "" {
-		searchKeyword = "搜索结果: " + filter
+		searchKeyword = FlareI18n.Tf(locale, "search_result", filter)
 		hasKeyword = true
 	}
 	now := time.Now()
@@ -244,9 +260,6 @@ func render(c *echo.Context, filter string) error {
 			configWeatherShow = weatherShow
 		}
 	}
-	var days = [...]string{
-		"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六",
-	}
 	if !FlareDefine.AppFlags.DisableCSP {
 		c.Response().Header().Set("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';")
 	}
@@ -256,6 +269,7 @@ func render(c *echo.Context, filter string) error {
 	}
 	m := FlarePool.GetTemplateMap()
 	defer FlarePool.PutTemplateMap(m)
+	m["Locale"] = locale
 	m["PageName"] = "Home"
 	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
 	m["SettingPages"] = FlareDefine.SettingPages
@@ -265,10 +279,10 @@ func render(c *echo.Context, filter string) error {
 	m["Location"] = options.Location
 	m["WeatherData"] = weatherData
 	m["WeatherIcon"] = weather.GetSVGCodeByName(weatherData.ConditionCode)
-	m["HeroDate"] = now.Format("2006年01月02日")
+	m["HeroDate"] = now.Format(FlareI18n.DateFormat(locale))
 	m["HeroTime"] = now.Format("15:04:05")
-	m["HeroDay"] = fmt.Sprintf(`%s`, days[now.Weekday()])
-	m["Greetings"] = getGreeting(options.Greetings)
+	m["HeroDay"] = FlareI18n.Weekday(locale, now.Weekday())
+	m["Greetings"] = getGreeting(options.Greetings, locale)
 	m["BookmarksURI"] = FlareDefine.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = FlareDefine.RegularPages.Applications.Path
 	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
