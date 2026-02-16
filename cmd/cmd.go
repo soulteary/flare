@@ -17,36 +17,37 @@ import (
 
 func Parse() FlareModel.Flags {
 	envs := ParseEnvFile(ParseEnvVars())
-	flags := parseCLI(envs)
+	resolved := parseCLI(envs)
 
 	log := FlareLogger.GetLogger()
-	log.Info("程序服务端口", slog.Int(_KEY_PORT, flags.Port))
-	log.Info("页面请求合并", slog.Bool(_KEY_MINI_REQUEST, flags.EnableMinimumRequest))
-	log.Info("启用离线模式", slog.Bool(_KEY_ENABLE_OFFLINE, flags.EnableOfflineMode))
-	if flags.DisableLoginMode {
+	log.Info("程序服务端口", slog.Int(_KEY_PORT, resolved.Port))
+	log.Info("页面请求合并", slog.Bool(_KEY_MINI_REQUEST, resolved.EnableMinimumRequest))
+	log.Info("启用离线模式", slog.Bool(_KEY_ENABLE_OFFLINE, resolved.EnableOfflineMode))
+	if resolved.DisableLoginMode {
 		log.Info("已禁用登陆模式，用户可直接调整应用设置。")
 	} else {
 		log.Info("启用登陆模式，调整应用设置需要先进行登陆。")
-		log.Info("当前内容整体可见性为：", slog.String(_KEY_VISIBILITY, flags.Visibility))
+		log.Info("当前内容整体可见性为：", slog.String(_KEY_VISIBILITY, resolved.Visibility))
 
-		if flags.UserIsGenerated {
+		if resolved.UserIsGenerated {
 			log.Info("用户未指定 `FLARE_USER`，使用默认用户名", slog.String("username", FlareDefine.DEFAULT_USER_NAME))
 		} else {
-			log.Info("应用用户设置为", slog.String("username", flags.User))
+			log.Info("应用用户设置为", slog.String("username", resolved.User))
 		}
 
-		if flags.PassIsGenerated {
-			log.Info("用户未指定 `FLARE_PASS`，自动生成应用密码", slog.String("password", flags.Pass))
+		if resolved.PassIsGenerated {
+			log.Info("用户未指定 `FLARE_PASS`，自动生成应用密码", slog.String("password", resolved.Pass))
 		} else {
-			log.Info("应用登陆密码已设置为", slog.String("password", FlareData.MaskTextWithStars(flags.Pass)))
+			log.Info("应用登陆密码已设置为", slog.String("password", FlareData.MaskTextWithStars(resolved.Pass)))
 		}
 	}
 
-	FlareDefine.AppFlags = flags
-	return flags
+	FlareDefine.AppFlags = resolved
+	return resolved
 }
 
-func ExcuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
+// ExecuteCLI handles --help and --version; returns true if the program should exit.
+func ExecuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
 	programVersion := GetVersion(false)
 	if cliFlags.ShowHelp {
 		fmt.Println(programVersion)
@@ -60,6 +61,11 @@ func ExcuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
 		return true
 	}
 	return false
+}
+
+// ExcuteCLI is deprecated: use ExecuteCLI.
+func ExcuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
+	return ExecuteCLI(cliFlags, options)
 }
 
 func GetVersion(echo bool) string {

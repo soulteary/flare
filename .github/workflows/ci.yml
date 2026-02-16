@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  GO_VERSION: "1.26.0"
+  GO111MODULE: on
+
+jobs:
+  fmt:
+    name: Code Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Check code formatting
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "The following files have incorrect formatting:"
+            gofmt -s -d .
+            exit 1
+          fi
+
+  vet:
+    name: Code Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run go vet
+        run: go vet ./...
+
+  test:
+    name: Test & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v5
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build
+        run: |
+          go run build/build.go
+          go mod tidy
+
+      - name: Run tests with coverage
+        run: |
+          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Generate coverage report
+        run: go tool cover -html=coverage.out -o coverage.html
+
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report
+          path: coverage.html
+
+      # 在仓库 Variables 或 job env 中设置 COVERAGE_THRESHOLD（如 50）可强制最低覆盖率
+      - name: Check coverage threshold
+        run: |
+          COVER=$(go tool cover -func=coverage.out | grep 'total:' | awk '{gsub(/%/,""); print $3}')
+          THRESHOLD="${COVERAGE_THRESHOLD:-0}"
+          echo "Coverage: ${COVER}%, threshold: ${THRESHOLD}%"
+          if ! awk -v c="$COVER" -v t="$THRESHOLD" 'BEGIN { exit (c >= t) ? 0 : 1 }'; then
+            echo "Coverage ${COVER}% is below threshold ${THRESHOLD}%"
+            exit 1
+          fi
+        env:
+          COVERAGE_THRESHOLD: "0"
+
+      - name: Upload to Codecov (optional)
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.out
+          flags: unittests
+          name: flare-coverage
+          fail_ci_if_error: false

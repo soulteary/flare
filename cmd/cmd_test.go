@@ -121,6 +121,12 @@ func TestExcuteCLI_NoFlags(t *testing.T) {
 	assert.False(t, FlareCMD.ExcuteCLI(cliFlags, options), "当没有任何标志被设置时，应该返回 false")
 }
 
+func TestExecuteCLI_NoFlags(t *testing.T) {
+	cliFlags := &FlareModel.Flags{}
+	options := &flags.FlagSet{}
+	assert.False(t, FlareCMD.ExecuteCLI(cliFlags, options), "ExecuteCLI 无 help/version 时应返回 false")
+}
+
 func TestGetVersionEcho(t *testing.T) {
 	ver := ""
 	// output := captureOutput(func() {

@@ -5,12 +5,16 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/soulteary/cli-kit/configutil"
+	"github.com/soulteary/cli-kit/flagutil"
 	"github.com/soulteary/flare/internal/version"
 	flags "github.com/spf13/pflag"
 
 	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
 )
+
+var flagsMapTrimValue = regexp.MustCompile(`=.*`)
 
 func GetCliFlags() (*FlareModel.Flags, *flags.FlagSet) {
 	var cliFlags = new(FlareModel.Flags)
@@ -50,23 +54,33 @@ func GetCliFlags() (*FlareModel.Flags, *flags.FlagSet) {
 	return cliFlags, options
 }
 
+// GetFlagsMaps returns a set of flag names that appear in os.Args (supports -x, --x, -x=val, --x=val).
+// Used by tests. For unregistered flags (e.g. debug) use flagutil.HasFlagInOSArgs.
 func GetFlagsMaps() map[string]bool {
 	keys := make(map[string]bool)
 	if len(os.Args) <= 1 {
 		return keys
 	}
-	trimValue := regexp.MustCompile(`=.*`)
 	for _, key := range os.Args[1:] {
-		if key[:2] == "--" {
-			keys[trimValue.ReplaceAllString(key[2:], "")] = true
-		} else if key[:1] == "-" {
-			keys[trimValue.ReplaceAllString(key[1:], "")] = true
+		var name string
+		if len(key) >= 2 && key[:2] == "--" {
+			name = flagsMapTrimValue.ReplaceAllString(key[2:], "")
+		} else if len(key) >= 1 && key[:1] == "-" {
+			name = flagsMapTrimValue.ReplaceAllString(key[1:], "")
+		}
+		if name != "" {
+			keys[name] = true
 		}
 	}
 	return keys
 }
 
+// CheckFlagsExists returns true if any of keys is present in dict.
+// Returns false if dict is nil.
 func CheckFlagsExists(dict map[string]bool, keys []string) bool {
+	if dict == nil {
+		return false
+	}
 	for _, key := range keys {
 		if dict[key] {
 			return true
@@ -76,79 +90,43 @@ func CheckFlagsExists(dict map[string]bool, keys []string) bool {
 }
 
 func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
-	userOptionsFromCLI, originFlags := GetCliFlags()
-	exit := ExcuteCLI(userOptionsFromCLI, originFlags)
+	cliFlags, fs := GetCliFlags()
+	exit := ExecuteCLI(cliFlags, fs)
 	if exit {
 		os.Exit(0)
 	}
 	GetVersion(true)
 
-	// 用于判断参数是否存在
-	keys := GetFlagsMaps()
-
-	cliFlags := userOptionsFromCLI
-
-	if CheckFlagsExists(keys, []string{_KEY_PORT, _KEY_PORT_SHORT}) {
-		baseFlags.Port = cliFlags.Port
+	// Resolve from CLI when flag is set, else keep base (env + envfile). Empty envKey = no env re-read.
+	port, err := configutil.ResolvePortPflag(fs, _KEY_PORT, "", baseFlags.Port)
+	if err != nil {
+		port = FlareDefine.DEFAULT_PORT
 	}
+	baseFlags.Port = port
 
-	if CheckFlagsExists(keys, []string{_KEY_MINI_REQUEST, _KEY_MINI_REQUEST_SHORT, _KEY_MINI_REQUEST_OLD}) {
-		baseFlags.EnableMinimumRequest = cliFlags.EnableMinimumRequest
+	baseFlags.EnableMinimumRequest = configutil.ResolveBoolPflag(fs, _KEY_MINI_REQUEST, "", baseFlags.EnableMinimumRequest)
+	baseFlags.DisableLoginMode = configutil.ResolveBoolPflag(fs, _KEY_DISABLE_LOGIN, "", baseFlags.DisableLoginMode)
+	baseFlags.DisableCSP = configutil.ResolveBoolPflag(fs, _KEY_DISABLE_CSP, "", baseFlags.DisableCSP)
+
+	visibility, err := configutil.ResolveEnumPflag(fs, _KEY_VISIBILITY, "", baseFlags.Visibility, []string{"DEFAULT", "PRIVATE"}, false)
+	if err != nil {
+		visibility = FlareDefine.DEFAULT_VISIBILITY
 	}
+	baseFlags.Visibility = strings.ToUpper(visibility)
 
-	if CheckFlagsExists(keys, []string{_KEY_DISABLE_LOGIN, _KEY_DISABLE_LOGIN_SHORT, _KEY_DISABLE_LOGIN_OLD}) {
-		baseFlags.DisableLoginMode = cliFlags.DisableLoginMode
-	}
+	baseFlags.EnableOfflineMode = configutil.ResolveBoolPflag(fs, _KEY_ENABLE_OFFLINE, "", baseFlags.EnableOfflineMode)
+	baseFlags.EnableDeprecatedNotice = configutil.ResolveBoolPflag(fs, _KEY_ENABLE_DEPRECATED_NOTICE, "", baseFlags.EnableDeprecatedNotice)
+	baseFlags.EnableGuide = configutil.ResolveBoolPflag(fs, _KEY_ENABLE_GUIDE, "", baseFlags.EnableGuide)
+	baseFlags.EnableEditor = configutil.ResolveBoolPflag(fs, _KEY_ENABLE_EDITOR, "", baseFlags.EnableEditor)
 
-	if CheckFlagsExists(keys, []string{_KEY_DISABLE_CSP, _KEY_DISABLE_CSP_SHORT}) {
-		baseFlags.DisableCSP = cliFlags.DisableCSP
-	}
+	baseFlags.CookieName = configutil.ResolveStringPflag(fs, _KEY_COOKIE_NAME, "", baseFlags.CookieName, true)
+	baseFlags.CookieSecret = configutil.ResolveStringPflag(fs, _KEY_COOKIE_SECRET, "", baseFlags.CookieSecret, true)
 
-	if CheckFlagsExists(keys, []string{_KEY_VISIBILITY, _KEY_VISIBILITY_SHORT}) {
-		baseFlags.Visibility = cliFlags.Visibility
-		// 判断是否为白名单中的词，以及强制转换内容为大写
-		if strings.ToUpper(cliFlags.Visibility) != FlareDefine.DEFAULT_VISIBILITY &&
-			strings.ToUpper(cliFlags.Visibility) != "PRIVATE" {
-			baseFlags.Visibility = FlareDefine.DEFAULT_VISIBILITY
-		} else {
-			baseFlags.Visibility = strings.ToUpper(cliFlags.Visibility)
-		}
-	} else {
-		baseFlags.Visibility = strings.ToUpper(baseFlags.Visibility)
-	}
-
-	if CheckFlagsExists(keys, []string{_KEY_ENABLE_OFFLINE, _KEY_ENABLE_OFFLINE_SHORT}) {
-		baseFlags.EnableOfflineMode = cliFlags.EnableOfflineMode
-	}
-
-	if CheckFlagsExists(keys, []string{_KEY_ENABLE_DEPRECATED_NOTICE, _KEY_ENABLE_DEPRECATED_NOTICE_SHORT}) {
-		baseFlags.EnableDeprecatedNotice = cliFlags.EnableDeprecatedNotice
-	}
-
-	if CheckFlagsExists(keys, []string{_KEY_ENABLE_GUIDE, _KEY_ENABLE_GUIDE_SHORT}) {
-		baseFlags.EnableGuide = cliFlags.EnableGuide
-	}
-
-	if CheckFlagsExists(keys, []string{_KEY_ENABLE_EDITOR, _KEY_ENABLE_EDITOR_SHORT}) {
-		baseFlags.EnableEditor = cliFlags.EnableEditor
-	}
-
-	// 设置 Cookie 相关信息
-	if CheckFlagsExists(keys, []string{_KEY_COOKIE_NAME, _KEY_COOKIE_NAME_SHORT}) {
-		baseFlags.CookieName = cliFlags.CookieName
-	}
-
-	if CheckFlagsExists(keys, []string{_KEY_COOKIE_SECRET, _KEY_COOKIE_SECRET_SHORT}) {
-		baseFlags.CookieSecret = cliFlags.CookieSecret
-	}
-
-	// Forcibly disable `debug mode` in non-development mode
+	// Forcibly disable debug mode in non-development mode
 	if strings.ToLower(version.Version) != "dev" {
 		baseFlags.DebugMode = false
 	} else {
-		if keys["D"] || keys["debug"] {
-			baseFlags.DebugMode = true
-		}
+		baseFlags.DebugMode = flagutil.HasFlagInOSArgs("D") || flagutil.HasFlagInOSArgs("debug")
 	}
 
 	return baseFlags
