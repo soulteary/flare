@@ -76,7 +76,7 @@ func initBookmarks(filePath string, isFavorite bool) (result model.Bookmarks, er
 	ok := saveFile(filePath, out)
 	if !ok {
 		log.Println("保存初始配置失败。")
-		return result, err
+		return result, fmt.Errorf("保存初始配置失败: %s", filePath)
 	}
 
 	return result, nil

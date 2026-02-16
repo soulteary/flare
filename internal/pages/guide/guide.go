@@ -22,12 +22,13 @@ const _ASSETS_WEB_URI = "/" + _ASSETS_BASE_DIR
 //go:embed guide-assets
 var IntroAssets embed.FS
 
-func Init() {
+func Init() error {
 	MemFs = memfs.New()
 	err := MemFs.MkdirAll(_ASSETS_BASE_DIR, 0777)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func RegisterRouting(e *echo.Echo) {

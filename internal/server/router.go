@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -29,7 +30,8 @@ import (
 )
 
 // NewRouter builds the Echo app and returns an http.Handler for the server.
-func NewRouter(_ *model.Flags) http.Handler {
+// It returns an error if any required initialization (templates, mdi, guide, editor) fails.
+func NewRouter(_ *model.Flags) (http.Handler, error) {
 	define.Init()
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -39,7 +41,9 @@ func NewRouter(_ *model.Flags) http.Handler {
 	}
 	auth.RequestHandle(e)
 	home.InitWeatherIfNeeded()
-	templates.RegisterRouting(e)
+	if err := templates.RegisterRouting(e); err != nil {
+		return nil, fmt.Errorf("初始化模板: %w", err)
+	}
 	assets.RegisterRouting(e)
 	health.RegisterRouting(e)
 	home.RegisterRouting(e)
@@ -49,17 +53,23 @@ func NewRouter(_ *model.Flags) http.Handler {
 	search.RegisterRouting(e)
 	appearance.RegisterRouting(e)
 	others.RegisterRouting(e)
-	mdi.Init()
+	if err := mdi.Init(); err != nil {
+		return nil, fmt.Errorf("初始化 MDI 资源: %w", err)
+	}
 	mdi.RegisterRouting(e)
 	redir.RegisterRouting(e)
 	if define.AppFlags.EnableGuide {
-		guide.Init()
+		if err := guide.Init(); err != nil {
+			return nil, fmt.Errorf("初始化引导页: %w", err)
+		}
 		guide.RegisterRouting(e)
 	}
 	if define.AppFlags.EnableEditor {
-		editor.Init()
+		if err := editor.Init(); err != nil {
+			return nil, fmt.Errorf("初始化编辑器: %w", err)
+		}
 		editor.RegisterRouting(e)
 	}
 	deprecated.RegisterRouting(e)
-	return e
+	return e, nil
 }

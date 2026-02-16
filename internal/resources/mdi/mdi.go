@@ -24,14 +24,15 @@ var _CACHE_MDI_ICON_DATA map[string]string
 //go:embed mdi-cheat-sheets
 var MdiExampleAssets embed.FS
 
-func Init() {
+func Init() error {
 	MemFs = memfs.New()
 	err := MemFs.MkdirAll(_ASSETS_BASE_DIR, 0777)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	_CACHE_MDI_ICON_EXIST = make(map[string]bool)
 	_CACHE_MDI_ICON_DATA = make(map[string]string)
+	return nil
 }
 
 func RegisterRouting(e *echo.Echo) {
@@ -71,7 +72,8 @@ func GetIconByName(name string) string {
 		}
 		_, err = fs.ReadFile(MemFs, svgFile)
 		if err != nil {
-			panic(err)
+			log.Println("读取内置图标缓存出错:", err)
+			return _EMPTY_ICON
 		}
 		_CACHE_MDI_ICON_EXIST[define.ThemeCurrent+"-"+name] = true
 	}

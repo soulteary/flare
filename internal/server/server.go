@@ -19,7 +19,11 @@ func StartDaemon(AppFlags *model.Flags) {
 	defer stop()
 
 	log := logger.GetLogger()
-	router := NewRouter(AppFlags)
+	router, err := NewRouter(AppFlags)
+	if err != nil {
+		log.Error("路由初始化失败", "error", err)
+		os.Exit(1)
+	}
 
 	srv := &http.Server{
 		Addr:              ":" + strconv.Itoa(AppFlags.Port),

@@ -75,7 +75,8 @@ func setupRouter() (http.Handler, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := os.Chdir(tmpDir); err != nil {
+	err = os.Chdir(tmpDir)
+	if err != nil {
 		_ = os.RemoveAll(tmpDir)
 		return nil, nil, err
 	}
@@ -94,7 +95,11 @@ func setupRouter() (http.Handler, func(), error) {
 	_, _ = data.LoadFavoriteBookmarks()
 	_, _ = data.LoadNormalBookmarks()
 
-	handler := server.NewRouter(&define.AppFlags)
+	handler, err := server.NewRouter(&define.AppFlags)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
 	return handler, cleanup, nil
 }
 

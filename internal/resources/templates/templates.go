@@ -50,7 +50,7 @@ var templateFuncMap = template.FuncMap{
 	"T": i18n.T,
 }
 
-func RegisterRouting(e *echo.Echo) {
+func RegisterRouting(e *echo.Echo) error {
 	var t *template.Template
 	var err error
 	if define.AppFlags.DebugMode {
@@ -59,7 +59,8 @@ func RegisterRouting(e *echo.Echo) {
 		t, err = template.New("").Funcs(templateFuncMap).ParseFS(TPL, "html/*.html")
 	}
 	if err != nil {
-		panic(err)
+		return err
 	}
 	e.Renderer = &Renderer{templates: t}
+	return nil
 }
