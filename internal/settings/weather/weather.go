@@ -7,11 +7,11 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareModel "github.com/soulteary/flare/config/model"
-	FlareAuth "github.com/soulteary/flare/internal/auth"
-	FlarePool "github.com/soulteary/flare/internal/pool"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/pool"
 	weather "github.com/soulteary/funny-china-weather"
 )
 
@@ -38,7 +38,7 @@ type WeatherQueryParams struct {
 	Location string `form:"location"`
 }
 
-func GetWeatherInfo(location string) (response FlareModel.Weather, desc string, err error) {
+func GetWeatherInfo(location string) (response model.Weather, desc string, err error) {
 	code, degree, humidity, lastUpdate, fetchRemoteErr := weather.GetWeatherByLocation(location)
 	if fetchRemoteErr != nil {
 		return response, "获取远程数据失败", errors.New("获取远程数据失败")
@@ -58,10 +58,10 @@ func GetWeatherInfo(location string) (response FlareModel.Weather, desc string, 
 }
 
 func RegisterRouting(e *echo.Echo) {
-	e.GET(FlareDefine.SettingPages.Weather.Path, pageHome, FlareAuth.AuthRequired)
-	if !FlareDefine.AppFlags.EnableOfflineMode {
-		e.POST(FlareDefine.SettingPages.Weather.Path, updateWeatherOptions, FlareAuth.AuthRequired)
-		e.POST(FlareDefine.SettingPagesAPI.WeatherTest.Path, testWeatherFetch, FlareAuth.AuthRequired)
+	e.GET(define.SettingPages.Weather.Path, pageHome, auth.AuthRequired)
+	if !define.AppFlags.EnableOfflineMode {
+		e.POST(define.SettingPages.Weather.Path, updateWeatherOptions, auth.AuthRequired)
+		e.POST(define.SettingPagesAPI.WeatherTest.Path, testWeatherFetch, auth.AuthRequired)
 	}
 }
 
@@ -77,36 +77,42 @@ func updateWeatherOptions(c *echo.Context) error {
 	if err := c.Bind(&body); err != nil {
 		return c.JSON(http.StatusForbidden, "提交数据缺失")
 	}
-	FlareData.UpdateWeatherAndLocation(body.ShowWeather, body.Location)
+	data.UpdateWeatherAndLocation(body.ShowWeather, body.Location)
 	return render(c, "")
 }
 
 func testWeatherFetch(c *echo.Context) error {
-	location, _ := FlareData.GetLocationAndWeatherShow()
-	_, desc, _ := GetWeatherInfo(location)
+	location, _ := data.GetLocationAndWeatherShow()
+	_, desc, err := GetWeatherInfo(location)
+	if err != nil {
+		desc = ""
+	}
 	return render(c, desc)
 }
 
 func render(c *echo.Context, testResult string) error {
-	location, showWeather := FlareData.GetLocationAndWeatherShow()
-	options := FlareData.GetAllSettingsOptions()
+	location, showWeather := data.GetLocationAndWeatherShow()
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "config error")
+	}
 	locale := options.Locale
 	if locale == "" {
 		locale = "zh"
 	}
-	m := FlarePool.GetTemplateMap()
-	defer FlarePool.PutTemplateMap(m)
+	m := pool.GetTemplateMap()
+	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
-	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
-	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
-	m["ShowWeatherModule"] = !FlareDefine.AppFlags.EnableOfflineMode && showWeather
+	m["DebugMode"] = define.AppFlags.DebugMode
+	m["PageInlineStyle"] = define.GetPageInlineStyle()
+	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && showWeather
 	m["ShowWeather"] = showWeather
 	m["PageName"] = "Weather"
-	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
-	m["SettingPages"] = FlareDefine.SettingPages
-	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
+	m["PageAppearance"] = define.GetAppBodyStyle()
+	m["SettingPages"] = define.SettingPages
+	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["OptionTitle"] = options.Title
-	m["SettingPagesAPI"] = FlareDefine.SettingPagesAPI
+	m["SettingPagesAPI"] = define.SettingPagesAPI
 	m["Location"] = location
 	m["TestResult"] = testResult
 	return c.Render(http.StatusOK, "settings.html", m)

@@ -1,4 +1,4 @@
-package FlareModel
+package model
 
 // Weather Data Model
 type Weather struct {

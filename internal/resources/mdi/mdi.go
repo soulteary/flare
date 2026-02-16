@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/soulteary/memfs"
 
-	FlareDefine "github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/define"
 )
 
 var MemFs *memfs.FS
@@ -35,10 +35,12 @@ func Init() {
 }
 
 func RegisterRouting(e *echo.Echo) {
-	weather, _ := fs.Sub(MemFs, _ASSETS_BASE_DIR)
-	e.StaticFS(_ASSETS_WEB_URI, weather)
-	mdiExample, _ := fs.Sub(MdiExampleAssets, "mdi-cheat-sheets")
-	e.StaticFS(FlareDefine.RegularPages.Icons.Path, mdiExample)
+	if weather, err := fs.Sub(MemFs, _ASSETS_BASE_DIR); err == nil {
+		e.StaticFS(_ASSETS_WEB_URI, weather)
+	}
+	if mdiExample, err := fs.Sub(MdiExampleAssets, "mdi-cheat-sheets"); err == nil {
+		e.StaticFS(define.RegularPages.Icons.Path, mdiExample)
+	}
 }
 
 const _EMPTY_ICON = ""
@@ -52,7 +54,7 @@ func GetIconByName(name string) string {
 		return _EMPTY_ICON
 	}
 	content := ""
-	if FlareDefine.AppFlags.EnableMinimumRequest {
+	if define.AppFlags.EnableMinimumRequest {
 		if !_CACHE_MDI_ICON_EXIST[name] {
 			content = `<svg viewBox="0 0 24 24"><path d="` + icon + `" style="fill: var(--color-primary);"></path></svg>`
 			_CACHE_MDI_ICON_DATA[name] = content
@@ -60,9 +62,9 @@ func GetIconByName(name string) string {
 		}
 		return _CACHE_MDI_ICON_DATA[name]
 	}
-	svgFile := filepath.ToSlash(filepath.Join(_ASSETS_BASE_DIR, (FlareDefine.ThemeCurrent + "-" + name + ".svg")))
-	if !_CACHE_MDI_ICON_EXIST[FlareDefine.ThemeCurrent+"-"+name] {
-		content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="` + icon + `" style="fill:` + FlareDefine.ThemePrimaryColor + `;"></path></svg>`
+	svgFile := filepath.ToSlash(filepath.Join(_ASSETS_BASE_DIR, (define.ThemeCurrent + "-" + name + ".svg")))
+	if !_CACHE_MDI_ICON_EXIST[define.ThemeCurrent+"-"+name] {
+		content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="` + icon + `" style="fill:` + define.ThemePrimaryColor + `;"></path></svg>`
 		err := MemFs.WriteFile(svgFile, []byte(content), 0755)
 		if err != nil {
 			log.Println("缓存内置图标出错:", err)
@@ -71,7 +73,7 @@ func GetIconByName(name string) string {
 		if err != nil {
 			panic(err)
 		}
-		_CACHE_MDI_ICON_EXIST[FlareDefine.ThemeCurrent+"-"+name] = true
+		_CACHE_MDI_ICON_EXIST[define.ThemeCurrent+"-"+name] = true
 	}
 	return `<img src="/` + svgFile + `" width="68" height="68" alt="">`
 }

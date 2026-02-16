@@ -10,7 +10,11 @@ var templateMapPool = sync.Pool{
 
 // GetTemplateMap 从池中取一个 map，用完后须调用 PutTemplateMap 归还。
 func GetTemplateMap() map[string]interface{} {
-	return templateMapPool.Get().(map[string]interface{})
+	m, ok := templateMapPool.Get().(map[string]interface{})
+	if !ok {
+		return make(map[string]interface{}, templateMapCap)
+	}
+	return m
 }
 
 // PutTemplateMap 清空 map 并归还到池。

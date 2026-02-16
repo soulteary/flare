@@ -1,4 +1,4 @@
-package FlareFn
+package fn
 
 import (
 	"encoding/json"

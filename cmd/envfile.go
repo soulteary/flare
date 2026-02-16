@@ -1,20 +1,20 @@
-package FlareCMD
+package cmd
 
 import (
 	"fmt"
 	"os"
 	"strings"
 
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareModel "github.com/soulteary/flare/config/model"
-	FlareFn "github.com/soulteary/flare/internal/fn"
-	FlareLogger "github.com/soulteary/flare/internal/logger"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/fn"
+	"github.com/soulteary/flare/internal/logger"
 	"gopkg.in/ini.v1"
 )
 
 func CheckDotEnvFileExist(filePath string) bool {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		log := FlareLogger.GetLogger()
+		log := logger.GetLogger()
 		log.Debug("默认的 .env 文件不存在，跳过解析。")
 		return false
 	}
@@ -24,7 +24,7 @@ func CheckDotEnvFileExist(filePath string) bool {
 func GetDotEnvFileStringOrDefault(envs *ini.File, key string, def string) string {
 	value := strings.TrimSpace(envs.Section("").Key(key).String())
 	if value == "" {
-		log := FlareLogger.GetLogger()
+		log := logger.GetLogger()
 		log.Debug(fmt.Sprintf("%s 配置文件值为空，使用默认值。", key))
 		return def
 	}
@@ -34,17 +34,17 @@ func GetDotEnvFileStringOrDefault(envs *ini.File, key string, def string) string
 func GetDotEnvFileBoolOrDefault(envs *ini.File, key string, def bool) bool {
 	value, err := envs.Section("").Key(key).Bool()
 	if err != nil {
-		log := FlareLogger.GetLogger()
+		log := logger.GetLogger()
 		log.Debug(fmt.Sprintf("%s 配置文件值异常，使用默认值。", key))
 		return def
 	}
 	return value
 }
 
-func ParseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
-	log := FlareLogger.GetLogger()
+func ParseEnvFile(baseFlags model.Flags) model.Flags {
+	log := logger.GetLogger()
 
-	envPath := FlareFn.GetWorkDirFile(".env")
+	envPath := fn.GetWorkDirFile(".env")
 
 	if !CheckDotEnvFileExist(envPath) {
 		return baseFlags
@@ -57,7 +57,7 @@ func ParseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 		return baseFlags
 	}
 
-	err = envs.MapTo(&FlareModel.Envs{})
+	err = envs.MapTo(&model.Envs{})
 	if err != nil {
 		log.Error("解析 .env 文件出错，请检查文件内容是否正确。")
 		log.Warn("程序使用默认配置继续运行。")
@@ -78,7 +78,7 @@ func ParseEnvFile(baseFlags FlareModel.Flags) FlareModel.Flags {
 	user := GetDotEnvFileStringOrDefault(envs, "FLARE_USER", baseFlags.User)
 	baseFlags.User = user
 
-	defaults := FlareDefine.DefaultEnvVars
+	defaults := define.DefaultEnvVars
 
 	if user == defaults.User {
 		baseFlags.UserIsGenerated = false

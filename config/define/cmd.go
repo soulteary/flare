@@ -1,7 +1,7 @@
-package FlareDefine
+package define
 
 import (
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/config/model"
 )
 
 const (
@@ -21,8 +21,8 @@ const (
 )
 
 // get default env config
-func GetDefaultEnvVars() FlareModel.Envs {
-	return FlareModel.Envs{
+func GetDefaultEnvVars() model.Envs {
+	return model.Envs{
 		Port:                   DEFAULT_PORT,
 		EnableGuide:            DEFAULT_ENABLE_GUIDE,
 		EnableDeprecatedNotice: DEFAULT_ENABLE_DEPRECATED_NOTICE,
@@ -43,9 +43,7 @@ func GetDefaultEnvVars() FlareModel.Envs {
 
 var DefaultEnvVars = GetDefaultEnvVars()
 
-var AppFlags FlareModel.Flags
+var AppFlags model.Flags
 
-// VISIABLE Levels
-// - "DEFAULT"
-// - "PRIVATE"
-var FLARE_VISIABLE = "PRIVATE"
+// FLARE_VISIBLE defines visibility levels: "DEFAULT" or "PRIVATE".
+var FLARE_VISIBLE = "PRIVATE"

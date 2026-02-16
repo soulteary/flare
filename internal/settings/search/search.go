@@ -5,15 +5,15 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareAuth "github.com/soulteary/flare/internal/auth"
-	FlarePool "github.com/soulteary/flare/internal/pool"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/pool"
 )
 
 func RegisterRouting(e *echo.Echo) {
-	e.GET(FlareDefine.SettingPages.Search.Path, pageSearch, FlareAuth.AuthRequired)
-	e.POST(FlareDefine.SettingPages.Search.Path, updateSearchOptions, FlareAuth.AuthRequired)
+	e.GET(define.SettingPages.Search.Path, pageSearch, auth.AuthRequired)
+	e.POST(define.SettingPages.Search.Path, updateSearchOptions, auth.AuthRequired)
 }
 
 func updateSearchOptions(c *echo.Context) error {
@@ -24,25 +24,28 @@ func updateSearchOptions(c *echo.Context) error {
 	if err := c.Bind(&body); err != nil {
 		return c.JSON(http.StatusForbidden, "提交数据缺失")
 	}
-	FlareData.UpdateSearch(body.ShowSearchComponent, body.DisabledSearchAutoFocus)
+	data.UpdateSearch(body.ShowSearchComponent, body.DisabledSearchAutoFocus)
 	return pageSearch(c)
 }
 
 func pageSearch(c *echo.Context) error {
-	options := FlareData.GetAllSettingsOptions()
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "config error")
+	}
 	locale := options.Locale
 	if locale == "" {
 		locale = "zh"
 	}
-	m := FlarePool.GetTemplateMap()
-	defer FlarePool.PutTemplateMap(m)
+	m := pool.GetTemplateMap()
+	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
-	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
-	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
+	m["DebugMode"] = define.AppFlags.DebugMode
+	m["PageInlineStyle"] = define.GetPageInlineStyle()
 	m["PageName"] = "Search"
-	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
-	m["SettingPages"] = FlareDefine.SettingPages
-	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
+	m["PageAppearance"] = define.GetAppBodyStyle()
+	m["SettingPages"] = define.SettingPages
+	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["ShowSearchComponent"] = options.ShowSearchComponent
 	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus
 	m["OptionTitle"] = options.Title

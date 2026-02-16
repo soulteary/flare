@@ -5,14 +5,14 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	FlareDefine "github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/define"
 )
 
 func RegisterRouting(e *echo.Echo) {
-	e.GET(FlareDefine.RegularPages.Settings.Path, pageHome)
-	e.GET(FlareDefine.RegularPages.Settings.Path+"/", pageHome)
+	e.GET(define.RegularPages.Settings.Path, pageHome)
+	e.GET(define.RegularPages.Settings.Path+"/", pageHome)
 }
 
 func pageHome(c *echo.Context) error {
-	return c.Redirect(http.StatusFound, FlareDefine.SettingPages.Theme.Path)
+	return c.Redirect(http.StatusFound, define.SettingPages.Theme.Path)
 }

@@ -1,12 +1,12 @@
-package FlareDefine
+package define
 
 // TODO：挪到合适地方，拆分 assets
 
 import (
 	"html/template"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/model"
 )
 
 // 程序运行默认使用内置的主题配色
@@ -40,7 +40,7 @@ func initPageInlineStyle() {
 }
 
 func initPagePrimaryColorCache() {
-	theme := FlareData.GetThemeName()
+	theme := data.GetThemeName()
 	ThemeCurrent = theme
 	ThemePrimaryColor = GetThemePrimaryColor(theme)
 }
@@ -68,7 +68,7 @@ func GetThemePrimaryColor(theme string) string {
 const emptyPageBodyStyle = template.CSS(``)
 
 func UpdatePagePalettes() {
-	theme := FlareData.GetThemeName()
+	theme := data.GetThemeName()
 	for _, themePresent := range ThemePalettes {
 		if themePresent.Name == theme {
 			_CACHE_PAGE_BODY_THEME_NAME = template.CSS(`--color-background:` + themePresent.Colors.Background + `;--color-primary:` + themePresent.Colors.Primary + `;--color-accent:` + themePresent.Colors.Accent + `;`)
@@ -78,67 +78,67 @@ func UpdatePagePalettes() {
 	_CACHE_PAGE_BODY_THEME_NAME = emptyPageBodyStyle
 }
 
-func getDefaultThemePalettes() []FlareModel.Theme {
-	return []FlareModel.Theme{
+func getDefaultThemePalettes() []model.Theme {
+	return []model.Theme{
 		{
 			Name:   "blackboard",
-			Colors: FlareModel.Palette{Background: "#1a1a1a", Primary: "#FFFDEA", Accent: "#5c5c5c"},
+			Colors: model.Palette{Background: "#1a1a1a", Primary: "#FFFDEA", Accent: "#5c5c5c"},
 		},
 		{
 			Name:   "gazette",
-			Colors: FlareModel.Palette{Background: "#F2F7FF", Primary: "#000000", Accent: "#5c5c5c"},
+			Colors: model.Palette{Background: "#F2F7FF", Primary: "#000000", Accent: "#5c5c5c"},
 		},
 		{
 			Name:   "espresso",
-			Colors: FlareModel.Palette{Background: "#21211F", Primary: "#D1B59A", Accent: "#4E4E4E"},
+			Colors: model.Palette{Background: "#21211F", Primary: "#D1B59A", Accent: "#4E4E4E"},
 		},
 		{
 			Name:   "cab",
-			Colors: FlareModel.Palette{Background: "#F6D305", Primary: "#1F1F1F", Accent: "#424242"},
+			Colors: model.Palette{Background: "#F6D305", Primary: "#1F1F1F", Accent: "#424242"},
 		},
 		{
 			Name:   "cloud",
-			Colors: FlareModel.Palette{Background: "#f1f2f0", Primary: "#35342f", Accent: "#37bbe4"},
+			Colors: model.Palette{Background: "#f1f2f0", Primary: "#35342f", Accent: "#37bbe4"},
 		},
 		{
 			Name:   "lime",
-			Colors: FlareModel.Palette{Background: "#263238", Primary: "#AABBC3", Accent: "#aeea00"},
+			Colors: model.Palette{Background: "#263238", Primary: "#AABBC3", Accent: "#aeea00"},
 		},
 		{
 			Name:   "white",
-			Colors: FlareModel.Palette{Background: "#ffffff", Primary: "#222222", Accent: "#dddddd"},
+			Colors: model.Palette{Background: "#ffffff", Primary: "#222222", Accent: "#dddddd"},
 		},
 		{
 			Name:   "tron",
-			Colors: FlareModel.Palette{Background: "#242B33", Primary: "#EFFBFF", Accent: "#6EE2FF"},
+			Colors: model.Palette{Background: "#242B33", Primary: "#EFFBFF", Accent: "#6EE2FF"},
 		},
 		{
 			Name:   "blues",
-			Colors: FlareModel.Palette{Background: "#2B2C56", Primary: "#EFF1FC", Accent: "#6677EB"},
+			Colors: model.Palette{Background: "#2B2C56", Primary: "#EFF1FC", Accent: "#6677EB"},
 		},
 		{
 			Name:   "passion",
-			Colors: FlareModel.Palette{Background: "#f5f5f5", Primary: "#12005e", Accent: "#8e24aa"},
+			Colors: model.Palette{Background: "#f5f5f5", Primary: "#12005e", Accent: "#8e24aa"},
 		},
 		{
 			Name:   "chalk",
-			Colors: FlareModel.Palette{Background: "#263238", Primary: "#AABBC3", Accent: "#FF869A"},
+			Colors: model.Palette{Background: "#263238", Primary: "#AABBC3", Accent: "#FF869A"},
 		},
 		{
 			Name:   "paper",
-			Colors: FlareModel.Palette{Background: "#F8F6F1", Primary: "#4C432E", Accent: "#AA9A73"},
+			Colors: model.Palette{Background: "#F8F6F1", Primary: "#4C432E", Accent: "#AA9A73"},
 		},
 		{
 			Name:   "neon",
-			Colors: FlareModel.Palette{Background: "#091833", Primary: "#EFFBFF", Accent: "#ea00d9"},
+			Colors: model.Palette{Background: "#091833", Primary: "#EFFBFF", Accent: "#ea00d9"},
 		},
 		{
 			Name:   "pumpkin",
-			Colors: FlareModel.Palette{Background: "#2d3436", Primary: "#EFFBFF", Accent: "#ffa500"},
+			Colors: model.Palette{Background: "#2d3436", Primary: "#EFFBFF", Accent: "#ffa500"},
 		},
 		{
 			Name:   "onedark",
-			Colors: FlareModel.Palette{Background: "#282c34", Primary: "#dfd9d6", Accent: "#98c379"},
+			Colors: model.Palette{Background: "#282c34", Primary: "#dfd9d6", Accent: "#98c379"},
 		},
 	}
 }

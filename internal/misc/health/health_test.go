@@ -1,4 +1,4 @@
-package FlareHealth
+package health
 
 import (
 	"net/http"

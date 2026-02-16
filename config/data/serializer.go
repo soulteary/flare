@@ -1,4 +1,4 @@
-package FlareData
+package data
 
 import (
 	"bytes"

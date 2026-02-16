@@ -1,4 +1,4 @@
-package FlareCMD_test
+package cmd_test
 
 import (
 	"bytes"
@@ -6,9 +6,9 @@ import (
 	"os"
 	"testing"
 
-	FlareCMD "github.com/soulteary/flare/cmd"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/cmd"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
 	version "github.com/soulteary/version-kit"
 	flags "github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
@@ -37,9 +37,9 @@ type CLIParserMock struct {
 // parseCLI is used by testify/mock when On("parseCLI", ...) is set.
 //
 //nolint:unused
-func (m *CLIParserMock) parseCLI(envs map[string]string) FlareModel.Flags {
+func (m *CLIParserMock) parseCLI(envs map[string]string) model.Flags {
 	args := m.Called(envs)
-	return args.Get(0).(FlareModel.Flags)
+	return args.Get(0).(model.Flags)
 }
 
 func TestParse(t *testing.T) {
@@ -49,9 +49,9 @@ func TestParse(t *testing.T) {
 
 	envVars := map[string]string{}
 	parsedEnvs := map[string]string{}
-	expectedFlags := FlareModel.Flags{}
+	expectedFlags := model.Flags{}
 
-	defaults := FlareDefine.DefaultEnvVars
+	defaults := define.DefaultEnvVars
 	expectedFlags.User = defaults.User
 	expectedFlags.Port = defaults.Port
 	expectedFlags.EnableGuide = defaults.EnableGuide
@@ -65,7 +65,7 @@ func TestParse(t *testing.T) {
 	envParser.On("ParseEnvFile", envVars).Return(parsedEnvs)
 	cliParser.On("parseCLI", parsedEnvs).Return(expectedFlags)
 
-	actualFlags := FlareCMD.Parse()
+	actualFlags := cmd.Parse()
 
 	actualFlags.Pass = ""
 	actualFlags.PassIsGenerated = false
@@ -94,46 +94,46 @@ func captureOutput(f func()) string {
 }
 
 func TestExcuteCLI_ShowHelp(t *testing.T) {
-	cliFlags := &FlareModel.Flags{ShowHelp: true}
+	cliFlags := &model.Flags{ShowHelp: true}
 	options := &flags.FlagSet{}
 
 	output := captureOutput(func() {
-		_ = FlareCMD.ExcuteCLI(cliFlags, options)
+		_ = cmd.ExcuteCLI(cliFlags, options)
 	})
 
 	assert.Contains(t, output, "支持命令：", "应该打印出支持命令")
-	assert.True(t, FlareCMD.ExcuteCLI(cliFlags, options), "在 ShowHelp 为 true 时，应该返回 true")
+	assert.True(t, cmd.ExcuteCLI(cliFlags, options), "在 ShowHelp 为 true 时，应该返回 true")
 }
 
 func TestExcuteCLI_ShowVersion(t *testing.T) {
-	cliFlags := &FlareModel.Flags{ShowVersion: true}
+	cliFlags := &model.Flags{ShowVersion: true}
 	options := &flags.FlagSet{}
 
 	output := captureOutput(func() {
-		_ = FlareCMD.ExcuteCLI(cliFlags, options)
+		_ = cmd.ExcuteCLI(cliFlags, options)
 	})
 
 	assert.Contains(t, output, version.Version, "应该打印出版本信息")
-	assert.True(t, FlareCMD.ExcuteCLI(cliFlags, options), "在 ShowVersion 为 true 时，应该返回 true")
+	assert.True(t, cmd.ExcuteCLI(cliFlags, options), "在 ShowVersion 为 true 时，应该返回 true")
 }
 
 func TestExcuteCLI_NoFlags(t *testing.T) {
-	cliFlags := &FlareModel.Flags{}
+	cliFlags := &model.Flags{}
 	options := &flags.FlagSet{}
 
-	assert.False(t, FlareCMD.ExcuteCLI(cliFlags, options), "当没有任何标志被设置时，应该返回 false")
+	assert.False(t, cmd.ExcuteCLI(cliFlags, options), "当没有任何标志被设置时，应该返回 false")
 }
 
 func TestExecuteCLI_NoFlags(t *testing.T) {
-	cliFlags := &FlareModel.Flags{}
+	cliFlags := &model.Flags{}
 	options := &flags.FlagSet{}
-	assert.False(t, FlareCMD.ExecuteCLI(cliFlags, options), "ExecuteCLI 无 help/version 时应返回 false")
+	assert.False(t, cmd.ExecuteCLI(cliFlags, options), "ExecuteCLI 无 help/version 时应返回 false")
 }
 
 func TestGetVersionEcho(t *testing.T) {
 	ver := ""
 	// output := captureOutput(func() {
-	ver = FlareCMD.GetVersion(true)
+	ver = cmd.GetVersion(true)
 	// })
 	assert.Contains(t, ver, version.Version, "应该打印出版本信息")
 	// assert.Contains(t, output, "Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.", "应该打印详细信息")
@@ -142,7 +142,7 @@ func TestGetVersionEcho(t *testing.T) {
 func TestGetVersionMute(t *testing.T) {
 	ver := ""
 	output := captureOutput(func() {
-		ver = FlareCMD.GetVersion(false)
+		ver = cmd.GetVersion(false)
 	})
 	assert.Contains(t, ver, version.Version, "应该打印出版本信息")
 	assert.NotContains(t, output, "Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.", "不应该打印详细信息")

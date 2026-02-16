@@ -6,44 +6,47 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareAuth "github.com/soulteary/flare/internal/auth"
-	FlarePool "github.com/soulteary/flare/internal/pool"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/pool"
 	version "github.com/soulteary/version-kit"
 )
 
 func RegisterRouting(e *echo.Echo) {
-	e.GET(FlareDefine.SettingPages.Others.Path, pageOthers)
+	e.GET(define.SettingPages.Others.Path, pageOthers)
 }
 
 func pageOthers(c *echo.Context) error {
-	options := FlareData.GetAllSettingsOptions()
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "config error")
+	}
 	locale := options.Locale
 	if locale == "" {
 		locale = "zh"
 	}
 	isLogined := false
-	if !FlareDefine.AppFlags.DisableLoginMode {
-		isLogined = FlareAuth.CheckUserIsLogin(c)
+	if !define.AppFlags.DisableLoginMode {
+		isLogined = auth.CheckUserIsLogin(c)
 	} else {
 		isLogined = true
 	}
-	m := FlarePool.GetTemplateMap()
-	defer FlarePool.PutTemplateMap(m)
+	m := pool.GetTemplateMap()
+	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
-	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
-	m["DisableLoginMode"] = FlareDefine.AppFlags.DisableLoginMode
+	m["DebugMode"] = define.AppFlags.DebugMode
+	m["DisableLoginMode"] = define.AppFlags.DisableLoginMode
 	m["UserIsLogin"] = isLogined
-	m["UserName"] = FlareAuth.GetUserName(c)
-	m["LoginDate"] = FlareAuth.GetUserLoginDate(c)
-	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
-	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
-	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
-	m["LoginURI"] = FlareDefine.MiscPages.Login.Path
-	m["LogoutURI"] = FlareDefine.MiscPages.Logout.Path
+	m["UserName"] = auth.GetUserName(c)
+	m["LoginDate"] = auth.GetUserLoginDate(c)
+	m["PageInlineStyle"] = define.GetPageInlineStyle()
+	m["PageAppearance"] = define.GetAppBodyStyle()
+	m["SettingsURI"] = define.RegularPages.Settings.Path
+	m["LoginURI"] = define.MiscPages.Login.Path
+	m["LogoutURI"] = define.MiscPages.Logout.Path
 	m["PageName"] = "Others"
-	m["SettingPages"] = FlareDefine.SettingPages
+	m["SettingPages"] = define.SettingPages
 	m["OptionTitle"] = options.Title
 	m["Version"] = version.Version
 	m["BuildDate"] = version.BuildDate

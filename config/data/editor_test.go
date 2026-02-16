@@ -1,9 +1,9 @@
-package FlareData
+package data
 
 import (
 	"testing"
 
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/config/model"
 )
 
 func TestGetBookmarksDataAsJSON(t *testing.T) {
@@ -65,8 +65,8 @@ func TestGetAndUpdateBookmarksFromEditor(t *testing.T) {
 }
 
 func TestPropsRemoveAndRestore(t *testing.T) {
-	var input []FlareModel.Bookmark
-	input = append(input, FlareModel.Bookmark{Private: true})
+	var input []model.Bookmark
+	input = append(input, model.Bookmark{Private: true})
 
 	removed := restorePrivateProp(removePrivateProp(input))
 	for i := 0; i < len(removed); i++ {

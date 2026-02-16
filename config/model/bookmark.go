@@ -1,4 +1,4 @@
-package FlareModel
+package model
 
 // Generic Bookmark Data Model
 type Bookmark struct {

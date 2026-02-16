@@ -1,0 +1,42 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+  go: "1.26"
+
+linters:
+  enable:
+    - errcheck
+    - gofmt
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+  disable:
+    - goimports # enable after running goimports -w (requires golang.org/x/tools)
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: github.com/soulteary/flare
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters: [errcheck]
+    - path: build/
+      linters: [errcheck, govet]
+    - path: tools/
+      linters: [errcheck]
+    - path: cmd/cli\.go
+      linters: [errcheck]
+      text: "MarkDeprecated|Parse"
+  max-issues-per-linter: 0
+  max-same-issues: 0

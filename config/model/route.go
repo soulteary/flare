@@ -1,4 +1,4 @@
-package FlareModel
+package model
 
 // Page Data Model
 type Page struct {

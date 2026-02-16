@@ -50,8 +50,8 @@ func _Copy(srcFile, dstFile string) error {
 	}
 
 	defer func() {
-		if err := out.Close(); err != nil {
-			log.Fatal(err)
+		if closeErr := out.Close(); closeErr != nil {
+			log.Fatal(closeErr)
 		}
 	}()
 
@@ -61,8 +61,8 @@ func _Copy(srcFile, dstFile string) error {
 	}
 
 	defer func() {
-		if err := in.Close(); err != nil {
-			log.Fatal(err)
+		if closeErr := in.Close(); closeErr != nil {
+			log.Fatal(closeErr)
 		}
 	}()
 

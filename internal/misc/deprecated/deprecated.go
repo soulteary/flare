@@ -1,11 +1,11 @@
-package FlareDeprecated
+package deprecated
 
 import (
 	"net/http"
 
 	"github.com/labstack/echo/v5"
 
-	FlareDefine "github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/define"
 )
 
 func makeLandingPage(originURL string, currentURL string, delay string) []byte {
@@ -29,9 +29,9 @@ func makeLandingPage(originURL string, currentURL string, delay string) []byte {
 func RegisterRouting(e *echo.Echo) {
 	const urlMDI = "/resources/mdi-cheat-sheets/"
 	e.GET(urlMDI, func(c *echo.Context) error {
-		if FlareDefine.AppFlags.EnableDeprecatedNotice {
-			return c.HTMLBlob(http.StatusOK, makeLandingPage(urlMDI, FlareDefine.RegularPages.Icons.Path, "5"))
+		if define.AppFlags.EnableDeprecatedNotice {
+			return c.HTMLBlob(http.StatusOK, makeLandingPage(urlMDI, define.RegularPages.Icons.Path, "5"))
 		}
-		return c.Redirect(http.StatusFound, FlareDefine.RegularPages.Icons.Path)
+		return c.Redirect(http.StatusFound, define.RegularPages.Icons.Path)
 	})
 }

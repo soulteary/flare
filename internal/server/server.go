@@ -1,4 +1,4 @@
-package FlareServer
+package server
 
 import (
 	"context"
@@ -10,15 +10,15 @@ import (
 	"syscall"
 	"time"
 
-	FlareModel "github.com/soulteary/flare/config/model"
-	FlareLogger "github.com/soulteary/flare/internal/logger"
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/logger"
 )
 
-func StartDaemon(AppFlags *FlareModel.Flags) {
+func StartDaemon(AppFlags *model.Flags) {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	log := FlareLogger.GetLogger()
+	log := logger.GetLogger()
 	router := NewRouter(AppFlags)
 
 	srv := &http.Server{

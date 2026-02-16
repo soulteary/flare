@@ -1,14 +1,14 @@
-package FlareCMD
+package cmd
 
 import (
 	"fmt"
 
 	env "github.com/caarlos0/env/v6"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareModel "github.com/soulteary/flare/config/model"
-	FlareLogger "github.com/soulteary/flare/internal/logger"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/logger"
 )
 
 func InitAccountFromEnvVars(
@@ -24,7 +24,7 @@ func InitAccountFromEnvVars(
 	}
 
 	if password == "" {
-		*targetPass = FlareData.GenerateRandomString(8)
+		*targetPass = data.GenerateRandomString(8)
 		*isPassGenerate = true
 	} else {
 		*isPassGenerate = false
@@ -32,11 +32,11 @@ func InitAccountFromEnvVars(
 	}
 }
 
-func ParseEnvVars() (stor FlareModel.Flags) {
-	log := FlareLogger.GetLogger()
+func ParseEnvVars() (stor model.Flags) {
+	log := logger.GetLogger()
 
 	// 1. init default values
-	defaults := FlareDefine.DefaultEnvVars
+	defaults := define.DefaultEnvVars
 
 	// 2. overwrite with user input
 	if err := env.Parse(&defaults); err != nil {
@@ -50,7 +50,7 @@ func ParseEnvVars() (stor FlareModel.Flags) {
 		defaults.Pass,
 		&stor.User,
 		&stor.Pass,
-		FlareDefine.DEFAULT_USER_NAME,
+		define.DEFAULT_USER_NAME,
 		&stor.UserIsGenerated,
 		&stor.PassIsGenerated,
 		&stor.DisableLoginMode,

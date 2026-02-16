@@ -6,23 +6,23 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v5"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
 	"github.com/stretchr/testify/assert"
 )
 
-func saveAppFlags() FlareModel.Flags {
-	return FlareDefine.AppFlags
+func saveAppFlags() model.Flags {
+	return define.AppFlags
 }
 
-func restoreAppFlags(f FlareModel.Flags) {
-	FlareDefine.AppFlags = f
+func restoreAppFlags(f model.Flags) {
+	define.AppFlags = f
 }
 
 func TestAuthRequired_DisableLoginMode(t *testing.T) {
 	orig := saveAppFlags()
 	defer restoreAppFlags(orig)
-	FlareDefine.AppFlags.DisableLoginMode = true
+	define.AppFlags.DisableLoginMode = true
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -43,7 +43,7 @@ func TestAuthRequired_DisableLoginMode(t *testing.T) {
 func TestCheckUserIsLogin_DisableLoginMode(t *testing.T) {
 	orig := saveAppFlags()
 	defer restoreAppFlags(orig)
-	FlareDefine.AppFlags.DisableLoginMode = true
+	define.AppFlags.DisableLoginMode = true
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -57,7 +57,7 @@ func TestCheckUserIsLogin_DisableLoginMode(t *testing.T) {
 func TestGetUserName_DisableLoginMode(t *testing.T) {
 	orig := saveAppFlags()
 	defer restoreAppFlags(orig)
-	FlareDefine.AppFlags.DisableLoginMode = true
+	define.AppFlags.DisableLoginMode = true
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -71,7 +71,7 @@ func TestGetUserName_DisableLoginMode(t *testing.T) {
 func TestGetUserLoginDate_DisableLoginMode(t *testing.T) {
 	orig := saveAppFlags()
 	defer restoreAppFlags(orig)
-	FlareDefine.AppFlags.DisableLoginMode = true
+	define.AppFlags.DisableLoginMode = true
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -85,9 +85,9 @@ func TestGetUserLoginDate_DisableLoginMode(t *testing.T) {
 func TestRequestHandle_DisableLoginMode(t *testing.T) {
 	orig := saveAppFlags()
 	defer restoreAppFlags(orig)
-	FlareDefine.AppFlags.DisableLoginMode = true
-	FlareDefine.AppFlags.CookieName = "flare"
-	FlareDefine.AppFlags.Port = 5005
+	define.AppFlags.DisableLoginMode = true
+	define.AppFlags.CookieName = "flare"
+	define.AppFlags.Port = 5005
 
 	e := echo.New()
 	RequestHandle(e)

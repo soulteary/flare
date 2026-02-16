@@ -1,4 +1,4 @@
-package FlareServer
+package server
 
 import (
 	"net/http"
@@ -7,58 +7,59 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareModel "github.com/soulteary/flare/config/model"
-	FlareAuth "github.com/soulteary/flare/internal/auth"
-	FlareLogger "github.com/soulteary/flare/internal/logger"
-	FlareDeprecated "github.com/soulteary/flare/internal/misc/deprecated"
-	FlareHealth "github.com/soulteary/flare/internal/misc/health"
-	FlareRedir "github.com/soulteary/flare/internal/misc/redir"
-	FlareEditor "github.com/soulteary/flare/internal/pages/editor"
-	FlareGuide "github.com/soulteary/flare/internal/pages/guide"
-	FlareHome "github.com/soulteary/flare/internal/pages/home"
-	FlareAssets "github.com/soulteary/flare/internal/resources/assets"
-	FlareMDI "github.com/soulteary/flare/internal/resources/mdi"
-	FlareTemplates "github.com/soulteary/flare/internal/resources/templates"
-	FlareSettings "github.com/soulteary/flare/internal/settings"
-	FlareAppearance "github.com/soulteary/flare/internal/settings/appearance"
-	FlareOthers "github.com/soulteary/flare/internal/settings/others"
-	FlareSearch "github.com/soulteary/flare/internal/settings/search"
-	FlareTheme "github.com/soulteary/flare/internal/settings/theme"
-	FlareWeather "github.com/soulteary/flare/internal/settings/weather"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/logger"
+	"github.com/soulteary/flare/internal/misc/deprecated"
+	"github.com/soulteary/flare/internal/misc/health"
+	"github.com/soulteary/flare/internal/misc/redir"
+	"github.com/soulteary/flare/internal/pages/editor"
+	"github.com/soulteary/flare/internal/pages/guide"
+	"github.com/soulteary/flare/internal/pages/home"
+	"github.com/soulteary/flare/internal/resources/assets"
+	"github.com/soulteary/flare/internal/resources/mdi"
+	"github.com/soulteary/flare/internal/resources/templates"
+	"github.com/soulteary/flare/internal/settings"
+	"github.com/soulteary/flare/internal/settings/appearance"
+	"github.com/soulteary/flare/internal/settings/others"
+	"github.com/soulteary/flare/internal/settings/search"
+	"github.com/soulteary/flare/internal/settings/theme"
+	"github.com/soulteary/flare/internal/settings/weather"
 )
 
 // NewRouter builds the Echo app and returns an http.Handler for the server.
-func NewRouter(_ *FlareModel.Flags) http.Handler {
-	FlareDefine.Init()
+func NewRouter(_ *model.Flags) http.Handler {
+	define.Init()
 	e := echo.New()
 	e.Use(middleware.Recover())
 	if os.Getenv("FLARE_BASELINE") != "1" {
-		log := FlareLogger.GetLogger()
-		e.Use(FlareLogger.NewEchoWithConfig(log, FlareLogger.LoggerConfig{Skipper: FlareLogger.DefaultRequestLogSkipper}))
+		log := logger.GetLogger()
+		e.Use(logger.NewEchoWithConfig(log, logger.LoggerConfig{Skipper: logger.DefaultRequestLogSkipper}))
 	}
-	FlareAuth.RequestHandle(e)
-	FlareTemplates.RegisterRouting(e)
-	FlareAssets.RegisterRouting(e)
-	FlareHealth.RegisterRouting(e)
-	FlareHome.RegisterRouting(e)
-	FlareSettings.RegisterRouting(e)
-	FlareTheme.RegisterRouting(e)
-	FlareWeather.RegisterRouting(e)
-	FlareSearch.RegisterRouting(e)
-	FlareAppearance.RegisterRouting(e)
-	FlareOthers.RegisterRouting(e)
-	FlareMDI.Init()
-	FlareMDI.RegisterRouting(e)
-	FlareRedir.RegisterRouting(e)
-	if FlareDefine.AppFlags.EnableGuide {
-		FlareGuide.Init()
-		FlareGuide.RegisterRouting(e)
+	auth.RequestHandle(e)
+	home.InitWeatherIfNeeded()
+	templates.RegisterRouting(e)
+	assets.RegisterRouting(e)
+	health.RegisterRouting(e)
+	home.RegisterRouting(e)
+	settings.RegisterRouting(e)
+	theme.RegisterRouting(e)
+	weather.RegisterRouting(e)
+	search.RegisterRouting(e)
+	appearance.RegisterRouting(e)
+	others.RegisterRouting(e)
+	mdi.Init()
+	mdi.RegisterRouting(e)
+	redir.RegisterRouting(e)
+	if define.AppFlags.EnableGuide {
+		guide.Init()
+		guide.RegisterRouting(e)
 	}
-	if FlareDefine.AppFlags.EnableEditor {
-		FlareEditor.Init()
-		FlareEditor.RegisterRouting(e)
+	if define.AppFlags.EnableEditor {
+		editor.Init()
+		editor.RegisterRouting(e)
 	}
-	FlareDeprecated.RegisterRouting(e)
+	deprecated.RegisterRouting(e)
 	return e
 }

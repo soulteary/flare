@@ -16,10 +16,10 @@ import (
 	"sync"
 	"time"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareModel "github.com/soulteary/flare/config/model"
-	FlareServer "github.com/soulteary/flare/internal/server"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/server"
 )
 
 type scenario struct {
@@ -47,9 +47,9 @@ type metrics struct {
 	BytesOp  float64
 }
 
-func defaultFlags() FlareModel.Flags {
-	env := FlareDefine.DefaultEnvVars
-	return FlareModel.Flags{
+func defaultFlags() model.Flags {
+	env := define.DefaultEnvVars
+	return model.Flags{
 		Port:                   env.Port,
 		EnableGuide:            env.EnableGuide,
 		EnableEditor:           env.EnableEditor,
@@ -87,19 +87,19 @@ func setupRouter() (http.Handler, func(), error) {
 	}
 
 	os.Setenv("FLARE_BASELINE", "1") // 关闭请求日志等，使 baseline 反映纯 handler 吞吐
-	FlareDefine.AppFlags = defaultFlags()
+	define.AppFlags = defaultFlags()
 
 	// 初始化运行时配置和缓存，确保基线可重复执行。
-	_ = FlareData.GetAllSettingsOptions()
-	_ = FlareData.LoadFavoriteBookmarks()
-	_ = FlareData.LoadNormalBookmarks()
+	_, _ = data.GetAllSettingsOptions()
+	_ = data.LoadFavoriteBookmarks()
+	_ = data.LoadNormalBookmarks()
 
-	handler := FlareServer.NewRouter(&FlareDefine.AppFlags)
+	handler := server.NewRouter(&define.AppFlags)
 	return handler, cleanup, nil
 }
 
 func buildScenarios() map[string]scenario {
-	encoded := FlareData.Base64EncodeUrl("https://link.example.com")
+	encoded := data.Base64EncodeUrl("https://link.example.com")
 	return map[string]scenario{
 		"home": {
 			Name:   "home",

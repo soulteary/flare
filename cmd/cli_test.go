@@ -1,12 +1,12 @@
-package FlareCMD_test
+package cmd_test
 
 import (
 	"flag"
 	"os"
 	"testing"
 
-	FlareCMD "github.com/soulteary/flare/cmd"
-	FlareDefine "github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/cmd"
+	"github.com/soulteary/flare/config/define"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +23,7 @@ func TestGetCliFlags(t *testing.T) {
 		{
 			name:       "empty args",
 			args:       []string{""},
-			wantPort:   FlareDefine.DEFAULT_PORT,
+			wantPort:   define.DEFAULT_PORT,
 			wantEnable: false,
 		},
 		{
@@ -38,7 +38,7 @@ func TestGetCliFlags(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			os.Args = append([]string{"app"}, tt.args...)
 			flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-			gotFlags, _ := FlareCMD.GetCliFlags()
+			gotFlags, _ := cmd.GetCliFlags()
 			assert.Equal(t, tt.wantPort, gotFlags.Port)
 		})
 	}
@@ -83,7 +83,7 @@ func TestGetFlagsMaps(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			os.Args = tt.args
-			got := FlareCMD.GetFlagsMaps()
+			got := cmd.GetFlagsMaps()
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -136,7 +136,7 @@ func TestCheckFlagsExists(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := FlareCMD.CheckFlagsExists(tt.dict, tt.keys)
+			result := cmd.CheckFlagsExists(tt.dict, tt.keys)
 			assert.Equal(t, result, tt.expect)
 		})
 	}

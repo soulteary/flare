@@ -3,4 +3,4 @@ Flare
 
 Define all program define (consts)
 */
-package FlareDefine
+package define

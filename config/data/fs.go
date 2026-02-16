@@ -1,4 +1,4 @@
-package FlareData
+package data
 
 import (
 	"log"
@@ -12,7 +12,10 @@ func checkExists(path string) bool {
 }
 
 func getConfigPath(config string) string {
-	rootDir, _ := os.Getwd()
+	rootDir, err := os.Getwd()
+	if err != nil {
+		return filepath.Join(".", config+".yml")
+	}
 	return filepath.Join(rootDir, config+".yml")
 }
 

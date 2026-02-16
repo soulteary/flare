@@ -1,4 +1,4 @@
-package FlareData
+package data
 
 import (
 	"fmt"
@@ -6,10 +6,10 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/config/model"
 )
 
-func initAppConfig(filePath string) (result FlareModel.Application, err error) {
+func initAppConfig(filePath string) (result model.Application, err error) {
 
 	out := []byte(`
 # 应用标题
@@ -62,13 +62,13 @@ Locale: "zh"
 
 	parseErr := yaml.Unmarshal(out, &result)
 	if parseErr != nil {
-		log.Fatalf("初始化程序配置失败。")
+		return result, fmt.Errorf("初始化程序配置失败: %w", parseErr)
 	}
 
 	return result, nil
 }
 
-func saveAppConfigToYamlFile(name string, result FlareModel.Application) bool {
+func saveAppConfigToYamlFile(name string, result model.Application) bool {
 	out, err := yaml.Marshal(result)
 	if err != nil {
 		log.Println("转换程序配置的数据格式失败")
@@ -85,7 +85,8 @@ func saveAppConfigToYamlFile(name string, result FlareModel.Application) bool {
 	return true
 }
 
-func loadAppConfigFromYaml(name string) (result FlareModel.Application) {
+func loadAppConfigFromYaml(name string) (model.Application, error) {
+	var result model.Application
 	filePath := getConfigPath(name)
 
 	if !checkExists(filePath) {
@@ -93,14 +94,14 @@ func loadAppConfigFromYaml(name string) (result FlareModel.Application) {
 		var createErr error
 		result, createErr = initAppConfig(filePath)
 		if createErr != nil {
-			log.Fatalf("尝试创建应用配置文件 %s 失败", name)
+			return result, fmt.Errorf("尝试创建应用配置文件 %s 失败: %w", name, createErr)
 		}
-		return result
+		return result, nil
 	}
 	configFile := readFileCached(name, func() []byte { return readFile(filePath, true) })
 	parseErr := yaml.Unmarshal(configFile, &result)
 	if parseErr != nil {
-		log.Fatalf("解析配置文件 %s 错误，请检查配置文件内容。", name)
+		return result, fmt.Errorf("解析配置文件 %s 错误，请检查配置文件内容: %w", name, parseErr)
 	}
-	return result
+	return result, nil
 }

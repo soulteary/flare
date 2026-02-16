@@ -1,10 +1,10 @@
-package FlareData
+package data
 
 import (
 	"os"
 	"testing"
 
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/config/model"
 )
 
 func TestGetAndSetThemeName(t *testing.T) {
@@ -59,7 +59,10 @@ func TestUpdateSearchAndGetAllSettingsOptions(t *testing.T) {
 		t.Fatal("UpdateSearch Error")
 	}
 
-	options := GetAllSettingsOptions()
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		t.Fatalf("GetAllSettingsOptions: %v", err)
+	}
 	if options.ShowSearchComponent != showSearchComponent && options.DisabledSearchAutoFocus != disabledSearchAutoFocus {
 		t.Fatal("GetAllSettingsOptions Error")
 	}
@@ -70,7 +73,7 @@ func TestUpdateSearchAndGetAllSettingsOptions(t *testing.T) {
 
 func TestUpdateAppearance(t *testing.T) {
 	const Title = "Test"
-	var update FlareModel.Application
+	var update model.Application
 	update.Title = Title
 
 	ok := UpdateAppearance(update)
@@ -78,7 +81,10 @@ func TestUpdateAppearance(t *testing.T) {
 		t.Fatal("UpdateAppearance Error")
 	}
 
-	options := GetAllSettingsOptions()
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		t.Fatalf("GetAllSettingsOptions: %v", err)
+	}
 	if options.Title != Title {
 		t.Fatal("GetAllSettingsOptions Error")
 	}

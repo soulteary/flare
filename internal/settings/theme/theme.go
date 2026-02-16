@@ -5,15 +5,15 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareAuth "github.com/soulteary/flare/internal/auth"
-	FlarePool "github.com/soulteary/flare/internal/pool"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/pool"
 )
 
 func RegisterRouting(e *echo.Echo) {
-	e.GET(FlareDefine.SettingPages.Theme.Path, pageTheme, FlareAuth.AuthRequired)
-	e.POST(FlareDefine.SettingPages.Theme.Path, updateThemes, FlareAuth.AuthRequired)
+	e.GET(define.SettingPages.Theme.Path, pageTheme, auth.AuthRequired)
+	e.POST(define.SettingPages.Theme.Path, updateThemes, auth.AuthRequired)
 }
 
 func updateThemes(c *echo.Context) error {
@@ -23,29 +23,32 @@ func updateThemes(c *echo.Context) error {
 	if err := c.Bind(&body); err != nil {
 		return c.JSON(http.StatusForbidden, "提交数据缺失")
 	}
-	FlareData.UpdateThemeName(body.Theme)
-	FlareDefine.UpdatePagePalettes()
-	FlareDefine.ThemeCurrent = body.Theme
-	FlareDefine.ThemePrimaryColor = FlareDefine.GetThemePrimaryColor(body.Theme)
+	data.UpdateThemeName(body.Theme)
+	define.UpdatePagePalettes()
+	define.ThemeCurrent = body.Theme
+	define.ThemePrimaryColor = define.GetThemePrimaryColor(body.Theme)
 	return pageTheme(c)
 }
 
 func pageTheme(c *echo.Context) error {
-	themes := FlareDefine.ThemePalettes
-	options := FlareData.GetAllSettingsOptions()
+	themes := define.ThemePalettes
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "config error")
+	}
 	locale := options.Locale
 	if locale == "" {
 		locale = "zh"
 	}
-	m := FlarePool.GetTemplateMap()
-	defer FlarePool.PutTemplateMap(m)
+	m := pool.GetTemplateMap()
+	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
-	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
-	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
-	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
-	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
+	m["DebugMode"] = define.AppFlags.DebugMode
+	m["PageInlineStyle"] = define.GetPageInlineStyle()
+	m["PageAppearance"] = define.GetAppBodyStyle()
+	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["PageName"] = "Theme"
-	m["SettingPages"] = FlareDefine.SettingPages
+	m["SettingPages"] = define.SettingPages
 	m["Themes"] = themes
 	m["OptionTitle"] = options.Title
 	return c.Render(http.StatusOK, "settings.html", m)

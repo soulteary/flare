@@ -10,8 +10,8 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/soulteary/memfs"
 
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareFn "github.com/soulteary/flare/internal/fn"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/fn"
 )
 
 var MemFs *memfs.FS
@@ -31,9 +31,10 @@ func Init() {
 }
 
 func RegisterRouting(e *echo.Echo) {
-	introAssets, _ := fs.Sub(IntroAssets, "guide-assets")
-	e.StaticFS(_ASSETS_WEB_URI, introAssets)
-	e.GET(FlareDefine.RegularPages.Guide.Path, render)
+	if introAssets, err := fs.Sub(IntroAssets, "guide-assets"); err == nil {
+		e.StaticFS(_ASSETS_WEB_URI, introAssets)
+	}
+	e.GET(define.RegularPages.Guide.Path, render)
 }
 
 func render(c *echo.Context) error {
@@ -41,8 +42,8 @@ func render(c *echo.Context) error {
 }
 
 func getUserHomePage() string {
-	port := strconv.Itoa(FlareDefine.AppFlags.Port)
-	body, err := FlareFn.GetHTML("http://localhost:" + port + "/")
+	port := strconv.Itoa(define.AppFlags.Port)
+	body, err := fn.GetHTML("http://localhost:" + port + "/")
 	if err != nil {
 		return ""
 	}

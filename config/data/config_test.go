@@ -1,4 +1,4 @@
-package FlareData
+package data
 
 import (
 	"os"
@@ -10,7 +10,10 @@ func TestAppConfig(t *testing.T) {
 	filePath := getConfigPath("config")
 	os.Remove(filePath)
 
-	data := loadAppConfigFromYaml("config")
+	data, err := loadAppConfigFromYaml("config")
+	if err != nil {
+		t.Fatalf("Load App Config: %v", err)
+	}
 	if data.Title != "flare" {
 		t.Fatal("Load App Config Failed")
 	}

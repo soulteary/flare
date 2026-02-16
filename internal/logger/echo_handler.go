@@ -49,7 +49,7 @@ func NewEchoWithConfig(logger *slog.Logger, config LoggerConfig) echo.Middleware
 			err := next(c)
 
 			status := 0
-			if rw, _ := echo.UnwrapResponse(c.Response()); rw != nil {
+			if rw, unwrapErr := echo.UnwrapResponse(c.Response()); unwrapErr == nil && rw != nil {
 				status = rw.Status
 			}
 			// Only build path params for error responses to keep 2xx hot path allocation-free.
@@ -70,7 +70,11 @@ func NewEchoWithConfig(logger *slog.Logger, config LoggerConfig) echo.Middleware
 			ip := c.RealIP()
 			referer := c.Request().Referer()
 
-			requestAttributes := requestAttrsPool.Get().(*[]slog.Attr)
+			attrsPtr, ok := requestAttrsPool.Get().(*[]slog.Attr)
+			if !ok || attrsPtr == nil {
+				attrsPtr = &[]slog.Attr{}
+			}
+			requestAttributes := attrsPtr
 			*requestAttributes = (*requestAttributes)[:0]
 			*requestAttributes = append(*requestAttributes,
 				slog.Time("time", start),

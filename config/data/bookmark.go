@@ -1,4 +1,4 @@
-package FlareData
+package data
 
 import (
 	"fmt"
@@ -7,10 +7,10 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/config/model"
 )
 
-func initBookmarks(filePath string, isFavorite bool) (result FlareModel.Bookmarks, err error) {
+func initBookmarks(filePath string, isFavorite bool) (result model.Bookmarks, err error) {
 
 	const exampleName = "示例链接"
 	const exmapleLink = "https://link.example.com"
@@ -28,7 +28,7 @@ func initBookmarks(filePath string, isFavorite bool) (result FlareModel.Bookmark
 	if isFavorite {
 		// with desc
 		for i := 0; i < 4; i++ {
-			var bookmark FlareModel.Bookmark
+			var bookmark model.Bookmark
 			bookmark.Name = exampleName
 			bookmark.URL = exmapleLink
 			bookmark.Icon = exampleIcons[i]
@@ -37,19 +37,19 @@ func initBookmarks(filePath string, isFavorite bool) (result FlareModel.Bookmark
 		}
 		// without desc
 		for i := 0; i < 4; i++ {
-			var bookmark FlareModel.Bookmark
+			var bookmark model.Bookmark
 			bookmark.Name = exampleName
 			bookmark.URL = exmapleLink
 			bookmark.Icon = exampleIcons[i+4]
 			result.Items = append(result.Items, bookmark)
 		}
 	} else {
-		var categories []FlareModel.Category
-		var bookmarks []FlareModel.Bookmark
+		var categories []model.Category
+		var bookmarks []model.Bookmark
 		const prefix = "cate-id-"
 
 		for i := 0; i < 4; i++ {
-			var category FlareModel.Category
+			var category model.Category
 			category.Name = "链接分类" + strconv.Itoa(i+1)
 			category.ID = prefix + strconv.Itoa(i)
 			categories = append(categories, category)
@@ -57,7 +57,7 @@ func initBookmarks(filePath string, isFavorite bool) (result FlareModel.Bookmark
 		result.Categories = categories
 
 		for i := 0; i < 20; i++ {
-			var bookmark FlareModel.Bookmark
+			var bookmark model.Bookmark
 			bookmark.Name = exampleName
 			bookmark.URL = exmapleLink
 			bookmark.Icon = exampleIcons[8+i]
@@ -82,7 +82,7 @@ func initBookmarks(filePath string, isFavorite bool) (result FlareModel.Bookmark
 	return result, nil
 }
 
-func saveBookmarksToYamlFile(name string, data FlareModel.Bookmarks) (bool, error) {
+func saveBookmarksToYamlFile(name string, data model.Bookmarks) (bool, error) {
 	out, err := yaml.Marshal(data)
 	if err != nil {
 		log.Println("转换数据格式失败", name)
@@ -99,7 +99,7 @@ func saveBookmarksToYamlFile(name string, data FlareModel.Bookmarks) (bool, erro
 	return true, nil
 }
 
-func loadBookmarksFromYamlFile(name string, isFavorite bool) (result FlareModel.Bookmarks) {
+func loadBookmarksFromYamlFile(name string, isFavorite bool) (result model.Bookmarks) {
 	filePath := getConfigPath(name)
 
 	if !checkExists(filePath) {
@@ -119,20 +119,20 @@ func loadBookmarksFromYamlFile(name string, isFavorite bool) (result FlareModel.
 	return result
 }
 
-func SaveFavoriteBookmarks(data FlareModel.Bookmarks) bool {
-	result, _ := saveBookmarksToYamlFile("apps", data)
-	return result
+func SaveFavoriteBookmarks(data model.Bookmarks) bool {
+	result, err := saveBookmarksToYamlFile("apps", data)
+	return err == nil && result
 }
 
-func SaveNormalBookmarks(data FlareModel.Bookmarks) bool {
-	result, _ := saveBookmarksToYamlFile("bookmarks", data)
-	return result
+func SaveNormalBookmarks(data model.Bookmarks) bool {
+	result, err := saveBookmarksToYamlFile("bookmarks", data)
+	return err == nil && result
 }
 
-func LoadFavoriteBookmarks() (result FlareModel.Bookmarks) {
+func LoadFavoriteBookmarks() (result model.Bookmarks) {
 	return loadBookmarksFromYamlFile("apps", true)
 }
 
-func LoadNormalBookmarks() (result FlareModel.Bookmarks) {
+func LoadNormalBookmarks() (result model.Bookmarks) {
 	return loadBookmarksFromYamlFile("bookmarks", false)
 }

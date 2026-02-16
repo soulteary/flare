@@ -11,7 +11,7 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	FlareDefine "github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/define"
 )
 
 //go:embed favicon.ico
@@ -29,7 +29,7 @@ func RegisterRouting(e *echo.Echo) {
 		return c.Blob(http.StatusOK, "image/x-icon", data)
 	})
 
-	if FlareDefine.AppFlags.DebugMode {
+	if define.AppFlags.DebugMode {
 		e.Static("/assets/css", "embed/assets/css")
 	}
 }

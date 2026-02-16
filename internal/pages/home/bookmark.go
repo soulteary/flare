@@ -4,32 +4,38 @@ import (
 	"html/template"
 	"strings"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareModel "github.com/soulteary/flare/config/model"
-	FlareFn "github.com/soulteary/flare/internal/fn"
-	FlareMDI "github.com/soulteary/flare/internal/resources/mdi"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/fn"
+	"github.com/soulteary/flare/internal/resources/mdi"
 )
 
-func GenerateBookmarkTemplate(filter string, options *FlareModel.Application) template.HTML {
+func GenerateBookmarkTemplate(filter string, options *model.Application) template.HTML {
 	if options == nil {
-		op := FlareData.GetAllSettingsOptions()
+		op, err := data.GetAllSettingsOptions()
+		if err != nil {
+			op = model.Application{}
+		}
 		options = &op
 	}
-	bookmarksData := FlareData.LoadNormalBookmarks()
-	b := builderPool.Get().(*strings.Builder)
+	bookmarksData := data.LoadNormalBookmarks()
+	b, ok := builderPool.Get().(*strings.Builder)
+	if !ok {
+		b = &strings.Builder{}
+	}
 	b.Reset()
 	defer builderPool.Put(b)
 
 	n := len(bookmarksData.Items)
-	parseBookmarks := make([]FlareModel.Bookmark, 0, n)
+	parseBookmarks := make([]model.Bookmark, 0, n)
 	for _, bookmark := range bookmarksData.Items {
-		bookmark.URL = FlareFn.ParseDynamicUrl(bookmark.URL)
+		bookmark.URL = fn.ParseDynamicUrl(bookmark.URL)
 		parseBookmarks = append(parseBookmarks, bookmark)
 	}
 
 	bookmarks := parseBookmarks
 	if filter != "" {
-		bookmarks = make([]FlareModel.Bookmark, 0, n)
+		bookmarks = make([]model.Bookmark, 0, n)
 	}
 
 	if filter != "" {
@@ -54,20 +60,20 @@ func GenerateBookmarkTemplate(filter string, options *FlareModel.Application) te
 	return template.HTML(b.String())
 }
 
-func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]FlareModel.Bookmark, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) {
+func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]model.Bookmark, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) {
 	b.WriteString(`<div class="bookmark-group-container pull-left"><ul class="bookmark-list">`)
 	for _, bookmark := range *bookmarks {
 		templateURL := bookmark.URL
 		if strings.HasPrefix(bookmark.URL, "chrome-extension://") || EnableEncryptedLink {
-			templateURL = "/redir/url?go=" + FlareData.Base64EncodeUrl(bookmark.URL)
+			templateURL = "/redir/url?go=" + data.Base64EncodeUrl(bookmark.URL)
 		}
-		templateIcon := FlareMDI.GetIconByName(bookmark.Icon)
+		templateIcon := mdi.GetIconByName(bookmark.Icon)
 		if strings.HasPrefix(bookmark.Icon, "http://") || strings.HasPrefix(bookmark.Icon, "https://") {
 			templateIcon = `<img src="` + bookmark.Icon + `"/>`
 		} else if bookmark.Icon != "" {
-			templateIcon = FlareMDI.GetIconByName(bookmark.Icon)
+			templateIcon = mdi.GetIconByName(bookmark.Icon)
 		} else if IconMode == "FILLING" {
-			templateIcon = FlareFn.GetYandexFavicon(bookmark.URL, FlareMDI.GetIconByName(bookmark.Icon))
+			templateIcon = fn.GetYandexFavicon(bookmark.URL, mdi.GetIconByName(bookmark.Icon))
 		}
 		if OpenBookmarkNewTab {
 			b.WriteString(`<li><a target="_blank" rel="noopener" href="`)
@@ -90,20 +96,20 @@ func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]FlareMode
 	b.WriteString(`</ul></div>`)
 }
 
-func renderBookmarksWithCategories(b *strings.Builder, bookmarks *[]FlareModel.Bookmark, category *FlareModel.Category, defaultCategory *FlareModel.Category, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) {
+func renderBookmarksWithCategories(b *strings.Builder, bookmarks *[]model.Bookmark, category *model.Category, defaultCategory *model.Category, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) {
 	var itemBuf strings.Builder
 	for _, bookmark := range *bookmarks {
 		templateURL := bookmark.URL
 		if strings.HasPrefix(bookmark.URL, "chrome-extension://") || EnableEncryptedLink {
-			templateURL = "/redir/url?go=" + FlareData.Base64EncodeUrl(bookmark.URL)
+			templateURL = "/redir/url?go=" + data.Base64EncodeUrl(bookmark.URL)
 		}
-		templateIcon := FlareMDI.GetIconByName(bookmark.Icon)
+		templateIcon := mdi.GetIconByName(bookmark.Icon)
 		if strings.HasPrefix(bookmark.Icon, "http://") || strings.HasPrefix(bookmark.Icon, "https://") {
 			templateIcon = `<img src="` + bookmark.Icon + `"/>`
 		} else if bookmark.Icon != "" {
-			templateIcon = FlareMDI.GetIconByName(bookmark.Icon)
+			templateIcon = mdi.GetIconByName(bookmark.Icon)
 		} else if IconMode == "FILLING" {
-			templateIcon = FlareFn.GetYandexFavicon(bookmark.URL, FlareMDI.GetIconByName(bookmark.Icon))
+			templateIcon = fn.GetYandexFavicon(bookmark.URL, mdi.GetIconByName(bookmark.Icon))
 		}
 		matched := false
 		if bookmark.Category != "" {

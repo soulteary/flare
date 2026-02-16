@@ -5,36 +5,42 @@ import (
 	"strings"
 	"sync"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareModel "github.com/soulteary/flare/config/model"
-	FlareFn "github.com/soulteary/flare/internal/fn"
-	FlareMDI "github.com/soulteary/flare/internal/resources/mdi"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/fn"
+	"github.com/soulteary/flare/internal/resources/mdi"
 )
 
 var builderPool = sync.Pool{
 	New: func() any { return &strings.Builder{} },
 }
 
-func GenerateApplicationsTemplate(filter string, options *FlareModel.Application) template.HTML {
+func GenerateApplicationsTemplate(filter string, options *model.Application) template.HTML {
 	if options == nil {
-		op := FlareData.GetAllSettingsOptions()
+		op, err := data.GetAllSettingsOptions()
+		if err != nil {
+			op = model.Application{}
+		}
 		options = &op
 	}
-	appsData := FlareData.LoadFavoriteBookmarks()
-	b := builderPool.Get().(*strings.Builder)
+	appsData := data.LoadFavoriteBookmarks()
+	b, ok := builderPool.Get().(*strings.Builder)
+	if !ok {
+		b = &strings.Builder{}
+	}
 	b.Reset()
 	defer builderPool.Put(b)
 
 	n := len(appsData.Items)
-	parseApps := make([]FlareModel.Bookmark, 0, n)
+	parseApps := make([]model.Bookmark, 0, n)
 	for _, app := range appsData.Items {
-		app.URL = FlareFn.ParseDynamicUrl(app.URL)
+		app.URL = fn.ParseDynamicUrl(app.URL)
 		parseApps = append(parseApps, app)
 	}
 
-	var apps []FlareModel.Bookmark
+	var apps []model.Bookmark
 	if filter != "" {
-		apps = make([]FlareModel.Bookmark, 0, n)
+		apps = make([]model.Bookmark, 0, n)
 	}
 
 	if filter != "" {
@@ -55,15 +61,15 @@ func GenerateApplicationsTemplate(filter string, options *FlareModel.Application
 		}
 		templateURL := app.URL
 		if strings.HasPrefix(app.URL, "chrome-extension://") || options.EnableEncryptedLink {
-			templateURL = "/redir/url?go=" + FlareData.Base64EncodeUrl(app.URL)
+			templateURL = "/redir/url?go=" + data.Base64EncodeUrl(app.URL)
 		}
-		templateIcon := FlareMDI.GetIconByName(app.Icon)
+		templateIcon := mdi.GetIconByName(app.Icon)
 		if strings.HasPrefix(app.Icon, "http://") || strings.HasPrefix(app.Icon, "https://") {
 			templateIcon = `<img src="` + app.Icon + `"/>`
 		} else if app.Icon != "" {
-			templateIcon = FlareMDI.GetIconByName(app.Icon)
+			templateIcon = mdi.GetIconByName(app.Icon)
 		} else if options.IconMode == "FILLING" {
-			templateIcon = FlareFn.GetYandexFavicon(app.URL, FlareMDI.GetIconByName(app.Icon))
+			templateIcon = fn.GetYandexFavicon(app.URL, mdi.GetIconByName(app.Icon))
 		}
 		if options.OpenAppNewTab {
 			b.WriteString(`<div class="app-container" data-id="`)

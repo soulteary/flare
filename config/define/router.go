@@ -1,55 +1,55 @@
-package FlareDefine
+package define
 
 import (
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/config/model"
 )
 
-func getRegularPages() FlareModel.RouteMaps {
-	return FlareModel.RouteMaps{
+func getRegularPages() model.RouteMaps {
+	return model.RouteMaps{
 		// 应用首页
-		Home: FlareModel.Page{
+		Home: model.Page{
 			Name:  "Home",
 			Title: "Home",
 			Path:  "/",
 		},
 		// 设置页面
-		Settings: FlareModel.Page{
+		Settings: model.Page{
 			Name:  "Settings",
 			Title: "Settings",
 			Path:  "/settings",
 		},
 		// 应用页面
-		Applications: FlareModel.Page{
+		Applications: model.Page{
 			Name:  "Applications",
 			Title: "Applications",
 			Path:  "/applications",
 		},
 		// 书签页面
-		Bookmarks: FlareModel.Page{
+		Bookmarks: model.Page{
 			Name:  "Bookmarks",
 			Title: "Bookmarks",
 			Path:  "/bookmarks",
 		},
 		// 帮助页面
-		Help: FlareModel.Page{
+		Help: model.Page{
 			Name:  "Help",
 			Title: "Help",
 			Path:  "/help",
 		},
 		// 使用向导
-		Guide: FlareModel.Page{
+		Guide: model.Page{
 			Name:  "Guide",
 			Title: "Guide",
 			Path:  "/guide",
 		},
 		// 使用向导
-		Editor: FlareModel.Page{
+		Editor: model.Page{
 			Name:  "Editor",
 			Title: "Editor",
 			Path:  "/editor",
 		},
 		// MDI
-		Icons: FlareModel.Page{
+		Icons: model.Page{
 			Name:  "Icons",
 			Title: "MDI",
 			Path:  "/icons",
@@ -59,32 +59,32 @@ func getRegularPages() FlareModel.RouteMaps {
 
 var RegularPages = getRegularPages()
 
-func getSettingPages() FlareModel.RouteMaps {
-	return FlareModel.RouteMaps{
-		Theme: FlareModel.Page{
+func getSettingPages() model.RouteMaps {
+	return model.RouteMaps{
+		Theme: model.Page{
 			Name:  "Theme",
 			Title: "主题",
 			Path:  "/settings/theme",
 		},
-		Weather: FlareModel.Page{
+		Weather: model.Page{
 			Name:  "Weather",
 			Title: "天气",
 			Path:  "/settings/weather",
 		},
 
-		Search: FlareModel.Page{
+		Search: model.Page{
 			Name:  "Search",
 			Title: "搜索",
 			Path:  "/settings/search",
 		},
 
-		Appearance: FlareModel.Page{
+		Appearance: model.Page{
 			Name:  "Appearance",
 			Title: "界面",
 			Path:  "/settings/appearance",
 		},
 
-		Others: FlareModel.Page{
+		Others: model.Page{
 			Name:  "Others",
 			Title: "其他",
 			Path:  "/settings/application",
@@ -94,9 +94,9 @@ func getSettingPages() FlareModel.RouteMaps {
 
 var SettingPages = getSettingPages()
 
-func getSettingAPIs() FlareModel.RouteMaps {
-	return FlareModel.RouteMaps{
-		WeatherTest: FlareModel.API{
+func getSettingAPIs() model.RouteMaps {
+	return model.RouteMaps{
+		WeatherTest: model.API{
 			Name: "Weather Tester",
 			Path: "/settings/weather/test",
 		},
@@ -105,28 +105,28 @@ func getSettingAPIs() FlareModel.RouteMaps {
 
 var SettingPagesAPI = getSettingAPIs()
 
-func getMiscPages() FlareModel.RouteMaps {
-	return FlareModel.RouteMaps{
-		HealthCheck: FlareModel.API{
+func getMiscPages() model.RouteMaps {
+	return model.RouteMaps{
+		HealthCheck: model.API{
 			Name: "HealthCheck",
 			Path: "/ping",
 		},
 
-		RedirHome: FlareModel.Page{
+		RedirHome: model.Page{
 			Title: "正在跳转...",
 			Name:  "Redir",
 			Path:  "/redir",
 		},
-		RedirHelper: FlareModel.API{
+		RedirHelper: model.API{
 			Name: "RedirHelper",
 			Path: "/redir/url",
 		},
 
-		Login: FlareModel.API{
+		Login: model.API{
 			Name: "Login",
 			Path: "/login",
 		},
-		Logout: FlareModel.API{
+		Logout: model.API{
 			Name: "Logout",
 			Path: "/logout",
 		},

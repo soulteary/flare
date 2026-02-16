@@ -7,16 +7,16 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareModel "github.com/soulteary/flare/config/model"
-	FlareAuth "github.com/soulteary/flare/internal/auth"
-	FlarePool "github.com/soulteary/flare/internal/pool"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/pool"
 )
 
 func RegisterRouting(e *echo.Echo) {
-	e.GET(FlareDefine.SettingPages.Appearance.Path, pageAppearance, FlareAuth.AuthRequired)
-	e.POST(FlareDefine.SettingPages.Appearance.Path, updateAppearanceOptions, FlareAuth.AuthRequired)
+	e.GET(define.SettingPages.Appearance.Path, pageAppearance, auth.AuthRequired)
+	e.POST(define.SettingPages.Appearance.Path, updateAppearanceOptions, auth.AuthRequired)
 }
 
 func updateAppearanceOptions(c *echo.Context) error {
@@ -42,7 +42,7 @@ func updateAppearanceOptions(c *echo.Context) error {
 	if err := c.Bind(&body); err != nil {
 		return c.JSON(http.StatusForbidden, "提交数据缺失")
 	}
-	var update FlareModel.Application
+	var update model.Application
 	update.Title = body.OptionTitle
 	update.Footer = body.OptionFooter
 	update.OpenAppNewTab = body.OptionOpenAppNewTab
@@ -65,22 +65,25 @@ func updateAppearanceOptions(c *echo.Context) error {
 	if body.Locale != "" {
 		update.Locale = body.Locale
 	}
-	FlareData.UpdateAppearance(update)
+	data.UpdateAppearance(update)
 	return pageAppearance(c)
 }
 
 func pageAppearance(c *echo.Context) error {
-	options := FlareData.GetAllSettingsOptions()
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "config error")
+	}
 	IconModeDefault := options.IconMode == "DEFAULT"
 	IconModeFilling := options.IconMode == "FILLING"
-	m := FlarePool.GetTemplateMap()
-	defer FlarePool.PutTemplateMap(m)
-	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
-	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
+	m := pool.GetTemplateMap()
+	defer pool.PutTemplateMap(m)
+	m["DebugMode"] = define.AppFlags.DebugMode
+	m["PageInlineStyle"] = define.GetPageInlineStyle()
 	m["PageName"] = "Appearance"
-	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
-	m["SettingPages"] = FlareDefine.SettingPages
-	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
+	m["PageAppearance"] = define.GetAppBodyStyle()
+	m["SettingPages"] = define.SettingPages
+	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["OptionTitle"] = options.Title
 	m["OptionFooter"] = template.HTML(options.Footer)
 	m["OptionOpenAppNewTab"] = options.OpenAppNewTab

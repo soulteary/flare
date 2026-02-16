@@ -1,4 +1,4 @@
-package FlareFn
+package fn
 
 import (
 	"path/filepath"
@@ -13,12 +13,15 @@ func TestGetWorkDir(t *testing.T) {
 }
 
 func TestGetWorkDirFile(t *testing.T) {
-	// GetWorkDirFile 当前实现固定使用 ".env"，与参数无关，这里只测返回路径格式
 	out := GetWorkDirFile("any")
 	if out == "" {
 		t.Fatal("GetWorkDirFile should not return empty")
 	}
-	if filepath.Base(out) != ".env" {
-		t.Errorf("GetWorkDirFile should end with .env, got %q", out)
+	if filepath.Base(out) != "any" {
+		t.Errorf("GetWorkDirFile should use filename: want base %q, got %q", "any", filepath.Base(out))
+	}
+	outEnv := GetWorkDirFile(".env")
+	if filepath.Base(outEnv) != ".env" {
+		t.Errorf("GetWorkDirFile(.env) should end with .env, got %q", outEnv)
 	}
 }

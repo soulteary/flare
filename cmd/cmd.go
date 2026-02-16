@@ -1,4 +1,4 @@
-package FlareCMD
+package cmd
 
 import (
 	"fmt"
@@ -8,18 +8,18 @@ import (
 
 	flags "github.com/spf13/pflag"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareModel "github.com/soulteary/flare/config/model"
-	FlareLogger "github.com/soulteary/flare/internal/logger"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/logger"
 	version "github.com/soulteary/version-kit"
 )
 
-func Parse() FlareModel.Flags {
+func Parse() model.Flags {
 	envs := ParseEnvFile(ParseEnvVars())
 	resolved := parseCLI(envs)
 
-	log := FlareLogger.GetLogger()
+	log := logger.GetLogger()
 	log.Info("程序服务端口", slog.Int(_KEY_PORT, resolved.Port))
 	log.Info("页面请求合并", slog.Bool(_KEY_MINI_REQUEST, resolved.EnableMinimumRequest))
 	log.Info("启用离线模式", slog.Bool(_KEY_ENABLE_OFFLINE, resolved.EnableOfflineMode))
@@ -30,7 +30,7 @@ func Parse() FlareModel.Flags {
 		log.Info("当前内容整体可见性为：", slog.String(_KEY_VISIBILITY, resolved.Visibility))
 
 		if resolved.UserIsGenerated {
-			log.Info("用户未指定 `FLARE_USER`，使用默认用户名", slog.String("username", FlareDefine.DEFAULT_USER_NAME))
+			log.Info("用户未指定 `FLARE_USER`，使用默认用户名", slog.String("username", define.DEFAULT_USER_NAME))
 		} else {
 			log.Info("应用用户设置为", slog.String("username", resolved.User))
 		}
@@ -38,16 +38,16 @@ func Parse() FlareModel.Flags {
 		if resolved.PassIsGenerated {
 			log.Info("用户未指定 `FLARE_PASS`，自动生成应用密码", slog.String("password", resolved.Pass))
 		} else {
-			log.Info("应用登陆密码已设置为", slog.String("password", FlareData.MaskTextWithStars(resolved.Pass)))
+			log.Info("应用登陆密码已设置为", slog.String("password", data.MaskTextWithStars(resolved.Pass)))
 		}
 	}
 
-	FlareDefine.AppFlags = resolved
+	define.AppFlags = resolved
 	return resolved
 }
 
 // ExecuteCLI handles --help and --version; returns true if the program should exit.
-func ExecuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
+func ExecuteCLI(cliFlags *model.Flags, options *flags.FlagSet) (exit bool) {
 	programVersion := GetVersion(false)
 	if cliFlags.ShowHelp {
 		fmt.Println(programVersion)
@@ -64,7 +64,7 @@ func ExecuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) 
 }
 
 // ExcuteCLI is deprecated: use ExecuteCLI.
-func ExcuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
+func ExcuteCLI(cliFlags *model.Flags, options *flags.FlagSet) (exit bool) {
 	return ExecuteCLI(cliFlags, options)
 }
 
@@ -72,7 +72,7 @@ func GetVersion(echo bool) string {
 	info := version.Default()
 	programVersion := fmt.Sprintf("Flare v%s-%s %s/%s BuildDate=%s", info.Version, strings.ToUpper(info.Commit), runtime.GOOS, runtime.GOARCH, info.BuildDate)
 	if echo {
-		log := FlareLogger.GetLogger()
+		log := logger.GetLogger()
 		log.Info("Flare - 🏂 Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.")
 		log.Info("程序信息：",
 			slog.String("version", info.Version),

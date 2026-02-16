@@ -1,11 +1,11 @@
-package FlareData
+package data
 
 import (
 	"log"
 
 	"github.com/jszwec/csvutil"
 
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/config/model"
 )
 
 // TODO Removed after private link feature support
@@ -17,7 +17,7 @@ type _BOOKMARK_REMOVE_PRIVATE struct {
 	Category string `yaml:"category,omitempty"`
 }
 
-func removePrivateProp(input []FlareModel.Bookmark) (result []_BOOKMARK_REMOVE_PRIVATE) {
+func removePrivateProp(input []model.Bookmark) (result []_BOOKMARK_REMOVE_PRIVATE) {
 	for _, src := range input {
 		var dest _BOOKMARK_REMOVE_PRIVATE
 		dest.Name = src.Name
@@ -30,9 +30,9 @@ func removePrivateProp(input []FlareModel.Bookmark) (result []_BOOKMARK_REMOVE_P
 	return result
 }
 
-func restorePrivateProp(input []_BOOKMARK_REMOVE_PRIVATE) (result []FlareModel.Bookmark) {
+func restorePrivateProp(input []_BOOKMARK_REMOVE_PRIVATE) (result []model.Bookmark) {
 	for _, src := range input {
-		var dest FlareModel.Bookmark
+		var dest model.Bookmark
 		dest.Name = src.Name
 		dest.URL = src.URL
 		dest.Icon = src.Icon
@@ -48,9 +48,9 @@ func GetBookmarksForEditor() (categories string, bookmarks string) {
 	favoriteBookmarks := LoadFavoriteBookmarks()
 	normalBookmarks := LoadNormalBookmarks()
 
-	var mixedBookmarks []FlareModel.Bookmark
+	var mixedBookmarks []model.Bookmark
 
-	var appendFixedCategoryForFavorite []FlareModel.Bookmark
+	var appendFixedCategoryForFavorite []model.Bookmark
 	for _, item := range favoriteBookmarks.Items {
 		// TODO Defined as a constant, provided for front-end use
 		item.Category = "_FLARE_FIXED_CATEGORY"
@@ -66,14 +66,14 @@ func GetBookmarksForEditor() (categories string, bookmarks string) {
 	return categories, bookmarks
 }
 
-func getCategoriesFromCSV(input string) (result []FlareModel.Category, err error) {
+func getCategoriesFromCSV(input string) (result []model.Category, err error) {
 	var fixHead = []byte("ID,Name\n" + input)
-	var decode []FlareModel.Category
+	var decode []model.Category
 	if err := csvutil.Unmarshal(fixHead, &decode); err != nil {
 		return result, err
 	}
 
-	var validItem []FlareModel.Category
+	var validItem []model.Category
 
 	for _, item := range decode {
 		if item.Name != "" && item.ID != "" {
@@ -83,7 +83,7 @@ func getCategoriesFromCSV(input string) (result []FlareModel.Category, err error
 	return validItem, nil
 }
 
-func getBookmarksFromCSV(input string, categories []FlareModel.Category) (favoriteBookmarks []FlareModel.Bookmark, normalBookmarks []FlareModel.Bookmark, err error) {
+func getBookmarksFromCSV(input string, categories []model.Category) (favoriteBookmarks []model.Bookmark, normalBookmarks []model.Bookmark, err error) {
 	var fixHead = []byte("ID,Name,URL,Category,Icon,Desc\n" + input)
 	var decode []_BOOKMARK_REMOVE_PRIVATE
 
@@ -127,12 +127,12 @@ func UpdateBookmarksFromEditor(categoriesCSV string, bookmakrsCSV string) bool {
 		return false
 	}
 
-	var normalBookmarks FlareModel.Bookmarks
+	var normalBookmarks model.Bookmarks
 	normalBookmarks.Items = normal
 	normalBookmarks.Categories = categories
 	SaveNormalBookmarks(normalBookmarks)
 
-	var favoriteBookmarks FlareModel.Bookmarks
+	var favoriteBookmarks model.Bookmarks
 	favoriteBookmarks.Items = favorite
 	SaveFavoriteBookmarks(favoriteBookmarks)
 

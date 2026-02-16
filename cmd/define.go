@@ -1,4 +1,4 @@
-package FlareCMD
+package cmd
 
 const (
 	_KEY_PORT       = "port"

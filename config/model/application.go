@@ -1,4 +1,4 @@
-package FlareModel
+package model
 
 // Application Data Model
 type Application struct {

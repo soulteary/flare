@@ -9,10 +9,10 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/soulteary/memfs"
 
-	FlareData "github.com/soulteary/flare/config/data"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareAuth "github.com/soulteary/flare/internal/auth"
-	FlarePool "github.com/soulteary/flare/internal/pool"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/pool"
 )
 
 var MemFs *memfs.FS
@@ -32,10 +32,11 @@ func Init() {
 }
 
 func RegisterRouting(e *echo.Echo) {
-	introAssets, _ := fs.Sub(editorAssets, "editor-assets")
-	e.StaticFS(_ASSETS_WEB_URI, introAssets)
-	e.GET(FlareDefine.RegularPages.Editor.Path, render, FlareAuth.AuthRequired)
-	e.POST(FlareDefine.RegularPages.Editor.Path, updateData, FlareAuth.AuthRequired)
+	if introAssets, err := fs.Sub(editorAssets, "editor-assets"); err == nil {
+		e.StaticFS(_ASSETS_WEB_URI, introAssets)
+	}
+	e.GET(define.RegularPages.Editor.Path, render, auth.AuthRequired)
+	e.POST(define.RegularPages.Editor.Path, updateData, auth.AuthRequired)
 }
 
 func updateData(c *echo.Context) error {
@@ -46,20 +47,23 @@ func updateData(c *echo.Context) error {
 	if err := c.Bind(&body); err != nil {
 		return c.JSON(http.StatusForbidden, "提交数据缺失")
 	}
-	FlareData.UpdateBookmarksFromEditor(body.Categories, body.Bookmarks)
+	data.UpdateBookmarksFromEditor(body.Categories, body.Bookmarks)
 	return render(c)
 }
 
 func render(c *echo.Context) error {
-	options := FlareData.GetAllSettingsOptions()
-	dataCategories, dataBookmarks := FlareData.GetBookmarksForEditor()
-	m := FlarePool.GetTemplateMap()
-	defer FlarePool.PutTemplateMap(m)
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "config error")
+	}
+	dataCategories, dataBookmarks := data.GetBookmarksForEditor()
+	m := pool.GetTemplateMap()
+	defer pool.PutTemplateMap(m)
 	m["PageName"] = "Editor"
-	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
-	m["SettingPages"] = FlareDefine.SettingPages
-	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
-	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
+	m["PageAppearance"] = define.GetAppBodyStyle()
+	m["SettingPages"] = define.SettingPages
+	m["DebugMode"] = define.AppFlags.DebugMode
+	m["PageInlineStyle"] = define.GetPageInlineStyle()
 	m["DataCategories"] = template.HTML(dataCategories)
 	m["DataBookmarks"] = template.HTML(dataBookmarks)
 	m["OptionTitle"] = options.Title

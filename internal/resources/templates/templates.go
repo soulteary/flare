@@ -9,8 +9,8 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareI18n "github.com/soulteary/flare/internal/i18n"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/i18n"
 )
 
 //go:embed html
@@ -33,7 +33,10 @@ func (r *Renderer) Render(c *echo.Context, w io.Writer, templateName string, dat
 			break
 		}
 	}
-	buf := bufPool.Get().(*bytes.Buffer)
+	buf, ok := bufPool.Get().(*bytes.Buffer)
+	if !ok || buf == nil {
+		buf = &bytes.Buffer{}
+	}
 	buf.Reset()
 	defer bufPool.Put(buf)
 	if err := r.templates.ExecuteTemplate(buf, tmplName, data); err != nil {
@@ -44,13 +47,13 @@ func (r *Renderer) Render(c *echo.Context, w io.Writer, templateName string, dat
 }
 
 var templateFuncMap = template.FuncMap{
-	"T": FlareI18n.T,
+	"T": i18n.T,
 }
 
 func RegisterRouting(e *echo.Echo) {
 	var t *template.Template
 	var err error
-	if FlareDefine.AppFlags.DebugMode {
+	if define.AppFlags.DebugMode {
 		t, err = template.New("").Funcs(templateFuncMap).ParseGlob("embed/templates/*.html")
 	} else {
 		t, err = template.New("").Funcs(templateFuncMap).ParseFS(TPL, "html/*.html")

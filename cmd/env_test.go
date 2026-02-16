@@ -1,13 +1,13 @@
-package FlareCMD_test
+package cmd_test
 
 import (
 	"os"
 	"testing"
 
 	env "github.com/caarlos0/env/v6"
-	FlareCMD "github.com/soulteary/flare/cmd"
-	FlareDefine "github.com/soulteary/flare/config/define"
-	FlareModel "github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/cmd"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +27,7 @@ func TestParseEnvVars(t *testing.T) {
 	os.Setenv("FLARE_VISIBILITY", "private")
 	defer os.Unsetenv("FLARE_VISIBILITY")
 
-	flags := FlareCMD.ParseEnvVars()
+	flags := cmd.ParseEnvVars()
 
 	assert.Equal(t, flags.Port, 5000)
 	assert.Equal(t, flags.EnableGuide, false)
@@ -38,25 +38,25 @@ func TestParseEnvVars(t *testing.T) {
 	// test error parse
 	os.Setenv("FLARE_OFFLINE", ")))))))@#$%^&*()")
 	defer os.Unsetenv("FLARE_OFFLINE")
-	flags = FlareCMD.ParseEnvVars()
-	defaultEnvs := FlareDefine.DefaultEnvVars
+	flags = cmd.ParseEnvVars()
+	defaultEnvs := define.DefaultEnvVars
 	assert.Equal(t, flags.EnableOfflineMode, defaultEnvs.EnableOfflineMode)
 }
 
 func TestInitAccountFromEnvVars_normal(t *testing.T) {
-	defaultEnvs := FlareDefine.DefaultEnvVars
+	defaultEnvs := define.DefaultEnvVars
 
 	err := env.Parse(&defaultEnvs)
 	assert.Nil(t, err, "TestInitAccountFromEnvVars Faild")
-	var target FlareModel.Flags
+	var target model.Flags
 
 	// 3. update username and password
-	FlareCMD.InitAccountFromEnvVars(
+	cmd.InitAccountFromEnvVars(
 		"custom",
 		defaultEnvs.Pass,
 		&target.User,
 		&target.Pass,
-		FlareDefine.DEFAULT_USER_NAME,
+		define.DEFAULT_USER_NAME,
 		&target.UserIsGenerated,
 		&target.PassIsGenerated,
 		&target.DisableLoginMode,
@@ -68,44 +68,44 @@ func TestInitAccountFromEnvVars_normal(t *testing.T) {
 }
 
 func TestInitAccountFromEnvVars_EmptyUser(t *testing.T) {
-	defaultEnvs := FlareDefine.DefaultEnvVars
+	defaultEnvs := define.DefaultEnvVars
 
 	err := env.Parse(&defaultEnvs)
 	assert.Nil(t, err, "TestInitAccountFromEnvVars Faild")
-	var target FlareModel.Flags
+	var target model.Flags
 
 	// 4. test empty username and password
-	FlareCMD.InitAccountFromEnvVars(
+	cmd.InitAccountFromEnvVars(
 		"",
 		defaultEnvs.Pass,
 		&target.User,
 		&target.Pass,
-		FlareDefine.DEFAULT_USER_NAME,
+		define.DEFAULT_USER_NAME,
 		&target.UserIsGenerated,
 		&target.PassIsGenerated,
 		&target.DisableLoginMode,
 	)
-	assert.Equal(t, target.User, FlareDefine.DEFAULT_USER_NAME)
+	assert.Equal(t, target.User, define.DEFAULT_USER_NAME)
 	assert.Equal(t, target.UserIsGenerated, true)
 	assert.Equal(t, target.PassIsGenerated, true)
 	assert.Equal(t, len(target.Pass), 8)
 }
 
 func TestInitAccountFromEnvVars_EmptyPass(t *testing.T) {
-	defaultEnvs := FlareDefine.DefaultEnvVars
+	defaultEnvs := define.DefaultEnvVars
 
 	err := env.Parse(&defaultEnvs)
 	assert.Nil(t, err, "TestInitAccountFromEnvVars Faild")
 
-	var target FlareModel.Flags
+	var target model.Flags
 
 	// 4. test empty password
-	FlareCMD.InitAccountFromEnvVars(
+	cmd.InitAccountFromEnvVars(
 		"custom",
 		"",
 		&target.User,
 		&target.Pass,
-		FlareDefine.DEFAULT_USER_NAME,
+		define.DEFAULT_USER_NAME,
 		&target.UserIsGenerated,
 		&target.PassIsGenerated,
 		&target.DisableLoginMode,
@@ -116,19 +116,19 @@ func TestInitAccountFromEnvVars_EmptyPass(t *testing.T) {
 }
 
 func TestInitAccountFromEnvVars_Pass(t *testing.T) {
-	defaultEnvs := FlareDefine.DefaultEnvVars
+	defaultEnvs := define.DefaultEnvVars
 
 	err := env.Parse(&defaultEnvs)
 	assert.Nil(t, err, "TestInitAccountFromEnvVars Faild")
-	var target FlareModel.Flags
+	var target model.Flags
 
 	// 4. test empty password
-	FlareCMD.InitAccountFromEnvVars(
+	cmd.InitAccountFromEnvVars(
 		"custom",
 		"custom",
 		&target.User,
 		&target.Pass,
-		FlareDefine.DEFAULT_USER_NAME,
+		define.DEFAULT_USER_NAME,
 		&target.UserIsGenerated,
 		&target.PassIsGenerated,
 		&target.DisableLoginMode,
