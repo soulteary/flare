@@ -12,6 +12,9 @@ env:
   GO111MODULE: on
   DOCKER_CLI_EXPERIMENTAL: "enabled"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -57,7 +60,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         if: success() && startsWith(github.ref, 'refs/tags/')
         with:
-          version: "v1.21.2"
+          version: "~> v2"
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
