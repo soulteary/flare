@@ -15,7 +15,7 @@ require (
 	github.com/soulteary/memfs v0.1.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.11.1
-	github.com/tdewolff/minify/v2 v2.20.19
+	github.com/tdewolff/minify/v2 v2.24.8
 	gopkg.in/ini.v1 v1.67.0
 )
 
@@ -28,7 +28,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/tdewolff/parse/v2 v2.7.12 // indirect
+	github.com/tdewolff/parse/v2 v2.8.5 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
