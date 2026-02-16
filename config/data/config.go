@@ -55,7 +55,7 @@ KeepLetterCase: false
 	ok := saveFile(filePath, out)
 	if !ok {
 		log.Println("初始化默认程序配置文件出错。")
-		return result, err
+		return result, fmt.Errorf("初始化默认配置文件失败: %s", filePath)
 	}
 
 	parseErr := yaml.Unmarshal(out, &result)

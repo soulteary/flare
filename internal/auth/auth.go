@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/subtle"
 	"fmt"
 	"net/http"
 	"strings"
@@ -64,26 +65,26 @@ func CheckUserIsLogin(c *echo.Context) bool {
 	return true
 }
 
-func GetUserName(c *echo.Context) interface{} {
+func GetUserName(c *echo.Context) string {
 	if !FlareDefine.AppFlags.DisableLoginMode {
 		sess, err := session.Get(sessionName, c)
 		if err != nil {
 			return ""
 		}
-		if v, ok := sess.Values[SESSION_KEY_USER_NAME]; ok {
+		if v, ok := sess.Values[SESSION_KEY_USER_NAME].(string); ok {
 			return v
 		}
 	}
 	return ""
 }
 
-func GetUserLoginDate(c *echo.Context) interface{} {
+func GetUserLoginDate(c *echo.Context) string {
 	if !FlareDefine.AppFlags.DisableLoginMode {
 		sess, err := session.Get(sessionName, c)
 		if err != nil {
 			return ""
 		}
-		if v, ok := sess.Values[SESSION_KEY_LOGIN_DATE]; ok {
+		if v, ok := sess.Values[SESSION_KEY_LOGIN_DATE].(string); ok {
 			return v
 		}
 	}
@@ -106,7 +107,8 @@ func login(c *echo.Context) error {
 		return c.HTMLBlob(http.StatusBadRequest, internalErrorEmpty)
 	}
 
-	if username != FlareDefine.AppFlags.User || password != FlareDefine.AppFlags.Pass {
+	if subtle.ConstantTimeCompare([]byte(username), []byte(FlareDefine.AppFlags.User)) != 1 ||
+		subtle.ConstantTimeCompare([]byte(password), []byte(FlareDefine.AppFlags.Pass)) != 1 {
 		return c.HTMLBlob(http.StatusBadRequest, internalErrorInput)
 	}
 
