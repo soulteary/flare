@@ -1,7 +1,7 @@
 package data
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -24,13 +24,11 @@ func saveFile(filePath string, data []byte) bool {
 	return err == nil
 }
 
-func readFile(filePath string, crashOnError bool) []byte {
+// readFile reads the file and returns (nil, error) on failure. Callers should handle errors.
+func readFile(filePath string) ([]byte, error) {
 	data, err := os.ReadFile(filepath.Clean(filePath))
 	if err != nil {
-		if crashOnError {
-			log.Fatalf("程序不能读取配置文件 %s，请检查文件权限是否正常", filePath)
-		}
-		return []byte("")
+		return nil, fmt.Errorf("读取配置文件 %s 失败: %w", filePath, err)
 	}
-	return data
+	return data, nil
 }

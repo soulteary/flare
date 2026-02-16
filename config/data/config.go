@@ -98,7 +98,10 @@ func loadAppConfigFromYaml(name string) (model.Application, error) {
 		}
 		return result, nil
 	}
-	configFile := readFileCached(name, func() []byte { return readFile(filePath, true) })
+	configFile, err := readFileCached(name, func() ([]byte, error) { return readFile(filePath) })
+	if err != nil {
+		return result, fmt.Errorf("读取配置文件 %s: %w", name, err)
+	}
 	parseErr := yaml.Unmarshal(configFile, &result)
 	if parseErr != nil {
 		return result, fmt.Errorf("解析配置文件 %s 错误，请检查配置文件内容: %w", name, parseErr)

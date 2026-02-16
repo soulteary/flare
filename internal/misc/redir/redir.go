@@ -26,16 +26,20 @@ func RegisterRouting(e *echo.Echo) {
 			return c.HTMLBlob(http.StatusBadRequest, internalError)
 		}
 		decodeURL := string(decoded)
-		appsData := data.LoadFavoriteBookmarks()
-		for _, bookmark := range appsData.Items {
-			if bookmark.URL == decodeURL {
-				return c.Redirect(http.StatusFound, string(decoded))
+		appsData, errApps := data.LoadFavoriteBookmarks()
+		if errApps == nil {
+			for _, bookmark := range appsData.Items {
+				if bookmark.URL == decodeURL {
+					return c.Redirect(http.StatusFound, string(decoded))
+				}
 			}
 		}
-		bookmarksData := data.LoadNormalBookmarks()
-		for _, bookmark := range bookmarksData.Items {
-			if bookmark.URL == decodeURL {
-				return c.Redirect(http.StatusFound, string(decoded))
+		bookmarksData, errBookmarks := data.LoadNormalBookmarks()
+		if errBookmarks == nil {
+			for _, bookmark := range bookmarksData.Items {
+				if bookmark.URL == decodeURL {
+					return c.Redirect(http.StatusFound, string(decoded))
+				}
 			}
 		}
 		return c.HTMLBlob(http.StatusOK, internalError)

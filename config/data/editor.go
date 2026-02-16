@@ -45,8 +45,14 @@ func restorePrivateProp(input []_BOOKMARK_REMOVE_PRIVATE) (result []model.Bookma
 }
 
 func GetBookmarksForEditor() (categories string, bookmarks string) {
-	favoriteBookmarks := LoadFavoriteBookmarks()
-	normalBookmarks := LoadNormalBookmarks()
+	favoriteBookmarks, errFav := LoadFavoriteBookmarks()
+	if errFav != nil {
+		return "", ""
+	}
+	normalBookmarks, errNorm := LoadNormalBookmarks()
+	if errNorm != nil {
+		return "", ""
+	}
 
 	var mixedBookmarks []model.Bookmark
 

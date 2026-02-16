@@ -91,8 +91,8 @@ func setupRouter() (http.Handler, func(), error) {
 
 	// 初始化运行时配置和缓存，确保基线可重复执行。
 	_, _ = data.GetAllSettingsOptions()
-	_ = data.LoadFavoriteBookmarks()
-	_ = data.LoadNormalBookmarks()
+	_, _ = data.LoadFavoriteBookmarks()
+	_, _ = data.LoadNormalBookmarks()
 
 	handler := server.NewRouter(&define.AppFlags)
 	return handler, cleanup, nil

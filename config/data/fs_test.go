@@ -34,7 +34,10 @@ func TestSaveAndReadFile(t *testing.T) {
 		t.Fatal("save file failed")
 	}
 
-	data := readFile(filePath, false)
+	data, err := readFile(filePath)
+	if err != nil {
+		t.Fatalf("readFile: %v", err)
+	}
 
 	res := bytes.Compare(content, data)
 	if res != 0 {

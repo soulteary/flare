@@ -11,7 +11,7 @@ var (
 	cachedBookmarks []byte
 )
 
-func readFileCached(name string, readDisk func() []byte) []byte {
+func readFileCached(name string, readDisk func() ([]byte, error)) ([]byte, error) {
 	fileCacheMu.RLock()
 	var cached *[]byte
 	switch name {
@@ -28,7 +28,7 @@ func readFileCached(name string, readDisk func() []byte) []byte {
 	if *cached != nil {
 		b := *cached
 		fileCacheMu.RUnlock()
-		return b
+		return b, nil
 	}
 	fileCacheMu.RUnlock()
 
@@ -37,22 +37,34 @@ func readFileCached(name string, readDisk func() []byte) []byte {
 	switch name {
 	case "config":
 		if cachedConfig != nil {
-			return cachedConfig
+			return cachedConfig, nil
 		}
-		cachedConfig = readDisk()
-		return cachedConfig
+		b, err := readDisk()
+		if err != nil {
+			return nil, err
+		}
+		cachedConfig = b
+		return cachedConfig, nil
 	case "apps":
 		if cachedApps != nil {
-			return cachedApps
+			return cachedApps, nil
 		}
-		cachedApps = readDisk()
-		return cachedApps
+		b, err := readDisk()
+		if err != nil {
+			return nil, err
+		}
+		cachedApps = b
+		return cachedApps, nil
 	case "bookmarks":
 		if cachedBookmarks != nil {
-			return cachedBookmarks
+			return cachedBookmarks, nil
 		}
-		cachedBookmarks = readDisk()
-		return cachedBookmarks
+		b, err := readDisk()
+		if err != nil {
+			return nil, err
+		}
+		cachedBookmarks = b
+		return cachedBookmarks, nil
 	}
 	return readDisk()
 }

@@ -18,7 +18,10 @@ func GenerateBookmarkTemplate(filter string, options *model.Application) templat
 		}
 		options = &op
 	}
-	bookmarksData := data.LoadNormalBookmarks()
+	bookmarksData, err := data.LoadNormalBookmarks()
+	if err != nil {
+		return template.HTML("")
+	}
 	b, ok := builderPool.Get().(*strings.Builder)
 	if !ok {
 		b = &strings.Builder{}

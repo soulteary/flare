@@ -99,7 +99,8 @@ func saveBookmarksToYamlFile(name string, data model.Bookmarks) (bool, error) {
 	return true, nil
 }
 
-func loadBookmarksFromYamlFile(name string, isFavorite bool) (result model.Bookmarks) {
+func loadBookmarksFromYamlFile(name string, isFavorite bool) (model.Bookmarks, error) {
+	var result model.Bookmarks
 	filePath := getConfigPath(name)
 
 	if !checkExists(filePath) {
@@ -107,16 +108,19 @@ func loadBookmarksFromYamlFile(name string, isFavorite bool) (result model.Bookm
 		var createErr error
 		result, createErr = initBookmarks(filePath, isFavorite)
 		if createErr != nil {
-			log.Fatalf("尝试创建应用配置文件 %s 失败", name)
+			return result, fmt.Errorf("尝试创建应用配置文件 %s 失败: %w", name, createErr)
 		}
-		return result
+		return result, nil
 	}
-	configFile := readFileCached(name, func() []byte { return readFile(filePath, true) })
+	configFile, err := readFileCached(name, func() ([]byte, error) { return readFile(filePath) })
+	if err != nil {
+		return result, fmt.Errorf("读取配置文件 %s: %w", name, err)
+	}
 	parseErr := yaml.Unmarshal(configFile, &result)
 	if parseErr != nil {
-		log.Fatalf("解析配置文件 %s 错误，请检查配置文件内容。", name)
+		return result, fmt.Errorf("解析配置文件 %s 错误，请检查配置文件内容: %w", name, parseErr)
 	}
-	return result
+	return result, nil
 }
 
 func SaveFavoriteBookmarks(data model.Bookmarks) bool {
@@ -129,10 +133,10 @@ func SaveNormalBookmarks(data model.Bookmarks) bool {
 	return err == nil && result
 }
 
-func LoadFavoriteBookmarks() (result model.Bookmarks) {
+func LoadFavoriteBookmarks() (model.Bookmarks, error) {
 	return loadBookmarksFromYamlFile("apps", true)
 }
 
-func LoadNormalBookmarks() (result model.Bookmarks) {
+func LoadNormalBookmarks() (model.Bookmarks, error) {
 	return loadBookmarksFromYamlFile("bookmarks", false)
 }

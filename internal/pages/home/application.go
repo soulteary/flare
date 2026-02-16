@@ -23,7 +23,10 @@ func GenerateApplicationsTemplate(filter string, options *model.Application) tem
 		}
 		options = &op
 	}
-	appsData := data.LoadFavoriteBookmarks()
+	appsData, err := data.LoadFavoriteBookmarks()
+	if err != nil {
+		return template.HTML("")
+	}
 	b, ok := builderPool.Get().(*strings.Builder)
 	if !ok {
 		b = &strings.Builder{}

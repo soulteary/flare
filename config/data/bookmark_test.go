@@ -10,7 +10,10 @@ func TestFavoriteBookmarks(t *testing.T) {
 	filePath := getConfigPath("apps")
 	os.Remove(filePath)
 
-	data := LoadFavoriteBookmarks()
+	data, err := LoadFavoriteBookmarks()
+	if err != nil {
+		t.Fatalf("LoadFavoriteBookmarks: %v", err)
+	}
 	if len(data.Categories) != 0 || len(data.Items) == 0 {
 		t.Fatal("Load Favorite Bookmarks Failed")
 	}
@@ -28,7 +31,10 @@ func TestNormalBookmarks(t *testing.T) {
 	filePath := getConfigPath("bookmarks")
 	os.Remove(filePath)
 
-	data := LoadNormalBookmarks()
+	data, err := LoadNormalBookmarks()
+	if err != nil {
+		t.Fatalf("LoadNormalBookmarks: %v", err)
+	}
 	if len(data.Categories) == 0 || len(data.Items) == 0 {
 		t.Fatal("Load Normal Bookmarks Failed")
 	}
