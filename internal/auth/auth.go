@@ -91,10 +91,6 @@ func GetUserLoginDate(c *echo.Context) string {
 	return ""
 }
 
-const (
-	_HTMLContentType = "text/html; charset=utf-8"
-)
-
 func login(c *echo.Context) error {
 	sess, err := session.Get(sessionName, c)
 	if err != nil {

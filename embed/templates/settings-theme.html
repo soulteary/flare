@@ -1,7 +1,7 @@
 {{ define "settings-theme.html" }}
 <div class="setting-group-container">
     <form method="POST" action="{{ .SettingPages.Theme.Path }}">
-        <h2>设置主题</h2>
+        <h2>{{ T .Locale "settings_theme" }}</h2>
         <div class="theme-groups clearfix">
             {{range .Themes}}
             <div class="pull-left theme theme-{{.Name}}">

@@ -33,8 +33,13 @@ func updateThemes(c *echo.Context) error {
 func pageTheme(c *echo.Context) error {
 	themes := FlareDefine.ThemePalettes
 	options := FlareData.GetAllSettingsOptions()
+	locale := options.Locale
+	if locale == "" {
+		locale = "zh"
+	}
 	m := FlarePool.GetTemplateMap()
 	defer FlarePool.PutTemplateMap(m)
+	m["Locale"] = locale
 	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
 	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
 	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()

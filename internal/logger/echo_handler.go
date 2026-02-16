@@ -14,7 +14,10 @@ import (
 const requestAttrsCap = 12
 
 var requestAttrsPool = sync.Pool{
-	New: func() any { return make([]slog.Attr, 0, requestAttrsCap) },
+	New: func() any {
+		attrs := make([]slog.Attr, 0, requestAttrsCap)
+		return &attrs
+	},
 }
 
 // LoggerConfig configures the request logging middleware.
@@ -67,9 +70,9 @@ func NewEchoWithConfig(logger *slog.Logger, config LoggerConfig) echo.Middleware
 			ip := c.RealIP()
 			referer := c.Request().Referer()
 
-			requestAttributes := requestAttrsPool.Get().([]slog.Attr)
-			requestAttributes = requestAttributes[:0]
-			requestAttributes = append(requestAttributes,
+			requestAttributes := requestAttrsPool.Get().(*[]slog.Attr)
+			*requestAttributes = (*requestAttributes)[:0]
+			*requestAttributes = append(*requestAttributes,
 				slog.Time("time", start),
 				slog.String("method", method),
 				slog.String("host", host),
@@ -77,9 +80,9 @@ func NewEchoWithConfig(logger *slog.Logger, config LoggerConfig) echo.Middleware
 				slog.String("query", query),
 			)
 			if params != nil {
-				requestAttributes = append(requestAttributes, slog.Any("params", params))
+				*requestAttributes = append(*requestAttributes, slog.Any("params", params))
 			}
-			requestAttributes = append(requestAttributes,
+			*requestAttributes = append(*requestAttributes,
 				slog.String("route", route),
 				slog.String("ip", ip),
 				slog.String("referer", referer),
@@ -104,14 +107,14 @@ func NewEchoWithConfig(logger *slog.Logger, config LoggerConfig) echo.Middleware
 
 			// Async log for 2xx to shorten critical path and improve throughput.
 			if status >= 200 && status < 300 {
-				go func(attrs []slog.Attr) {
-					logger.LogAttrs(context.Background(), level, msg, attrs...)
-					attrs = attrs[:0]
+				go func(attrs *[]slog.Attr) {
+					logger.LogAttrs(context.Background(), level, msg, (*attrs)...)
+					*attrs = (*attrs)[:0]
 					requestAttrsPool.Put(attrs)
 				}(requestAttributes)
 			} else {
-				logger.LogAttrs(c.Request().Context(), level, msg, requestAttributes...)
-				requestAttributes = requestAttributes[:0]
+				logger.LogAttrs(c.Request().Context(), level, msg, (*requestAttributes)...)
+				*requestAttributes = (*requestAttributes)[:0]
 				requestAttrsPool.Put(requestAttributes)
 			}
 			return err

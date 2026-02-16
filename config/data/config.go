@@ -50,6 +50,8 @@ ShowWeather: true
 Location: "北京市"
 # 保持界面中链接大小写和配置中一致
 KeepLetterCase: false
+# 界面语言 (zh / en)
+Locale: "zh"
 `)
 
 	ok := saveFile(filePath, out)

@@ -35,6 +35,7 @@ func updateAppearanceOptions(c *echo.Context) error {
 		EnableEncryptedLink      bool   `form:"enable-encrypted-link"`
 		IconMode                 string `form:"icon-mode"`
 		KeepLetterCase           bool   `form:"keep-letter-case"`
+		Locale                   string `form:"locale"`
 		OptionCustomDay          string `form:"custom-day"`
 		OptionCustomMonth        string `form:"custom-month"`
 	}
@@ -60,6 +61,9 @@ func updateAppearanceOptions(c *echo.Context) error {
 		update.IconMode = "DEFAULT"
 	} else {
 		update.IconMode = requestIconMode
+	}
+	if body.Locale != "" {
+		update.Locale = body.Locale
 	}
 	FlareData.UpdateAppearance(update)
 	return pageAppearance(c)
@@ -92,5 +96,7 @@ func pageAppearance(c *echo.Context) error {
 	m["OptionKeepLetterCase"] = options.KeepLetterCase
 	m["OptionIconModeDefault"] = IconModeDefault
 	m["OptionIconModeFilling"] = IconModeFilling
+	m["OptionLocale"] = options.Locale
+	m["Locale"] = options.Locale
 	return c.Render(http.StatusOK, "settings.html", m)
 }
