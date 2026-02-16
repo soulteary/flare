@@ -10,7 +10,7 @@ import (
 	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 	FlarePool "github.com/soulteary/flare/internal/pool"
-	FlareVersion "github.com/soulteary/flare/internal/version"
+	version "github.com/soulteary/version-kit"
 )
 
 func RegisterRouting(e *echo.Echo) {
@@ -40,9 +40,9 @@ func pageOthers(c *echo.Context) error {
 	m["PageName"] = "Others"
 	m["SettingPages"] = FlareDefine.SettingPages
 	m["OptionTitle"] = options.Title
-	m["Version"] = FlareVersion.Version
-	m["BuildDate"] = FlareVersion.BuildDate
-	m["COMMIT"] = FlareVersion.Commit
+	m["Version"] = version.Version
+	m["BuildDate"] = version.BuildDate
+	m["COMMIT"] = version.Commit
 	m["OptionFooter"] = template.HTML(options.Footer)
 	return c.Render(http.StatusOK, "settings.html", m)
 }

@@ -7,7 +7,7 @@ import (
 
 	"github.com/soulteary/cli-kit/configutil"
 	"github.com/soulteary/cli-kit/flagutil"
-	"github.com/soulteary/flare/internal/version"
+	version "github.com/soulteary/version-kit"
 	flags "github.com/spf13/pflag"
 
 	FlareDefine "github.com/soulteary/flare/config/define"
@@ -123,7 +123,7 @@ func parseCLI(baseFlags FlareModel.Flags) FlareModel.Flags {
 	baseFlags.CookieSecret = configutil.ResolveStringPflag(fs, _KEY_COOKIE_SECRET, "", baseFlags.CookieSecret, true)
 
 	// Forcibly disable debug mode in non-development mode
-	if strings.ToLower(version.Version) != "dev" {
+	if !version.Default().IsDev() {
 		baseFlags.DebugMode = false
 	} else {
 		baseFlags.DebugMode = flagutil.HasFlagInOSArgs("D") || flagutil.HasFlagInOSArgs("debug")
