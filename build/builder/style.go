@@ -34,7 +34,7 @@ func TaskForStyles(gofile string) {
 }
 
 func initInlineStyle(data string, gofile string) {
-	content := "package define\nconst PAGE_INLINE_STYLE = " + `"` + strings.Replace(data, "\"", "\\\"", -1) + `"`
+	content := "package define\nconst PAGE_INLINE_STYLE = " + `"` + strings.ReplaceAll(data, "\"", "\\\"") + `"`
 	fmtContent, err := format.Source([]byte(content))
 	if err != nil {
 		fmt.Println("序列化内容失败", err)
