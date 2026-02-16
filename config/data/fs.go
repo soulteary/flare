@@ -28,7 +28,7 @@ func readFile(filePath string, crashOnError bool) []byte {
 	data, err := os.ReadFile(filepath.Clean(filePath))
 	if err != nil {
 		if crashOnError {
-			log.Fatalf("程序不能读取配置文件" + filePath + "，请检查文件权限是否正常")
+			log.Fatalf("程序不能读取配置文件 %s，请检查文件权限是否正常", filePath)
 		}
 		return []byte("")
 	}

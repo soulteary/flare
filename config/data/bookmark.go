@@ -107,14 +107,14 @@ func loadBookmarksFromYamlFile(name string, isFavorite bool) (result FlareModel.
 		var createErr error
 		result, createErr = initBookmarks(filePath, isFavorite)
 		if createErr != nil {
-			log.Fatalf("尝试创建应用配置文件" + name + "失败")
+			log.Fatalf("尝试创建应用配置文件 %s 失败", name)
 		}
 		return result
 	}
 	configFile := readFileCached(name, func() []byte { return readFile(filePath, true) })
 	parseErr := yaml.Unmarshal(configFile, &result)
 	if parseErr != nil {
-		log.Fatalf("解析配置文件" + name + "错误，请检查配置文件内容。")
+		log.Fatalf("解析配置文件 %s 错误，请检查配置文件内容。", name)
 	}
 	return result
 }
