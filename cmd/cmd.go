@@ -12,7 +12,7 @@ import (
 	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
 	FlareLogger "github.com/soulteary/flare/internal/logger"
-	"github.com/soulteary/flare/internal/version"
+	version "github.com/soulteary/version-kit"
 )
 
 func Parse() FlareModel.Flags {
@@ -69,15 +69,16 @@ func ExcuteCLI(cliFlags *FlareModel.Flags, options *flags.FlagSet) (exit bool) {
 }
 
 func GetVersion(echo bool) string {
-	programVersion := fmt.Sprintf("Flare v%s-%s %s/%s BuildDate=%s", version.Version, strings.ToUpper(version.Commit), runtime.GOOS, runtime.GOARCH, version.BuildDate)
+	info := version.Default()
+	programVersion := fmt.Sprintf("Flare v%s-%s %s/%s BuildDate=%s", info.Version, strings.ToUpper(info.Commit), runtime.GOOS, runtime.GOARCH, info.BuildDate)
 	if echo {
 		log := FlareLogger.GetLogger()
 		log.Info("Flare - 🏂 Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.")
 		log.Info("程序信息：",
-			slog.String("version", version.Version),
-			slog.String("commit", strings.ToUpper(version.Commit)),
+			slog.String("version", info.Version),
+			slog.String("commit", strings.ToUpper(info.Commit)),
 			slog.String("GOGS/ARCH", fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)),
-			slog.String("date", version.BuildDate),
+			slog.String("date", info.BuildDate),
 		)
 	}
 	return programVersion

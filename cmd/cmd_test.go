@@ -9,7 +9,7 @@ import (
 	FlareCMD "github.com/soulteary/flare/cmd"
 	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
-	"github.com/soulteary/flare/internal/version"
+	version "github.com/soulteary/version-kit"
 	flags "github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -9,7 +9,7 @@ builds:
       env:
         - CGO_ENABLED=0
       ldflags:
-        - -w -s -X "github.com/soulteary/flare/internal/version.Version={{ .Tag }}" -X "github.com/soulteary/flare/internal/version.Commit={{.Commit}}" -X "github.com/soulteary/flare/internal/version.BuildDate={{.Date}}"
+        - -w -s -X "github.com/soulteary/version-kit.Version={{ .Tag }}" -X "github.com/soulteary/version-kit.Commit={{.Commit}}" -X "github.com/soulteary/version-kit.BuildDate={{.Date}}"
     id: macos
     goos: [ darwin ]
     goarch: [ amd64, arm64 ]
