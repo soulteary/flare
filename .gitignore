@@ -27,6 +27,7 @@ internal/pages/editor/editor-assets
 internal/weather/icons
 .DS_Store
 tmp
+.benchmark
 apps.yml
 bookmarks.yml
 config.yml
