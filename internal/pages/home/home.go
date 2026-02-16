@@ -8,13 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v5"
 
 	FlareData "github.com/soulteary/flare/config/data"
 	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareModel "github.com/soulteary/flare/config/model"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
 	FlareFn "github.com/soulteary/flare/internal/fn"
+	FlarePool "github.com/soulteary/flare/internal/pool"
 	FlareWeather "github.com/soulteary/flare/internal/settings/weather"
 	weather "github.com/soulteary/funny-china-weather"
 )
@@ -36,34 +37,29 @@ func init() {
 
 }
 
-func RegisterRouting(router *gin.Engine) {
-
+func RegisterRouting(e *echo.Echo) {
 	if FlareDefine.AppFlags.Visibility != "PRIVATE" {
-		router.GET(FlareDefine.RegularPages.Home.Path, pageHome)
-		router.GET(FlareDefine.RegularPages.Help.Path, renderHelp)
-		router.POST(FlareDefine.RegularPages.Home.Path, pageSearch)
-
-		router.GET(FlareDefine.RegularPages.Applications.Path, pageApplication)
-		router.GET(FlareDefine.RegularPages.Bookmarks.Path, pageBookmark)
+		e.GET(FlareDefine.RegularPages.Home.Path, pageHome)
+		e.GET(FlareDefine.RegularPages.Help.Path, renderHelp)
+		e.POST(FlareDefine.RegularPages.Home.Path, pageSearch)
+		e.GET(FlareDefine.RegularPages.Applications.Path, pageApplication)
+		e.GET(FlareDefine.RegularPages.Bookmarks.Path, pageBookmark)
 	} else {
-		router.GET(FlareDefine.RegularPages.Home.Path, FlareAuth.AuthRequired, pageHome)
-		router.GET(FlareDefine.RegularPages.Help.Path, FlareAuth.AuthRequired, renderHelp)
-		router.POST(FlareDefine.RegularPages.Home.Path, FlareAuth.AuthRequired, pageSearch)
-
-		router.GET(FlareDefine.RegularPages.Applications.Path, FlareAuth.AuthRequired, pageApplication)
-		router.GET(FlareDefine.RegularPages.Bookmarks.Path, FlareAuth.AuthRequired, pageBookmark)
+		e.GET(FlareDefine.RegularPages.Home.Path, pageHome, FlareAuth.AuthRequired)
+		e.GET(FlareDefine.RegularPages.Help.Path, renderHelp, FlareAuth.AuthRequired)
+		e.POST(FlareDefine.RegularPages.Home.Path, pageSearch, FlareAuth.AuthRequired)
+		e.GET(FlareDefine.RegularPages.Applications.Path, pageApplication, FlareAuth.AuthRequired)
+		e.GET(FlareDefine.RegularPages.Bookmarks.Path, pageBookmark, FlareAuth.AuthRequired)
 	}
 }
 
-func pageHome(c *gin.Context) {
-	render(c, "")
+func pageHome(c *echo.Context) error {
+	return render(c, "")
 }
 
-func renderHelp(c *gin.Context) {
+func renderHelp(c *echo.Context) error {
 	options := FlareData.GetAllSettingsOptions()
-
 	now := time.Now()
-
 	configWeatherShow := true
 	var weatherData FlareModel.Weather
 	if !FlareDefine.AppFlags.EnableOfflineMode {
@@ -74,87 +70,60 @@ func renderHelp(c *gin.Context) {
 			configWeatherShow = weatherShow
 		}
 	}
-
 	var days = [...]string{
-		"星期日",
-		"星期一",
-		"星期二",
-		"星期三",
-		"星期四",
-		"星期五",
-		"星期六",
+		"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六",
 	}
-
 	if !FlareDefine.AppFlags.DisableCSP {
-		c.Header("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';")
+		c.Response().Header().Set("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';")
 	}
-
-	c.HTML(
-		http.StatusOK,
-		"home.html",
-		gin.H{
-			"PageName":       "Home",
-			"PageAppearance": FlareDefine.GetAppBodyStyle(),
-			"SettingPages":   FlareDefine.SettingPages,
-
-			"DebugMode":       FlareDefine.AppFlags.DebugMode,
-			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
-
-			"ShowWeatherModule": !FlareDefine.AppFlags.EnableOfflineMode && configWeatherShow,
-			"Location":          options.Location,
-			"WeatherData":       weatherData,
-			"WeatherIcon":       weather.GetSVGCodeByName(weatherData.ConditionCode),
-
-			"HeroDate":  now.Format("2006年01月02日"),
-			"HeroTime":  now.Format("15:04:05"),
-			"HeroDay":   fmt.Sprintf(`%s`, days[now.Weekday()]),
-			"Greetings": "帮助",
-
-			"BookmarksURI":    FlareDefine.RegularPages.Bookmarks.Path,
-			"ApplicationsURI": FlareDefine.RegularPages.Applications.Path,
-			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
-			"Applications":    GenerateHelpTemplate(),
-			"SearchKeyword":   template.HTML(" "),
-			"HasKeyword":      false,
-
-			// SearchProvider          string // 默认的搜索引擎
-			"ShowSearchComponent":     options.ShowSearchComponent,
-			"DisabledSearchAutoFocus": true,
-
-			"OptionTitle":              options.Title,
-			"OptionFooter":             template.HTML(options.Footer),
-			"OptionOpenAppNewTab":      options.OpenAppNewTab,
-			"OptionOpenBookmarkNewTab": options.OpenBookmarkNewTab,
-			"OptionShowTitle":          options.ShowTitle,
-			"OptionShowDateTime":       options.ShowDateTime,
-			// help 界面强制展示 Apps 模块，隐藏书签模块
-			"OptionShowApps":           true,
-			"OptionShowBookmarks":      false,
-			"OptionHideSettingsButton": options.HideSettingsButton,
-			"OptionHideHelpButton":     options.HideHelpButton,
-		},
-	)
+	m := FlarePool.GetTemplateMap()
+	defer FlarePool.PutTemplateMap(m)
+	m["PageName"] = "Home"
+	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
+	m["SettingPages"] = FlareDefine.SettingPages
+	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
+	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
+	m["ShowWeatherModule"] = !FlareDefine.AppFlags.EnableOfflineMode && configWeatherShow
+	m["Location"] = options.Location
+	m["WeatherData"] = weatherData
+	m["WeatherIcon"] = weather.GetSVGCodeByName(weatherData.ConditionCode)
+	m["HeroDate"] = now.Format("2006年01月02日")
+	m["HeroTime"] = now.Format("15:04:05")
+	m["HeroDay"] = fmt.Sprintf(`%s`, days[now.Weekday()])
+	m["Greetings"] = "帮助"
+	m["BookmarksURI"] = FlareDefine.RegularPages.Bookmarks.Path
+	m["ApplicationsURI"] = FlareDefine.RegularPages.Applications.Path
+	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
+	m["Applications"] = GenerateHelpTemplate()
+	m["SearchKeyword"] = template.HTML(" ")
+	m["HasKeyword"] = false
+	m["ShowSearchComponent"] = options.ShowSearchComponent
+	m["DisabledSearchAutoFocus"] = true
+	m["OptionTitle"] = options.Title
+	m["OptionFooter"] = template.HTML(options.Footer)
+	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
+	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
+	m["OptionShowTitle"] = options.ShowTitle
+	m["OptionShowDateTime"] = options.ShowDateTime
+	m["OptionShowApps"] = true
+	m["OptionShowBookmarks"] = false
+	m["OptionHideSettingsButton"] = options.HideSettingsButton
+	m["OptionHideHelpButton"] = options.HideHelpButton
+	return c.Render(http.StatusOK, "home.html", m)
 }
 
-func pageSearch(c *gin.Context) {
-
-	type UpdateBody struct {
+func pageSearch(c *echo.Context) error {
+	var body struct {
 		Search string `form:"search"`
 	}
-
-	var body UpdateBody
-	if c.ShouldBind(&body) != nil {
-		render(c, "")
-		return
+	if err := c.Bind(&body); err != nil {
+		return render(c, "")
 	}
-
 	search := strings.TrimSpace(body.Search)
 	if len(search) > 50 {
-		render(c, "")
-		return
+		return render(c, "")
 	}
-
-	render(c, search)
+	return render(c, search)
 }
 
 var _CACHE_WEATHER_DATA FlareModel.Weather
@@ -167,7 +136,6 @@ func GetWeatherData() (data FlareModel.Weather) {
 	return _CACHE_WEATHER_DATA
 }
 
-// 每五分钟更新一次数据
 func updateWeatherData(location string) {
 	timestamp := time.Now().Unix()
 	if (_CACHE_WEATHER_DATA.Expires < timestamp) || (location != _CACHE_WEATHER_DATA.Location) {
@@ -189,118 +157,83 @@ func getGreeting(greeting string) string {
 	words := strings.Split(greeting, ";")
 	count := len(words)
 	defaultWord := "你好"
-
-	// 单一词语模式
 	if count == 1 {
 		if len(words[0]) > 0 {
 			return words[0]
 		}
 		return defaultWord
 	}
-
 	hour, _, _ := time.Now().Clock()
-	// 早晨
-	if hour >= 5 && hour <= 10 {
-		if len(words[0]) > 0 {
-			return words[0]
-		}
+	if hour >= 5 && hour <= 10 && len(words[0]) > 0 {
+		return words[0]
 	}
-	// 中午
-	if hour >= 11 && hour <= 13 {
-		if len(words[1]) > 0 {
-			return words[1]
-		}
+	if hour >= 11 && hour <= 13 && len(words[1]) > 0 {
+		return words[1]
 	}
-	// 下午
-	if hour >= 14 && hour <= 18 {
-		if len(words[2]) > 0 {
-			return words[2]
-		}
+	if hour >= 14 && hour <= 18 && len(words[2]) > 0 {
+		return words[2]
 	}
-	// 晚上
-	if len(words[3]) > 0 {
+	if len(words) > 3 && len(words[3]) > 0 {
 		return words[3]
 	}
-
 	return defaultWord
 }
 
-func pageBookmark(c *gin.Context) {
+func pageBookmark(c *echo.Context) error {
 	options := FlareData.GetAllSettingsOptions()
-	FlareFn.ParseRequestURL(c.Request)
-
-	c.HTML(
-		http.StatusOK,
-		"home.html",
-		gin.H{
-			"DebugMode":       FlareDefine.AppFlags.DebugMode,
-			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
-
-			"PageName": "书签",
-			"SubPage":  true,
-
-			"PageAppearance": FlareDefine.GetAppBodyStyle(),
-			"SettingPages":   FlareDefine.SettingPages,
-
-			"BookmarksURI":    FlareDefine.RegularPages.Bookmarks.Path,
-			"ApplicationsURI": FlareDefine.RegularPages.Applications.Path,
-			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
-
-			"Bookmarks": GenerateBookmarkTemplate(""),
-
-			"OptionTitle":              options.Title,
-			"OptionOpenBookmarkNewTab": options.OpenBookmarkNewTab,
-			"OptionShowBookmarks":      options.ShowBookmarks,
-			"OptionHideSettingsButton": options.HideSettingsButton,
-			"OptionHideHelpButton":     options.HideHelpButton,
-		},
-	)
+	FlareFn.ParseRequestURL(c.Request())
+	m := FlarePool.GetTemplateMap()
+	defer FlarePool.PutTemplateMap(m)
+	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
+	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
+	m["PageName"] = "书签"
+	m["SubPage"] = true
+	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
+	m["SettingPages"] = FlareDefine.SettingPages
+	m["BookmarksURI"] = FlareDefine.RegularPages.Bookmarks.Path
+	m["ApplicationsURI"] = FlareDefine.RegularPages.Applications.Path
+	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
+	m["Bookmarks"] = GenerateBookmarkTemplate("", &options)
+	m["OptionTitle"] = options.Title
+	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
+	m["OptionShowBookmarks"] = options.ShowBookmarks
+	m["OptionHideSettingsButton"] = options.HideSettingsButton
+	m["OptionHideHelpButton"] = options.HideHelpButton
+	return c.Render(http.StatusOK, "home.html", m)
 }
 
-func pageApplication(c *gin.Context) {
+func pageApplication(c *echo.Context) error {
 	options := FlareData.GetAllSettingsOptions()
-	FlareFn.ParseRequestURL(c.Request)
-
-	c.HTML(
-		http.StatusOK,
-		"home.html",
-		gin.H{
-			"DebugMode":       FlareDefine.AppFlags.DebugMode,
-			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
-
-			"BookmarksURI":    FlareDefine.RegularPages.Bookmarks.Path,
-			"ApplicationsURI": FlareDefine.RegularPages.Applications.Path,
-			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
-			"Applications":    GenerateApplicationsTemplate(""),
-
-			"PageName":       "应用",
-			"SubPage":        true,
-			"PageAppearance": FlareDefine.GetAppBodyStyle(),
-
-			// "SettingPages": FlareState.SettingPages,
-
-			"OptionTitle":              options.Title,
-			"OptionOpenAppNewTab":      options.OpenAppNewTab,
-			"OptionShowApps":           options.ShowApps,
-			"OptionHideSettingsButton": options.HideSettingsButton,
-			"OptionHideHelpButton":     options.HideHelpButton,
-		},
-	)
+	FlareFn.ParseRequestURL(c.Request())
+	m := FlarePool.GetTemplateMap()
+	defer FlarePool.PutTemplateMap(m)
+	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
+	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
+	m["BookmarksURI"] = FlareDefine.RegularPages.Bookmarks.Path
+	m["ApplicationsURI"] = FlareDefine.RegularPages.Applications.Path
+	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
+	m["Applications"] = GenerateApplicationsTemplate("", &options)
+	m["PageName"] = "应用"
+	m["SubPage"] = true
+	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
+	m["OptionTitle"] = options.Title
+	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
+	m["OptionShowApps"] = options.ShowApps
+	m["OptionHideSettingsButton"] = options.HideSettingsButton
+	m["OptionHideHelpButton"] = options.HideHelpButton
+	return c.Render(http.StatusOK, "home.html", m)
 }
 
-func render(c *gin.Context, filter string) {
+func render(c *echo.Context, filter string) error {
 	options := FlareData.GetAllSettingsOptions()
-	FlareFn.ParseRequestURL(c.Request)
-
+	FlareFn.ParseRequestURL(c.Request())
 	hasKeyword := false
 	searchKeyword := " "
 	if filter != "" {
 		searchKeyword = "搜索结果: " + filter
 		hasKeyword = true
 	}
-
 	now := time.Now()
-
 	configWeatherShow := true
 	var weatherData FlareModel.Weather
 	if !FlareDefine.AppFlags.EnableOfflineMode {
@@ -311,70 +244,50 @@ func render(c *gin.Context, filter string) {
 			configWeatherShow = weatherShow
 		}
 	}
-
 	var days = [...]string{
-		"星期日",
-		"星期一",
-		"星期二",
-		"星期三",
-		"星期四",
-		"星期五",
-		"星期六",
+		"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六",
 	}
-
 	if !FlareDefine.AppFlags.DisableCSP {
-		c.Header("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';")
+		c.Response().Header().Set("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';")
 	}
-
 	bodyClassName := ""
 	if !options.KeepLetterCase {
 		bodyClassName += "app-content-uppercase "
 	}
-
-	c.HTML(
-		http.StatusOK,
-		"home.html",
-		gin.H{
-			"PageName":       "Home",
-			"PageAppearance": FlareDefine.GetAppBodyStyle(),
-			"SettingPages":   FlareDefine.SettingPages,
-
-			"DebugMode":       FlareDefine.AppFlags.DebugMode,
-			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
-
-			"ShowWeatherModule": !FlareDefine.AppFlags.EnableOfflineMode && configWeatherShow,
-			"Location":          options.Location,
-			"WeatherData":       weatherData,
-			"WeatherIcon":       weather.GetSVGCodeByName(weatherData.ConditionCode),
-
-			"HeroDate":  now.Format("2006年01月02日"),
-			"HeroTime":  now.Format("15:04:05"),
-			"HeroDay":   fmt.Sprintf(`%s`, days[now.Weekday()]),
-			"Greetings": getGreeting(options.Greetings),
-
-			"BookmarksURI":    FlareDefine.RegularPages.Bookmarks.Path,
-			"ApplicationsURI": FlareDefine.RegularPages.Applications.Path,
-			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
-			"Applications":    GenerateApplicationsTemplate(filter),
-			"Bookmarks":       GenerateBookmarkTemplate(filter),
-			"SearchKeyword":   template.HTML(searchKeyword),
-			"HasKeyword":      hasKeyword,
-
-			// SearchProvider          string // 默认的搜索引擎
-			"ShowSearchComponent":     options.ShowSearchComponent,
-			"DisabledSearchAutoFocus": options.DisabledSearchAutoFocus,
-
-			"OptionTitle":              options.Title,
-			"OptionFooter":             template.HTML(options.Footer),
-			"OptionOpenAppNewTab":      options.OpenAppNewTab,
-			"OptionOpenBookmarkNewTab": options.OpenBookmarkNewTab,
-			"OptionShowTitle":          options.ShowTitle,
-			"OptionShowDateTime":       options.ShowDateTime,
-			"OptionShowApps":           options.ShowApps,
-			"OptionShowBookmarks":      options.ShowBookmarks,
-			"OptionHideSettingsButton": options.HideSettingsButton,
-			"OptionHideHelpButton":     options.HideHelpButton,
-			"BodyClassName":            template.HTMLAttr(bodyClassName),
-		},
-	)
+	m := FlarePool.GetTemplateMap()
+	defer FlarePool.PutTemplateMap(m)
+	m["PageName"] = "Home"
+	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
+	m["SettingPages"] = FlareDefine.SettingPages
+	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
+	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
+	m["ShowWeatherModule"] = !FlareDefine.AppFlags.EnableOfflineMode && configWeatherShow
+	m["Location"] = options.Location
+	m["WeatherData"] = weatherData
+	m["WeatherIcon"] = weather.GetSVGCodeByName(weatherData.ConditionCode)
+	m["HeroDate"] = now.Format("2006年01月02日")
+	m["HeroTime"] = now.Format("15:04:05")
+	m["HeroDay"] = fmt.Sprintf(`%s`, days[now.Weekday()])
+	m["Greetings"] = getGreeting(options.Greetings)
+	m["BookmarksURI"] = FlareDefine.RegularPages.Bookmarks.Path
+	m["ApplicationsURI"] = FlareDefine.RegularPages.Applications.Path
+	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
+	m["Applications"] = GenerateApplicationsTemplate(filter, &options)
+	m["Bookmarks"] = GenerateBookmarkTemplate(filter, &options)
+	m["SearchKeyword"] = template.HTML(searchKeyword)
+	m["HasKeyword"] = hasKeyword
+	m["ShowSearchComponent"] = options.ShowSearchComponent
+	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus
+	m["OptionTitle"] = options.Title
+	m["OptionFooter"] = template.HTML(options.Footer)
+	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
+	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
+	m["OptionShowTitle"] = options.ShowTitle
+	m["OptionShowDateTime"] = options.ShowDateTime
+	m["OptionShowApps"] = options.ShowApps
+	m["OptionShowBookmarks"] = options.ShowBookmarks
+	m["OptionHideSettingsButton"] = options.HideSettingsButton
+	m["OptionHideHelpButton"] = options.HideHelpButton
+	m["BodyClassName"] = template.HTMLAttr(bodyClassName)
+	return c.Render(http.StatusOK, "home.html", m)
 }

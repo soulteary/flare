@@ -3,61 +3,45 @@ package theme
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v5"
 
 	FlareData "github.com/soulteary/flare/config/data"
 	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
+	FlarePool "github.com/soulteary/flare/internal/pool"
 )
 
-func RegisterRouting(router *gin.Engine) {
-	router.GET(FlareDefine.SettingPages.Theme.Path, FlareAuth.AuthRequired, pageTheme)
-	router.POST(FlareDefine.SettingPages.Theme.Path, FlareAuth.AuthRequired, updateThemes)
+func RegisterRouting(e *echo.Echo) {
+	e.GET(FlareDefine.SettingPages.Theme.Path, pageTheme, FlareAuth.AuthRequired)
+	e.POST(FlareDefine.SettingPages.Theme.Path, updateThemes, FlareAuth.AuthRequired)
 }
 
-func updateThemes(c *gin.Context) {
-
-	type UpdateThemeBody struct {
+func updateThemes(c *echo.Context) error {
+	var body struct {
 		Theme string `form:"theme"`
 	}
-
-	var body UpdateThemeBody
-	if c.ShouldBind(&body) != nil {
-		c.PureJSON(http.StatusForbidden, "提交数据缺失")
-		return
+	if err := c.Bind(&body); err != nil {
+		return c.JSON(http.StatusForbidden, "提交数据缺失")
 	}
-
 	FlareData.UpdateThemeName(body.Theme)
 	FlareDefine.UpdatePagePalettes()
-
-	// 中转变量
 	FlareDefine.ThemeCurrent = body.Theme
 	FlareDefine.ThemePrimaryColor = FlareDefine.GetThemePrimaryColor(body.Theme)
-
-	pageTheme(c)
+	return pageTheme(c)
 }
 
-func pageTheme(c *gin.Context) {
-	// themes := getThemePalettes()
+func pageTheme(c *echo.Context) error {
 	themes := FlareDefine.ThemePalettes
 	options := FlareData.GetAllSettingsOptions()
-
-	c.HTML(
-		http.StatusOK,
-		"settings.html",
-		gin.H{
-			"DebugMode":       FlareDefine.AppFlags.DebugMode,
-			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
-			"PageAppearance":  FlareDefine.GetAppBodyStyle(),
-			"SettingsURI":     FlareDefine.RegularPages.Settings.Path,
-
-			"PageName": "Theme",
-			// 当前选择主题
-			"SettingPages": FlareDefine.SettingPages,
-			// "Themes":       themes.Themes,
-			"Themes": themes,
-
-			"OptionTitle": options.Title,
-		},
-	)
+	m := FlarePool.GetTemplateMap()
+	defer FlarePool.PutTemplateMap(m)
+	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
+	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
+	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
+	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
+	m["PageName"] = "Theme"
+	m["SettingPages"] = FlareDefine.SettingPages
+	m["Themes"] = themes
+	m["OptionTitle"] = options.Title
+	return c.Render(http.StatusOK, "settings.html", m)
 }

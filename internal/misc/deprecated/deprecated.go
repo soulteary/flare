@@ -3,12 +3,11 @@ package FlareDeprecated
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v5"
 
 	FlareDefine "github.com/soulteary/flare/config/define"
 )
 
-// TODO：样式优化
 func makeLandingPage(originURL string, currentURL string, delay string) []byte {
 	tpl := `<!DOCTYPE html>
 <html lang="en">
@@ -27,15 +26,12 @@ func makeLandingPage(originURL string, currentURL string, delay string) []byte {
 	return []byte(tpl)
 }
 
-// 展示临时的落地页，在几个版本后，彻底取消路由
-func RegisterRouting(router *gin.Engine) {
+func RegisterRouting(e *echo.Echo) {
 	const urlMDI = "/resources/mdi-cheat-sheets/"
-	router.GET(urlMDI, func(c *gin.Context) {
+	e.GET(urlMDI, func(c *echo.Context) error {
 		if FlareDefine.AppFlags.EnableDeprecatedNotice {
-			c.Data(http.StatusOK, "text/html; charset=utf-8", makeLandingPage(urlMDI, FlareDefine.RegularPages.Icons.Path, "5"))
-		} else {
-			c.Redirect(http.StatusFound, FlareDefine.RegularPages.Icons.Path)
+			return c.HTMLBlob(http.StatusOK, makeLandingPage(urlMDI, FlareDefine.RegularPages.Icons.Path, "5"))
 		}
-		c.Abort()
+		return c.Redirect(http.StatusFound, FlareDefine.RegularPages.Icons.Path)
 	})
 }

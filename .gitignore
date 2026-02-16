@@ -22,11 +22,14 @@ internal/assets/favicon.ico
 internal/assets/css
 internal/templates/html/*
 internal/mdi/mdi-cheat-sheets
-internal/pages/guide/guide-assets
-internal/pages/editor/editor-assets
+internal/pages/guide/guide-assets/*
+!internal/pages/guide/guide-assets/placeholder.txt
+internal/pages/editor/editor-assets/*
+!internal/pages/editor/editor-assets/placeholder.txt
 internal/weather/icons
 .DS_Store
 tmp
+.benchmark
 apps.yml
 bookmarks.yml
 config.yml

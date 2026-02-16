@@ -3,13 +3,13 @@ package FlareHealth
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v5"
 
 	FlareDefine "github.com/soulteary/flare/config/define"
 )
 
-func RegisterRouting(router *gin.Engine) {
-	router.GET(FlareDefine.MiscPages.HealthCheck.Path, func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong"})
+func RegisterRouting(e *echo.Echo) {
+	e.GET(FlareDefine.MiscPages.HealthCheck.Path, func(c *echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"message": "pong"})
 	})
 }

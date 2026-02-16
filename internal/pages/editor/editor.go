@@ -6,12 +6,13 @@ import (
 	"io/fs"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v5"
 	"github.com/soulteary/memfs"
 
 	FlareData "github.com/soulteary/flare/config/data"
 	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
+	FlarePool "github.com/soulteary/flare/internal/pool"
 )
 
 var MemFs *memfs.FS
@@ -25,63 +26,49 @@ var editorAssets embed.FS
 func Init() {
 	MemFs = memfs.New()
 	err := MemFs.MkdirAll(_ASSETS_BASE_DIR, 0777)
-
 	if err != nil {
 		panic(err)
 	}
 }
 
-func RegisterRouting(router *gin.Engine) {
+func RegisterRouting(e *echo.Echo) {
 	introAssets, _ := fs.Sub(editorAssets, "editor-assets")
-	router.StaticFS(_ASSETS_WEB_URI, http.FS(introAssets))
-
-	router.GET(FlareDefine.RegularPages.Editor.Path, FlareAuth.AuthRequired, render)
-	router.POST(FlareDefine.RegularPages.Editor.Path, FlareAuth.AuthRequired, updateData)
+	e.StaticFS(_ASSETS_WEB_URI, introAssets)
+	e.GET(FlareDefine.RegularPages.Editor.Path, render, FlareAuth.AuthRequired)
+	e.POST(FlareDefine.RegularPages.Editor.Path, updateData, FlareAuth.AuthRequired)
 }
 
-func updateData(c *gin.Context) {
-
-	type UpdateBody struct {
+func updateData(c *echo.Context) error {
+	var body struct {
 		Categories string `form:"categories"`
 		Bookmarks  string `form:"bookmarks"`
 	}
-
-	var body UpdateBody
-	if c.ShouldBind(&body) != nil {
-		c.PureJSON(http.StatusForbidden, "提交数据缺失")
-		return
+	if err := c.Bind(&body); err != nil {
+		return c.JSON(http.StatusForbidden, "提交数据缺失")
 	}
-
 	FlareData.UpdateBookmarksFromEditor(body.Categories, body.Bookmarks)
-	render(c)
+	return render(c)
 }
 
-func render(c *gin.Context) {
+func render(c *echo.Context) error {
 	options := FlareData.GetAllSettingsOptions()
-
 	dataCategories, dataBookmarks := FlareData.GetBookmarksForEditor()
-	c.HTML(
-		http.StatusOK,
-		"editor.html",
-		gin.H{
-			"PageName":       "Editor",
-			"PageAppearance": FlareDefine.GetAppBodyStyle(),
-			"SettingPages":   FlareDefine.SettingPages,
-
-			"DebugMode":       FlareDefine.AppFlags.DebugMode,
-			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
-
-			"DataCategories": template.HTML(dataCategories),
-			"DataBookmarks":  template.HTML(dataBookmarks),
-
-			"OptionTitle":              options.Title,
-			"OptionFooter":             template.HTML(options.Footer),
-			"OptionOpenAppNewTab":      options.OpenAppNewTab,
-			"OptionOpenBookmarkNewTab": options.OpenBookmarkNewTab,
-			"OptionShowTitle":          options.ShowTitle,
-			"OptionShowDateTime":       options.ShowDateTime,
-			"OptionShowApps":           options.ShowApps,
-			"OptionShowBookmarks":      options.ShowBookmarks,
-		},
-	)
+	m := FlarePool.GetTemplateMap()
+	defer FlarePool.PutTemplateMap(m)
+	m["PageName"] = "Editor"
+	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
+	m["SettingPages"] = FlareDefine.SettingPages
+	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
+	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
+	m["DataCategories"] = template.HTML(dataCategories)
+	m["DataBookmarks"] = template.HTML(dataBookmarks)
+	m["OptionTitle"] = options.Title
+	m["OptionFooter"] = template.HTML(options.Footer)
+	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
+	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
+	m["OptionShowTitle"] = options.ShowTitle
+	m["OptionShowDateTime"] = options.ShowDateTime
+	m["OptionShowApps"] = options.ShowApps
+	m["OptionShowBookmarks"] = options.ShowBookmarks
+	return c.Render(http.StatusOK, "editor.html", m)
 }

@@ -3,57 +3,43 @@ package search
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v5"
 
 	FlareData "github.com/soulteary/flare/config/data"
 	FlareDefine "github.com/soulteary/flare/config/define"
 	FlareAuth "github.com/soulteary/flare/internal/auth"
+	FlarePool "github.com/soulteary/flare/internal/pool"
 )
 
-func RegisterRouting(router *gin.Engine) {
-
-	router.GET(FlareDefine.SettingPages.Search.Path, FlareAuth.AuthRequired, pageSearch)
-	router.POST(FlareDefine.SettingPages.Search.Path, FlareAuth.AuthRequired, updateSearchOptions)
-
+func RegisterRouting(e *echo.Echo) {
+	e.GET(FlareDefine.SettingPages.Search.Path, pageSearch, FlareAuth.AuthRequired)
+	e.POST(FlareDefine.SettingPages.Search.Path, updateSearchOptions, FlareAuth.AuthRequired)
 }
 
-func updateSearchOptions(c *gin.Context) {
-
-	type UpdateBody struct {
+func updateSearchOptions(c *echo.Context) error {
+	var body struct {
 		ShowSearchComponent     bool `form:"show-search-component"`
 		DisabledSearchAutoFocus bool `form:"disabled-search-auto-focus"`
 	}
-
-	var body UpdateBody
-	if c.ShouldBind(&body) != nil {
-		c.PureJSON(http.StatusForbidden, "提交数据缺失")
-		return
+	if err := c.Bind(&body); err != nil {
+		return c.JSON(http.StatusForbidden, "提交数据缺失")
 	}
-
 	FlareData.UpdateSearch(body.ShowSearchComponent, body.DisabledSearchAutoFocus)
-
-	pageSearch(c)
+	return pageSearch(c)
 }
 
-func pageSearch(c *gin.Context) {
+func pageSearch(c *echo.Context) error {
 	options := FlareData.GetAllSettingsOptions()
-
-	c.HTML(
-		http.StatusOK,
-		"settings.html",
-		gin.H{
-			"DebugMode":       FlareDefine.AppFlags.DebugMode,
-			"PageInlineStyle": FlareDefine.GetPageInlineStyle(),
-
-			"PageName":       "Search",
-			"PageAppearance": FlareDefine.GetAppBodyStyle(),
-			"SettingPages":   FlareDefine.SettingPages,
-			"SettingsURI":    FlareDefine.RegularPages.Settings.Path,
-
-			"ShowSearchComponent":     options.ShowSearchComponent,
-			"DisabledSearchAutoFocus": options.DisabledSearchAutoFocus,
-
-			"OptionTitle": options.Title,
-		},
-	)
+	m := FlarePool.GetTemplateMap()
+	defer FlarePool.PutTemplateMap(m)
+	m["DebugMode"] = FlareDefine.AppFlags.DebugMode
+	m["PageInlineStyle"] = FlareDefine.GetPageInlineStyle()
+	m["PageName"] = "Search"
+	m["PageAppearance"] = FlareDefine.GetAppBodyStyle()
+	m["SettingPages"] = FlareDefine.SettingPages
+	m["SettingsURI"] = FlareDefine.RegularPages.Settings.Path
+	m["ShowSearchComponent"] = options.ShowSearchComponent
+	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus
+	m["OptionTitle"] = options.Title
+	return c.Render(http.StatusOK, "settings.html", m)
 }

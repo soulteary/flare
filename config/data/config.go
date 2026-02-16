@@ -79,27 +79,26 @@ func saveAppConfigToYamlFile(name string, result FlareModel.Application) bool {
 		log.Println("保存程序配置文件失败")
 		return false
 	}
-
+	invalidateFileCache(name)
 	return true
 }
 
 func loadAppConfigFromYaml(name string) (result FlareModel.Application) {
 	filePath := getConfigPath(name)
 
-	if checkExists(filePath) {
-		configFile := readFile(filePath, true)
-		parseErr := yaml.Unmarshal(configFile, &result)
-		if parseErr != nil {
-			log.Fatalf("解析配置文件" + name + "错误，请检查配置文件内容。")
-		}
-	} else {
+	if !checkExists(filePath) {
 		fmt.Println("找不到配置文件" + name + "，创建默认配置。")
 		var createErr error
 		result, createErr = initAppConfig(filePath)
 		if createErr != nil {
 			log.Fatalf("尝试创建应用配置文件" + name + "失败")
 		}
+		return result
 	}
-
+	configFile := readFileCached(name, func() []byte { return readFile(filePath, true) })
+	parseErr := yaml.Unmarshal(configFile, &result)
+	if parseErr != nil {
+		log.Fatalf("解析配置文件" + name + "错误，请检查配置文件内容。")
+	}
 	return result
 }

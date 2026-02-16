@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v5"
 	"github.com/soulteary/memfs"
 
 	FlareDefine "github.com/soulteary/flare/config/define"
@@ -25,38 +25,32 @@ var IntroAssets embed.FS
 func Init() {
 	MemFs = memfs.New()
 	err := MemFs.MkdirAll(_ASSETS_BASE_DIR, 0777)
-
 	if err != nil {
 		panic(err)
 	}
 }
 
-func RegisterRouting(router *gin.Engine) {
+func RegisterRouting(e *echo.Echo) {
 	introAssets, _ := fs.Sub(IntroAssets, "guide-assets")
-	router.StaticFS(_ASSETS_WEB_URI, http.FS(introAssets))
-
-	router.GET(FlareDefine.RegularPages.Guide.Path, render)
+	e.StaticFS(_ASSETS_WEB_URI, introAssets)
+	e.GET(FlareDefine.RegularPages.Guide.Path, render)
 }
 
-func render(c *gin.Context) {
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(getUserHomePage()))
-	c.Abort()
+func render(c *echo.Context) error {
+	return c.HTMLBlob(http.StatusOK, []byte(getUserHomePage()))
 }
 
 func getUserHomePage() string {
 	port := strconv.Itoa(FlareDefine.AppFlags.Port)
-
 	body, err := FlareFn.GetHTML("http://localhost:" + port + "/")
 	if err != nil {
 		return ""
 	}
-
 	ruleHead := regexp.MustCompile("</head>")
 	ruleBody := regexp.MustCompile("</body>")
 	rulePageView := regexp.MustCompile(`class="pageview"`)
 	content := ruleHead.ReplaceAllString(body, `<link rel="stylesheet" href="/assets/guide/introjs.min.css"><link rel="stylesheet" href="/assets/guide/app.css"><script src="/assets/guide/intro.min.js"></script></head>`)
 	content = ruleBody.ReplaceAllString(content, `<script src="/assets/guide/app.js"></script></head>`)
 	content = rulePageView.ReplaceAllString(content, `class="pageview" style="position:inherit;"`)
-
 	return content
 }

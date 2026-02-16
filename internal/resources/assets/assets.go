@@ -4,11 +4,12 @@ import (
 	"crypto/md5" //#nosec
 	"embed"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v5"
 
 	FlareDefine "github.com/soulteary/flare/config/define"
 )
@@ -16,39 +17,39 @@ import (
 //go:embed favicon.ico
 var Favicon embed.FS
 
-func RegisterRouting(router *gin.Engine) {
+func RegisterRouting(e *echo.Echo) {
+	e.Use(optimizeResourceCacheTime())
 
-	router.Use(optimizeResourceCacheTime())
-
-	router.GET("/favicon.ico", func(c *gin.Context) {
-		c.Header("Cache-Control", "public, max-age=31536000")
-		c.FileFromFS("favicon.ico", http.FS(Favicon))
+	e.GET("/favicon.ico", func(c *echo.Context) error {
+		c.Response().Header().Set("Cache-Control", "public, max-age=31536000")
+		data, err := fs.ReadFile(Favicon, "favicon.ico")
+		if err != nil {
+			return err
+		}
+		return c.Blob(http.StatusOK, "image/x-icon", data)
 	})
 
 	if FlareDefine.AppFlags.DebugMode {
-		router.StaticFS("/assets/css", http.Dir("embed/assets/css"))
-		return
+		e.Static("/assets/css", "embed/assets/css")
 	}
 }
 
-// ViewHandler support dist handler from UI
-// https://github.com/gin-gonic/gin/issues/1222
-func optimizeResourceCacheTime() gin.HandlerFunc {
+// optimizeResourceCacheTime sets cache headers for assets and supports 304.
+func optimizeResourceCacheTime() echo.MiddlewareFunc {
 	data := []byte(time.Now().String())
 	/* #nosec */
 	etag := fmt.Sprintf("W/%x", md5.Sum(data))
-	return func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.RequestURI, "/assets/") ||
-			strings.HasPrefix(c.Request.RequestURI, "/favicon.ico") {
-			c.Header("Cache-Control", "public, max-age=31536000")
-			c.Header("ETag", etag)
-
-			if match := c.GetHeader("If-None-Match"); match != "" {
-				if strings.Contains(match, etag) {
-					c.Status(http.StatusNotModified)
-					return
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			uri := c.Request().RequestURI
+			if strings.HasPrefix(uri, "/assets/") || strings.HasPrefix(uri, "/favicon.ico") {
+				c.Response().Header().Set("Cache-Control", "public, max-age=31536000")
+				c.Response().Header().Set("ETag", etag)
+				if match := c.Request().Header.Get("If-None-Match"); match != "" && strings.Contains(match, etag) {
+					return c.NoContent(http.StatusNotModified)
 				}
 			}
+			return next(c)
 		}
 	}
 }

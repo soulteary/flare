@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/sessions"
+	session "github.com/labstack/echo-contrib/v5/session"
+	"github.com/labstack/echo/v5"
 
 	FlareDefine "github.com/soulteary/flare/config/define"
 )
@@ -18,14 +18,16 @@ const (
 	SESSION_KEY_LOGIN_DATE = "LOGIN_TIME"
 )
 
-func RequestHandle(router *gin.Engine) {
-	store := cookie.NewStore([]byte(FlareDefine.AppFlags.CookieSecret))
-	router.Use(sessions.Sessions(fmt.Sprintf("%s_%d", FlareDefine.AppFlags.CookieName, FlareDefine.AppFlags.Port), store))
+// sessionName is set by RequestHandle and used by session.Get.
+var sessionName string
 
-	// 非离线模式注册路由
+func RequestHandle(e *echo.Echo) {
+	sessionName = fmt.Sprintf("%s_%d", FlareDefine.AppFlags.CookieName, FlareDefine.AppFlags.Port)
 	if !FlareDefine.AppFlags.DisableLoginMode {
-		router.POST(FlareDefine.MiscPages.Login.Path, login)
-		router.POST(FlareDefine.MiscPages.Logout.Path, logout)
+		store := sessions.NewCookieStore([]byte(FlareDefine.AppFlags.CookieSecret))
+		e.Use(session.Middleware(store))
+		e.POST(FlareDefine.MiscPages.Login.Path, login)
+		e.POST(FlareDefine.MiscPages.Logout.Path, logout)
 	}
 }
 
@@ -34,44 +36,56 @@ var internalErrorInput = []byte(`<html><p>请填写正确的用户名和密码 `
 var internalErrorEmpty = []byte(`<html><p>用户名或密码不能为空 ` + commonText + `</html>`)
 var internalErrorSave = []byte(`<html><p>程序内部错误，保存登陆状态失败 ` + commonText + `</html>`)
 
-func AuthRequired(c *gin.Context) {
-
-	if !FlareDefine.AppFlags.DisableLoginMode {
-		session := sessions.Default(c)
-		user := session.Get(SESSION_KEY_USER_NAME)
-		if user == nil {
-			c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
-			c.Abort()
-			return
+func AuthRequired(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c *echo.Context) error {
+		if !FlareDefine.AppFlags.DisableLoginMode {
+			sess, err := session.Get(sessionName, c)
+			if err != nil {
+				return c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
+			}
+			user := sess.Values[SESSION_KEY_USER_NAME]
+			if user == nil {
+				return c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
+			}
 		}
+		return next(c)
 	}
-
-	c.Next()
 }
 
-func CheckUserIsLogin(c *gin.Context) bool {
+func CheckUserIsLogin(c *echo.Context) bool {
 	if !FlareDefine.AppFlags.DisableLoginMode {
-		session := sessions.Default(c)
-		user := session.Get(SESSION_KEY_USER_NAME)
+		sess, err := session.Get(sessionName, c)
+		if err != nil {
+			return false
+		}
+		user := sess.Values[SESSION_KEY_USER_NAME]
 		return user != nil
 	}
 	return true
 }
 
-func GetUserName(c *gin.Context) interface{} {
+func GetUserName(c *echo.Context) interface{} {
 	if !FlareDefine.AppFlags.DisableLoginMode {
-		session := sessions.Default(c)
-		data := session.Get(SESSION_KEY_USER_NAME)
-		return data
+		sess, err := session.Get(sessionName, c)
+		if err != nil {
+			return ""
+		}
+		if v, ok := sess.Values[SESSION_KEY_USER_NAME]; ok {
+			return v
+		}
 	}
 	return ""
 }
 
-func GetUserLoginDate(c *gin.Context) interface{} {
+func GetUserLoginDate(c *echo.Context) interface{} {
 	if !FlareDefine.AppFlags.DisableLoginMode {
-		session := sessions.Default(c)
-		data := session.Get(SESSION_KEY_LOGIN_DATE)
-		return data
+		sess, err := session.Get(sessionName, c)
+		if err != nil {
+			return ""
+		}
+		if v, ok := sess.Values[SESSION_KEY_LOGIN_DATE]; ok {
+			return v
+		}
 	}
 	return ""
 }
@@ -80,54 +94,45 @@ const (
 	_HTMLContentType = "text/html; charset=utf-8"
 )
 
-// login is a handler that parses a form and checks for specific data
-func login(c *gin.Context) {
-	session := sessions.Default(c)
-	username := c.PostForm("username")
-	password := c.PostForm("password")
+func login(c *echo.Context) error {
+	sess, err := session.Get(sessionName, c)
+	if err != nil {
+		return c.HTMLBlob(http.StatusBadRequest, internalErrorSave)
+	}
+	username := c.FormValue("username")
+	password := c.FormValue("password")
 
 	if strings.Trim(username, " ") == "" || strings.Trim(password, " ") == "" {
-		c.Data(http.StatusBadRequest, _HTMLContentType, internalErrorEmpty)
-		c.Abort()
-		return
+		return c.HTMLBlob(http.StatusBadRequest, internalErrorEmpty)
 	}
 
 	if username != FlareDefine.AppFlags.User || password != FlareDefine.AppFlags.Pass {
-		c.Data(http.StatusBadRequest, _HTMLContentType, internalErrorInput)
-		c.Abort()
-		return
+		return c.HTMLBlob(http.StatusBadRequest, internalErrorInput)
 	}
 
-	session.Set(SESSION_KEY_USER_NAME, username)
-	session.Set(SESSION_KEY_LOGIN_DATE, time.Now().Format("2006年01月02日 15:04:05 CST"))
+	sess.Values[SESSION_KEY_USER_NAME] = username
+	sess.Values[SESSION_KEY_LOGIN_DATE] = time.Now().Format("2006年01月02日 15:04:05 CST")
 
-	if err := session.Save(); err != nil {
-		c.Data(http.StatusBadRequest, _HTMLContentType, internalErrorSave)
-		c.Abort()
-		return
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return c.HTMLBlob(http.StatusBadRequest, internalErrorSave)
 	}
 
-	c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
-	c.Abort()
+	return c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
 }
 
-func logout(c *gin.Context) {
-	session := sessions.Default(c)
-	user := session.Get(SESSION_KEY_USER_NAME)
-	if user == nil {
-		// 直接跳转登陆页面
-		c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
-		c.Abort()
-		return
+func logout(c *echo.Context) error {
+	sess, err := session.Get(sessionName, c)
+	if err != nil {
+		return c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
 	}
-	session.Delete(SESSION_KEY_USER_NAME)
-	session.Delete(SESSION_KEY_LOGIN_DATE)
+	if sess.Values[SESSION_KEY_USER_NAME] == nil {
+		return c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
+	}
+	delete(sess.Values, SESSION_KEY_USER_NAME)
+	delete(sess.Values, SESSION_KEY_LOGIN_DATE)
 
-	if err := session.Save(); err != nil {
-		c.Data(http.StatusBadRequest, _HTMLContentType, internalErrorSave)
-		c.Abort()
-		return
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return c.HTMLBlob(http.StatusBadRequest, internalErrorSave)
 	}
-	c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
-	c.Abort()
+	return c.Redirect(http.StatusFound, FlareDefine.SettingPages.Others.Path)
 }

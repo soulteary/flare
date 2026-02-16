@@ -95,28 +95,27 @@ func saveBookmarksToYamlFile(name string, data FlareModel.Bookmarks) (bool, erro
 		log.Println("保存数据为书签失败")
 		return false, err
 	}
-
+	invalidateFileCache(name)
 	return true, nil
 }
 
 func loadBookmarksFromYamlFile(name string, isFavorite bool) (result FlareModel.Bookmarks) {
 	filePath := getConfigPath(name)
 
-	if checkExists(filePath) {
-		configFile := readFile(filePath, true)
-		parseErr := yaml.Unmarshal(configFile, &result)
-		if parseErr != nil {
-			log.Fatalf("解析配置文件" + name + "错误，请检查配置文件内容。")
-		}
-	} else {
+	if !checkExists(filePath) {
 		fmt.Println("找不到配置文件" + name + "，创建默认配置。")
 		var createErr error
 		result, createErr = initBookmarks(filePath, isFavorite)
 		if createErr != nil {
 			log.Fatalf("尝试创建应用配置文件" + name + "失败")
 		}
+		return result
 	}
-
+	configFile := readFileCached(name, func() []byte { return readFile(filePath, true) })
+	parseErr := yaml.Unmarshal(configFile, &result)
+	if parseErr != nil {
+		log.Fatalf("解析配置文件" + name + "错误，请检查配置文件内容。")
+	}
 	return result
 }
 

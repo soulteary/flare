@@ -10,139 +10,128 @@ import (
 	FlareMDI "github.com/soulteary/flare/internal/resources/mdi"
 )
 
-func GenerateBookmarkTemplate(filter string) template.HTML {
-	options := FlareData.GetAllSettingsOptions()
+func GenerateBookmarkTemplate(filter string, options *FlareModel.Application) template.HTML {
+	if options == nil {
+		op := FlareData.GetAllSettingsOptions()
+		options = &op
+	}
 	bookmarksData := FlareData.LoadNormalBookmarks()
-	tpl := ""
+	b := builderPool.Get().(*strings.Builder)
+	b.Reset()
+	defer builderPool.Put(b)
 
-	var parseBookmarks []FlareModel.Bookmark
+	n := len(bookmarksData.Items)
+	parseBookmarks := make([]FlareModel.Bookmark, 0, n)
 	for _, bookmark := range bookmarksData.Items {
 		bookmark.URL = FlareFn.ParseDynamicUrl(bookmark.URL)
 		parseBookmarks = append(parseBookmarks, bookmark)
 	}
 
-	var bookmarks []FlareModel.Bookmark
+	bookmarks := parseBookmarks
+	if filter != "" {
+		bookmarks = make([]FlareModel.Bookmark, 0, n)
+	}
 
 	if filter != "" {
 		filterLower := strings.ToLower(filter)
-
 		for _, bookmark := range parseBookmarks {
 			if strings.Contains(strings.ToLower(bookmark.Name), filterLower) || strings.Contains(strings.ToLower(bookmark.URL), filterLower) {
 				bookmarks = append(bookmarks, bookmark)
 			}
 		}
-	} else {
-		bookmarks = parseBookmarks
 	}
 
 	if len(bookmarksData.Categories) > 0 {
 		defaultCategory := bookmarksData.Categories[0]
 		for _, category := range bookmarksData.Categories {
 			categoryCopy := category
-			tpl += renderBookmarksWithCategories(&bookmarks, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
+			renderBookmarksWithCategories(b, &bookmarks, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
 		}
 	} else {
-		tpl += renderBookmarksWithoutCategories(&bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
+		renderBookmarksWithoutCategories(b, &bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
 	}
 
-	return template.HTML(tpl)
+	return template.HTML(b.String())
 }
 
-func renderBookmarksWithoutCategories(bookmarks *[]FlareModel.Bookmark, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) string {
-	tpl := ""
+func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]FlareModel.Bookmark, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) {
+	b.WriteString(`<div class="bookmark-group-container pull-left"><ul class="bookmark-list">`)
 	for _, bookmark := range *bookmarks {
-
-		// 如果以 chrome-extension:// 协议开头
-		// 则使用服务端 Location 方式打开链接
-		templateURL := ""
-		if strings.HasPrefix(bookmark.URL, "chrome-extension://") {
+		templateURL := bookmark.URL
+		if strings.HasPrefix(bookmark.URL, "chrome-extension://") || EnableEncryptedLink {
 			templateURL = "/redir/url?go=" + FlareData.Base64EncodeUrl(bookmark.URL)
-		} else {
-			if EnableEncryptedLink {
-				templateURL = "/redir/url?go=" + FlareData.Base64EncodeUrl(bookmark.URL)
-			} else {
-				templateURL = bookmark.URL
-			}
 		}
-
-		templateIcon := ""
+		templateIcon := FlareMDI.GetIconByName(bookmark.Icon)
 		if strings.HasPrefix(bookmark.Icon, "http://") || strings.HasPrefix(bookmark.Icon, "https://") {
 			templateIcon = `<img src="` + bookmark.Icon + `"/>`
 		} else if bookmark.Icon != "" {
 			templateIcon = FlareMDI.GetIconByName(bookmark.Icon)
-		} else {
-			if IconMode == "FILLING" {
-				templateIcon = FlareFn.GetYandexFavicon(bookmark.URL, FlareMDI.GetIconByName(bookmark.Icon))
-			} else {
-				templateIcon = FlareMDI.GetIconByName(bookmark.Icon)
-			}
+		} else if IconMode == "FILLING" {
+			templateIcon = FlareFn.GetYandexFavicon(bookmark.URL, FlareMDI.GetIconByName(bookmark.Icon))
 		}
-
 		if OpenBookmarkNewTab {
-			tpl += `<li><a target="_blank" rel="noopener" href="` + templateURL + `" class="bookmark">` + templateIcon + `<span>` + bookmark.Name + `</span></a></li>`
+			b.WriteString(`<li><a target="_blank" rel="noopener" href="`)
+			b.WriteString(templateURL)
+			b.WriteString(`" class="bookmark">`)
+			b.WriteString(templateIcon)
+			b.WriteString(`<span>`)
+			b.WriteString(bookmark.Name)
+			b.WriteString(`</span></a></li>`)
 		} else {
-			tpl += `<li><a rel="noopener" href="` + templateURL + `" class="bookmark">` + templateIcon + `<span>` + bookmark.Name + `</span></a></li>`
+			b.WriteString(`<li><a rel="noopener" href="`)
+			b.WriteString(templateURL)
+			b.WriteString(`" class="bookmark">`)
+			b.WriteString(templateIcon)
+			b.WriteString(`<span>`)
+			b.WriteString(bookmark.Name)
+			b.WriteString(`</span></a></li>`)
 		}
 	}
-	return `<div class="bookmark-group-container pull-left"><ul class="bookmark-list">` + tpl + `</ul></div>`
+	b.WriteString(`</ul></div>`)
 }
 
-func renderBookmarksWithCategories(bookmarks *[]FlareModel.Bookmark, category *FlareModel.Category, defaultCategory *FlareModel.Category, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) string {
-	tpl := ""
-	isEmpty := true
-
+func renderBookmarksWithCategories(b *strings.Builder, bookmarks *[]FlareModel.Bookmark, category *FlareModel.Category, defaultCategory *FlareModel.Category, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) {
+	var itemBuf strings.Builder
 	for _, bookmark := range *bookmarks {
-
-		// 如果以 chrome-extension:// 协议开头
-		// 则使用服务端 Location 方式打开链接
-		templateURL := ""
-		if strings.HasPrefix(bookmark.URL, "chrome-extension://") {
+		templateURL := bookmark.URL
+		if strings.HasPrefix(bookmark.URL, "chrome-extension://") || EnableEncryptedLink {
 			templateURL = "/redir/url?go=" + FlareData.Base64EncodeUrl(bookmark.URL)
-		} else {
-			if EnableEncryptedLink {
-				templateURL = "/redir/url?go=" + FlareData.Base64EncodeUrl(bookmark.URL)
-			} else {
-				templateURL = bookmark.URL
-			}
 		}
-
-		templateIcon := ""
+		templateIcon := FlareMDI.GetIconByName(bookmark.Icon)
 		if strings.HasPrefix(bookmark.Icon, "http://") || strings.HasPrefix(bookmark.Icon, "https://") {
 			templateIcon = `<img src="` + bookmark.Icon + `"/>`
 		} else if bookmark.Icon != "" {
 			templateIcon = FlareMDI.GetIconByName(bookmark.Icon)
-		} else {
-			if IconMode == "FILLING" {
-				templateIcon = FlareFn.GetYandexFavicon(bookmark.URL, FlareMDI.GetIconByName(bookmark.Icon))
-			} else {
-				templateIcon = FlareMDI.GetIconByName(bookmark.Icon)
-			}
+		} else if IconMode == "FILLING" {
+			templateIcon = FlareFn.GetYandexFavicon(bookmark.URL, FlareMDI.GetIconByName(bookmark.Icon))
 		}
-
+		matched := false
 		if bookmark.Category != "" {
-			if bookmark.Category == category.ID {
-				if OpenBookmarkNewTab {
-					tpl += `<li><a target="_blank" rel="noopener" href="` + templateURL + `" class="bookmark">` + templateIcon + `<span>` + bookmark.Name + `</span></a></li>`
-				} else {
-					tpl += `<li><a rel="noopener" href="` + templateURL + `" class="bookmark">` + templateIcon + `<span>` + bookmark.Name + `</span></a></li>`
-				}
-				isEmpty = false
-			}
+			matched = bookmark.Category == category.ID
 		} else {
-			if category.ID == defaultCategory.ID {
-				if OpenBookmarkNewTab {
-					tpl += `<li><a target="_blank" rel="noopener" href="` + templateURL + `" class="bookmark">` + templateIcon + `<span>` + bookmark.Name + `</span></a></li>`
-				} else {
-					tpl += `<li><a rel="noopener" href="` + templateURL + `" class="bookmark">` + templateIcon + `<span>` + bookmark.Name + `</span></a></li>`
-				}
-				isEmpty = false
-			}
+			matched = category.ID == defaultCategory.ID
 		}
+		if !matched {
+			continue
+		}
+		if OpenBookmarkNewTab {
+			itemBuf.WriteString(`<li><a target="_blank" rel="noopener" href="`)
+		} else {
+			itemBuf.WriteString(`<li><a rel="noopener" href="`)
+		}
+		itemBuf.WriteString(templateURL)
+		itemBuf.WriteString(`" class="bookmark">`)
+		itemBuf.WriteString(templateIcon)
+		itemBuf.WriteString(`<span>`)
+		itemBuf.WriteString(bookmark.Name)
+		itemBuf.WriteString(`</span></a></li>`)
 	}
-
-	if isEmpty {
-		return ``
+	if itemBuf.Len() == 0 {
+		return
 	}
-
-	return `<div class="bookmark-group-container pull-left"><h3 class="bookmark-group-title">` + category.Name + `</h3><ul class="bookmark-list">` + tpl + `</ul></div>`
+	b.WriteString(`<div class="bookmark-group-container pull-left"><h3 class="bookmark-group-title">`)
+	b.WriteString(category.Name)
+	b.WriteString(`</h3><ul class="bookmark-list">`)
+	b.WriteString(itemBuf.String())
+	b.WriteString(`</ul></div>`)
 }
