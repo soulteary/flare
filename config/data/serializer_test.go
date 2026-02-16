@@ -50,3 +50,35 @@ func TestGenerateRandomString(t *testing.T) {
 		t.Fatal("GenerateRandomString length error")
 	}
 }
+
+func TestBase64EncodeUrl(t *testing.T) {
+	const input = "https://example.com/path"
+	encoded := Base64EncodeUrl(input)
+	if encoded == "" || encoded == input {
+		t.Fatal("Base64EncodeUrl should encode and query-escape")
+	}
+	decoded, err := Base64DecodeUrl(encoded)
+	if err != nil {
+		t.Fatalf("Base64EncodeUrl result should be decodable: %v", err)
+	}
+	if string(decoded) != input {
+		t.Fatalf("Base64EncodeUrl roundtrip: got %q", string(decoded))
+	}
+}
+
+func TestBase64DecodeUrl(t *testing.T) {
+	const input = "https://example.com"
+	encoded := Base64EncodeUrl(input)
+	decoded, err := Base64DecodeUrl(encoded)
+	if err != nil {
+		t.Fatalf("Base64DecodeUrl: %v", err)
+	}
+	if string(decoded) != input {
+		t.Fatalf("Base64DecodeUrl: got %q", string(decoded))
+	}
+
+	_, err = Base64DecodeUrl("%")
+	if err == nil {
+		t.Fatal("Base64DecodeUrl invalid input should return error")
+	}
+}
