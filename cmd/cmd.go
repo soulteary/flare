@@ -63,11 +63,6 @@ func ExecuteCLI(cliFlags *model.Flags, options *flags.FlagSet) (exit bool) {
 	return false
 }
 
-// ExcuteCLI is deprecated: use ExecuteCLI.
-func ExcuteCLI(cliFlags *model.Flags, options *flags.FlagSet) (exit bool) {
-	return ExecuteCLI(cliFlags, options)
-}
-
 func GetVersion(echo bool) string {
 	info := version.Default()
 	programVersion := fmt.Sprintf("Flare v%s-%s %s/%s BuildDate=%s", info.Version, strings.ToUpper(info.Commit), runtime.GOOS, runtime.GOARCH, info.BuildDate)

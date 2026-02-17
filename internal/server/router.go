@@ -31,8 +31,12 @@ import (
 
 // NewRouter builds the Echo app and returns an http.Handler for the server.
 // It returns an error if any required initialization (templates, mdi, guide, editor) fails.
-func NewRouter(_ *model.Flags) (http.Handler, error) {
+// The given appFlags are used as the single source of truth and synced to define.AppFlags.
+func NewRouter(appFlags *model.Flags) (http.Handler, error) {
 	define.Init()
+	if appFlags != nil {
+		define.AppFlags = *appFlags
+	}
 	e := echo.New()
 	e.Use(middleware.Recover())
 	if os.Getenv("FLARE_BASELINE") != "1" {

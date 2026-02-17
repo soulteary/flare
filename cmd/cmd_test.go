@@ -93,41 +93,34 @@ func captureOutput(f func()) string {
 	return <-outC
 }
 
-func TestExcuteCLI_ShowHelp(t *testing.T) {
+func TestExecuteCLI_ShowHelp(t *testing.T) {
 	cliFlags := &model.Flags{ShowHelp: true}
 	options := &flags.FlagSet{}
 
 	output := captureOutput(func() {
-		_ = cmd.ExcuteCLI(cliFlags, options)
+		_ = cmd.ExecuteCLI(cliFlags, options)
 	})
 
 	assert.Contains(t, output, "支持命令：", "应该打印出支持命令")
-	assert.True(t, cmd.ExcuteCLI(cliFlags, options), "在 ShowHelp 为 true 时，应该返回 true")
+	assert.True(t, cmd.ExecuteCLI(cliFlags, options), "在 ShowHelp 为 true 时，应该返回 true")
 }
 
-func TestExcuteCLI_ShowVersion(t *testing.T) {
+func TestExecuteCLI_ShowVersion(t *testing.T) {
 	cliFlags := &model.Flags{ShowVersion: true}
 	options := &flags.FlagSet{}
 
 	output := captureOutput(func() {
-		_ = cmd.ExcuteCLI(cliFlags, options)
+		_ = cmd.ExecuteCLI(cliFlags, options)
 	})
 
 	assert.Contains(t, output, version.Version, "应该打印出版本信息")
-	assert.True(t, cmd.ExcuteCLI(cliFlags, options), "在 ShowVersion 为 true 时，应该返回 true")
-}
-
-func TestExcuteCLI_NoFlags(t *testing.T) {
-	cliFlags := &model.Flags{}
-	options := &flags.FlagSet{}
-
-	assert.False(t, cmd.ExcuteCLI(cliFlags, options), "当没有任何标志被设置时，应该返回 false")
+	assert.True(t, cmd.ExecuteCLI(cliFlags, options), "在 ShowVersion 为 true 时，应该返回 true")
 }
 
 func TestExecuteCLI_NoFlags(t *testing.T) {
 	cliFlags := &model.Flags{}
 	options := &flags.FlagSet{}
-	assert.False(t, cmd.ExecuteCLI(cliFlags, options), "ExecuteCLI 无 help/version 时应返回 false")
+	assert.False(t, cmd.ExecuteCLI(cliFlags, options), "当没有任何标志被设置时，应该返回 false")
 }
 
 func TestGetVersionEcho(t *testing.T) {

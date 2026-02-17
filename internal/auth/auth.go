@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/subtle"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -30,6 +31,9 @@ func RequestHandleSessionName(cookieName string, port int) string {
 func RequestHandle(e *echo.Echo) {
 	sessionName = RequestHandleSessionName(define.AppFlags.CookieName, define.AppFlags.Port)
 	if !define.AppFlags.DisableLoginMode {
+		if define.AppFlags.CookieSecret == define.DEFAULT_COOKIE_SECRET {
+			log.Println("[auth] 警告: 已启用登录但 CookieSecret 仍为默认值，生产环境请通过 FLARE_COOKIE_SECRET 或 --cookie-secret 设置强密钥")
+		}
 		store := sessions.NewCookieStore([]byte(define.AppFlags.CookieSecret))
 		e.Use(session.Middleware(store))
 		e.POST(define.MiscPages.Login.Path, login)

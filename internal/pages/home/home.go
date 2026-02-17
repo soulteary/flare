@@ -22,6 +22,14 @@ import (
 
 const _weatherLocationDetectTimeout = 5 * time.Second
 
+const _cspValue = "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';"
+
+func setCSPHeader(c *echo.Context) {
+	if !define.AppFlags.DisableCSP {
+		c.Response().Header().Set("Content-Security-Policy", _cspValue)
+	}
+}
+
 // InitWeatherIfNeeded loads settings and updates weather/location (e.g. auto-detect location). Call from server startup instead of relying on init().
 // GetMyIPLocation is called with a timeout to avoid blocking startup when the network is slow.
 func InitWeatherIfNeeded() {
@@ -108,9 +116,7 @@ func renderHelp(c *echo.Context) error {
 	if locale == "" {
 		locale = "zh"
 	}
-	if !define.AppFlags.DisableCSP {
-		c.Response().Header().Set("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';")
-	}
+	setCSPHeader(c)
 	m := pool.GetTemplateMap()
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
@@ -303,9 +309,7 @@ func render(c *echo.Context, filter string) error {
 			configWeatherShow = weatherShow
 		}
 	}
-	if !define.AppFlags.DisableCSP {
-		c.Response().Header().Set("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';")
-	}
+	setCSPHeader(c)
 	bodyClassName := ""
 	if !options.KeepLetterCase {
 		bodyClassName += "app-content-uppercase "
