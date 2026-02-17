@@ -1,11 +1,11 @@
 {{ define "settings-search.html" }}<div class=setting-group-container><form method=POST action="{{ .SettingPages.Search.Path }}"><h2>{{ T .Locale "page_search" }}</h2><div class=form-group><label for=show-search-component>{{ T .Locale "show_search_toolbar" }}</label>
 {{ if .ShowSearchComponent }}
-<select name=show-search-component id=show-search-component><option value=1 selected>{{ T .Locale "yes" }}</option><option value=0>{{ T .Locale "no" }}</option></select>
+<select name=show-search-component id=show-search-component><option value=1 selected>{{ T .Locale "yes" }}<option value=0>{{ T .Locale "no" }}</select>
 {{ else }}
-<select name=show-search-component id=show-search-component><option value=0 selected>{{ T .Locale "no" }}</option><option value=1>{{ T .Locale "yes" }}</option></select>
+<select name=show-search-component id=show-search-component><option value=0 selected>{{ T .Locale "no" }}<option value=1>{{ T .Locale "yes" }}</select>
 {{ end }}</div><div class=form-group><label for=disabled-search-auto-focus>{{ T .Locale "disabled_search_auto_focus" }}</label>
 {{ if .DisabledSearchAutoFocus }}
-<select name=disabled-search-auto-focus id=disabled-search-auto-focus><option value=1 selected>{{ T .Locale "yes" }}</option><option value=0>{{ T .Locale "no" }}</option></select>
+<select name=disabled-search-auto-focus id=disabled-search-auto-focus><option value=1 selected>{{ T .Locale "yes" }}<option value=0>{{ T .Locale "no" }}</select>
 {{ else }}
-<select name=disabled-search-auto-focus id=disabled-search-auto-focus><option value=0 selected>{{ T .Locale "no" }}</option><option value=1>{{ T .Locale "yes" }}</option></select>
-{{ end }}</div><div class=form-group><input class=btn-submit type=submit value="{{ T .Locale "save_changes" }}"></div></form></div>{{ end }}
+<select name=disabled-search-auto-focus id=disabled-search-auto-focus><option value=0 selected>{{ T .Locale "no" }}<option value=1>{{ T .Locale "yes" }}</select>
+{{ end }}</div><div class=form-group><input class=btn-submit type=submit value="{{ T .Locale " save_changes" }}"></div></form></div>{{ end }}

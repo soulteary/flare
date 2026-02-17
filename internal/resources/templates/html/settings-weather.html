@@ -1,16 +1,16 @@
 {{ define "settings-weather.html" }}<div class=setting-group-container><h2>{{ T .Locale "settings_weather" }}</h2><form method=POST action="{{ .SettingPages.Weather.Path }}"><div class=form-group><label for=show-weather-component>{{ T .Locale "enable_weather" }}</label>
 {{ if .ShowWeather }}
-<select name=show id=show-weather-component><option value=1 selected>{{ T .Locale "yes" }}</option><option value=0>{{ T .Locale "no" }}</option></select>
+<select name=show id=show-weather-component><option value=1 selected>{{ T .Locale "yes" }}<option value=0>{{ T .Locale "no" }}</select>
 {{ else }}
-<select name=show id=show-weather-component><option value=0 selected>{{ T .Locale "no" }}</option><option value=1>{{ T .Locale "yes" }}</option></select>
+<select name=show id=show-weather-component><option value=0 selected>{{ T .Locale "no" }}<option value=1>{{ T .Locale "yes" }}</select>
 {{ end }}</div><div class=form-group><label for=settings-location>{{ T .Locale "weather_location" }}</label>
 {{ if .ShowWeatherModule }}
-<input name=location id=settings-location class=option-input placeholder="{{ T .Locale "weather_location_placeholder" }}" value={{.Location}}><p class=help-text>{{ T .Locale "weather_location_help" }}</p><input class=btn-submit type=submit value="{{ T .Locale "save_changes" }}">
+<input name=location id=settings-location class=option-input placeholder="{{ T .Locale " weather_location_placeholder" }}" value={{.Location}}><p class=help-text>{{ T .Locale "weather_location_help" }}</p><input class=btn-submit type=submit value="{{ T .Locale " save_changes" }}">
 {{ else }}
 {{ if .ShowWeather }}
-<input name=location id=settings-location class=option-input placeholder="{{ T .Locale "weather_location_placeholder" }}" value={{.Location}} disabled><p class=help-text>{{ T .Locale "weather_offline_help" }}</p><input class=btn-submit type=submit value="{{ T .Locale "save_changes" }}" disabled>
+<input name=location id=settings-location class=option-input placeholder="{{ T .Locale " weather_location_placeholder" }}" value={{.Location}} disabled><p class=help-text>{{ T .Locale "weather_offline_help" }}</p><input class=btn-submit type=submit value="{{ T .Locale " save_changes" }}" disabled>
 {{ else }}
-<input name=location id=settings-location class=option-input placeholder="{{ T .Locale "weather_location_placeholder" }}" value={{.Location}}><p class=help-text>{{ T .Locale "weather_enable_help" }}</p><input class=btn-submit type=submit value="{{ T .Locale "save_changes" }}">
+<input name=location id=settings-location class=option-input placeholder="{{ T .Locale " weather_location_placeholder" }}" value={{.Location}}><p class=help-text>{{ T .Locale "weather_enable_help" }}</p><input class=btn-submit type=submit value="{{ T .Locale " save_changes" }}">
 {{ end }}
 {{ end }}</div></form>{{ if .ShowWeatherModule }}<form method=POST action="{{ .SettingPagesAPI.WeatherTest.Path }}"><div class=form-group><label for=settings-weather-tester>{{ T .Locale "weather_test_api" }}</label>
-<input name=location id=settings-weather-tester class=option-input placeholder="{{ T .Locale "weather_test_placeholder" }}" value={{.TestResult}} readonly><p class=help-text>{{ T .Locale "weather_test_help" }}</p><input class=btn-submit type=submit value="{{ T .Locale "weather_test_api" }}"></div></form>{{ end }}</div>{{ end }}
+<input name=location id=settings-weather-tester class=option-input placeholder="{{ T .Locale " weather_test_placeholder" }}" value={{.TestResult}} readonly><p class=help-text>{{ T .Locale "weather_test_help" }}</p><input class=btn-submit type=submit value="{{ T .Locale " weather_test_api" }}"></div></form>{{ end }}</div>{{ end }}
