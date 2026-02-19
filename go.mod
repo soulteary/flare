@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/gorilla/sessions v1.4.0
 	github.com/jszwec/csvutil v1.10.0
-	github.com/labstack/echo-contrib/v5 v5.0.0
+	github.com/labstack/echo-contrib/v5 v5.0.1
 	github.com/labstack/echo/v5 v5.0.4
 	github.com/soulteary/cli-kit v1.5.0
 	github.com/soulteary/funny-china-weather v0.1.1
@@ -28,7 +28,6 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.11 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
