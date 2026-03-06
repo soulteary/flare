@@ -11,7 +11,7 @@ require (
 	github.com/jszwec/csvutil v1.10.0
 	github.com/labstack/echo-contrib/v5 v5.0.0
 	github.com/labstack/echo/v5 v5.0.4
-	github.com/soulteary/cli-kit v1.5.0
+	github.com/soulteary/cli-kit v1.6.0
 	github.com/soulteary/funny-china-weather v0.1.1
 	github.com/soulteary/memfs v0.1.0
 	github.com/soulteary/version-kit v1.2.0
