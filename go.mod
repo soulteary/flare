@@ -14,7 +14,7 @@ require (
 	github.com/soulteary/cli-kit v1.5.0
 	github.com/soulteary/funny-china-weather v0.1.1
 	github.com/soulteary/memfs v0.1.0
-	github.com/soulteary/version-kit v1.2.0
+	github.com/soulteary/version-kit v1.3.0
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/minify/v2 v2.24.8
@@ -25,7 +25,7 @@ require (
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/gofiber/fiber/v2 v2.52.11 // indirect
+	github.com/gofiber/fiber/v2 v2.52.12 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
