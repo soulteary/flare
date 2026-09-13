@@ -5,7 +5,7 @@ RUN export VERSION=$(cat RELEASE_VERSION) && \
     export COMMIT=$(cat RELEASE_COMMIT) && \
     export BUILD_DATE=`date +%FT%T%z` && \
     echo "$BUILD_DATE / $COMMIT / $VERSION" && \
-    GOARM=7	GOARCH=arm go build -ldflags "-w -s -X 'github.com/soulteary/version-kit.Version=$VERSION' -X 'github.com/soulteary/version-kit.Commit=$COMMIT' -X 'github.com/soulteary/version-kit.BuildDate=$BUILD_DATE'" -o flare main.go
+    GOARM=7	GOARCH=arm go build -ldflags "-w -s -X 'github.com/soulteary/version-kit/v2.Version=$VERSION' -X 'github.com/soulteary/version-kit/v2.Commit=$COMMIT' -X 'github.com/soulteary/version-kit/v2.BuildDate=$BUILD_DATE'" -o flare main.go
 RUN upx -9 -o flare.minify flare && mv flare.minify flare
 
 

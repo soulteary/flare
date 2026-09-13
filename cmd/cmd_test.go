@@ -9,7 +9,7 @@ import (
 	"github.com/soulteary/flare/cmd"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
-	version "github.com/soulteary/version-kit"
+	version "github.com/soulteary/version-kit/v2"
 	flags "github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
