@@ -10,7 +10,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/pool"
-	version "github.com/soulteary/version-kit/v2"
+	version "github.com/soulteary/version-kit/v4"
 )
 
 func RegisterRouting(e *echo.Echo) {

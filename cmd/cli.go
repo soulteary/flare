@@ -7,7 +7,7 @@ import (
 
 	"github.com/soulteary/cli-kit/configutil"
 	"github.com/soulteary/cli-kit/flagutil"
-	version "github.com/soulteary/version-kit/v2"
+	version "github.com/soulteary/version-kit/v4"
 	flags "github.com/spf13/pflag"
 
 	"github.com/soulteary/flare/config/define"
