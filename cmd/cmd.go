@@ -12,7 +12,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/logger"
-	version "github.com/soulteary/version-kit/v2"
+	version "github.com/soulteary/version-kit/v4"
 )
 
 func Parse() model.Flags {
