@@ -30,13 +30,14 @@ func RequestHandleSessionName(cookieName string, port int) string {
 	return fmt.Sprintf("%s_%d", cookieName, port)
 }
 
-// RequestHandle configures login routes and sessions, rejecting unsafe signing keys before registration.
+// RequestHandle initializes the signing key before configuring login routes and sessions.
 func RequestHandle(e *echo.Echo) error {
 	if !define.AppFlags.DisableLoginMode {
-		secret := strings.TrimSpace(define.AppFlags.CookieSecret)
-		if secret == define.DEFAULT_COOKIE_SECRET || len(secret) < minimumCookieSecretLength {
-			return fmt.Errorf("启用登录需要至少 %d 字节的随机 Cookie 密钥，不能使用默认值；请通过 FLARE_COOKIE_SECRET、.env 或 --cookie_secret 配置", minimumCookieSecretLength)
+		secret, err := initializeCookieSecret(define.AppFlags.CookieSecret)
+		if err != nil {
+			return err
 		}
+		define.AppFlags.CookieSecret = secret
 	}
 	sessionName = RequestHandleSessionName(define.AppFlags.CookieName, define.AppFlags.Port)
 	if !define.AppFlags.DisableLoginMode {
@@ -109,8 +110,14 @@ func GetUserLoginDate(c *echo.Context) string {
 
 func login(c *echo.Context) error {
 	sess, err := session.Get(sessionName, c)
-	if err != nil {
+	if sess == nil {
 		return c.HTMLBlob(http.StatusBadRequest, internalErrorSave)
+	}
+	if err != nil {
+		// CookieStore returns a new session when an old cookie cannot be decoded.
+		// Discard its contents so key rotation allows a fresh login after credential checks.
+		sess.Values = make(map[interface{}]interface{})
+		sess.IsNew = true
 	}
 	username := c.FormValue("username")
 	password := c.FormValue("password")

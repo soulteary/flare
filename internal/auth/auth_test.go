@@ -1,8 +1,13 @@
 package auth
 
 import (
+	"bytes"
+	"encoding/hex"
+	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -10,6 +15,7 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -88,6 +94,7 @@ func TestGetUserLoginDate_DisableLoginMode(t *testing.T) {
 }
 
 func TestRequestHandle_DisableLoginMode(t *testing.T) {
+	t.Chdir(t.TempDir())
 	orig := saveAppFlags()
 	defer restoreAppFlags(orig)
 	define.AppFlags.DisableLoginMode = true
@@ -98,6 +105,9 @@ func TestRequestHandle_DisableLoginMode(t *testing.T) {
 		define.AppFlags.CookieSecret = secret
 		e := echo.New()
 		require.NoError(t, RequestHandle(e))
+		assert.Equal(t, secret, define.AppFlags.CookieSecret, "关闭登录时不应更改密钥配置")
+		_, err := os.Stat(".flare-cookie-secret")
+		assert.ErrorIs(t, err, os.ErrNotExist, "关闭登录时不应创建密钥文件")
 		for _, path := range []string{define.MiscPages.Login.Path, define.MiscPages.Logout.Path} {
 			req := httptest.NewRequest(http.MethodPost, path, nil)
 			rec := httptest.NewRecorder()
@@ -112,12 +122,14 @@ func TestRequestHandle_DisableLoginMode(t *testing.T) {
 	}
 }
 
-func TestRequestHandle_RejectsUnsafeCookieSecrets(t *testing.T) {
+func TestRequestHandle_InitializesUnsafeCookieSecrets(t *testing.T) {
 	orig := saveAppFlags()
 	defer restoreAppFlags(orig)
 	define.AppFlags.DisableLoginMode = false
 	define.AppFlags.CookieName = "flare"
 	define.AppFlags.Port = 5005
+	define.AppFlags.User = "testuser"
+	define.AppFlags.Pass = "testpass"
 
 	tests := []struct {
 		name   string
@@ -132,20 +144,25 @@ func TestRequestHandle_RejectsUnsafeCookieSecrets(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
 			define.AppFlags.CookieSecret = tt.secret
 			e := echo.New()
-			require.Error(t, RequestHandle(e))
-			for _, path := range []string{define.MiscPages.Login.Path, define.MiscPages.Logout.Path} {
-				req := httptest.NewRequest(http.MethodPost, path, nil)
-				rec := httptest.NewRecorder()
-				e.ServeHTTP(rec, req)
-				assert.Equal(t, http.StatusNotFound, rec.Code, "无效密钥不应注册 %s", path)
-			}
+			require.NoError(t, RequestHandle(e), "旧配置升级后应能正常启动")
+			key, err := hex.DecodeString(define.AppFlags.CookieSecret)
+			require.NoError(t, err)
+			require.Len(t, key, 32, "自动密钥应包含 32 字节随机数据")
+			saved, err := os.ReadFile(".flare-cookie-secret")
+			require.NoError(t, err)
+			assert.Equal(t, define.AppFlags.CookieSecret, strings.TrimSpace(string(saved)))
+			e.GET("/protected", func(c *echo.Context) error { return c.String(http.StatusOK, "ok") }, AuthRequired)
+			cookie := loginForAutoSecretTest(t, e)
+			assertProtectedWithCookie(t, e, cookie, http.StatusOK)
 		})
 	}
 }
 
 func TestRequestHandle_AcceptsSufficientCookieSecrets(t *testing.T) {
+	t.Chdir(t.TempDir())
 	orig := saveAppFlags()
 	defer restoreAppFlags(orig)
 	define.AppFlags.DisableLoginMode = false
@@ -156,10 +173,231 @@ func TestRequestHandle_AcceptsSufficientCookieSecrets(t *testing.T) {
 		define.AppFlags.CookieSecret = secret
 		e := echo.New()
 		require.NoError(t, RequestHandle(e))
+		assert.Equal(t, secret, define.AppFlags.CookieSecret, "有效显式密钥应原样使用")
+		_, err := os.Stat(".flare-cookie-secret")
+		assert.ErrorIs(t, err, os.ErrNotExist, "有效显式密钥无需初始化密钥文件")
 		req := httptest.NewRequest(http.MethodPost, define.MiscPages.Login.Path, nil)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusBadRequest, rec.Code, "有效密钥应注册登录路由")
+	}
+}
+
+func loginForAutoSecretTest(t *testing.T, handler http.Handler) *http.Cookie {
+	t.Helper()
+	body := strings.NewReader("username=testuser&password=testpass")
+	req := httptest.NewRequest(http.MethodPost, define.MiscPages.Login.Path, body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusFound, rec.Code, "自动密钥初始化后应能正常登录")
+	cookies := rec.Result().Cookies()
+	require.Len(t, cookies, 1)
+	return cookies[0]
+}
+
+func assertProtectedWithCookie(t *testing.T, handler http.Handler, cookie *http.Cookie, status int) {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	req.AddCookie(cookie)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	assert.Equal(t, status, rec.Code)
+}
+
+func TestRequestHandle_AutomaticSecretRotatesOldSessionsAndSurvivesRestart(t *testing.T) {
+	t.Chdir(t.TempDir())
+	orig := saveAppFlags()
+	t.Cleanup(func() { restoreAppFlags(orig) })
+	define.AppFlags = model.Flags{
+		Port: 5005, CookieName: "flare", CookieSecret: define.DEFAULT_COOKIE_SECRET,
+		User: "testuser", Pass: "testpass",
+	}
+
+	oldStore := sessions.NewCookieStore([]byte(define.DEFAULT_COOKIE_SECRET))
+	oldRequest := httptest.NewRequest(http.MethodGet, "/", nil)
+	oldSession, err := oldStore.New(oldRequest, RequestHandleSessionName("flare", 5005))
+	require.NoError(t, err)
+	oldSession.Values[SESSION_KEY_USER_NAME] = "testuser"
+	oldRecorder := httptest.NewRecorder()
+	require.NoError(t, oldSession.Save(oldRequest, oldRecorder))
+	oldCookies := oldRecorder.Result().Cookies()
+	require.Len(t, oldCookies, 1)
+
+	newApp := func() *echo.Echo {
+		e := echo.New()
+		require.NoError(t, RequestHandle(e))
+		e.GET("/protected", func(c *echo.Context) error { return c.String(http.StatusOK, "ok") }, AuthRequired)
+		return e
+	}
+	e := newApp()
+	firstKey := define.AppFlags.CookieSecret
+	assertProtectedWithCookie(t, e, oldCookies[0], http.StatusFound)
+	cookie := loginForAutoSecretTest(t, e)
+	assertProtectedWithCookie(t, e, cookie, http.StatusOK)
+
+	define.AppFlags.CookieSecret = define.DEFAULT_COOKIE_SECRET
+	restarted := newApp()
+	assert.Equal(t, firstKey, define.AppFlags.CookieSecret, "重启应复用已保存的自动密钥")
+	assertProtectedWithCookie(t, restarted, cookie, http.StatusOK)
+	assertProtectedWithCookie(t, restarted, oldCookies[0], http.StatusFound)
+
+	define.AppFlags.CookieSecret = testCookieSecret
+	explicit := newApp()
+	assert.Equal(t, testCookieSecret, define.AppFlags.CookieSecret, "有效显式配置应优先于自动保存的密钥")
+	assertProtectedWithCookie(t, explicit, cookie, http.StatusFound)
+	assertProtectedWithCookie(t, explicit, loginForAutoSecretTest(t, explicit), http.StatusOK)
+}
+
+func TestLogin_RecoversAfterCookieSecretRotation(t *testing.T) {
+	orig := saveAppFlags()
+	t.Cleanup(func() { restoreAppFlags(orig) })
+	tests := []struct {
+		name       string
+		oldSecret  string
+		configured string
+	}{
+		{name: "automatic_upgrade", oldSecret: define.DEFAULT_COOKIE_SECRET, configured: define.DEFAULT_COOKIE_SECRET},
+		{name: "explicit_rotation", oldSecret: testCookieSecret, configured: strings.Repeat("n", 32)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			define.AppFlags = model.Flags{
+				Port: 5005, CookieName: "flare", CookieSecret: tt.configured,
+				User: "testuser", Pass: "testpass",
+			}
+			oldStore := sessions.NewCookieStore([]byte(tt.oldSecret))
+			oldRequest := httptest.NewRequest(http.MethodGet, "/", nil)
+			oldSession, err := oldStore.New(oldRequest, RequestHandleSessionName("flare", 5005))
+			require.NoError(t, err)
+			oldSession.Values[SESSION_KEY_USER_NAME] = "testuser"
+			oldRecorder := httptest.NewRecorder()
+			require.NoError(t, oldSession.Save(oldRequest, oldRecorder))
+			oldCookies := oldRecorder.Result().Cookies()
+			require.Len(t, oldCookies, 1)
+
+			e := echo.New()
+			require.NoError(t, RequestHandle(e))
+			e.GET("/protected", func(c *echo.Context) error { return c.String(http.StatusOK, "ok") }, AuthRequired)
+			assertProtectedWithCookie(t, e, oldCookies[0], http.StatusFound)
+
+			login := func(password string) *httptest.ResponseRecorder {
+				body := strings.NewReader("username=testuser&password=" + password)
+				req := httptest.NewRequest(http.MethodPost, define.MiscPages.Login.Path, body)
+				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+				req.AddCookie(oldCookies[0])
+				rec := httptest.NewRecorder()
+				e.ServeHTTP(rec, req)
+				return rec
+			}
+			wrongPassword := login("wrong")
+			assert.Equal(t, http.StatusBadRequest, wrongPassword.Code, "旧 Cookie 不应绕过密码校验")
+			for _, cookie := range wrongPassword.Result().Cookies() {
+				assertProtectedWithCookie(t, e, cookie, http.StatusFound)
+			}
+
+			rec := login("testpass")
+			require.Equal(t, http.StatusFound, rec.Code, "浏览器保留旧 Cookie 时仍应能够重新登录")
+			cookies := rec.Result().Cookies()
+			require.Len(t, cookies, 1)
+			assertProtectedWithCookie(t, e, cookies[0], http.StatusOK)
+		})
+	}
+}
+
+func TestRequestHandle_LogsAutomaticCookieSecretWithoutExposingKeys(t *testing.T) {
+	orig := saveAppFlags()
+	t.Cleanup(func() { restoreAppFlags(orig) })
+	origLogger := logger.GetLogger()
+	t.Cleanup(func() { logger.SetLogger(origLogger) })
+	tests := []struct {
+		name   string
+		secret string
+		reason string
+	}{
+		{name: "empty", reason: "empty"},
+		{name: "default", secret: define.DEFAULT_COOKIE_SECRET, reason: "default"},
+		{name: "short", secret: "private-custom-short-key", reason: "short"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			var logOutput bytes.Buffer
+			logger.SetLogger(slog.New(slog.NewJSONHandler(&logOutput, nil)))
+			define.AppFlags = model.Flags{Port: 5005, CookieName: "flare", CookieSecret: tt.secret}
+			require.NoError(t, RequestHandle(echo.New()))
+			firstKey := define.AppFlags.CookieSecret
+			assertAutomaticCookieSecretLog(t, &logOutput, tt.secret, firstKey, tt.reason, "generated", true)
+
+			logOutput.Reset()
+			define.AppFlags.CookieSecret = tt.secret
+			require.NoError(t, RequestHandle(echo.New()))
+			assert.Equal(t, firstKey, define.AppFlags.CookieSecret)
+			assertAutomaticCookieSecretLog(t, &logOutput, tt.secret, firstKey, tt.reason, "reused", true)
+		})
+	}
+}
+
+func TestRequestHandle_ContinuesWithoutPersistingCookieSecret(t *testing.T) {
+	t.Chdir(t.TempDir())
+	require.NoError(t, os.Mkdir(".flare-cookie-secret", 0700))
+	orig := saveAppFlags()
+	t.Cleanup(func() { restoreAppFlags(orig) })
+	define.AppFlags = model.Flags{
+		Port: 5005, CookieName: "flare", CookieSecret: "private-custom-short-key",
+		User: "testuser", Pass: "testpass",
+	}
+	var logOutput bytes.Buffer
+	origLogger := logger.GetLogger()
+	t.Cleanup(func() { logger.SetLogger(origLogger) })
+	logger.SetLogger(slog.New(slog.NewJSONHandler(&logOutput, nil)))
+	e := echo.New()
+	require.NoError(t, RequestHandle(e), "无法保存自动密钥时应继续启动")
+	e.GET("/protected", func(c *echo.Context) error { return c.String(http.StatusOK, "ok") }, AuthRequired)
+	cookie := loginForAutoSecretTest(t, e)
+	assertProtectedWithCookie(t, e, cookie, http.StatusOK)
+	firstKey := define.AppFlags.CookieSecret
+	assertAutomaticCookieSecretLog(t, &logOutput, "private-custom-short-key", define.AppFlags.CookieSecret, "short", "generated", false)
+	assert.Contains(t, logOutput.String(), "WARN")
+	assert.Contains(t, logOutput.String(), "未持久化")
+	assert.Contains(t, logOutput.String(), "重新登录")
+
+	info, err := os.Stat(".flare-cookie-secret")
+	require.NoError(t, err)
+	assert.True(t, info.IsDir(), "不应替换阻止密钥保存的现有目录")
+
+	logOutput.Reset()
+	define.AppFlags.CookieSecret = "private-custom-short-key"
+	restarted := echo.New()
+	require.NoError(t, RequestHandle(restarted))
+	restarted.GET("/protected", func(c *echo.Context) error { return c.String(http.StatusOK, "ok") }, AuthRequired)
+	assert.NotEqual(t, firstKey, define.AppFlags.CookieSecret, "无法持久化的密钥只能用于当前进程")
+	assertProtectedWithCookie(t, restarted, cookie, http.StatusFound)
+	assertProtectedWithCookie(t, restarted, loginForAutoSecretTest(t, restarted), http.StatusOK)
+}
+
+func assertAutomaticCookieSecretLog(t *testing.T, output *bytes.Buffer, configured, effective, reason, action string, persisted bool) {
+	t.Helper()
+	var record struct {
+		Message   string `json:"msg"`
+		Reason    string `json:"reason"`
+		Action    string `json:"action"`
+		Persisted bool   `json:"persisted"`
+	}
+	require.NoError(t, json.NewDecoder(strings.NewReader(output.String())).Decode(&record))
+	assert.NotEmpty(t, record.Message, "启动日志应说明自动初始化行为")
+	assert.Equal(t, reason, record.Reason)
+	assert.Equal(t, action, record.Action)
+	assert.Equal(t, persisted, record.Persisted)
+	assert.NotContains(t, output.String(), effective, "日志不应泄漏有效密钥")
+	if configured == define.DEFAULT_COOKIE_SECRET {
+		// The file name also contains "secret"; reject the actual JSON value instead.
+		encoded, err := json.Marshal(configured)
+		require.NoError(t, err)
+		assert.NotContains(t, output.String(), string(encoded), "日志不应输出配置中的密钥值")
+	} else if configured != "" {
+		assert.NotContains(t, output.String(), configured, "日志不应泄漏配置中的密钥值")
 	}
 }
 
