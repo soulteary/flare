@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/soulteary/flare/config/define"
@@ -42,7 +43,7 @@ func TestNewRouter_Smoke(t *testing.T) {
 		Visibility:        "DEFAULT",
 		DebugMode:         false,
 		CookieName:        env.CookieName,
-		CookieSecret:      env.CookieSecret,
+		CookieSecret:      "test-cookie-secret-with-at-least-32-bytes",
 	}
 
 	handler, err := NewRouter(&flags)
@@ -87,7 +88,7 @@ func TestNewRouter_PrivateVisibility_RedirectsWhenNoAuth(t *testing.T) {
 		Visibility:        "PRIVATE",
 		DebugMode:         false,
 		CookieName:        env.CookieName,
-		CookieSecret:      env.CookieSecret,
+		CookieSecret:      "test-cookie-secret-with-at-least-32-bytes",
 	}
 
 	handler, err := NewRouter(&flags)
@@ -100,4 +101,41 @@ func TestNewRouter_PrivateVisibility_RedirectsWhenNoAuth(t *testing.T) {
 
 	assert.Equal(t, http.StatusFound, rec.Code, "未登录访问 PRIVATE 首页应 302")
 	assert.Equal(t, define.SettingPages.Others.Path, rec.Header().Get("Location"), "应重定向到设置页")
+}
+
+func TestNewRouter_RejectsUnsafeCookieSecretsBeforeServing(t *testing.T) {
+	origWd, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(t.TempDir()))
+	t.Cleanup(func() { _ = os.Chdir(origWd) })
+	orig := define.AppFlags
+	t.Cleanup(func() { define.AppFlags = orig })
+	t.Setenv("FLARE_BASELINE", "1")
+
+	tests := []struct {
+		name   string
+		secret string
+	}{
+		{name: "empty", secret: ""},
+		{name: "default", secret: define.DEFAULT_COOKIE_SECRET},
+		{name: "whitespace", secret: " \t\n"},
+		{name: "short", secret: strings.Repeat("x", 31)},
+		{name: "padded_short", secret: " \t" + strings.Repeat("x", 31) + "\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			flags := model.Flags{
+				Port:              5005,
+				EnableEditor:      true,
+				EnableOfflineMode: true,
+				DisableLoginMode:  false,
+				Visibility:        "PRIVATE",
+				CookieName:        "flare",
+				CookieSecret:      tt.secret,
+			}
+			handler, err := NewRouter(&flags)
+			require.Error(t, err)
+			assert.Nil(t, handler, "无效密钥不能暴露 HTTP handler")
+		})
+	}
 }

@@ -3,7 +3,6 @@ package auth
 import (
 	"crypto/subtle"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -18,6 +17,9 @@ import (
 const (
 	SESSION_KEY_USER_NAME  = "USER_NAME"
 	SESSION_KEY_LOGIN_DATE = "LOGIN_TIME"
+
+	// minimumCookieSecretLength follows securecookie's minimum recommended HMAC key size.
+	minimumCookieSecretLength = 32
 )
 
 // sessionName is set by RequestHandle and used by session.Get. Prefer passing name via RequestHandleSessionName.
@@ -28,17 +30,22 @@ func RequestHandleSessionName(cookieName string, port int) string {
 	return fmt.Sprintf("%s_%d", cookieName, port)
 }
 
-func RequestHandle(e *echo.Echo) {
+// RequestHandle configures login routes and sessions, rejecting unsafe signing keys before registration.
+func RequestHandle(e *echo.Echo) error {
+	if !define.AppFlags.DisableLoginMode {
+		secret := strings.TrimSpace(define.AppFlags.CookieSecret)
+		if secret == define.DEFAULT_COOKIE_SECRET || len(secret) < minimumCookieSecretLength {
+			return fmt.Errorf("启用登录需要至少 %d 字节的随机 Cookie 密钥，不能使用默认值；请通过 FLARE_COOKIE_SECRET、.env 或 --cookie_secret 配置", minimumCookieSecretLength)
+		}
+	}
 	sessionName = RequestHandleSessionName(define.AppFlags.CookieName, define.AppFlags.Port)
 	if !define.AppFlags.DisableLoginMode {
-		if define.AppFlags.CookieSecret == define.DEFAULT_COOKIE_SECRET {
-			log.Println("[auth] 警告: 已启用登录但 CookieSecret 仍为默认值，生产环境请通过 FLARE_COOKIE_SECRET 或 --cookie-secret 设置强密钥")
-		}
 		store := sessions.NewCookieStore([]byte(define.AppFlags.CookieSecret))
 		e.Use(session.Middleware(store))
 		e.POST(define.MiscPages.Login.Path, login)
 		e.POST(define.MiscPages.Logout.Path, logout)
 	}
+	return nil
 }
 
 var commonText = `<a href="` + define.SettingPages.Others.Path + `">返回重试</a></p><p>或前往 <a href="https://github.com/soulteary/docker-flare/issues/" target="_blank">https://github.com/soulteary/docker-flare/issues/</a> 反馈使用中的问题，谢谢！`

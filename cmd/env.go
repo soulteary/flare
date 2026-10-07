@@ -66,6 +66,8 @@ func ParseEnvVars() (stor model.Flags) {
 	stor.EnableOfflineMode = defaults.EnableOfflineMode
 	stor.EnableEditor = defaults.EnableEditor
 	stor.DisableCSP = defaults.DisableCSP
+	stor.CookieName = defaults.CookieName
+	stor.CookieSecret = defaults.CookieSecret
 
 	return stor
 }

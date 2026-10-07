@@ -6,12 +6,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v5"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+const testCookieSecret = "test-cookie-secret-with-at-least-32-bytes"
 
 func saveAppFlags() model.Flags {
 	return define.AppFlags
@@ -91,10 +94,73 @@ func TestRequestHandle_DisableLoginMode(t *testing.T) {
 	define.AppFlags.CookieName = "flare"
 	define.AppFlags.Port = 5005
 
-	e := echo.New()
-	RequestHandle(e)
-	// 未注册 login/logout 路由时不应 panic；仅验证可调用
-	assert.NotNil(t, e)
+	for _, secret := range []string{"", define.DEFAULT_COOKIE_SECRET, " \t\n"} {
+		define.AppFlags.CookieSecret = secret
+		e := echo.New()
+		require.NoError(t, RequestHandle(e))
+		for _, path := range []string{define.MiscPages.Login.Path, define.MiscPages.Logout.Path} {
+			req := httptest.NewRequest(http.MethodPost, path, nil)
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
+			assert.Equal(t, http.StatusNotFound, rec.Code, "登录关闭时不应注册 %s", path)
+		}
+		e.GET("/protected", func(c *echo.Context) error { return c.String(http.StatusOK, "ok") }, AuthRequired)
+		req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+		rec := httptest.NewRecorder()
+		e.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusOK, rec.Code, "关闭登录时应继续允许匿名访问")
+	}
+}
+
+func TestRequestHandle_RejectsUnsafeCookieSecrets(t *testing.T) {
+	orig := saveAppFlags()
+	defer restoreAppFlags(orig)
+	define.AppFlags.DisableLoginMode = false
+	define.AppFlags.CookieName = "flare"
+	define.AppFlags.Port = 5005
+
+	tests := []struct {
+		name   string
+		secret string
+	}{
+		{name: "empty", secret: ""},
+		{name: "default", secret: define.DEFAULT_COOKIE_SECRET},
+		{name: "whitespace", secret: " \t\n"},
+		{name: "padded_default", secret: " \t" + define.DEFAULT_COOKIE_SECRET + "\n"},
+		{name: "short", secret: strings.Repeat("x", 31)},
+		{name: "padded_short", secret: " \t" + strings.Repeat("x", 31) + "\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			define.AppFlags.CookieSecret = tt.secret
+			e := echo.New()
+			require.Error(t, RequestHandle(e))
+			for _, path := range []string{define.MiscPages.Login.Path, define.MiscPages.Logout.Path} {
+				req := httptest.NewRequest(http.MethodPost, path, nil)
+				rec := httptest.NewRecorder()
+				e.ServeHTTP(rec, req)
+				assert.Equal(t, http.StatusNotFound, rec.Code, "无效密钥不应注册 %s", path)
+			}
+		})
+	}
+}
+
+func TestRequestHandle_AcceptsSufficientCookieSecrets(t *testing.T) {
+	orig := saveAppFlags()
+	defer restoreAppFlags(orig)
+	define.AppFlags.DisableLoginMode = false
+	define.AppFlags.CookieName = "flare"
+	define.AppFlags.Port = 5005
+
+	for _, secret := range []string{strings.Repeat("x", 32), testCookieSecret} {
+		define.AppFlags.CookieSecret = secret
+		e := echo.New()
+		require.NoError(t, RequestHandle(e))
+		req := httptest.NewRequest(http.MethodPost, define.MiscPages.Login.Path, nil)
+		rec := httptest.NewRecorder()
+		e.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusBadRequest, rec.Code, "有效密钥应注册登录路由")
+	}
 }
 
 // TestAuthRequired_LoginRequired_RedirectsWhenNoSession 验证启用登录且无 session 时重定向到设置页
@@ -129,10 +195,10 @@ func TestLogin_Success_RedirectsAndSetsSession(t *testing.T) {
 	define.AppFlags.Port = 5005
 	define.AppFlags.User = "testuser"
 	define.AppFlags.Pass = "testpass"
-	define.AppFlags.CookieSecret = "test-secret-for-session"
+	define.AppFlags.CookieSecret = testCookieSecret
 
 	e := echo.New()
-	RequestHandle(e)
+	require.NoError(t, RequestHandle(e))
 	e.GET("/protected", func(c *echo.Context) error { return c.String(http.StatusOK, "ok") }, AuthRequired)
 
 	// 登录
@@ -164,10 +230,10 @@ func TestLogin_WrongPassword_Returns400(t *testing.T) {
 	define.AppFlags.Port = 5005
 	define.AppFlags.User = "u"
 	define.AppFlags.Pass = "p"
-	define.AppFlags.CookieSecret = "wrong-pw-test-secret"
+	define.AppFlags.CookieSecret = testCookieSecret
 
 	e := echo.New()
-	RequestHandle(e)
+	require.NoError(t, RequestHandle(e))
 
 	body := strings.NewReader("username=u&password=wrong")
 	req := httptest.NewRequest(http.MethodPost, define.MiscPages.Login.Path, body)
@@ -187,10 +253,10 @@ func TestLogin_EmptyCredentials_Returns400(t *testing.T) {
 	define.AppFlags.DisableLoginMode = false
 	define.AppFlags.CookieName = "flare"
 	define.AppFlags.Port = 5005
-	define.AppFlags.CookieSecret = "empty-test-secret"
+	define.AppFlags.CookieSecret = testCookieSecret
 
 	e := echo.New()
-	RequestHandle(e)
+	require.NoError(t, RequestHandle(e))
 
 	body := strings.NewReader("username=&password=any")
 	req := httptest.NewRequest(http.MethodPost, define.MiscPages.Login.Path, body)
@@ -211,10 +277,10 @@ func TestLogout_ClearsSession(t *testing.T) {
 	define.AppFlags.Port = 5005
 	define.AppFlags.User = "u"
 	define.AppFlags.Pass = "p"
-	define.AppFlags.CookieSecret = "logout-test-secret"
+	define.AppFlags.CookieSecret = testCookieSecret
 
 	e := echo.New()
-	RequestHandle(e)
+	require.NoError(t, RequestHandle(e))
 	e.GET("/protected", func(c *echo.Context) error { return c.String(http.StatusOK, "ok") }, AuthRequired)
 
 	// 先登录拿到 cookie
@@ -243,4 +309,40 @@ func TestLogout_ClearsSession(t *testing.T) {
 	e.ServeHTTP(recGet, reqGet)
 	assert.Equal(t, http.StatusFound, recGet.Code, "登出后带更新后的 cookie 访问应 302")
 	assert.Equal(t, define.SettingPages.Others.Path, recGet.Header().Get("Location"))
+}
+
+func TestAuthRequired_RejectsCookieSignedWithOldDefaultSecret(t *testing.T) {
+	orig := saveAppFlags()
+	defer restoreAppFlags(orig)
+	define.AppFlags.DisableLoginMode = false
+	define.AppFlags.CookieName = "flare"
+	define.AppFlags.Port = 5005
+	define.AppFlags.CookieSecret = testCookieSecret
+
+	// Reproduce an attacker-created session signed with the old public key.
+	oldStore := sessions.NewCookieStore([]byte(define.DEFAULT_COOKIE_SECRET))
+	oldRequest := httptest.NewRequest(http.MethodGet, "/", nil)
+	oldSession, err := oldStore.New(oldRequest, RequestHandleSessionName("flare", 5005))
+	require.NoError(t, err)
+	oldSession.Values[SESSION_KEY_USER_NAME] = "forged-user"
+	oldRecorder := httptest.NewRecorder()
+	require.NoError(t, oldSession.Save(oldRequest, oldRecorder))
+	oldCookies := oldRecorder.Result().Cookies()
+	require.Len(t, oldCookies, 1)
+
+	e := echo.New()
+	require.NoError(t, RequestHandle(e))
+	called := false
+	e.GET("/protected", func(c *echo.Context) error {
+		called = true
+		return c.String(http.StatusOK, "ok")
+	}, AuthRequired)
+
+	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	req.AddCookie(oldCookies[0])
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusFound, rec.Code)
+	assert.Equal(t, define.SettingPages.Others.Path, rec.Header().Get("Location"))
+	assert.False(t, called, "旧默认密钥签名的 Cookie 不应通过鉴权")
 }

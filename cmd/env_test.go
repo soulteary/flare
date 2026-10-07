@@ -43,6 +43,47 @@ func TestParseEnvVars(t *testing.T) {
 	assert.Equal(t, flags.EnableOfflineMode, defaultEnvs.EnableOfflineMode)
 }
 
+// TestParseEnvVarsCookies verifies that session configuration reaches the flags.
+func TestParseEnvVarsCookies(t *testing.T) {
+	tests := []struct {
+		name       string
+		envs       map[string]string
+		wantName   string
+		wantSecret string
+	}{
+		{
+			name:       "defaults",
+			wantName:   define.DEFAULT_COOKIE_NAME,
+			wantSecret: define.DEFAULT_COOKIE_SECRET,
+		},
+		{
+			name: "environment overrides",
+			envs: map[string]string{
+				"FLARE_COOKIE_NAME":   "custom-session",
+				"FLARE_COOKIE_SECRET": "test-session-secret-32-bytes-long",
+			},
+			wantName:   "custom-session",
+			wantSecret: "test-session-secret-32-bytes-long",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, key := range []string{"FLARE_COOKIE_NAME", "FLARE_COOKIE_SECRET"} {
+				t.Setenv(key, "")
+				assert.NoError(t, os.Unsetenv(key))
+			}
+			for key, value := range tt.envs {
+				t.Setenv(key, value)
+			}
+
+			flags := cmd.ParseEnvVars()
+			assert.Equal(t, tt.wantName, flags.CookieName)
+			assert.Equal(t, tt.wantSecret, flags.CookieSecret)
+		})
+	}
+}
+
 func TestInitAccountFromEnvVars_normal(t *testing.T) {
 	defaultEnvs := define.DefaultEnvVars
 

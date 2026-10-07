@@ -25,7 +25,22 @@ TBD
 - Browse automatically generated program documentation:
     - `godoc --http=localhost:8080`
 
+### Login configuration
 
+Login is disabled by default. To enable it, set `FLARE_DISABLE_LOGIN=false` and
+configure `FLARE_COOKIE_SECRET` with a randomly generated value of at least 32
+bytes. Generate a key once with `openssl rand -hex 32`, then save it in your
+environment or `.env` file. The `--cookie_secret` command-line flag is also
+supported. Command-line flags override `.env`, which overrides environment
+variables.
+
+When login is enabled, the server refuses to start with an empty or whitespace-only
+key, the legacy default `secret`, or a key shorter than 32 bytes after trimming
+surrounding whitespace. Login-disabled deployments do not require a key.
+
+Keep the key stable across restarts. Changing it invalidates previously issued
+session cookies. When upgrading a deployment that used the published default key,
+replace it with a new random key before enabling login.
 
 ## Directory
 
