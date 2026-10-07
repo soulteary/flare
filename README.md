@@ -50,6 +50,9 @@ Login-disabled deployments do not create or require a key file.
 If the saved key cannot be read or validated, or a new key cannot be saved, Flare
 uses a secure key for the current process and warns that it was not persisted.
 The service remains available, but users must log in again after a restart.
+If a key file has already been saved and can be read, Flare keeps using that key
+even when syncing its directory fails. A separate warning explains that the file
+may not survive a power loss; ordinary restarts and other instances reuse it.
 Multiple instances should use the same configured key or share the persistent
 key file so that their session cookies remain compatible.
 

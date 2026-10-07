@@ -15,11 +15,16 @@ import (
 )
 
 // cookieSecretFileName lives beside config.yml in the application's working directory.
-const cookieSecretFileName = ".flare-cookie-secret"
+const cookieSecretFileName = ".flare-cookie-secret" // #nosec G101 -- Fixed state filename, not a credential; signing keys are random or explicitly configured.
 
 // initializeCookieSecret retains safe explicit configuration and migrates unsafe keys without downtime.
 // Generated keys contain 32 random bytes encoded as hexadecimal, and persisted keys survive restarts.
 func initializeCookieSecret(configured string) (string, error) {
+	return initializeCookieSecretWithStorage(configured, cookieSecretFileName, syncCookieSecretDirectory)
+}
+
+// initializeCookieSecretWithStorage permits per-call storage failures without changing global state.
+func initializeCookieSecretWithStorage(configured, path string, syncDirectory func(string) error) (string, error) {
 	trimmed := strings.TrimSpace(configured)
 	if trimmed != define.DEFAULT_COOKIE_SECRET && len(trimmed) >= minimumCookieSecretLength {
 		return configured, nil
@@ -33,8 +38,8 @@ func initializeCookieSecret(configured string) (string, error) {
 		reason, explanation = "default", "使用默认值"
 	}
 
-	secret, created, err := loadOrCreateCookieSecret(cookieSecretFileName)
-	if err != nil {
+	secret, created, err := loadOrCreateCookieSecretWithSync(path, syncDirectory)
+	if err != nil && secret == "" {
 		// Filesystem failures must not restore the old unsafe key or prevent an upgrade.
 		// Do not log the underlying error: paths or damaged contents may contain secrets.
 		fallback, randomErr := generateCookieSecret(rand.Reader)
@@ -45,13 +50,20 @@ func initializeCookieSecret(configured string) (string, error) {
 			"reason", reason, "action", "generated", "persisted", false)
 		return fallback, nil
 	}
+	action := "reused"
+	message := "Cookie 密钥" + explanation + "；程序已复用已保存的安全长密钥"
 	if created {
-		logger.GetLogger().Warn("Cookie 密钥"+explanation+"；程序已自动生成并保存具有 32 字节随机熵的安全长密钥，已有登录状态失效，请重新登录",
-			"reason", reason, "action", "generated", "persisted", true)
-	} else {
-		logger.GetLogger().Warn("Cookie 密钥"+explanation+"；程序已复用已保存的安全长密钥",
-			"reason", reason, "action", "reused", "persisted", true)
+		action = "generated"
+		message = "Cookie 密钥" + explanation + "；程序已自动生成并保存具有 32 字节随机熵的安全长密钥，已有登录状态失效，请重新登录"
 	}
+	if err != nil {
+		// A published, validated key may already be in use by another process.
+		// Keep it even when the directory flush cannot confirm crash durability.
+		logger.GetLogger().Warn(message+"；目录同步失败，无法确认掉电后的持久性，程序将继续使用已保存密钥",
+			"reason", reason, "action", action, "persisted", true, "durability_confirmed", false)
+		return secret, nil
+	}
+	logger.GetLogger().Warn(message, "reason", reason, "action", action, "persisted", true)
 	return secret, nil
 }
 
@@ -74,7 +86,7 @@ func readCookieSecret(path string) (string, error) {
 	if !info.Mode().IsRegular() {
 		return "", errors.New("密钥文件不是常规文件")
 	}
-	file, err := os.Open(path)
+	file, err := os.Open(path) // #nosec G304 -- Production callers use the fixed application state path, never request input; type and identity are checked below.
 	if err != nil {
 		return "", err
 	}
@@ -109,6 +121,12 @@ func readCookieSecret(path string) (string, error) {
 // loadOrCreateCookieSecret publishes a fully written key without replacing an existing file.
 // Linking a temporary file makes concurrent first starts agree on one winner, then all re-read it.
 func loadOrCreateCookieSecret(path string) (string, bool, error) {
+	return loadOrCreateCookieSecretWithSync(path, syncCookieSecretDirectory)
+}
+
+// loadOrCreateCookieSecretWithSync takes a per-call directory flush function for deterministic tests.
+// A nonempty key with an error means publication succeeded but crash durability is uncertain.
+func loadOrCreateCookieSecretWithSync(path string, syncDirectory func(string) error) (string, bool, error) {
 	secret, err := readCookieSecret(path)
 	if err == nil {
 		return secret, false, nil
@@ -145,24 +163,28 @@ func loadOrCreateCookieSecret(path string) (string, bool, error) {
 		}
 		created = false
 	}
+	var durabilityErr error
 	if created {
-		// Flush the directory entry as well as the file before claiming persistence.
-		directory, openErr := os.Open(filepath.Dir(path))
-		if openErr != nil {
-			return "", false, openErr
-		}
-		syncErr := directory.Sync()
-		closeErr := directory.Close()
-		if syncErr != nil {
-			return "", false, syncErr
-		}
-		if closeErr != nil {
-			return "", false, closeErr
-		}
+		// A directory flush failure must not discard a key already visible to peers.
+		durabilityErr = syncDirectory(filepath.Dir(path))
 	}
 	secret, err = readCookieSecret(path)
 	if err != nil {
 		return "", false, err
 	}
-	return secret, created, nil
+	return secret, created, durabilityErr
+}
+
+// syncCookieSecretDirectory flushes the published directory entry to durable storage.
+func syncCookieSecretDirectory(path string) error {
+	directory, err := os.Open(path) // #nosec G304 -- The directory comes from the fixed application state path, never from request input.
+	if err != nil {
+		return err
+	}
+	syncErr := directory.Sync()
+	closeErr := directory.Close()
+	if syncErr != nil {
+		return syncErr
+	}
+	return closeErr
 }
