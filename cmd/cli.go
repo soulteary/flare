@@ -47,7 +47,7 @@ func GetCliFlags() (*model.Flags, *flags.FlagSet) {
 	options.BoolVarP(&cliFlags.ShowHelp, "help", "h", false, "显示帮助")
 	// Cookie
 	options.StringVarP(&cliFlags.CookieName, _KEY_COOKIE_NAME, _KEY_COOKIE_NAME_SHORT, define.DEFAULT_COOKIE_NAME, "调整 Cookie 字段名称")
-	options.StringVarP(&cliFlags.CookieSecret, _KEY_COOKIE_SECRET, _KEY_COOKIE_SECRET_SHORT, define.DEFAULT_COOKIE_SECRET, "设置 Cookie 密钥（启用登录时至少 32 字节，请使用随机值）")
+	options.StringVarP(&cliFlags.CookieSecret, _KEY_COOKIE_SECRET, _KEY_COOKIE_SECRET_SHORT, define.DEFAULT_COOKIE_SECRET, "设置 Cookie 密钥（建议使用至少 32 字节的随机值；缺省或过短时自动初始化）")
 
 	_ = options.Parse(os.Args)
 

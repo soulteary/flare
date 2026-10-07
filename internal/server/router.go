@@ -31,7 +31,7 @@ import (
 
 // NewRouter builds the Echo app and returns an http.Handler for the server.
 // It returns an error if any required initialization (templates, mdi, guide, editor) fails.
-// The given appFlags are used as the single source of truth and synced to define.AppFlags.
+// The given appFlags are synced to define.AppFlags and receive the effective cookie signing key.
 func NewRouter(appFlags *model.Flags) (http.Handler, error) {
 	define.Init()
 	if appFlags != nil {
@@ -45,6 +45,9 @@ func NewRouter(appFlags *model.Flags) (http.Handler, error) {
 	}
 	if err := auth.RequestHandle(e); err != nil {
 		return nil, fmt.Errorf("初始化认证: %w", err)
+	}
+	if appFlags != nil {
+		appFlags.CookieSecret = define.AppFlags.CookieSecret
 	}
 	home.InitWeatherIfNeeded()
 	if err := templates.RegisterRouting(e); err != nil {
