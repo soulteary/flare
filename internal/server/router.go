@@ -43,7 +43,9 @@ func NewRouter(appFlags *model.Flags) (http.Handler, error) {
 		log := logger.GetLogger()
 		e.Use(logger.NewEchoWithConfig(log, logger.LoggerConfig{Skipper: logger.DefaultRequestLogSkipper}))
 	}
-	auth.RequestHandle(e)
+	if err := auth.RequestHandle(e); err != nil {
+		return nil, fmt.Errorf("初始化认证: %w", err)
+	}
 	home.InitWeatherIfNeeded()
 	if err := templates.RegisterRouting(e); err != nil {
 		return nil, fmt.Errorf("初始化模板: %w", err)

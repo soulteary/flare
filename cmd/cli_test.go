@@ -8,7 +8,85 @@ import (
 	"github.com/soulteary/flare/cmd"
 	"github.com/soulteary/flare/config/define"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+// TestParseCookiePrecedence covers the complete cookie configuration pipeline.
+func TestParseCookiePrecedence(t *testing.T) {
+	t.Chdir(t.TempDir())
+	originalArgs := os.Args
+	originalFlags := define.AppFlags
+	t.Cleanup(func() {
+		os.Args = originalArgs
+		define.AppFlags = originalFlags
+	})
+
+	tests := []struct {
+		name       string
+		envs       map[string]string
+		envfile    string
+		args       []string
+		wantName   string
+		wantSecret string
+	}{
+		{
+			name:       "defaults",
+			wantName:   define.DEFAULT_COOKIE_NAME,
+			wantSecret: define.DEFAULT_COOKIE_SECRET,
+		},
+		{
+			name: "environment",
+			envs: map[string]string{
+				"FLARE_COOKIE_NAME":   "environment-session",
+				"FLARE_COOKIE_SECRET": "environment-session-secret-32-bytes",
+			},
+			wantName:   "environment-session",
+			wantSecret: "environment-session-secret-32-bytes",
+		},
+		{
+			name: "envfile overrides environment",
+			envs: map[string]string{
+				"FLARE_COOKIE_NAME":   "environment-session",
+				"FLARE_COOKIE_SECRET": "environment-session-secret-32-bytes",
+			},
+			envfile:    "FLARE_COOKIE_NAME=file-session\nFLARE_COOKIE_SECRET=file-session-secret-at-least-32-bytes\n",
+			wantName:   "file-session",
+			wantSecret: "file-session-secret-at-least-32-bytes",
+		},
+		{
+			name: "CLI overrides envfile and environment",
+			envs: map[string]string{
+				"FLARE_COOKIE_NAME":   "environment-session",
+				"FLARE_COOKIE_SECRET": "environment-session-secret-32-bytes",
+			},
+			envfile:    "FLARE_COOKIE_NAME=file-session\nFLARE_COOKIE_SECRET=file-session-secret-at-least-32-bytes\n",
+			args:       []string{"--cookie_name", "cli-session", "--cookie_secret", "cli-session-secret-at-least-32-bytes"},
+			wantName:   "cli-session",
+			wantSecret: "cli-session-secret-at-least-32-bytes",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, key := range []string{"FLARE_COOKIE_NAME", "FLARE_COOKIE_SECRET"} {
+				t.Setenv(key, "")
+				require.NoError(t, os.Unsetenv(key))
+			}
+			for key, value := range tt.envs {
+				t.Setenv(key, value)
+			}
+			if tt.envfile != "" {
+				require.NoError(t, os.WriteFile(".env", []byte(tt.envfile), 0600))
+				t.Cleanup(func() { require.NoError(t, os.Remove(".env")) })
+			}
+			os.Args = append([]string{"flare"}, tt.args...)
+
+			flags := cmd.Parse()
+			assert.Equal(t, tt.wantName, flags.CookieName)
+			assert.Equal(t, tt.wantSecret, flags.CookieSecret)
+		})
+	}
+}
 
 func TestGetCliFlags(t *testing.T) {
 	originalArgs := os.Args

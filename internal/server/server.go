@@ -21,7 +21,7 @@ func StartDaemon(AppFlags *model.Flags) {
 	log := logger.GetLogger()
 	router, err := NewRouter(AppFlags)
 	if err != nil {
-		log.Error("路由初始化失败", "error", err)
+		log.Error("路由初始化失败", "error", err.Error())
 		os.Exit(1)
 	}
 
