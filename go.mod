@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/jszwec/csvutil v1.10.0
 	github.com/labstack/echo-contrib/v5 v5.0.0
-	github.com/labstack/echo/v5 v5.0.4
+	github.com/labstack/echo/v5 v5.4.0
 	github.com/soulteary/cli-kit v1.9.0
 	github.com/soulteary/funny-china-weather v0.1.1
 	github.com/soulteary/memfs v0.1.0
@@ -30,5 +30,5 @@ require (
 	github.com/tdewolff/parse/v2 v2.8.5 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/time v0.14.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 )
