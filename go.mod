@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/caarlos0/env/v6 v6.10.1
-	github.com/fatih/color v1.18.0
+	github.com/fatih/color v1.19.0
 	github.com/gorilla/sessions v1.4.0
 	github.com/jszwec/csvutil v1.10.0
 	github.com/labstack/echo-contrib/v5 v5.0.0
