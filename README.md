@@ -1,5 +1,7 @@
 # Flare
 
+[![Go Test Coverage](./.github/coverage.svg)](./.github/go-test-report.md) [![Go Report Card](./.github/goreportcard.svg)](./.github/goreportcard-report.md)
+
 Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.
 
 🚧 **Code is being prepared and refactored, commits are slow.**
