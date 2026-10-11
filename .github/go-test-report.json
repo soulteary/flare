@@ -1,0 +1,221 @@
+{
+  "schema_version": "1.0",
+  "tests": {
+    "total": 85,
+    "passed": 85,
+    "failed": 0,
+    "skipped": 0
+  },
+  "coverage": {
+    "covered_statements": 639,
+    "total_statements": 2082,
+    "percentage": 30.69,
+    "threshold": 0
+  },
+  "packages": [
+    {
+      "name": ".",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "build",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "build/builder",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "cmd",
+      "status": "pass",
+      "tests": 23,
+      "failed": 0,
+      "coverage": 92.06
+    },
+    {
+      "name": "config/data",
+      "status": "pass",
+      "tests": 19,
+      "failed": 0,
+      "coverage": 78.35
+    },
+    {
+      "name": "config/define",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "config/model",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": null
+    },
+    {
+      "name": "internal/auth",
+      "status": "pass",
+      "tests": 29,
+      "failed": 0,
+      "coverage": 78.31
+    },
+    {
+      "name": "internal/fn",
+      "status": "pass",
+      "tests": 8,
+      "failed": 0,
+      "coverage": 71.43
+    },
+    {
+      "name": "internal/i18n",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/logger",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/misc/deprecated",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/misc/health",
+      "status": "pass",
+      "tests": 1,
+      "failed": 0,
+      "coverage": 100
+    },
+    {
+      "name": "internal/misc/redir",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/pages/editor",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/pages/guide",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/pages/home",
+      "status": "pass",
+      "tests": 2,
+      "failed": 0,
+      "coverage": 0.48
+    },
+    {
+      "name": "internal/pool",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/resources/assets",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/resources/mdi",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/resources/templates",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/server",
+      "status": "pass",
+      "tests": 3,
+      "failed": 0,
+      "coverage": 48.33
+    },
+    {
+      "name": "internal/settings",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/settings/appearance",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/settings/others",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/settings/search",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/settings/theme",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "internal/settings/weather",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    },
+    {
+      "name": "tools/baseline",
+      "status": "no_tests",
+      "tests": 0,
+      "failed": 0,
+      "coverage": 0
+    }
+  ],
+  "failures": null
+}
