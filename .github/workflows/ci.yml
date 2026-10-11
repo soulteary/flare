@@ -108,12 +108,3 @@ jobs:
           fi
         env:
           COVERAGE_THRESHOLD: "0"
-
-      - name: Upload to Codecov (optional)
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.out
-          flags: unittests
-          name: flare-coverage
-          fail_ci_if_error: false
