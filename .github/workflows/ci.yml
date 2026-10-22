@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  GO_VERSION: "1.27.2"
+  GO_VERSION: "1.27.3"
   GO111MODULE: on
 
 jobs:
@@ -117,6 +117,11 @@ jobs:
           threshold: "0"
           report: "true"
           commit: "false"
+      - name: Restore project Go toolchain
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
       - name: Reuse GTR coverage profile
         if: github.event_name == 'pull_request'
         shell: bash
@@ -128,7 +133,7 @@ jobs:
         run: go tool cover -html=coverage.out -o coverage.html
 
       - name: Coverage summary
-        run: go tool cover -func=coverage.out
+        run: GOTOOLCHAIN=auto go tool cover -func=coverage.out
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v6
