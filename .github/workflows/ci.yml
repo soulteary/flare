@@ -170,3 +170,18 @@ jobs:
           retention-days: 14
     permissions:
       contents: read
+
+  goreleaser-config:
+    name: Validate GoReleaser configuration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: check
