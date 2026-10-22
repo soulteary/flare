@@ -11,10 +11,10 @@
 
 | Check | Score |
 | ----- | ----- |
-| gofmt | 100% |
 | go_vet | 100% |
-| gocyclo | 96% |
+| gofmt | 100% |
 | ineffassign | 100% |
+| gocyclo | 96% |
 | license | 100% |
 | misspell | 91% |
 
@@ -22,23 +22,15 @@
 
 ### gocyclo
 
-- `internal/logger/echo_handler.go`
-  - Line 35: cyclomatic complexity 18 for function NewEchoWithConfig
 - `internal/pages/home/application.go`
   - Line 18: cyclomatic complexity 21 for function GenerateApplicationsTemplate
 - `tools/baseline/main.go`
   - Line 266: cyclomatic complexity 19 for function main
+- `internal/logger/echo_handler.go`
+  - Line 35: cyclomatic complexity 18 for function NewEchoWithConfig
 
 ### misspell
 
-- `embed/templates/home.html`
-  - Line 88: "bookmakrs" is a misspelling of "bookmarks"
-- `internal/resources/templates/html/home.html`
-  - Line 16: "bookmakrs" is a misspelling of "bookmarks"
-- `internal/resources/mdi/mdi-cheat-sheets/css/materialdesignicons.min.css`
-  - Line 1: "stange" is a misspelling of "strange"
-- `internal/resources/mdi/mdi-cheat-sheets/index.html`
-  - Line 476: "stange" is a misspelling of "strange"
 - `embed/assets/css/base.css`
   - Line 91: "bookmakrs" is a misspelling of "bookmarks"
 - `embed/assets/css/home/bookmarks.css`
@@ -70,6 +62,14 @@
   - Line 3: "bookmakrs" is a misspelling of "bookmarks"
   - Line 3: "bookmakrs" is a misspelling of "bookmarks"
   - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+- `embed/templates/home.html`
+  - Line 88: "bookmakrs" is a misspelling of "bookmarks"
+- `internal/resources/templates/html/home.html`
+  - Line 16: "bookmakrs" is a misspelling of "bookmarks"
+- `internal/resources/mdi/mdi-cheat-sheets/css/materialdesignicons.min.css`
+  - Line 1: "stange" is a misspelling of "strange"
+- `internal/resources/mdi/mdi-cheat-sheets/index.html`
+  - Line 476: "stange" is a misspelling of "strange"
 
 ---
 
