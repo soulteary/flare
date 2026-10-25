@@ -4,8 +4,6 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fatih/color v1.19.0 h1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=
 github.com/fatih/color v1.19.0/go.mod h1:zNk67I0ZUT1bEGsSGyCZYZNrHuTkJJB+r6Q9VuMi0LE=
-github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
-github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/google/gofuzz v1.2.0 h1:xRy4A+RhZaiKjJ1bPfwQ8sedCA+YS2YcCHW6ec7JMi0=
 github.com/google/gofuzz v1.2.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/gorilla/securecookie v1.1.2 h1:YCIWL56dvtr73r6715mJs5ZvhtnY73hBvEF8kXD8ePA=
@@ -27,8 +25,8 @@ github.com/soulteary/cli-kit v1.9.2 h1:lciNt542e/YwV8aTSOLABtA6GTOv6i7iaTV+4w9SA
 github.com/soulteary/cli-kit v1.9.2/go.mod h1:/u1MG5w4C04y2UvjQ2hUgkmFIWX36F26IUzRsBR5qP8=
 github.com/soulteary/funny-china-weather v0.1.1 h1:b/RPaANSgDkrsQ4q2h5iaGs+S1yTBp9e3VYUkra5uiU=
 github.com/soulteary/funny-china-weather v0.1.1/go.mod h1:4po196pA+zjhoAgckkUtmLo2bu2r7jl/kwITRKGQYTw=
-github.com/soulteary/memfs v0.1.0 h1:phV9TrPmiU6MBc0C2jiOWqjU/eBb4KkF/hBpI/2LHj8=
-github.com/soulteary/memfs v0.1.0/go.mod h1:qJkwZ8IAF04VO0vp7GyjVC3sqBDsiW/a1DrC/TQWsM8=
+github.com/soulteary/memfs-kit v1.0.0 h1:DY2GXE9fzDbFMdlptsHRfR0TuiiNX1S7tu3NtB2mBzQ=
+github.com/soulteary/memfs-kit v1.0.0/go.mod h1:qEn9S3SYXlEHhnGbJmbPXDb4NI/LG1VKimVWUCBWHU4=
 github.com/soulteary/version-kit/v4 v4.0.2 h1:IUByGmmT8y5wlq/JEAUXRHs+wN9RdZhwA8GzEIMQ3Ho=
 github.com/soulteary/version-kit/v4 v4.0.2/go.mod h1:1BR82efrpQ3LbpCegVfKM0xgbW1R62+TLKwepf3URkA=
 github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=

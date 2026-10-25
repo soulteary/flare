@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v5"
-	"github.com/soulteary/memfs"
+	memfs "github.com/soulteary/memfs-kit"
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"

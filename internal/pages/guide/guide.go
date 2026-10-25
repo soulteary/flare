@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v5"
-	"github.com/soulteary/memfs"
+	memfs "github.com/soulteary/memfs-kit"
 
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/fn"
