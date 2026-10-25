@@ -1,3 +1,5 @@
+//go:build !fiber
+
 package home
 
 import (

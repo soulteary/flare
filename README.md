@@ -11,7 +11,7 @@ Challenge all bookmarking apps and websites directories, Aim to Be a best perfor
 **Simple**, **Fast**, **Lightweight** and super **Easy** to install and use.
 
 - Written in Go (Golang) and a little Modern vanilla Javascript only.
-- HTTP stack: [Echo](https://echo.labstack.com/) v5.
+- HTTP stack: [Echo](https://echo.labstack.com/) v5 by default; an experimental native [Fiber](https://gofiber.io/) v3 build is available with `-tags fiber`.
 - Doesn't depend on any database or any complicated framework.
 - Single executable, no dependencies required, good docker support.
 - You can choose whether to enable various functions according to your needs: offline mode, weather, editor, account, and so on.
@@ -32,6 +32,64 @@ TBD
 
 - Browse automatically generated program documentation:
     - `godoc --http=localhost:8080`
+
+### Experimental Fiber build
+
+The default build continues to use Echo. Select Fiber with the `fiber` build tag:
+
+```sh
+# Default Echo build
+go run .
+go build -o flare-echo .
+
+# Experimental Fiber build
+go run -tags fiber .
+go build -tags fiber -o flare-fiber .
+```
+
+The Fiber application serves routes on its native fasthttp listener. It keeps
+`Immutable` enabled and copies retained bound theme strings. The request reader
+is configured to 64 KiB; request lines and headers exceeding its capacity can
+receive HTTP 431. Request bodies are buffered with a 32 MiB global limit; bookmark
+import routes retain their existing upload and commit limits. Embedded favicon
+and SVG resources keep a `net/http.ServeContent` adapter for conditional and range
+requests. These choices are part of the candidate being measured.
+
+Run the existing baseline for either stack:
+
+```sh
+./scripts/baseline-metrics.sh
+HTTP_STACK=fiber ./scripts/baseline-metrics.sh
+```
+
+For repeated alternating runs and separate server CPU, allocation, GC and RSS
+measurements, use `python3 scripts/compare-http-stacks.py`. Add
+`--compare-read-buffers` to compare Echo, the current 64 KiB Fiber candidate,
+and same-source 8 KiB / 1 MiB Fiber references in the same run. The archived
+read-buffer comparison used 5 baseline rounds and 4 resource rounds, so every
+target occupied each of the four resource-run positions once. It measured the
+redirect path before the subsequent path optimization.
+
+The original baseline includes client allocations and uses the Go client's
+default pool of 2 idle connections per host. A supplementary run with
+`--keepalive-connections 8` measures a stable pool at concurrency 8. See
+[baseline methodology and reproduction](docs/baseline-metrics.md) and the
+[64 KiB comparison report](metrics-reports/fiber-64kib-buffer-2026-10-25.md).
+The earlier [8 KiB report](metrics-reports/fiber-default-buffer-2026-10-25.md) and
+[1 MiB report](metrics-reports/fiber-comparison-2026-10-25.md) describe historical
+candidates.
+
+For the redirect investigation, `scripts/analyze-redirect.py` accepts repeated
+`--target label=existing-baseline-binary`, a common Echo `--client`, and an
+`--output` directory. The current focused comparison uses 8 rounds of 100000
+requests after 1000 warmup requests, concurrency 8 and GOMAXPROCS 4, with both
+default and 8-connection idle pools. It rotates target order and measures server
+CPU, allocations, GC and RSS in isolated processes. `--profiles-only` downloads
+server-only CPU and heap profiles for diagnosis; profiled throughput and RSS are
+excluded from performance conclusions. See the
+[redirect diagnosis and comparison report](metrics-reports/fiber-redirect-profile-2026-10-25.md)
+and [reproduction details](docs/baseline-metrics.md#跳转路径独立诊断与复测).
+The candidate continues to use a 64 KiB reader.
 
 ### Container images
 

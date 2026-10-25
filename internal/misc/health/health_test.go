@@ -1,3 +1,5 @@
+//go:build !fiber
+
 package health
 
 import (

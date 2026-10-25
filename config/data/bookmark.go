@@ -101,18 +101,19 @@ func saveBookmarksToYamlFile(name string, data model.Bookmarks) (bool, error) {
 
 func loadBookmarksFromYamlFile(name string, isFavorite bool) (model.Bookmarks, error) {
 	var result model.Bookmarks
-	filePath := getConfigPath(name)
 
-	if !checkExists(filePath) {
+	// Cached reads still check for deletion, but need no absolute path lookup.
+	// Resolve the current directory only when initializing or reading from disk.
+	if !checkExists(name + ".yml") {
 		fmt.Println("找不到配置文件" + name + "，创建默认配置。")
 		var createErr error
-		result, createErr = initBookmarks(filePath, isFavorite)
+		result, createErr = initBookmarks(getConfigPath(name), isFavorite)
 		if createErr != nil {
 			return result, fmt.Errorf("尝试创建应用配置文件 %s 失败: %w", name, createErr)
 		}
 		return result, nil
 	}
-	configFile, err := readFileCached(name, func() ([]byte, error) { return readFile(filePath) })
+	configFile, err := readFileCached(name, func() ([]byte, error) { return readFile(getConfigPath(name)) })
 	if err != nil {
 		return result, fmt.Errorf("读取配置文件 %s: %w", name, err)
 	}
