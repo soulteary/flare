@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
@@ -114,6 +116,26 @@ func nativeFiberBody(t *testing.T, response *http.Response) string {
 	return string(body)
 }
 
+// Write oversized requests as a single buffered pipe message. net/http's normal
+// multi-write sender can race the peer closing this in-memory pipe after 431,
+// obscuring the valid rejection response with a client-side closed-pipe error.
+func nativeFiberWireRequest(t *testing.T, client *http.Client, request *http.Request) *http.Response {
+	t.Helper()
+	transport, ok := client.Transport.(*http.Transport)
+	require.True(t, ok)
+	conn, err := transport.DialContext(context.Background(), "tcp", request.URL.Host)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+	require.NoError(t, conn.SetDeadline(time.Now().Add(5*time.Second)))
+	var wire bytes.Buffer
+	require.NoError(t, request.Write(&wire))
+	_, err = conn.Write(wire.Bytes())
+	require.NoError(t, err)
+	response, err := http.ReadResponse(bufio.NewReader(conn), request)
+	require.NoError(t, err)
+	return response
+}
+
 func TestNativeFiberRoutesAndRequestLimits(t *testing.T) {
 	app := newNativeFiberApp(t, false)
 	readBufferSize := app.Config().ReadBufferSize
@@ -152,8 +174,7 @@ func TestNativeFiberRoutesAndRequestLimits(t *testing.T) {
 			request, err := http.NewRequest(http.MethodGet, base+define.MiscPages.HealthCheck.Path, nil)
 			require.NoError(t, err)
 			request.Header.Set("X-Large-Fixture", strings.Repeat("x", test.size))
-			response, err := client.Do(request)
-			require.NoError(t, err)
+			response := nativeFiberWireRequest(t, client, request)
 			nativeFiberBody(t, response)
 			assert.Equal(t, test.status, response.StatusCode)
 		})
@@ -170,8 +191,9 @@ func TestNativeFiberRoutesAndRequestLimits(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			bookmarkURL := "https://example.test/" + strings.Repeat("x", test.size)
 			require.True(t, data.SaveFavoriteBookmarks(model.Bookmarks{Items: []model.Bookmark{{Name: "long URL", URL: bookmarkURL}}}))
-			response, err := client.Get(base + define.MiscPages.RedirHelper.Path + "?go=" + data.Base64EncodeUrl(bookmarkURL))
+			request, err := http.NewRequest(http.MethodGet, base+define.MiscPages.RedirHelper.Path+"?go="+data.Base64EncodeUrl(bookmarkURL), nil)
 			require.NoError(t, err)
+			response := nativeFiberWireRequest(t, client, request)
 			nativeFiberBody(t, response)
 			assert.Equal(t, test.status, response.StatusCode)
 			if test.status == http.StatusFound {
