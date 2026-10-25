@@ -1,4 +1,4 @@
-{{ define "settings-weather.html" }}<div class=setting-group-container><h2>{{ T .Locale "settings_weather" }}</h2><form method=POST action="{{ .SettingPages.Weather.Path }}"><div class=form-group><label for=show-weather-component>{{ T .Locale "enable_weather" }}</label>
+{{ define "settings-weather.html" }}<div class=setting-group-container><h2>{{ T .Locale "settings_weather" }}</h2>{{ if .SaveFailed }}<p role=alert>{{ T .Locale "weather_save_failed" }}</p>{{ end }}<form method=POST action="{{ .SettingPages.Weather.Path }}"><div class=form-group><label for=show-weather-component>{{ T .Locale "enable_weather" }}</label>
 {{ if .ShowWeather }}
 <select name=show id=show-weather-component><option value=1 selected>{{ T .Locale "yes" }}<option value=0>{{ T .Locale "no" }}</select>
 {{ else }}
