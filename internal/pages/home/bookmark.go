@@ -20,13 +20,13 @@ func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *
 	if options == nil {
 		op, err := data.GetAllSettingsOptions()
 		if err != nil {
-			op = model.Application{}
+			return navigationDataError("bookmarks", "", err)
 		}
 		options = &op
 	}
 	bookmarksData, err := data.LoadNormalBookmarks()
 	if err != nil {
-		return template.HTML("")
+		return navigationDataError("bookmarks", options.Locale, err)
 	}
 	b, ok := builderPool.Get().(*strings.Builder)
 	if !ok {
@@ -35,25 +35,14 @@ func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *
 	b.Reset()
 	defer builderPool.Put(b)
 
-	n := len(bookmarksData.Items)
-	parseBookmarks := make([]model.Bookmark, 0, n)
+	bookmarks := make([]model.Bookmark, 0, len(bookmarksData.Items))
+	filterLower := strings.ToLower(filter)
 	for _, bookmark := range bookmarksData.Items {
 		bookmark.URL = fn.ParseDynamicUrlWith(bookmark.URL, firstRequestInfo(requestInfo))
-		parseBookmarks = append(parseBookmarks, bookmark)
-	}
-
-	bookmarks := parseBookmarks
-	if filter != "" {
-		bookmarks = make([]model.Bookmark, 0, n)
-	}
-
-	if filter != "" {
-		filterLower := strings.ToLower(filter)
-		for _, bookmark := range parseBookmarks {
-			if strings.Contains(strings.ToLower(bookmark.Name), filterLower) || strings.Contains(strings.ToLower(bookmark.URL), filterLower) {
-				bookmarks = append(bookmarks, bookmark)
-			}
+		if filter != "" && !strings.Contains(strings.ToLower(bookmark.Name), filterLower) && !strings.Contains(strings.ToLower(bookmark.URL), filterLower) {
+			continue
 		}
+		bookmarks = append(bookmarks, bookmark)
 	}
 
 	if len(bookmarksData.Categories) > 0 {
@@ -74,12 +63,23 @@ func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *
 			renderCategoryNavigation(b, bookmarksData.Categories, selected, filter, path, options.Locale)
 		}
 		defaultCategory := bookmarksData.Categories[0]
+		// Group once before rendering. Default-placement entries follow the first
+		// named group; unknown IDs remain absent, matching the existing behavior.
+		groups := make(map[string][]model.Bookmark, len(bookmarksData.Categories))
+		for _, bookmark := range bookmarks {
+			id := bookmark.Category
+			if id == "" {
+				id = defaultCategory.ID
+			}
+			groups[id] = append(groups[id], bookmark)
+		}
 		for _, category := range bookmarksData.Categories {
 			if selected != "" && category.ID != selected {
 				continue
 			}
 			categoryCopy := category
-			renderBookmarksWithCategoriesForRequest(b, &bookmarks, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, firstRequestInfo(requestInfo), mode == "collapse" && filter == "")
+			items := groups[category.ID]
+			renderBookmarksWithCategoriesForRequest(b, &items, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, firstRequestInfo(requestInfo), mode == "collapse" && filter == "")
 		}
 	} else {
 		renderBookmarksWithoutCategories(b, &bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, firstRequestInfo(requestInfo))
@@ -121,8 +121,6 @@ func renderBookmarksWithCategories(b *strings.Builder, bookmarks *[]model.Bookma
 func renderBookmarksWithCategoriesForRequest(b *strings.Builder, bookmarks *[]model.Bookmark, category *model.Category, defaultCategory *model.Category, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string, info *fn.DynamicURL, collapse ...bool) {
 	var itemBuf strings.Builder
 	for _, bookmark := range *bookmarks {
-		templateURL := navigationHref(bookmark.URL, EnableEncryptedLink, info)
-		templateIcon := navigationIcon(bookmark.Icon, bookmark.URL, IconMode)
 		matched := false
 		if bookmark.Category != "" {
 			matched = bookmark.Category == category.ID
@@ -132,6 +130,8 @@ func renderBookmarksWithCategoriesForRequest(b *strings.Builder, bookmarks *[]mo
 		if !matched {
 			continue
 		}
+		templateURL := navigationHref(bookmark.URL, EnableEncryptedLink, info)
+		templateIcon := navigationIcon(bookmark.Icon, bookmark.URL, IconMode)
 		if OpenBookmarkNewTab {
 			itemBuf.WriteString(`<li><a target="_blank" rel="noopener" href="`)
 		} else {
