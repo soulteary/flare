@@ -136,7 +136,11 @@ func (snapshot *parsedBookmarks) prepareSearch(isApp bool) {
 		for index, item := range snapshot.value.Items {
 			_, known := categoryIDs[item.Category]
 			visible := isApp || item.Category == "" || len(categoryIDs) == 0 || known
-			snapshot.search = append(snapshot.search, searchEntry{index: index, name: strings.ToLower(item.Name), link: strings.ToLower(item.URL), description: strings.ToLower(item.Desc), dynamic: hasDynamicURL(item.URL), visible: visible})
+			description := ""
+			if isApp {
+				description = strings.ToLower(item.Desc)
+			}
+			snapshot.search = append(snapshot.search, searchEntry{index: index, name: strings.ToLower(item.Name), link: strings.ToLower(item.URL), description: description, dynamic: hasDynamicURL(item.URL), visible: visible})
 		}
 	})
 }

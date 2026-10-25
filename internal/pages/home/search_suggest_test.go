@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/fn"
 	"github.com/stretchr/testify/require"
@@ -18,12 +19,18 @@ func TestSuggestionsMatchExistingSearchAndVisibleModules(t *testing.T) {
 		{Name: "Needle orphan", URL: "https://orphan.example", Category: "missing"},
 		{Name: "Needle unsafe", URL: "javascript:alert(1)"},
 	}}
-	result := collectSearchSuggestions(opts, "NEEDLE", apps, bookmarks, nil)
+	t.Chdir(t.TempDir())
+	require.True(t, data.SaveFavoriteBookmarks(apps))
+	require.True(t, data.SaveNormalBookmarks(bookmarks))
+	result, err := collectSearchSuggestions(opts, "NEEDLE", nil)
+	require.NoError(t, err)
 	require.Len(t, result, 2)
 	require.True(t, result[0].NewTab)
 	require.False(t, result[1].NewTab)
 	opts.ShowApps = false
-	require.Len(t, collectSearchSuggestions(opts, "needle", apps, bookmarks, nil), 1)
+	result, err = collectSearchSuggestions(opts, "needle", nil)
+	require.NoError(t, err)
+	require.Len(t, result, 1)
 }
 
 func TestSuggestionsBoundedAndPreserveLinkSemantics(t *testing.T) {
@@ -33,7 +40,10 @@ func TestSuggestionsBoundedAndPreserveLinkSemantics(t *testing.T) {
 		apps.Items = append(apps.Items, model.Bookmark{Name: "Dynamic", URL: "{origin}/panel"})
 	}
 	info := fn.DynamicURL{Origin: "https://home.example"}
-	result := collectSearchSuggestions(opts, "home.example", apps, model.Bookmarks{}, &info)
+	t.Chdir(t.TempDir())
+	require.True(t, data.SaveFavoriteBookmarks(apps))
+	result, err := collectSearchSuggestions(opts, "home.example", &info)
+	require.NoError(t, err)
 	require.Len(t, result, 8)
 	require.True(t, strings.HasPrefix(result[0].URL, "/redir/url?go="))
 }

@@ -21,7 +21,6 @@ func TestParsedSnapshotsDoNotAliasReturnedModels(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	first.Title = "mutated"
 	first.Clock.Timezone = "Europe/Paris"
 	first.Homepage.DesktopColumns = "8"
 	first.Search.Engines[0].Name = "Mutated"
@@ -165,5 +164,46 @@ func TestIndexedSearchScopeOrderAndInvalidation(t *testing.T) {
 	}
 	if _, err = SearchNavigationMatches("needle", true, true, 8, nil, accept); err == nil {
 		t.Fatal("visible malformed apps silently ignored")
+	}
+}
+
+func TestNavigationIndexesFollowEditorImportAndDeletion(t *testing.T) {
+	prepareBookmarkHotPath(t)
+	if !SaveFavoriteBookmarks(model.Bookmarks{}) || !SaveNormalBookmarks(model.Bookmarks{Items: []model.Bookmark{{Name: "Old", URL: "https://old.example"}}}) {
+		t.Fatal("save")
+	}
+	assertTarget := func(want, absent string) {
+		t.Helper()
+		if !MatchNavigationTarget(want, nil) || MatchNavigationTarget(absent, nil) {
+			t.Fatalf("target index mismatch: want %s, absent %s", want, absent)
+		}
+		matches, err := SearchNavigationMatches("", false, true, 8, nil, nil)
+		if err != nil || len(matches) != 1 || matches[0].URL != want {
+			t.Fatal("search index mismatch", err, matches)
+		}
+	}
+	assertTarget("https://old.example", "https://editor.example")
+	document, err := EditorSnapshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	document.Bookmarks = []model.Bookmark{{Name: "Editor", URL: "https://editor.example"}}
+	if _, err = CommitEditorDocument(document); err != nil {
+		t.Fatal(err)
+	}
+	assertTarget("https://editor.example", "https://old.example")
+	_, version, err := BookmarkSnapshot("bookmarks")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = CommitBookmarkImport("bookmarks", version, model.Bookmarks{Items: []model.Bookmark{{Name: "Import", URL: "https://import.example"}}}); err != nil {
+		t.Fatal(err)
+	}
+	assertTarget("https://import.example", "https://editor.example")
+	if err = os.Remove("bookmarks.yml"); err != nil {
+		t.Fatal(err)
+	}
+	if MatchNavigationTarget("https://import.example", nil) || !MatchNavigationTarget("https://link.example.com", nil) {
+		t.Fatal("deleted file kept stale target index")
 	}
 }

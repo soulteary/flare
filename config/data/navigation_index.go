@@ -50,7 +50,7 @@ func SearchNavigationMatches(query string, showApps, showBookmarks bool, limit i
 		snapshot *parsedBookmarks
 		isApp    bool
 	}
-	var collections []searchCollection
+	collections := make([]searchCollection, 0, 2)
 	for _, collection := range []struct {
 		name           string
 		enabled, isApp bool

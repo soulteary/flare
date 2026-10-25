@@ -1,0 +1,21 @@
+goos: linux
+goarch: amd64
+pkg: github.com/soulteary/flare/config/data
+cpu: AMD EPYC 9V74 80-Core Processor                
+BenchmarkLoadFavoriteBookmarks/pwd-current-8         	  202549	      1181 ns/op	    1000 B/op	       4 allocs/op
+BenchmarkLoadFavoriteBookmarks/pwd-current-8         	  202662	      1141 ns/op	    1000 B/op	       4 allocs/op
+BenchmarkLoadFavoriteBookmarks/pwd-current-8         	  256639	       945.5 ns/op	    1000 B/op	       4 allocs/op
+BenchmarkLoadFavoriteBookmarks/pwd-stale-8           	  312471	       944.5 ns/op	    1000 B/op	       4 allocs/op
+BenchmarkLoadFavoriteBookmarks/pwd-stale-8           	  302840	       756.6 ns/op	    1000 B/op	       4 allocs/op
+BenchmarkLoadFavoriteBookmarks/pwd-stale-8           	  293076	       989.5 ns/op	    1000 B/op	       4 allocs/op
+BenchmarkNavigationSnapshotScale/1000-8              	    8265	     50608 ns/op	   90384 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/1000-8              	   10000	     36531 ns/op	   90384 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/1000-8              	    6914	     34606 ns/op	   90385 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/5000-8              	     696	    354801 ns/op	  442644 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/5000-8              	     763	    320551 ns/op	  442644 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/5000-8              	     612	    365129 ns/op	  442642 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/10000-8             	     520	   1149706 ns/op	  885011 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/10000-8             	     112	   2161278 ns/op	  885008 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/10000-8             	     466	    556395 ns/op	  885010 B/op	       5 allocs/op
+PASS
+ok  	github.com/soulteary/flare/config/data	9.665s
