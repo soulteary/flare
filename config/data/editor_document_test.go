@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/soulteary/flare/config/model"
@@ -216,4 +217,82 @@ func TestEditorDocumentNoopPreservesExactBytesAndRevision(t *testing.T) {
 	doc.Version = "old"
 	_, err = CommitEditorDocument(doc)
 	require.ErrorIs(t, err, ErrBookmarkConflict)
+}
+
+func TestEditorRecoveryDetectionDoesNotRestoreOrDeleteCopies(t *testing.T) {
+	t.Chdir(t.TempDir())
+	before, err := EditorSnapshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := filepath.Join(".flare-editor-recovery", "save-interrupted")
+	if err = os.MkdirAll(root, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"apps.yml", "bookmarks.yml"} {
+		b, readErr := os.ReadFile(name)
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+		if err = os.WriteFile(filepath.Join(root, name), b, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	doc, err := EditorSnapshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.Version != before.Version || len(doc.RecoveryPaths) != 1 || !strings.HasSuffix(doc.RecoveryPaths[0], "save-interrupted") {
+		t.Fatalf("unexpected recovery snapshot: %+v", doc)
+	}
+	if _, err = os.Stat(filepath.Join(root, "apps.yml")); err != nil {
+		t.Fatal("recovery copies were removed", err)
+	}
+	// A symlink must not be followed as a recovery directory.
+	if err = os.Symlink(t.TempDir(), filepath.Join(".flare-editor-recovery", "save-link")); err != nil {
+		t.Fatal(err)
+	}
+	paths, err := EditorRecoveryDirectories()
+	if err != nil || len(paths) != 1 {
+		t.Fatalf("unexpected recovery scan %v %v", paths, err)
+	}
+}
+
+func TestRecoveryCopiesPreventInitializationOfMissingLiveFiles(t *testing.T) {
+	t.Chdir(t.TempDir())
+	root := filepath.Join(".flare-editor-recovery", "save-crash")
+	require.NoError(t, os.MkdirAll(root, 0700))
+	_, err := EditorSnapshot()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "recovery copies exist")
+	_, err = os.Stat("apps.yml")
+	require.True(t, os.IsNotExist(err), "must not silently initialize replacement data")
+}
+
+func TestOrdinaryBookmarkLoadsCannotInitializeOverRecoveryCopies(t *testing.T) {
+	for _, collection := range bookmarkHotPathCollections() {
+		t.Run(collection.name, func(t *testing.T) {
+			prepareBookmarkHotPath(t)
+			require.NoError(t, os.MkdirAll(filepath.Join(".flare-editor-recovery", "save-interrupted"), 0700))
+			_, err := collection.load()
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "recovery copies exist")
+			_, err = os.Stat(collection.name + ".yml")
+			require.True(t, os.IsNotExist(err), "navigation must not create example data over recovery state")
+		})
+	}
+}
+
+func TestImportPreviewCannotInitializeOverRecoveryCopies(t *testing.T) {
+	for _, name := range []string{"apps", "bookmarks"} {
+		t.Run(name, func(t *testing.T) {
+			prepareBookmarkHotPath(t)
+			require.NoError(t, os.MkdirAll(filepath.Join(".flare-editor-recovery", "save-interrupted"), 0700))
+			_, _, err := BookmarkSnapshot(name)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "recovery copies exist")
+			_, err = os.Stat(name + ".yml")
+			require.True(t, os.IsNotExist(err), "import preview must not create replacement examples")
+		})
+	}
 }
