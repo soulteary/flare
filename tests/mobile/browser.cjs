@@ -72,6 +72,8 @@ const {spawn} = require('node:child_process');
    await input.fill(value); await input.press('Enter');
   }
   await edit('#container-bookmarks', 1, 0, '未保存的修改');
+  await edit('#container-bookmarks', 1, 3, 'home');
+  await edit('#container-bookmarks', 1, 4, '应保留的描述');
   await edit('#container-category', 0, 0, '重命名分类');
   assert.equal(await page.locator('#container-bookmarks .ht_master tbody tr').nth(1).locator('td').first().textContent(), '未保存的修改');
   assert.equal(await page.locator('#container-bookmarks .ht_master tbody tr').nth(1).locator('td').nth(2).textContent(), '重命名分类');
@@ -80,7 +82,7 @@ const {spawn} = require('node:child_process');
   await page.reload();
   assert.match(await page.locator('#container-bookmarks').textContent(), /未保存的修改/);
   const saved = await fs.readFile(path.join(dir, 'bookmarks.yml'), 'utf8');
-  assert.match(saved, /重命名分类/); assert.match(saved, /query=a&value=b#fragment/);
+  assert.match(saved, /重命名分类/); assert.match(saved, /应保留的描述/); assert.match(saved, /icon: home/); assert.match(saved, /query=a&value=b#fragment/);
   // Failure must preserve the current table and a subsequent retry must work.
   await edit('#container-bookmarks', 1, 0, '保存失败后仍保留');
   await page.route('**/editor', async route => {
@@ -116,6 +118,10 @@ const {spawn} = require('node:child_process');
   await page.locator('#container-bookmarks textarea.handsontableInput:visible').fill('空表新增书签');
   await page.locator('textarea.handsontableInput:visible').last().press('Enter');
   await edit('#container-bookmarks', 0, 1, 'https://example.com/new?x=1&y=2#z');
+  await page.locator('#container-bookmarks .ht_master tbody tr').first().locator('td').nth(2).tap();
+  await page.locator('#edit-bookmark').click();
+  const categorySelect = page.locator('#container-bookmarks select:visible');
+  await categorySelect.selectOption('空表新增分类'); await categorySelect.press('Enter');
   await page.locator('.update-data').first().click();
   await page.waitForFunction(() => document.getElementById('save-status').textContent === '全部数据已保存');
   await page.reload(); assert.match(await page.locator('#container-bookmarks').textContent(), /空表新增书签/);
