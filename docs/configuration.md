@@ -90,3 +90,31 @@ protocols remain editable in stored data but render as `#`; do not assume an
 arbitrary custom scheme is clickable. Icons accept bundled identifiers or
 absolute HTTP(S) image URLs. The administrator-controlled Footer intentionally
 supports HTML and must be treated as trusted site content.
+
+## Dynamic bookmark placeholders
+
+For a request to `http://nas.example:5005/bookmarks?search=docs`:
+
+| Placeholder | Value |
+| --- | --- |
+| `{host}` | `nas.example:5005` |
+| `{hostname}` | `nas.example` |
+| `{origin}` | `http://nas.example:5005` |
+| `{href}` | `http://nas.example:5005/bookmarks?search=docs` |
+| `{pathname}` | `/bookmarks` |
+| `{port}` | `5005` (or the scheme default when absent) |
+| `{protocol}` | `http:` |
+
+Use `{origin}/service` to follow the current authority, or explicit addresses when
+services have different hosts/ports. `{host}` retains IPv6 brackets; `{hostname}`
+is the unbracketed literal, so do not splice it into an IPv6 URL authority without
+brackets. These values come from the request Flare receives; a TLS-terminating
+HTTP backend still sees HTTP unless the server directly receives TLS. This is not
+a general trusted-proxy feature or a two-address network-switching configuration.
+Development encoded redirects carry validated relative source context so path
+placeholders continue to refer to the originating navigation page.
+
+Per-entry `private` values are preserved for data compatibility; they do not
+implement a per-entry access-control list. Use whole-site authentication for
+private navigation, and never rely on a stored flag, link encoding, tabs or hidden
+buttons to protect individual links on a public homepage.
