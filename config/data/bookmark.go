@@ -11,6 +11,13 @@ import (
 )
 
 func initBookmarks(filePath string, isFavorite bool) (result model.Bookmarks, err error) {
+	recoveries, recoveryErr := EditorRecoveryDirectories()
+	if recoveryErr != nil {
+		return result, recoveryErr
+	}
+	if len(recoveries) > 0 {
+		return result, fmt.Errorf("live bookmark file %s is missing while editor recovery copies exist; inspect %s before restoring files", filePath, recoveries[0])
+	}
 
 	const exampleName = "示例链接"
 	const exmapleLink = "https://link.example.com"

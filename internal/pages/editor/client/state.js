@@ -40,6 +40,8 @@
     }
     restore(removed) { if(removed)this.working[removed.collection].splice(removed.index,0,removed.item); }
   }
-  const api={Store,normalize,payload};
+  const maxDraftBytes=64*1024*1024;
+  function draftBlob(doc) {const blob=new Blob([JSON.stringify(doc)],{type:'application/json'});if(blob.size>maxDraftBytes)throw Error('草稿文件不能超过 64 MiB');return blob;}
+  const api={Store,normalize,payload,maxDraftBytes,draftBlob};
   if (typeof module==='object' && module.exports) module.exports=api; else root.FlareEditorState=api;
 })(typeof window==='undefined' ? globalThis : window);
