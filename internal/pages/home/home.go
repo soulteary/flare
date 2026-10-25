@@ -13,6 +13,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/clock"
 	"github.com/soulteary/flare/internal/fn"
 	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/pool"
@@ -101,7 +102,6 @@ func renderHelp(c *echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "config error")
 	}
-	now := time.Now()
 	configWeatherShow := true
 	var weatherData model.Weather
 	if !define.AppFlags.EnableOfflineMode {
@@ -129,9 +129,6 @@ func renderHelp(c *echo.Context) error {
 	m["Location"] = options.Location
 	m["WeatherData"] = weatherData
 	m["WeatherIcon"] = weatherip.GetSVGCodeByName(weatherData.ConditionCode)
-	m["HeroDate"] = now.Format(i18n.DateFormat(locale))
-	m["HeroTime"] = now.Format("15:04:05")
-	m["HeroDay"] = i18n.Weekday(locale, now.Weekday())
 	m["Greetings"] = i18n.T(locale, "page_help")
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
@@ -151,7 +148,7 @@ func renderHelp(c *echo.Context) error {
 	m["OptionShowBookmarks"] = false
 	m["OptionHideSettingsButton"] = options.HideSettingsButton
 	m["OptionHideHelpButton"] = options.HideHelpButton
-	return c.Render(http.StatusOK, "home.html", m)
+	return renderClockPage(c, m, options, false)
 }
 
 func pageSearch(c *echo.Context) error {
@@ -193,32 +190,6 @@ func updateWeatherData(location string) {
 			_CACHE_WEATHER_DATA.Location = location
 		}
 	}
-}
-
-func getGreeting(greeting, locale string) string {
-	words := strings.Split(greeting, ";")
-	count := len(words)
-	defaultWord := i18n.T(locale, "greetings_placeholder")
-	if count == 1 {
-		if len(words[0]) > 0 {
-			return words[0]
-		}
-		return defaultWord
-	}
-	hour, _, _ := time.Now().Clock()
-	if hour >= 5 && hour <= 10 && len(words[0]) > 0 {
-		return words[0]
-	}
-	if hour >= 11 && hour <= 13 && len(words[1]) > 0 {
-		return words[1]
-	}
-	if hour >= 14 && hour <= 18 && len(words[2]) > 0 {
-		return words[2]
-	}
-	if len(words) > 3 && len(words[3]) > 0 {
-		return words[3]
-	}
-	return defaultWord
 }
 
 func pageBookmark(c *echo.Context) error {
@@ -298,7 +269,6 @@ func render(c *echo.Context, filter string) error {
 		searchKeyword = i18n.Tf(locale, "search_result", filter)
 		hasKeyword = true
 	}
-	now := time.Now()
 	configWeatherShow := true
 	var weatherData model.Weather
 	if !define.AppFlags.EnableOfflineMode {
@@ -326,10 +296,6 @@ func render(c *echo.Context, filter string) error {
 	m["Location"] = options.Location
 	m["WeatherData"] = weatherData
 	m["WeatherIcon"] = weatherip.GetSVGCodeByName(weatherData.ConditionCode)
-	m["HeroDate"] = now.Format(i18n.DateFormat(locale))
-	m["HeroTime"] = now.Format("15:04:05")
-	m["HeroDay"] = i18n.Weekday(locale, now.Weekday())
-	m["Greetings"] = getGreeting(options.Greetings, locale)
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
@@ -350,5 +316,16 @@ func render(c *echo.Context, filter string) error {
 	m["OptionHideSettingsButton"] = options.HideSettingsButton
 	m["OptionHideHelpButton"] = options.HideHelpButton
 	m["BodyClassName"] = template.HTMLAttr(bodyClassName)
+	return renderClockPage(c, m, options, true)
+}
+
+func renderClockPage(c *echo.Context, m map[string]any, options model.Application, greeting bool) error {
+	if options.Locale == "" {
+		options.Locale = "zh"
+	}
+	resolved := clock.Populate(m, options, time.Now(), greeting)
+	if resolved.Enhance && !define.AppFlags.DisableCSP {
+		c.Response().Header().Set("Content-Security-Policy", clock.Policy())
+	}
 	return c.Render(http.StatusOK, "home.html", m)
 }

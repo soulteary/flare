@@ -2,6 +2,7 @@ package data
 
 import (
 	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/clock"
 )
 
 func GetThemeName() string {
@@ -70,11 +71,17 @@ func GetAllSettingsOptions() (model.Application, error) {
 }
 
 func UpdateAppearance(update model.Application) bool {
+	if update.Clock != nil && clock.Validate(*update.Clock) != nil {
+		return false
+	}
 	options, err := GetAllSettingsOptions()
 	if err != nil {
 		return false
 	}
 
+	if update.Clock != nil {
+		options.Clock = update.Clock
+	}
 	options.Title = update.Title
 	options.Footer = update.Footer
 	options.OpenAppNewTab = update.OpenAppNewTab

@@ -1,0 +1,8 @@
+Title: Clock container test
+ShowDateTime: true
+ShowWeather: false
+Locale: en
+Clock:
+  Dynamic: true
+  TimezoneMode: custom
+  Timezone: Asia/Kathmandu

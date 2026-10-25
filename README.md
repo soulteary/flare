@@ -106,6 +106,12 @@ overrides environment variables. A value of `false` still allows direct TLS
 requests to use `Secure`. Flare does not infer this policy from untrusted
 `X-Forwarded-Proto`, `Forwarded`, or similar request headers.
 
+## Date, time and time zones
+
+The optional live clock supports server, visitor-device and custom IANA time zones,
+with a static no-JavaScript fallback. Existing configurations keep their original
+static display. See [clock configuration and behavior / 日期时间配置说明](docs/clock.md).
+
 ## Directory
 
 ```bash

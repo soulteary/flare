@@ -84,5 +84,19 @@
   "weekday_wed": "星期三",
   "weekday_thu": "星期四",
   "weekday_fri": "星期五",
-  "weekday_sat": "星期六"
+  "weekday_sat": "星期六",
+  "clock_update": "时间更新方式",
+  "clock_static": "页面加载时",
+  "clock_dynamic": "实时更新",
+  "clock_seconds": "显示秒数",
+  "clock_timezone": "显示时区",
+  "clock_server": "跟随服务器",
+  "clock_browser": "跟随访问设备",
+  "clock_custom": "指定时区",
+  "clock_server_zone": "服务器时区",
+  "clock_zone_name": "IANA 时区名称",
+  "clock_preview": "当前时间预览",
+  "clock_preview_error": "无法预览，请使用有效的 IANA 时区；服务器 Local 时区请显式配置 TZ。",
+  "clock_help": "实时更新使用访问设备的系统时间，不提供网络校时。设备时区模式需要 JavaScript；禁用脚本时保留服务器生成的时间。预览在修改选项时更新。",
+  "clock_noscript": "设备时区需要 JavaScript，当前显示服务器生成的时间。"
 }
