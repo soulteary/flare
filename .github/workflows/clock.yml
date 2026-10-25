@@ -45,10 +45,18 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/mobile/browser.cjs
-      - name: Navigation list and form acceptance
+      - name: Navigation list, form and batch acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
+          EDITOR_SCREENSHOT_DIR: ${{ runner.temp }}/flare-editor-screenshots
         run: node tests/editor/browser.cjs
+      - name: Upload editor view screenshots
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: editor-view-screenshots
+          path: ${{ runner.temp }}/flare-editor-screenshots
+          if-no-files-found: ignore
       - name: Legacy bookmark compatibility
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock

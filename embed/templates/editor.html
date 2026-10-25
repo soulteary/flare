@@ -6,15 +6,18 @@
 <link rel="stylesheet" href="/assets/editor-ui/editor.css">
 <script defer src="/assets/editor-ui/state.js"></script>
 <script defer src="/assets/editor-ui/app.js"></script>
+<script defer src="/assets/editor-ui/batch.js"></script>
 </head>
 <body>
 <div class="shell">
 <header class="page-header"><div><a href="/" data-leave>← 返回首页</a><h1>管理导航 <small id="total-count"></small></h1></div>
-<details class="menu"><summary>更多</summary><nav><a href="/editor/transfer" data-leave>导入 / 导出</a><a href="/editor/batch" data-leave>批量编辑</a><a href="/help" data-leave>使用帮助</a></nav></details></header>
+<details class="menu"><summary>更多</summary><nav><a href="/editor/transfer" data-leave>导入 / 导出</a><button id="open-batch" type="button">批量编辑</button>
+<button id="restore-draft" type="button">恢复编辑草稿</button><input id="draft-file" type="file" accept="application/json,.json" hidden><a href="/help" data-leave>使用帮助</a></nav></details></header>
 <main id="workspace" aria-busy="true">
-<div class="toolbar"><label class="search-label"><span class="sr-only">搜索名称、地址和描述</span><input id="entry-search" type="search" placeholder="搜索名称、地址和描述" autocomplete="off"></label><label><span class="sr-only">所属位置</span><select id="location-filter"><option value="all">全部位置</option></select></label><button id="manage-categories">管理分类</button><button id="new-entry" class="primary">＋ 新增</button></div>
+<section id="list-view"><div class="toolbar"><label class="search-label"><span class="sr-only">搜索名称、地址和描述</span><input id="entry-search" type="search" placeholder="搜索名称、地址和描述" autocomplete="off"></label><label><span class="sr-only">所属位置</span><select id="location-filter"><option value="all">全部位置</option></select></label><button id="manage-categories">管理分类</button><button id="new-entry" class="primary">＋ 新增</button></div>
 <div class="list-heading"><p id="result-count" role="status">正在加载…</p><div id="undo-area" hidden><span>条目已移除</span> <button id="undo-delete" class="text-button">撤销</button></div></div>
-<div id="entry-list" role="list"></div>
+<div id="entry-list" role="list"></div></section>
+<section id="batch-view" hidden aria-labelledby="batch-title"><h2 id="batch-title">批量编辑</h2><p class="muted">粘贴或连续修改多行；更改仍需通过底部保存。应用与各分类内的顺序按行顺序保存。</p><div class="batch-toolbar"><button id="leave-batch">返回列表</button><button id="batch-add">新增行</button><button id="batch-edit" disabled>编辑单元格</button><button id="batch-delete" class="danger" disabled>删除选中行</button><button id="batch-up" disabled>上移</button><button id="batch-down" disabled>下移</button><button id="batch-categories">管理分类</button><button id="batch-reset">放弃本次表格修改</button></div><p id="batch-selection" class="muted" role="status"></p><div class="batch-scroll" tabindex="0" role="region" aria-label="批量编辑表格，可横向滚动"><div id="batch-table"></div></div></section>
 </main>
 </div>
 <footer class="savebar"><div><p id="save-status" role="status" aria-live="polite">正在加载数据…</p><div class="save-actions"><button id="export-draft" hidden>导出待保存数据</button><button id="reload-data" hidden>重新载入</button><button id="discard-changes" disabled>放弃更改</button><button id="save-changes" class="primary" disabled>保存更改</button></div></div></footer>

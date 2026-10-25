@@ -60,74 +60,11 @@ const {spawn} = require('node:child_process');
    await page.goto(base + '/settings/appearance');
    await fits('html'); await fits('#page-settings');
    assert.equal(await page.locator('.sidebar').evaluate(el => getComputedStyle(el).position), 'static');
-   await page.goto(base + '/editor/batch'); await fits('html');
+   await page.goto(base + '/editor'); await page.waitForFunction(()=>window.FlareEditorUI?.store); await fits('html');
   }
-  await page.setViewportSize({width: 390, height: 844});
-  await page.goto(base + '/editor/batch');
-  async function edit(container, row, col, value) {
-   const cell = page.locator(`${container} .ht_master tbody tr`).nth(row).locator('td').nth(col);
-   await cell.tap();
-   await page.locator(container === '#container-category' ? '#edit-category' : '#edit-bookmark').click();
-   const input = page.locator(`${container} textarea.handsontableInput:visible`);
-   await input.fill(value); await input.press('Enter');
-  }
-  await edit('#container-bookmarks', 1, 0, '未保存的修改');
-  await edit('#container-bookmarks', 1, 3, 'home');
-  await edit('#container-bookmarks', 1, 4, '应保留的描述');
-  await edit('#container-category', 0, 0, '重命名分类');
-  assert.equal(await page.locator('#container-bookmarks .ht_master tbody tr').nth(1).locator('td').first().textContent(), '未保存的修改');
-  assert.equal(await page.locator('#container-bookmarks .ht_master tbody tr').nth(1).locator('td').nth(2).textContent(), '重命名分类');
-  await page.locator('.update-data').first().click();
-  await page.waitForFunction(() => document.getElementById('save-status').textContent === '全部数据已保存');
-  await page.reload();
-  assert.match(await page.locator('#container-bookmarks').textContent(), /未保存的修改/);
-  const saved = await fs.readFile(path.join(dir, 'bookmarks.yml'), 'utf8');
-  assert.match(saved, /重命名分类/); assert.match(saved, /应保留的描述/); assert.match(saved, /icon: home/); assert.match(saved, /query=a&value=b#fragment/);
-  // Failure must preserve the current table and a subsequent retry must work.
-  await edit('#container-bookmarks', 1, 0, '保存失败后仍保留');
-  await page.route('**/editor/document', async route => {
-   if (route.request().method() === 'POST') return route.fulfill({status: 500, contentType: 'application/json', body: '{"saved":false,"error":"模拟保存失败"}'});
-   return route.continue();
-  });
-  await page.locator('.update-data').first().click();
-  await page.waitForFunction(() => document.getElementById('save-status').textContent.includes('模拟保存失败'));
-  assert.match(await page.locator('#container-bookmarks').textContent(), /保存失败后仍保留/);
-  await page.unroute('**/editor/document');
-  await page.locator('.update-data').first().click();
-  await page.waitForFunction(() => document.getElementById('save-status').textContent === '全部数据已保存');
-  // Delete every category. Associated bookmarks must become applications.
-  while (await page.locator('#container-category .ht_master tbody td').count()) {
-   await page.locator('#container-category .ht_master tbody tr').first().locator('td').first().tap();
-   page.once('dialog', dialog => dialog.accept()); await page.locator('#delete-category').click();
-  }
-  assert.equal(await page.locator('#container-category .ht_master tbody td').count(), 0);
-  assert.match(await page.locator('#container-bookmarks .ht_master tbody tr').first().textContent(), /Flare 应用/);
-  // Delete every bookmark, persist empty collections, then add from empty.
-  while (await page.locator('#container-bookmarks .ht_master tbody td').count()) {
-   await page.locator('#container-bookmarks .ht_master tbody tr').first().locator('td').first().tap();
-   page.once('dialog', dialog => dialog.accept()); await page.locator('#delete-bookmark').click();
-  }
-  await page.locator('.update-data').first().click();
-  await page.waitForFunction(() => document.getElementById('save-status').textContent === '全部数据已保存');
-  await page.reload();
-  assert.equal(await page.locator('#container-bookmarks .ht_master tbody td').count(), 0);
-  await page.locator('#add-category').click();
-  await page.locator('#container-category textarea.handsontableInput:visible').fill('空表新增分类');
-  await page.locator('textarea.handsontableInput:visible').last().press('Enter');
-  await page.locator('#add-bookmark').click();
-  await page.locator('#container-bookmarks textarea.handsontableInput:visible').fill('空表新增书签');
-  await page.locator('textarea.handsontableInput:visible').last().press('Enter');
-  await edit('#container-bookmarks', 0, 1, 'https://example.com/new?x=1&y=2#z');
-  await page.locator('#container-bookmarks .ht_master tbody tr').first().locator('td').nth(2).tap();
-  await page.locator('#edit-bookmark').click();
-  const categorySelect = page.locator('#container-bookmarks select:visible');
-  await categorySelect.selectOption({label:'空表新增分类'}); await categorySelect.press('Enter');
-  await page.locator('.update-data').first().click();
-  await page.waitForFunction(() => document.getElementById('save-status').textContent === '全部数据已保存');
-  await page.reload(); assert.match(await page.locator('#container-bookmarks').textContent(), /空表新增书签/);
   if (process.env.MOBILE_SCREENSHOT_DIR) {
    await fs.mkdir(process.env.MOBILE_SCREENSHOT_DIR, {recursive:true});
-   for (const [name, url] of [['editor','/editor/batch'],['settings','/settings/appearance'],['home','/']]) {
+   for (const [name, url] of [['editor','/editor'],['settings','/settings/appearance'],['home','/']]) {
     await page.goto(base + url); await page.screenshot({path: path.join(process.env.MOBILE_SCREENSHOT_DIR, name + '.png'), fullPage:true});
    }
   }
@@ -135,11 +72,11 @@ const {spawn} = require('node:child_process');
   for (const width of [1024, 1440, 1920]) {
    await desktop.setViewportSize({width, height:1080}); await desktop.goto(base);
    assert.equal(await desktop.locator('#search[autofocus]').count(), 1);
-   await desktop.goto(base + '/editor/batch');
+   await desktop.goto(base + '/editor');
    const size = await desktop.locator('html').evaluate(el => ({s:el.scrollWidth,w:el.clientWidth}));
    assert.ok(size.s <= size.w + 1);
   }
   assert.deepEqual(errors, []);
-  console.log('PASS: 6 mobile widths, enlarged text, settings, editor CRUD, empty data, category rename, save failure/retry and 3 desktop widths');
+  console.log('PASS: 6 mobile widths, enlarged text, settings, default editor layout and 3 desktop widths; list/form/batch CRUD is covered by tests/editor/browser.cjs');
  } finally { if (browser) await browser.close(); child.kill(); await fs.rm(dir, {recursive:true,force:true}); }
 })().catch(error => {console.error(error); process.exitCode=1;});
