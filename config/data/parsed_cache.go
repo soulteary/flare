@@ -43,6 +43,10 @@ func sameCachedBytes(a, b []byte) bool { return len(a) == len(b) && (len(a) == 0
 func cloneApplication(value model.Application) model.Application {
 	if value.Clock != nil {
 		copy := *value.Clock
+		if copy.Seconds != nil {
+			seconds := *copy.Seconds
+			copy.Seconds = &seconds
+		}
 		value.Clock = &copy
 	}
 	if value.Homepage != nil {

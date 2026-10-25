@@ -13,7 +13,7 @@ func TestParsedSnapshotsDoNotAliasReturnedModels(t *testing.T) {
 	prepareBookmarkHotPath(t)
 	invalidateFileCache("config")
 	defer invalidateFileCache("config")
-	options := model.Application{Title: "original", Clock: &model.ClockOptions{Timezone: "UTC"}, Homepage: &model.HomepageOptions{DesktopColumns: "4"}, Search: &model.SearchOptions{Engines: []model.SearchEngine{{ID: "engine", Name: "Original"}}}}
+	options := model.Application{Title: "original", Clock: &model.ClockOptions{Timezone: "UTC", Seconds: new(true)}, Homepage: &model.HomepageOptions{DesktopColumns: "4"}, Search: &model.SearchOptions{Engines: []model.SearchEngine{{ID: "engine", Name: "Original"}}}}
 	if !saveAppConfigToYamlFile("config", options) {
 		t.Fatal("save config")
 	}
@@ -22,6 +22,7 @@ func TestParsedSnapshotsDoNotAliasReturnedModels(t *testing.T) {
 		t.Fatal(err)
 	}
 	first.Clock.Timezone = "Europe/Paris"
+	*first.Clock.Seconds = false
 	first.Homepage.DesktopColumns = "8"
 	first.Search.Engines[0].Name = "Mutated"
 	first.Search.Engines = append(first.Search.Engines, model.SearchEngine{ID: "extra"})
@@ -29,7 +30,7 @@ func TestParsedSnapshotsDoNotAliasReturnedModels(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if second.Title != "original" || second.Clock.Timezone != "UTC" || second.Homepage.DesktopColumns != "4" || len(second.Search.Engines) != 1 || second.Search.Engines[0].Name != "Original" {
+	if second.Title != "original" || second.Clock.Timezone != "UTC" || second.Clock.Seconds == nil || !*second.Clock.Seconds || second.Homepage.DesktopColumns != "4" || len(second.Search.Engines) != 1 || second.Search.Engines[0].Name != "Original" {
 		t.Fatalf("returned config aliased cache: %+v", second)
 	}
 	original := model.Bookmarks{Categories: []model.Category{{ID: "cat", Name: "Original"}}, Items: []model.Bookmark{{Name: "Original", URL: "https://original.example", Category: "cat"}}}
