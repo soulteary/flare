@@ -61,6 +61,10 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/editor/legacy.browser.cjs
+      - name: Compact mobile layout acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/mobile/layout.browser.cjs
       - name: Minimal scratch-container timezone acceptance
         shell: bash
         run: |
