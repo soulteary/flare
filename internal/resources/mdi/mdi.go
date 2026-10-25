@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v5"
-	"github.com/soulteary/memfs"
+	memfs "github.com/soulteary/memfs-kit"
 
 	"github.com/soulteary/flare/config/define"
 )
@@ -28,8 +28,8 @@ const _ASSETS_WEB_URI = "/" + _ASSETS_BASE_DIR
 var _CACHE_MDI_ICON_EXIST map[string]bool
 var _CACHE_MDI_ICON_DATA map[string]string
 
-// iconCacheMu protects cache initialization and generation as well as reads of
-// memfs files, whose contents are published separately from their directory entry.
+// iconCacheMu keeps cache initialization and icon generation consistent with
+// concurrent reads of the cache maps and generated files.
 var iconCacheMu sync.RWMutex
 
 //go:embed mdi-cheat-sheets
@@ -63,9 +63,9 @@ func RegisterRouting(e *echo.Echo) {
 	}
 }
 
-// iconFileHandler serves generated SVGs without requiring memfs.File to seek.
-// Each request gets an independent reader so HTTP ranges and repeated requests
-// work correctly; only direct SVG filenames inside the icon subtree are accepted.
+// iconFileHandler serves generated SVGs with a content-derived ETag and an
+// independent reader per request so HTTP ranges and repeated requests stay
+// consistent. Only direct SVG filenames inside the icon subtree are accepted.
 func iconFileHandler(icons fs.FS) echo.HandlerFunc {
 	return func(c *echo.Context) error {
 		name := c.Param("name")
