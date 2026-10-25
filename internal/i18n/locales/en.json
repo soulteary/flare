@@ -113,7 +113,7 @@
   "app_descriptions": "Application descriptions",
   "show": "Show",
   "hide": "Hide",
-  "readability_help": "These preferences affect the homepage only. Device text scaling still applies.",
+  "readability_help": "Navigation text and application descriptions apply to the homepage, bookmarks and applications pages. Greeting size applies to the homepage. Device text scaling still applies.",
   "category_navigation": "Bookmark category navigation",
   "category_navigation_all": "All groups",
   "category_navigation_tabs": "Category links",
