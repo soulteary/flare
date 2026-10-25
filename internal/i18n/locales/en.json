@@ -7,6 +7,7 @@
   "page_apps": "Applications",
   "page_bookmarks": "Bookmarks",
   "page_help": "Help",
+  "search_match_count": "%s local matches",
   "search_placeholder": "Search",
   "search_tip_back": ">> TIPS: Click here or press Enter again to return home",
   "search_label": "Too many bookmarks? Try searching for what you need :)",

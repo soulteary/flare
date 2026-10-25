@@ -12,6 +12,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/clock"
 	"github.com/soulteary/flare/internal/i18n"
+	"github.com/soulteary/flare/internal/searchui"
 )
 
 //go:embed html
@@ -66,7 +67,7 @@ func NewRenderer() (fiber.Views, error) {
 	if err != nil {
 		return nil, err
 	}
-	t, err = t.Parse(clock.Templates())
+	t, err = t.Parse(clock.Templates() + searchui.Templates())
 	if err != nil {
 		return nil, err
 	}
