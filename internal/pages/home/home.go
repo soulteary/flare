@@ -20,7 +20,6 @@ import (
 	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/pool"
 	searchcore "github.com/soulteary/flare/internal/search"
-	"github.com/soulteary/flare/internal/settings/weather"
 	weatherip "github.com/soulteary/funny-china-weather"
 )
 
@@ -129,7 +128,7 @@ func renderHelp(c fiber.Ctx) error {
 	m["SettingPages"] = define.SettingPages
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
-	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && configWeatherShow
+	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && configWeatherShow && weatherData.Location != ""
 	m["Location"] = options.Location
 	m["WeatherData"] = weatherData
 	m["WeatherIcon"] = weatherip.GetSVGCodeByName(weatherData.ConditionCode)
@@ -186,33 +185,6 @@ func pageSearch(c fiber.Ctx) error {
 		return c.SendStatus(http.StatusSeeOther)
 	}
 	return renderSearch(c, result.Query, result.Query, result.Target, configMessage)
-}
-
-var _CACHE_WEATHER_DATA model.Weather
-
-func GetWeatherData() (result model.Weather) {
-	location, weatherShow := data.GetLocationAndWeatherShow()
-	if location != "" && weatherShow {
-		updateWeatherData(location)
-	}
-	return _CACHE_WEATHER_DATA
-}
-
-func updateWeatherData(location string) {
-	timestamp := time.Now().Unix()
-	if (_CACHE_WEATHER_DATA.Expires < timestamp) || (location != _CACHE_WEATHER_DATA.Location) {
-		data, _, err := weather.GetWeatherInfo(location)
-		if err == nil {
-			_CACHE_WEATHER_DATA.ConditionCode = data.ConditionCode
-			_CACHE_WEATHER_DATA.ConditionText = data.ConditionText
-			_CACHE_WEATHER_DATA.Degree = data.Degree
-			_CACHE_WEATHER_DATA.ExternalLastUpdate = data.ExternalLastUpdate
-			_CACHE_WEATHER_DATA.Humidity = data.Humidity
-			_CACHE_WEATHER_DATA.IsDay = data.IsDay
-			_CACHE_WEATHER_DATA.Expires = data.Expires
-			_CACHE_WEATHER_DATA.Location = location
-		}
-	}
 }
 
 func pageBookmark(c fiber.Ctx) error {
@@ -318,7 +290,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["SettingPages"] = define.SettingPages
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
-	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && configWeatherShow
+	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && configWeatherShow && weatherData.Location != ""
 	m["Location"] = options.Location
 	m["WeatherData"] = weatherData
 	m["WeatherIcon"] = weatherip.GetSVGCodeByName(weatherData.ConditionCode)
