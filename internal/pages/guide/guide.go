@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/static"
+	"github.com/soulteary/flare/internal/resources/assets"
 	memfs "github.com/soulteary/memfs-kit"
 
 	"github.com/soulteary/flare/config/define"
@@ -34,7 +34,7 @@ func Init() error {
 
 func RegisterRouting(e *fiber.App) {
 	if introAssets, err := fs.Sub(IntroAssets, "guide-assets"); err == nil {
-		e.Use(_ASSETS_WEB_URI, static.New("", static.Config{FS: introAssets}))
+		e.Use(_ASSETS_WEB_URI, assets.StaticFS(introAssets, _ASSETS_WEB_URI))
 	}
 	e.Get(define.RegularPages.Guide.Path, render)
 }
