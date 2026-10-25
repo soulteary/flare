@@ -31,6 +31,7 @@ feature does not publish an image or move `latest`.
 - [Performance decisions](performance.md), [measurement methods](baseline-metrics.md)
 - [Physical mobile acceptance](mobile-device-acceptance.md)
 - [Next release readiness](release-readiness.md)
+- [Historical feedback disposition](issue-triage.md)
 
 The server-side offline switch does not prevent the browser from opening external
 bookmarks or fetching configured remote images. Encoded links are not encryption,
