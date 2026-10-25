@@ -103,7 +103,7 @@ def semantic_preflight(info, body_path):
 
 
 def describe_semantics(rows):
-    """Keep literal mismatches distinct from verified semantic equivalence."""
+    """Keep literal mismatches distinct from matching selected response fields."""
     result = {}
     for scenario in comparison.SCENARIOS:
         variants, projections, securities = {}, {}, {}
@@ -127,7 +127,7 @@ def describe_semantics(rows):
         result[scenario] = {'equal': equal, 'literal_equal': literal_equal, 'content_equal': content_equal,
                             'link_rel_equal': security_equal, 'only_safe_rel_additions': safe_security_delta,
                             'responses': variants, 'link_rel_observations': securities,
-                            'interpretation': 'HTTP, document text, navigation, forms and ordered asset bytes match' if equal else
+                            'interpretation': 'Selected HTTP/text/navigation/control fields and ordered asset bytes match' if equal else
                             'Meaningful response differs: inspect recorded bodies/assets before interpreting a speedup'}
     return result
 
@@ -144,12 +144,12 @@ def render_report(data, destination):
              f"{meta['parameters']['resource_warmup']} warmup; concurrency {meta['parameters']['concurrency']}; "
              f"pool {meta['parameters']['keepalive_connections']}; {meta['parameters']['rounds']} alternating rounds.", '',
              '## Response validation', '',
-             '| Scene | Literal normalized response | DOM / asset content / HTTP behavior | Before / after bytes |',
+             '| Scene | Literal normalized response | Selected DOM / asset / HTTP fields | Before / after bytes |',
              '| --- | --- | --- | --- |']
     for scenario, value in data['semantics'].items():
         sizes = ['/'.join(str(row['bytes']) for row in value['responses'][label]) for label in ('before', 'after')]
         literal = 'equal' if value['literal_equal'] else '**DIFFERENT — retained**'
-        semantic = 'verified equivalent' if value['equal'] else '**DIFFERENT — inspect raw bodies/assets**'
+        semantic = 'captured fields match' if value['equal'] else '**DIFFERENT — inspect raw bodies/assets**'
         lines.append(f"| {scenario} | {literal} | {semantic} | {' / '.join(sizes)} |")
     columns = [('server_cpu_ns_per_request', 1000, 'CPU µs/request'),
                ('server_bytes_per_request', 1, 'allocated B/request'),
@@ -177,8 +177,8 @@ def render_report(data, destination):
               '- Timed load covers HTML/redirect routes only. Icons/favicon are fetched for semantic preflight before warmup; browser cache/request mixes and full-page latency are not measured. Asset Cache-Control differences are retained and can change real-browser revalidation traffic.',
               '- Both binaries use offline mode, disabled login/request logs, and default fixtures. This does not measure production authentication, weather, browser CPU, ARM hardware, or large bookmark datasets.',
               '- Raw response bodies, literal fingerprints, parsed semantic projections, icon response statuses/content hashes, binary hashes, build metadata, heap profiles and per-round observations/orders are retained. Only clock-time text is normalized.',
-              '- Semantic equivalence requires matching HTTP status/type/CSP/Location, document text (excluding script/style), navigation destinations/targets/order, form controls, and ordered icon/favicon content hashes. Icon URL/cache-key changes remain recorded. Rel-token changes permit only additions of noopener/noreferrer; removals or other changes fail validation.',
-              '- The parsed-DOM projection does not establish computed CSS visibility or layout equivalence; browser acceptance is separate.',
+              '- Selected-field checks compare HTTP status/type/CSP/Location, whitespace-collapsed document text (excluding script/style), navigation destinations/targets/order, selected form/control fields, and ordered icon/favicon content hashes. Icon URL/cache-key changes remain recorded. The anchor-rel guard permits only noopener/noreferrer additions; it does not cover form rel.',
+              '- This is not complete DOM, form, script, computed-style, layout or browser-behavior equivalence. Form rel and several control attributes are omitted from the live projection; raw bodies retain them for offline review. Browser Origin/referrer acceptance is separate.',
               '- A response mismatch remains a mismatch. Explain it before interpreting resource differences; do not claim a like-for-like improvement if functionality was removed.', '']
     destination.write_text('\n'.join(lines))
 
