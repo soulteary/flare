@@ -112,6 +112,7 @@ def main():
     env = dict(os.environ, GOMAXPROCS=str(args.gomaxprocs))
     parameters = {name: getattr(args, name) for name in ('rounds', 'resource_requests', 'resource_warmup', 'concurrency', 'keepalive_connections', 'gomaxprocs')}
     data = {'metadata': {'generated_at': datetime.now(ZoneInfo('Asia/Shanghai')).isoformat(timespec='seconds'),
+            'local_timezone': str(datetime.now().astimezone().tzinfo),
             'host': platform.platform(), 'machine': platform.machine(), 'logical_cpus': os.cpu_count(),
             'affinity_cpus': len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else None,
             'go_version': comparison.run(['go', 'version'], env).strip(),

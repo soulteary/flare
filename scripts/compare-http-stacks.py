@@ -184,9 +184,14 @@ def isolated(binary, client, scenario, args, env, logfile):
                 with OPENER.open(info['control'] + '/debug/pprof/heap?gc=1', timeout=30) as response:
                     profile_path.write_bytes(response.read())
                 raw_profile = run(['go', 'tool', 'pprof', '-raw', binary, profile_path], env)
+                expected_samples = 'alloc_objects/count alloc_space/bytes inuse_objects/count inuse_space/bytes'
+                if expected_samples not in raw_profile:
+                    raise RuntimeError('Unexpected heap profile sample order; refuse to mislabel live heap')
                 samples = re.findall(r'^\s*(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+):', raw_profile, re.M)
                 if not samples:
                     raise RuntimeError('No allocation samples in forced-GC heap profile')
+                period = re.search(r'^Period:\s*(\d+)', raw_profile, re.M)
+                result['heap_profile_sampling_period_bytes'] = int(period.group(1)) if period else None
                 result['server_live_heap_sampled_bytes'] = sum(int(sample[3]) for sample in samples)
                 result['server_live_objects_sampled'] = sum(int(sample[2]) for sample in samples)
                 result['heap_profile_sha256'] = hashlib.sha256(profile_path.read_bytes()).hexdigest()
