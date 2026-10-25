@@ -30,9 +30,10 @@ func IsSafeNavigationURL(raw string) bool {
 // IsSafeImageURL only permits absolute HTTP(S) image resources. Other icon
 // values are treated as bundled icon identifiers, never arbitrary HTML or data.
 func IsSafeImageURL(raw string) bool {
-	if !IsSafeNavigationURL(raw) {
-		return false
-	}
-	u, err := url.Parse(raw)
-	return err == nil && (strings.EqualFold(u.Scheme, "http") || strings.EqualFold(u.Scheme, "https"))
+	// Reject built-in icon names and non-web protocols before URL parsing. The
+	// shared navigation validator then parses an actual image URL exactly once.
+	httpPrefix, httpsPrefix := "http://", "https://"
+	web := len(raw) >= len(httpPrefix) && strings.EqualFold(raw[:len(httpPrefix)], httpPrefix)
+	web = web || len(raw) >= len(httpsPrefix) && strings.EqualFold(raw[:len(httpsPrefix)], httpsPrefix)
+	return web && IsSafeNavigationURL(raw)
 }

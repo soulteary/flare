@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"embed"
-	"errors"
 	"fmt"
-	"io/fs"
-	"mime"
+	"io"
 	"net/http"
-	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -23,15 +21,25 @@ import (
 //go:embed favicon.ico
 var Favicon embed.FS
 
+var faviconVersionOnce sync.Once
+var faviconVersionURL string
+
+// FaviconURL bypasses older releases' long-lived unversioned browser entries.
+func FaviconURL() string {
+	faviconVersionOnce.Do(func() {
+		data, err := Favicon.ReadFile("favicon.ico")
+		if err != nil {
+			faviconVersionURL = "/favicon.ico"
+			return
+		}
+		faviconVersionURL = fmt.Sprintf("/favicon.ico?v=%x", sha256.Sum256(data))
+	})
+	return faviconVersionURL
+}
+
 func RegisterRouting(e *fiber.App) {
 	e.Use(optimizeResourceCacheTime())
-	handler := func(c fiber.Ctx) error {
-		data, err := fs.ReadFile(Favicon, "favicon.ico")
-		if err != nil {
-			return err
-		}
-		return ServeContent(c, "favicon.ico", "image/x-icon", data)
-	}
+	handler := StaticFS(Favicon, "/")
 	e.Get("/favicon.ico", handler)
 	e.Head("/favicon.ico", handler)
 	if define.AppFlags.DebugMode {
@@ -43,45 +51,15 @@ func RegisterRouting(e *fiber.App) {
 // files. Only static assets use this adapter; application routes use Fiber
 // directly, including routing, middleware, and template rendering.
 func ServeContent(c fiber.Ctx, name, contentType string, data []byte) error {
-	return adaptor.HTTPHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("ETag", fmt.Sprintf(`"%x"`, sha256.Sum256(data)))
-		w.Header().Set("Content-Type", contentType)
-		http.ServeContent(w, r, name, time.Time{}, bytes.NewReader(data))
-	})(c)
+	return serveReader(c, name, contentType, fmt.Sprintf(`"%x"`, sha256.Sum256(data)), bytes.NewReader(data))
 }
 
-// StaticFS serves embedded files with content-derived validators. Embedded files
-// have no meaningful modification time, so timestamp/size validators can mistake
-// a changed, same-size script for an unchanged resource after an upgrade.
-func StaticFS(files fs.FS, prefix string) fiber.Handler {
-	return func(c fiber.Ctx) error {
-		if c.Method() != http.MethodGet && c.Method() != http.MethodHead {
-			return c.Next()
-		}
-		name := strings.TrimPrefix(strings.TrimPrefix(c.Path(), prefix), "/")
-		if !fs.ValidPath(name) || strings.Contains(name, "\\") {
-			return c.Next()
-		}
-		info, err := fs.Stat(files, name)
-		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				return c.Next()
-			}
-			return err
-		}
-		if !info.Mode().IsRegular() {
-			return c.Next()
-		}
-		data, err := fs.ReadFile(files, name)
-		if err != nil {
-			return err
-		}
-		contentType := mime.TypeByExtension(path.Ext(name))
-		if contentType == "" {
-			contentType = http.DetectContentType(data)
-		}
-		return ServeContent(c, path.Base(name), contentType, data)
-	}
+func serveReader(c fiber.Ctx, name, contentType, etag string, reader io.ReadSeeker) error {
+	return adaptor.HTTPHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("ETag", etag)
+		w.Header().Set("Content-Type", contentType)
+		http.ServeContent(w, r, name, time.Time{}, reader)
+	})(c)
 }
 
 // optimizeResourceCacheTime applies policy after Fiber has buffered the response,

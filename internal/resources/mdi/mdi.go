@@ -1,6 +1,7 @@
 package mdi
 
 import (
+	"crypto/sha256"
 	"embed"
 	"errors"
 	"fmt"
@@ -23,8 +24,17 @@ var MemFs *memfs.FS
 const _ASSETS_BASE_DIR = "assets/mdi"
 const _ASSETS_WEB_URI = "/" + _ASSETS_BASE_DIR
 
-var _CACHE_MDI_ICON_EXIST map[string]bool
-var _CACHE_MDI_ICON_DATA map[string]string
+type iconCacheEntry struct {
+	markup string
+	color  string
+}
+
+type iconCacheKey struct {
+	name, theme string
+	inline      bool
+}
+
+var iconMarkupCache map[iconCacheKey]iconCacheEntry
 
 // iconCacheMu keeps cache initialization and icon generation consistent with
 // concurrent reads of the cache maps and generated files.
@@ -42,8 +52,7 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-	_CACHE_MDI_ICON_EXIST = make(map[string]bool)
-	_CACHE_MDI_ICON_DATA = make(map[string]string)
+	iconMarkupCache = make(map[iconCacheKey]iconCacheEntry)
 	return nil
 }
 
@@ -69,6 +78,15 @@ func iconFileHandler(icons fs.FS) fiber.Handler {
 		name := c.Params("name")
 		if !fs.ValidPath(name) || strings.ContainsAny(name, `/\`) || !strings.HasSuffix(name, ".svg") {
 			return fiber.ErrNotFound
+		}
+
+		// Older pages may still reference the original mixed-case spelling. Keep
+		// those URLs valid while storing only one canonical generated icon.
+		if separator := strings.LastIndexByte(name, '-'); separator >= 0 {
+			suffix := name[separator+1:]
+			if canonical := strings.ToLower(suffix); canonical != suffix {
+				name = name[:separator+1] + canonical
+			}
 		}
 
 		iconCacheMu.RLock()
@@ -101,40 +119,52 @@ func GetIconSVGByName(name string) string {
 }
 
 func GetIconByName(name string) string {
+	name = strings.ToLower(name)
 	if name == "" {
 		return _EMPTY_ICON
 	}
-	icon := iconMap[strings.ToLower(name)]
+	icon := iconMap[name]
 	if icon == "" {
 		return _EMPTY_ICON
 	}
+	inline := define.AppFlags.EnableMinimumRequest
+	theme, color := "", ""
+	key := iconCacheKey{name: name, inline: inline}
+	if !inline {
+		theme, color = define.ThemeSnapshot()
+		key.theme = theme
+	}
+	iconCacheMu.RLock()
+	cached, exists := iconMarkupCache[key]
+	iconCacheMu.RUnlock()
+	if exists && (inline || cached.color == color) {
+		return cached.markup
+	}
+
 	iconCacheMu.Lock()
 	defer iconCacheMu.Unlock()
-
-	content := ""
-	if define.AppFlags.EnableMinimumRequest {
-		if !_CACHE_MDI_ICON_EXIST[name] {
-			content = `<svg viewBox="0 0 24 24"><path d="` + icon + `" style="fill: var(--color-primary);"></path></svg>`
-			_CACHE_MDI_ICON_DATA[name] = content
-			_CACHE_MDI_ICON_EXIST[name] = true
-		}
-		return _CACHE_MDI_ICON_DATA[name]
+	// A concurrent first use may have generated the same normalized icon.
+	if cached, exists = iconMarkupCache[key]; exists && (inline || cached.color == color) {
+		return cached.markup
 	}
-	theme, color := define.ThemeSnapshot()
-	svgFile := filepath.ToSlash(filepath.Join(_ASSETS_BASE_DIR, (theme + "-" + name + ".svg")))
-	if !_CACHE_MDI_ICON_EXIST[theme+"-"+name] {
-		content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="` + icon + `" style="fill:` + color + `;"></path></svg>`
-		err := MemFs.WriteFile(svgFile, []byte(content), 0755)
-		if err != nil {
+	var markup string
+	if inline {
+		markup = `<svg viewBox="0 0 24 24"><path d="` + icon + `" style="fill: var(--color-primary);"></path></svg>`
+	} else {
+		svgFile := filepath.ToSlash(filepath.Join(_ASSETS_BASE_DIR, theme+"-"+name+".svg"))
+		content := `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="` + icon + `" style="fill:` + color + `;"></path></svg>`
+		if err := MemFs.WriteFile(svgFile, []byte(content), 0755); err != nil {
 			log.Println("缓存内置图标出错:", err)
 			return _EMPTY_ICON
 		}
-		_, err = fs.ReadFile(MemFs, svgFile)
-		if err != nil {
-			log.Println("读取内置图标缓存出错:", err)
-			return _EMPTY_ICON
-		}
-		_CACHE_MDI_ICON_EXIST[theme+"-"+name] = true
+		// Versions bypass previously cached fixed URLs after an icon-library or
+		// palette update. The query is not an access-control or immutable guarantee.
+		version := fmt.Sprintf("%x", sha256.Sum256([]byte(content)))
+		markup = `<img src="/` + svgFile + `?v=` + version + `" width="68" height="68" alt="">`
 	}
-	return `<img src="/` + svgFile + `" width="68" height="68" alt="">`
+	// Do not retain a borrowed request string from a caller using Fiber's
+	// mutable request mode. Canonical hot lookups need no additional copy.
+	key.name = strings.Clone(key.name)
+	iconMarkupCache[key] = iconCacheEntry{markup: markup, color: color}
+	return markup
 }
