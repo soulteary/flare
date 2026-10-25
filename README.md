@@ -27,6 +27,25 @@ TBD
 - Browse automatically generated program documentation:
     - `godoc --http=localhost:8080`
 
+### Container images
+
+Published stable versions are available from both registries:
+
+```sh
+docker pull soulteary/flare:0.6.1
+docker pull ghcr.io/soulteary/flare:0.6.1
+```
+
+Both images support `linux/amd64`, `linux/arm64`, `linux/arm/v7`, and
+`linux/arm/v6`. The `latest` tag follows the current stable release. GHCR copies
+the verified Docker Hub image by digest, so both registries contain the same
+multi-platform image rather than separate builds. Existing containers still
+need to be recreated after pulling an update.
+
+See [docker-flare](https://github.com/soulteary/docker-flare) for deployment
+examples and [container publishing](.github/CONTAINER-RELEASES.md) for the release
+workflow, verification, and historical backfills.
+
 ### Login configuration
 
 Login is disabled by default. To enable it, set `FLARE_DISABLE_LOGIN=false`.

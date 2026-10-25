@@ -65,6 +65,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  publish_ghcr:
+    name: Publish the released images to GHCR
+    needs: build
+    if: github.repository == 'soulteary/flare' && startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/publish-ghcr.yml
+    with:
+      version: ${{ github.ref_name }}
+      expected_commit: ${{ github.sha }}
+      update_latest: true
+
   report_release:
     name: Dispatch verified release reports
     needs: build
