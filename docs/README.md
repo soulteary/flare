@@ -14,7 +14,7 @@ feature does not publish an image or move `latest`.
 | Import/export bookmarks | [Bookmark transfer](bookmark-transfer.md) | Since 0.6.2 |
 | Configure clocks and zones | [Clock](clock.md) | Since 0.6.3 |
 | Control access logs | [Logging](logging.md) | Since 0.6.4 |
-| Use list/forms/batch editor | [Editor](editor.md), [icons](editor-icons.md) | Development, after 0.6.4 |
+| Use list/forms/batch editor | [Editor](editor.md), [screenshots](screenshots/README.md), [icons](editor-icons.md) | Development, after 0.6.4 |
 | Configure external/hybrid search | [Search](search.md), [suggestions](search-hybrid.md) | Development, after 0.6.4 |
 | Choose category tabs/collapse | [Category navigation](category-navigation.md) | Development, after 0.6.4 |
 | Change mobile layout/text size | [Mobile layout](mobile-layout.md) | Development options after 0.6.4 |
