@@ -55,7 +55,10 @@ func TestSearchSettingsActionsAndLegacyPreservation(t *testing.T) {
 	original := &model.SearchOptions{DefaultTarget: "bing", Engines: searchcore.Presets()}
 	require.NoError(t, data.UpdateSearchOptions(true, true, original))
 	submit := func(values url.Values) string {
+		token, cookie := searchSettingsToken(t, app)
+		values.Set("csrf-token", token)
 		req := httptest.NewRequest(http.MethodPost, "/settings/search", strings.NewReader(values.Encode()))
+		req.AddCookie(cookie)
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		response, err := app.Test(req)
 		require.NoError(t, err)

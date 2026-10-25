@@ -104,13 +104,20 @@ func pageSearchSuggestions(c fiber.Ctx) error {
 	if query == "" {
 		return c.JSON([]searchSuggestion{})
 	}
-	apps, err := data.LoadFavoriteBookmarks()
-	if err != nil {
-		return c.SendStatus(http.StatusInternalServerError)
+	// A hidden module is outside the search scope. Its missing or malformed
+	// backing file must not break suggestions from a visible module.
+	var apps, bookmarks model.Bookmarks
+	if options.ShowApps {
+		apps, err = data.LoadFavoriteBookmarks()
+		if err != nil {
+			return c.SendStatus(http.StatusInternalServerError)
+		}
 	}
-	bookmarks, err := data.LoadNormalBookmarks()
-	if err != nil {
-		return c.SendStatus(http.StatusInternalServerError)
+	if options.ShowBookmarks {
+		bookmarks, err = data.LoadNormalBookmarks()
+		if err != nil {
+			return c.SendStatus(http.StatusInternalServerError)
+		}
 	}
 	// Suggestions are for the homepage, not the endpoint's own pathname. Use request-
 	// scoped dynamic URL metadata so simultaneous clients cannot alter one another.

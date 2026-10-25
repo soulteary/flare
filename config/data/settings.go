@@ -2,11 +2,17 @@ package data
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/clock"
 	"github.com/soulteary/flare/internal/search"
 )
+
+// settingsUpdateMu serializes read-modify-write operations within this process.
+// Atomic file replacement alone prevents truncation, not lost updates between pages.
+// This is not a cross-process lock or a merge strategy for concurrent edits of one section.
+var settingsUpdateMu sync.Mutex
 
 func GetThemeName() string {
 	opts, err := GetAllSettingsOptions()
@@ -17,6 +23,8 @@ func GetThemeName() string {
 }
 
 func UpdateThemeName(theme string) bool {
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
 	options, err := GetAllSettingsOptions()
 	if err != nil {
 		return false
@@ -34,6 +42,8 @@ func GetLocationAndWeatherShow() (string, bool) {
 }
 
 func UpdateWeatherAndLocation(enable bool, location string) bool {
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
 	options, err := GetAllSettingsOptions()
 	if err != nil {
 		return false
@@ -44,6 +54,8 @@ func UpdateWeatherAndLocation(enable bool, location string) bool {
 }
 
 func UpdateLocation(location string) bool {
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
 	options, err := GetAllSettingsOptions()
 	if err != nil {
 		return false
@@ -53,6 +65,8 @@ func UpdateLocation(location string) bool {
 }
 
 func UpdateSearch(showSearchComponent bool, disabledSearchAutoFocus bool) bool {
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
 	options, err := GetAllSettingsOptions()
 	if err != nil {
 		return false
@@ -64,6 +78,8 @@ func UpdateSearch(showSearchComponent bool, disabledSearchAutoFocus bool) bool {
 
 // UpdateSearchOptions validates and atomically saves search settings without changing other settings.
 func UpdateSearchOptions(showSearchComponent, disabledSearchAutoFocus bool, update *model.SearchOptions) error {
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
 	var next *model.SearchOptions
 	if update != nil {
 		normalized := search.Normalize(update)
@@ -97,6 +113,8 @@ func GetAllSettingsOptions() (model.Application, error) {
 }
 
 func UpdateAppearance(update model.Application) bool {
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
 	if update.Clock != nil && clock.Validate(*update.Clock) != nil {
 		return false
 	}

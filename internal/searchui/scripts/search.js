@@ -8,7 +8,7 @@
   var target = document.getElementById('search-target');
   var keywords = {};
   try { keywords = JSON.parse(form.dataset.keywords || '{}'); } catch (_) {}
-  var timer, controller, generation = 0, active = -1, links = [], composing = false;
+  var timer, controller, generation = 0, active = -1, links = [], composing = false, pointingAtSuggestion = false;
   input.setAttribute('role', 'combobox');
   input.setAttribute('aria-autocomplete', 'list');
   input.setAttribute('aria-controls', list.id);
@@ -66,6 +66,23 @@
       });
     }, 180);
   }
+  function dismiss() { cancel(); clear(); }
+  if (target) target.addEventListener('change', dismiss);
+  list.addEventListener('pointerdown', function () { pointingAtSuggestion = true; });
+  document.addEventListener('pointerup', function () {
+    setTimeout(function () { pointingAtSuggestion = false; }, 0);
+  });
+  document.addEventListener('pointercancel', function () { pointingAtSuggestion = false; dismiss(); });
+  list.addEventListener('click', function () {
+    // Let the real anchor's default click/tap navigation finish before removing it.
+    setTimeout(dismiss, 0);
+  });
+  form.addEventListener('focusout', function (event) {
+    cancel();
+    if (!pointingAtSuggestion && !list.contains(event.relatedTarget)) clear();
+  });
+  input.addEventListener('focus', refresh);
+  window.addEventListener('blur', dismiss);
   input.addEventListener('compositionstart', function () { composing = true; cancel(); clear(); });
   input.addEventListener('compositionend', function () { composing = false; refresh(); });
   input.addEventListener('input', refresh);

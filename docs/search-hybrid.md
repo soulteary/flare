@@ -32,3 +32,9 @@ Chinese IME confirmation, delayed/out-of-order responses, CSP enforcement with a
 without the clock, and the script-free fallback. Server tests cover matching,
 limits, authentication, disabled mode, no-store responses and production/debug
 script hashes.
+
+Changing the selected engine clears the active local match. Moving focus out of
+the search input cancels pending suggestions; stale responses cannot reopen a
+dismissed list. Mouse and touch activation still use the result's native anchor.
+Known enabled commands such as `!local`, `!ex` and `!s` bypass suggestions and
+override the selected target. Unknown commands remain ordinary searchable text.

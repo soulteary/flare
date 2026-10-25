@@ -16,8 +16,9 @@ import (
 )
 
 func RegisterRouting(e *fiber.App) {
-	e.Get(define.SettingPages.Search.Path, auth.AuthRequired, pageSearch)
-	e.Post(define.SettingPages.Search.Path, auth.AuthRequired, updateSearchOptions)
+	guard := newSearchSecurity()
+	e.Get(define.SettingPages.Search.Path, auth.AuthRequired, guard.attach, pageSearch)
+	e.Post(define.SettingPages.Search.Path, auth.AuthRequired, guard.attach, guard.protect, updateSearchOptions)
 }
 
 func updateSearchOptions(c fiber.Ctx) error {
@@ -28,8 +29,8 @@ func updateSearchOptions(c fiber.Ctx) error {
 	options.ShowSearchComponent = c.FormValue("show-search-component") == "1"
 	options.DisabledSearchAutoFocus = c.FormValue("disabled-search-auto-focus") == "1"
 	if c.FormValue("engine-count") == "" {
-		if saveErr := data.UpdateSearchOptions(options.ShowSearchComponent, options.DisabledSearchAutoFocus, options.Search); saveErr != nil {
-			return renderSettings(c, options, "Unable to save search settings: "+saveErr.Error(), false)
+		if !data.UpdateSearch(options.ShowSearchComponent, options.DisabledSearchAutoFocus) {
+			return renderSettings(c, options, "Unable to save search settings", false)
 		}
 		return renderSettings(c, options, "", true)
 	}
@@ -139,6 +140,9 @@ func renderSettings(c fiber.Ctx, options model.Application, message string, save
 	}
 	m := pool.GetTemplateMap()
 	defer pool.PutTemplateMap(m)
+	if guard, ok := c.Locals(searchSecurityKey{}).(*searchSecurity); ok {
+		m["SearchCSRFToken"] = guard.formToken(c)
+	}
 	m["Locale"] = locale
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
