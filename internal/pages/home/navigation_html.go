@@ -2,7 +2,6 @@ package home
 
 import (
 	"html"
-	"net/url"
 	"strings"
 
 	"github.com/soulteary/flare/internal/fn"
@@ -15,11 +14,9 @@ func navigationHref(raw string, encoded bool, requestInfo ...*fn.DynamicURL) str
 	if !fn.IsSafeNavigationURL(raw) {
 		return "#"
 	}
-	parsed, err := url.Parse(raw)
-	if err != nil {
-		return "#"
-	}
-	if encoded || strings.EqualFold(parsed.Scheme, "chrome-extension") {
+	const extensionScheme = "chrome-extension:"
+	extension := len(raw) >= len(extensionScheme) && strings.EqualFold(raw[:len(extensionScheme)], extensionScheme)
+	if encoded || extension {
 		return fn.EncodedNavigationURL(raw, firstRequestInfo(requestInfo))
 	}
 	return raw
