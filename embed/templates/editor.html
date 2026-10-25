@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/assets/editor/handsontable.full.min.css">
     <script src="/assets/editor/handsontable.full.min.js"></script>
     <script src="/assets/editor/zh-CN.min.js"></script>
+    <script src="/assets/editor-ui/state.js"></script>
     <style>
         body {
             --color-background: #1a1a1a;
@@ -87,13 +88,14 @@
     <script type="text/html" id="data-categories">{{.DataCategories}}</script>
     <script type="text/html" id="data-bookmarks">{{.DataBookmarks}}</script>
     <script>
-    (() => {
+    (async () => {
         const APP = '[Flare 应用]';
-        const categories = JSON.parse(document.getElementById('data-categories').textContent) || [];
+        const loaded = await fetch('/editor/document', {cache: 'no-store'});
+        if (!loaded.ok || !(loaded.headers.get('content-type') || '').includes('application/json')) { document.getElementById('save-status').textContent = '无法读取数据，请重新登录或检查配置后刷新。'; return; }
+        const store = new FlareEditorState.Store(await loaded.json());
+        const categories = store.working.categories;
         const categoryMap = Object.fromEntries(categories.map(item => [item.ID, item.Name]));
-        const bookmarks = (JSON.parse(document.getElementById('data-bookmarks').textContent) || []).map(item => ({
-            ...item, Category: item.Category === '_FLARE_FIXED_CATEGORY' ? APP : (categoryMap[item.Category] || APP)
-        }));
+        const bookmarks = [...store.working.apps.map(item => ({...item, Category: APP})), ...store.working.bookmarks.map(item => ({...item, Category: categoryMap[item.Category] || '[缺失分类：' + item.Category + ']'}))];
         let dirty = false, saving = false, tableCategories, tableBookmarks;
         const selected = {category: [], bookmark: []};
         const status = document.getElementById('save-status');
@@ -121,7 +123,7 @@
             return [{data: 'Name'}, {data: 'URL'}, {data: 'Category', editor: 'select', selectOptions: [APP, ...categoryNames()], allowInvalid: false}, {data: 'Icon'}, {data: 'Desc'}];
         }
         tableCategories = new Handsontable(document.getElementById('container-category'), {
-            ...common, data: categories, dataSchema: {Name: ''}, colHeaders: ['分类名称'], columns: [{data: 'Name'}], colWidths: [240],
+            ...common, data: categories, dataSchema: {ID: '', Name: ''}, colHeaders: ['分类名称'], columns: [{data: 'Name'}], colWidths: [240],
             afterSelectionEnd(r1, c1, r2) { selection('category', r1, c1, r2); },
             afterChange(changes, source) {
                 changed(changes, source);
@@ -153,6 +155,7 @@
             finishEditing();
             const row = table.countRows();
             table.alter('insert_row', row, 1);
+            if (table === tableCategories) table.getSourceDataAtRow(table.toPhysicalRow(row)).ID = store.categoryID();
             table.selectCell(row, 0);
             const editor = table.getActiveEditor();
             if (editor) { editor.beginEditing(); editor.focus(); }
@@ -216,13 +219,21 @@
             tableCategories.updateSettings({readOnly: true, contextMenu: false, manualRowMove: false}); tableBookmarks.updateSettings({readOnly: true, contextMenu: false, manualRowMove: false});
             status.textContent = '正在保存…';
             try {
-                const options = {bom: false, columnDelimiter: ',', columnHeaders: false, exportHiddenColumns: true, exportHiddenRows: true, rowDelimiter: '\r\n', rowHeaders: true};
-                const body = new URLSearchParams({categories: tableCategories.getPlugin('exportFile').exportAsString('csv', options), bookmarks: tableBookmarks.getPlugin('exportFile').exportAsString('csv', options)});
-                const response = await fetch('/editor', {method: 'POST', headers: {'Accept': 'application/json'}, body});
+                const categoryRows = Array.from({length: tableCategories.countRows()}, (_, r) => ({ID: (tableCategories.getSourceDataAtRow(tableCategories.toPhysicalRow(r)).ID ||= store.categoryID()), Name: tableCategories.getDataAtRowProp(r, 'Name')}));
+                const nameToID = Object.fromEntries(categoryRows.map(c => [c.Name, c.ID]));
+                const apps = [], normal = [];
+                for (let r = 0; r < tableBookmarks.countRows(); r++) {
+                    const item = {...tableBookmarks.getSourceDataAtRow(tableBookmarks.toPhysicalRow(r))};
+                    delete item._key;
+                    if (item.Category === APP || !item.Category) { item.Category = ''; apps.push(item); }
+                    else { item.Category = nameToID[item.Category] || item.Category; normal.push(item); }
+                }
+                store.working = {...store.working, categories: categoryRows, apps, bookmarks: normal};
+                const response = await fetch('/editor/document', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Flare-Editor': '1'}, body: JSON.stringify(store.toJSON()), signal: AbortSignal.timeout(30000)});
                 if (response.redirected || !(response.headers.get('content-type') || '').includes('application/json')) throw new Error('登录可能已过期，请在新窗口登录后重试；当前编辑内容已保留。');
                 const result = await response.json();
                 if (!response.ok || !result.saved) throw new Error(result.error || '保存失败，请重试并检查服务端日志。');
-                dirty = false; status.textContent = '全部数据已保存';
+                store.accept(result.document); dirty = false; status.textContent = '全部数据已保存';
             } catch (error) { status.textContent = error.message + ' 未清除当前编辑内容。'; }
             finally {
                 saving = false;
@@ -235,7 +246,7 @@
         document.getElementById('back-home').onclick = () => leave('/');
         document.getElementById('transfer-link').onclick = event => { event.preventDefault(); leave('/editor/transfer'); };
         window.addEventListener('beforeunload', event => { if (dirty || saving) { event.preventDefault(); event.returnValue = ''; } });
-    })();
+    })().catch(error => { document.getElementById('save-status').textContent = '加载失败：' + error.message; });
     </script>
 </body>
 </html>

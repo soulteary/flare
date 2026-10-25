@@ -85,14 +85,14 @@ const {spawn} = require('node:child_process');
   assert.match(saved, /重命名分类/); assert.match(saved, /应保留的描述/); assert.match(saved, /icon: home/); assert.match(saved, /query=a&value=b#fragment/);
   // Failure must preserve the current table and a subsequent retry must work.
   await edit('#container-bookmarks', 1, 0, '保存失败后仍保留');
-  await page.route('**/editor', async route => {
+  await page.route('**/editor/document', async route => {
    if (route.request().method() === 'POST') return route.fulfill({status: 500, contentType: 'application/json', body: '{"saved":false,"error":"模拟保存失败"}'});
    return route.continue();
   });
   await page.locator('.update-data').first().click();
   await page.waitForFunction(() => document.getElementById('save-status').textContent.includes('模拟保存失败'));
   assert.match(await page.locator('#container-bookmarks').textContent(), /保存失败后仍保留/);
-  await page.unroute('**/editor');
+  await page.unroute('**/editor/document');
   await page.locator('.update-data').first().click();
   await page.waitForFunction(() => document.getElementById('save-status').textContent === '全部数据已保存');
   // Delete every category. Associated bookmarks must become applications.

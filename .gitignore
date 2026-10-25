@@ -40,3 +40,5 @@ RELEASE_*
 
 # Browser acceptance dependencies
 tests/clock/node_modules/
+
+.flare-editor-recovery/

@@ -35,6 +35,8 @@ func Init() error {
 
 func RegisterRouting(e *fiber.App) {
 	registerTransfers(e)
+	registerEditorClient(e)
+	registerEditorDocument(e)
 	if introAssets, err := fs.Sub(editorAssets, "editor-assets"); err == nil {
 		e.Use(_ASSETS_WEB_URI, static.New("", static.Config{FS: introAssets}))
 	}
@@ -42,21 +44,9 @@ func RegisterRouting(e *fiber.App) {
 	e.Post(define.RegularPages.Editor.Path, auth.AuthRequired, updateData)
 }
 
+// Old CSV pages have no revision token and cannot safely overwrite a document.
 func updateData(c fiber.Ctx) error {
-	var body struct {
-		Categories string `form:"categories"`
-		Bookmarks  string `form:"bookmarks"`
-	}
-	if err := c.Bind().Body(&body); err != nil {
-		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
-	}
-	if !data.UpdateBookmarksFromEditor(body.Categories, body.Bookmarks) {
-		return c.Status(http.StatusInternalServerError).JSON(map[string]any{"saved": false, "error": "保存失败，请检查数据格式、目录权限和服务端日志。"})
-	}
-	if c.Get("Accept") == "application/json" {
-		return c.Status(http.StatusOK).JSON(map[string]bool{"saved": true})
-	}
-	return render(c)
+	return c.Status(http.StatusConflict).JSON(map[string]any{"saved": false, "error": "编辑器已升级，请先保留当前内容，再刷新页面后重新编辑。"})
 }
 
 func render(c fiber.Ctx) error {

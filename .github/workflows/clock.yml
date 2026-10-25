@@ -2,7 +2,7 @@ name: Clock acceptance
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feat/editor-state, feat/editor-list]
   push:
     branches: [main]
 
@@ -35,6 +35,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Clock logic and lifecycle regressions
         run: node --test tests/clock/clock.test.cjs
+      - name: Editor state regressions
+        run: node --test tests/editor/state.test.cjs
       - name: Production HTTP and browser acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
