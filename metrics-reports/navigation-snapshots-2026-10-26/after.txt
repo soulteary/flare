@@ -1,0 +1,33 @@
+goos: linux
+goarch: amd64
+pkg: github.com/soulteary/flare/config/data
+cpu: AMD EPYC 9V74 80-Core Processor                
+BenchmarkNavigationSnapshotScale/1000-8 	   10000	     27770 ns/op	   90385 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/1000-8 	    8211	     32448 ns/op	   90385 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/1000-8 	   10000	     26435 ns/op	   90384 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/5000-8 	     676	    296035 ns/op	  442645 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/5000-8 	     810	    387114 ns/op	  442643 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/5000-8 	     936	    417276 ns/op	  442644 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/10000-8         	     337	    897679 ns/op	  885012 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/10000-8         	     469	    837841 ns/op	  885011 B/op	       5 allocs/op
+BenchmarkNavigationSnapshotScale/10000-8         	     423	    653524 ns/op	  885010 B/op	       5 allocs/op
+BenchmarkNavigationTargetIndexScale/1000-8       	  198776	      1191 ns/op	     472 B/op	       6 allocs/op
+BenchmarkNavigationTargetIndexScale/1000-8       	  185437	      1193 ns/op	     472 B/op	       6 allocs/op
+BenchmarkNavigationTargetIndexScale/1000-8       	  215299	      1161 ns/op	     472 B/op	       6 allocs/op
+BenchmarkNavigationTargetIndexScale/5000-8       	  167678	      1357 ns/op	     472 B/op	       6 allocs/op
+BenchmarkNavigationTargetIndexScale/5000-8       	  181744	      1256 ns/op	     472 B/op	       6 allocs/op
+BenchmarkNavigationTargetIndexScale/5000-8       	  192429	      1289 ns/op	     472 B/op	       6 allocs/op
+BenchmarkNavigationTargetIndexScale/10000-8      	  211562	      1124 ns/op	     472 B/op	       6 allocs/op
+BenchmarkNavigationTargetIndexScale/10000-8      	  137392	      3314 ns/op	     472 B/op	       6 allocs/op
+BenchmarkNavigationTargetIndexScale/10000-8      	  116989	      3206 ns/op	     472 B/op	       6 allocs/op
+BenchmarkNavigationSearchIndexScale/1000-8       	    9723	     25698 ns/op	    1280 B/op	       5 allocs/op
+BenchmarkNavigationSearchIndexScale/1000-8       	    9459	     26108 ns/op	    1280 B/op	       5 allocs/op
+BenchmarkNavigationSearchIndexScale/1000-8       	   10000	     22179 ns/op	    1280 B/op	       5 allocs/op
+BenchmarkNavigationSearchIndexScale/5000-8       	    2653	     87380 ns/op	    1280 B/op	       5 allocs/op
+BenchmarkNavigationSearchIndexScale/5000-8       	    2636	     94262 ns/op	    1280 B/op	       5 allocs/op
+BenchmarkNavigationSearchIndexScale/5000-8       	    2758	     97852 ns/op	    1280 B/op	       5 allocs/op
+BenchmarkNavigationSearchIndexScale/10000-8      	    1426	    206123 ns/op	    1280 B/op	       5 allocs/op
+BenchmarkNavigationSearchIndexScale/10000-8      	    1377	    182709 ns/op	    1280 B/op	       5 allocs/op
+BenchmarkNavigationSearchIndexScale/10000-8      	    1395	    183086 ns/op	    1280 B/op	       5 allocs/op
+PASS
+ok  	github.com/soulteary/flare/config/data	14.915s
