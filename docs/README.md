@@ -32,6 +32,7 @@ feature does not publish an image or move `latest`.
 - [Navigation cache and invalidation](navigation-cache.md) (since 0.6.5)
 - [Performance decisions and current observation index](performance.md), [measurement methods](baseline-metrics.md)
 - [Physical mobile acceptance](mobile-device-acceptance.md)
+- [0.6.5 artifact verification and limitations](release-0.6.5-verification.md)
 - [Release preparation checklist and limitations](release-readiness.md)
 - [Historical feedback disposition](issue-triage.md)
 

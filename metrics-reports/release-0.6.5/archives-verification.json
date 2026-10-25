@@ -1,0 +1,92 @@
+{
+  "ok": true,
+  "version": "0.6.5",
+  "commit": "a2ed02e0085df283fd1a6a685b97fad3b6377b78",
+  "archives": [
+    {
+      "archive": "flare_0.6.5_darwin_amd64.tar.gz",
+      "sha256": "4a1daece619f851ee2727b5f6e1dde2c7dad518d3b00b9cc1f6f055e0675b199",
+      "files": [
+        "LICENSE",
+        "README.md",
+        "flare"
+      ],
+      "binary": "/tmp/flare-065-release-assets/darwin_amd64/flare",
+      "file": "/tmp/flare-065-release-assets/darwin_amd64/flare: Mach-O 64-bit x86_64 executable, flags:<|DYLDLINK|PIE>",
+      "metadata_version_commit_verified": true
+    },
+    {
+      "archive": "flare_0.6.5_darwin_arm64.tar.gz",
+      "sha256": "6f12c9dae60ebb8beaea1dbb635316a65ede5591d511d9f6d16b1313d13c48a7",
+      "files": [
+        "LICENSE",
+        "README.md",
+        "flare"
+      ],
+      "binary": "/tmp/flare-065-release-assets/darwin_arm64/flare",
+      "file": "/tmp/flare-065-release-assets/darwin_arm64/flare: Mach-O 64-bit arm64 executable, flags:<|DYLDLINK|PIE>",
+      "metadata_version_commit_verified": true
+    },
+    {
+      "archive": "flare_0.6.5_linux_386.tar.gz",
+      "sha256": "6c0deacfa458f65bda8181d820c31053b5c0933098ecad271f752457bde2e843",
+      "files": [
+        "LICENSE",
+        "README.md",
+        "flare"
+      ],
+      "binary": "/tmp/flare-065-release-assets/linux_386/flare",
+      "file": "/tmp/flare-065-release-assets/linux_386/flare: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, Go BuildID=-yKWjLGcFfAIif5xZw05/_HB0lqlENugjiqcsjiVt/9Hd_kgbd3C8RSJ8mo5eF/MyvO_TOHAjvcipDxhyLm, BuildID[sha1]=6307a81f3cc1eeecc3460081bd9e93486701fc8c, stripped",
+      "metadata_version_commit_verified": true
+    },
+    {
+      "archive": "flare_0.6.5_linux_amd64.tar.gz",
+      "sha256": "2165a4d67dd5f77ce9508458a073041992c72fec3202cb0466f9f5291addba28",
+      "files": [
+        "LICENSE",
+        "README.md",
+        "flare"
+      ],
+      "binary": "/tmp/flare-065-release-assets/linux_amd64/flare",
+      "file": "/tmp/flare-065-release-assets/linux_amd64/flare: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, Go BuildID=AYM83YtyHRRRD2eljL9C/2pLSar4dSegMBsP7FNGW/bmCxL2ICw-yq46fy9G9y/Xc1Yl3khG9Yf08x45yVG, BuildID[sha1]=4c183cf7558161c1396360798d3c2fe53493a32a, stripped",
+      "metadata_version_commit_verified": true
+    },
+    {
+      "archive": "flare_0.6.5_linux_arm64.tar.gz",
+      "sha256": "c665115a970fb0e3a822d3417e713679870b269e0e5cb4f515f8c10cc5aeaa2d",
+      "files": [
+        "LICENSE",
+        "README.md",
+        "flare"
+      ],
+      "binary": "/tmp/flare-065-release-assets/linux_arm64/flare",
+      "file": "/tmp/flare-065-release-assets/linux_arm64/flare: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), statically linked, Go BuildID=KPmBmGpLaZpL2THkiOk8/mIbBc6zBEHhNLfut6lCm/9pVHDkrA_efy355g9v-n/7pVVxVST4ul5HZCXwBZQ, BuildID[sha1]=4e1f5d9aa6143e4609fc7ec88f7c0ff6ae439a64, stripped",
+      "metadata_version_commit_verified": true
+    },
+    {
+      "archive": "flare_0.6.5_linux_armv6.tar.gz",
+      "sha256": "9e5f2dcd765e0fc815dc7573d084c962cc6c6aed60e3cc09cb7ed9e2149d949a",
+      "files": [
+        "LICENSE",
+        "README.md",
+        "flare"
+      ],
+      "binary": "/tmp/flare-065-release-assets/linux_armv6/flare",
+      "file": "/tmp/flare-065-release-assets/linux_armv6/flare: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, Go BuildID=J-bYzNschOH2Ss7P6-L1/j-zXQHpv7uWvY_OGJN_X/tT45Ty7OF6PufFtER4dL/vC1e3vLQ7drepmu6JdwE, BuildID[sha1]=35108e3ecc5d109051592e5144527f4e4421f131, stripped",
+      "metadata_version_commit_verified": true
+    },
+    {
+      "archive": "flare_0.6.5_linux_armv7.tar.gz",
+      "sha256": "fad5772226a48cc75132a30be82a68ee2fb20513e01844f7eecb6da731c6e364",
+      "files": [
+        "LICENSE",
+        "README.md",
+        "flare"
+      ],
+      "binary": "/tmp/flare-065-release-assets/linux_armv7/flare",
+      "file": "/tmp/flare-065-release-assets/linux_armv7/flare: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, Go BuildID=sX-EB14sC7HHvBI193eo/HWIr8BpBh3NDV0EJghxH/pQf3elsf_uh-vIzjxU0A/MpaQHD5wEJJP03H4ZZxq, BuildID[sha1]=028d8eb6c582d57ebdfbe66f100677c81a9d4362, stripped",
+      "metadata_version_commit_verified": true
+    }
+  ],
+  "cross_platform_execution": "Only linux/amd64 executed; other binaries inspected, not executed."
+}

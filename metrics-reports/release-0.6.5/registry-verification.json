@@ -1,0 +1,114 @@
+{
+  "commit": "a2ed02e0085df283fd1a6a685b97fad3b6377b78",
+  "digest": "sha256:44948e8c1c3d4c4743cd1db907993feec89362391f69ea87ed9d75a0710b60bf",
+  "ok": true,
+  "repositories": [
+    {
+      "anonymous": true,
+      "digest": "sha256:44948e8c1c3d4c4743cd1db907993feec89362391f69ea87ed9d75a0710b60bf",
+      "images": [
+        {
+          "image_digest": "sha256:297a2d7eec1f55d9875941e35c6eb2fc638c1db97a0fa34cbbe5adbc488b0cfa",
+          "labels": {
+            "org.opencontainers.image.revision": "a2ed02e0085df283fd1a6a685b97fad3b6377b78",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.version": "0.6.5"
+          },
+          "platform": "linux/amd64"
+        },
+        {
+          "image_digest": "sha256:dd3e21269c3dce8d84a4a105792d994d42e45c4620e8e79606ba26b38b71d9d9",
+          "labels": {
+            "org.opencontainers.image.revision": "a2ed02e0085df283fd1a6a685b97fad3b6377b78",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.version": "0.6.5"
+          },
+          "platform": "linux/arm64"
+        },
+        {
+          "image_digest": "sha256:d609a7288cce43a61764e542e1b1eda41bf6e4220f75d5e33bfbc497d88570a2",
+          "labels": {
+            "org.opencontainers.image.revision": "a2ed02e0085df283fd1a6a685b97fad3b6377b78",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.version": "0.6.5"
+          },
+          "platform": "linux/arm/v6"
+        },
+        {
+          "image_digest": "sha256:cfd61809c3d0ceea81f0a17e4b2f34f31cccdb009ae0f6c8e1639049337280df",
+          "labels": {
+            "org.opencontainers.image.revision": "a2ed02e0085df283fd1a6a685b97fad3b6377b78",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.version": "0.6.5"
+          },
+          "platform": "linux/arm/v7"
+        }
+      ],
+      "media_type": "application/vnd.docker.distribution.manifest.list.v2+json",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm/v6",
+        "linux/arm/v7",
+        "linux/arm64"
+      ],
+      "repository": "docker.io/soulteary/flare"
+    },
+    {
+      "anonymous": true,
+      "digest": "sha256:44948e8c1c3d4c4743cd1db907993feec89362391f69ea87ed9d75a0710b60bf",
+      "images": [
+        {
+          "image_digest": "sha256:297a2d7eec1f55d9875941e35c6eb2fc638c1db97a0fa34cbbe5adbc488b0cfa",
+          "labels": {
+            "org.opencontainers.image.revision": "a2ed02e0085df283fd1a6a685b97fad3b6377b78",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.version": "0.6.5"
+          },
+          "platform": "linux/amd64"
+        },
+        {
+          "image_digest": "sha256:dd3e21269c3dce8d84a4a105792d994d42e45c4620e8e79606ba26b38b71d9d9",
+          "labels": {
+            "org.opencontainers.image.revision": "a2ed02e0085df283fd1a6a685b97fad3b6377b78",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.version": "0.6.5"
+          },
+          "platform": "linux/arm64"
+        },
+        {
+          "image_digest": "sha256:d609a7288cce43a61764e542e1b1eda41bf6e4220f75d5e33bfbc497d88570a2",
+          "labels": {
+            "org.opencontainers.image.revision": "a2ed02e0085df283fd1a6a685b97fad3b6377b78",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.version": "0.6.5"
+          },
+          "platform": "linux/arm/v6"
+        },
+        {
+          "image_digest": "sha256:cfd61809c3d0ceea81f0a17e4b2f34f31cccdb009ae0f6c8e1639049337280df",
+          "labels": {
+            "org.opencontainers.image.revision": "a2ed02e0085df283fd1a6a685b97fad3b6377b78",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.version": "0.6.5"
+          },
+          "platform": "linux/arm/v7"
+        }
+      ],
+      "media_type": "application/vnd.docker.distribution.manifest.list.v2+json",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm/v6",
+        "linux/arm/v7",
+        "linux/arm64"
+      ],
+      "repository": "ghcr.io/soulteary/flare"
+    }
+  ],
+  "tags": {
+    "docker.io/soulteary/flare:0.6.5": "sha256:44948e8c1c3d4c4743cd1db907993feec89362391f69ea87ed9d75a0710b60bf",
+    "docker.io/soulteary/flare:latest": "sha256:44948e8c1c3d4c4743cd1db907993feec89362391f69ea87ed9d75a0710b60bf",
+    "ghcr.io/soulteary/flare:0.6.5": "sha256:44948e8c1c3d4c4743cd1db907993feec89362391f69ea87ed9d75a0710b60bf",
+    "ghcr.io/soulteary/flare:latest": "sha256:44948e8c1c3d4c4743cd1db907993feec89362391f69ea87ed9d75a0710b60bf"
+  },
+  "version": "0.6.5"
+}
