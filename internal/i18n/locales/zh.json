@@ -152,5 +152,6 @@
   "search_save_help": "添加、移除和排序仅修改当前表单，请保存后生效。测试使用“Flare search test”打开引擎，不保存设置。",
   "search_test_target": "测试会向以下配置地址发送查询：",
   "search_no_results": "没有匹配的书签或应用。可以选择外部引擎继续搜索。",
-  "search_unavailable": "已不可用，请选择替代目标"
+  "search_unavailable": "已不可用，请选择替代目标",
+  "weather_save_failed": "天气设置保存失败，输入内容已保留。请检查存储权限后重试。"
 }

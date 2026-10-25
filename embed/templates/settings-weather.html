@@ -1,6 +1,7 @@
 {{ define "settings-weather.html" }}
 <div class="setting-group-container">
     <h2>{{ T .Locale "settings_weather" }}</h2>
+    {{ if .SaveFailed }}<p role="alert">{{ T .Locale "weather_save_failed" }}</p>{{ end }}
     <form method="POST" action="{{ .SettingPages.Weather.Path }}">
 
         <div class="form-group">

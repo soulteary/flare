@@ -158,7 +158,7 @@ func collectSearchSuggestions(options model.Application, query string, apps, boo
 				}
 			}
 			if options.EnableEncryptedLink || strings.HasPrefix(link, "chrome-extension://") {
-				link = "/redir/url?go=" + data.Base64EncodeUrl(link)
+				link = fn.EncodedNavigationURL(link, info)
 			}
 			newTab := options.OpenBookmarkNewTab
 			if isApp {
