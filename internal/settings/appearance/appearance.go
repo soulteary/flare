@@ -46,11 +46,36 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
 	}
 	var update model.Application
-	if value := formvalue.Get(c, "mobile-bookmark-layout"); value != "" {
-		update.Homepage = &model.HomepageOptions{MobileBookmarkLayout: value}
-		if err := update.Homepage.Validate(); err != nil {
+	// Copy existing options so older forms cannot erase newer preferences.
+	layout, textSize, titleSize, hideDesc := formvalue.Get(c, "mobile-bookmark-layout"), formvalue.Get(c, "navigation-text-size"), formvalue.Get(c, "title-size"), formvalue.Get(c, "hide-app-descriptions")
+	if layout != "" || textSize != "" || titleSize != "" || hideDesc != "" {
+		existing, err := data.GetAllSettingsOptions()
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).SendString("config error")
+		}
+		homepage := model.HomepageOptions{}
+		if existing.Homepage != nil {
+			homepage = *existing.Homepage
+		}
+		if layout != "" {
+			homepage.MobileBookmarkLayout = layout
+		}
+		if textSize != "" {
+			homepage.NavigationTextSize = textSize
+		}
+		if titleSize != "" {
+			homepage.TitleSize = titleSize
+		}
+		if hideDesc != "" {
+			if hideDesc != "0" && hideDesc != "1" {
+				return c.Status(http.StatusBadRequest).SendString("invalid description visibility")
+			}
+			homepage.HideAppDescriptions = hideDesc == "1"
+		}
+		if err := homepage.Validate(); err != nil {
 			return c.Status(http.StatusBadRequest).SendString(err.Error())
 		}
+		update.Homepage = &homepage
 	}
 
 	// Missing fields from older forms must not erase existing clock preferences.
@@ -109,6 +134,18 @@ func pageAppearance(c fiber.Ctx) error {
 	m["PageAppearance"] = define.GetAppBodyStyle()
 	m["SettingPages"] = define.SettingPages
 	m["SettingsURI"] = define.RegularPages.Settings.Path
+	m["OptionNavigationTextSize"] = "standard"
+	m["OptionTitleSize"] = "standard"
+	m["OptionHideAppDescriptions"] = false
+	if options.Homepage != nil {
+		if options.Homepage.NavigationTextSize == "larger" || options.Homepage.NavigationTextSize == "large" {
+			m["OptionNavigationTextSize"] = options.Homepage.NavigationTextSize
+		}
+		if options.Homepage.TitleSize == "compact" || options.Homepage.TitleSize == "prominent" {
+			m["OptionTitleSize"] = options.Homepage.TitleSize
+		}
+		m["OptionHideAppDescriptions"] = options.Homepage.HideAppDescriptions
+	}
 	m["OptionMobileBookmarkLayout"] = "single"
 	if options.Homepage != nil && options.Homepage.MobileBookmarkLayout == "compact" {
 		m["OptionMobileBookmarkLayout"] = "compact"
