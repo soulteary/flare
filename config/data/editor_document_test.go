@@ -14,7 +14,7 @@ func editorFixture(t *testing.T) EditorDocument {
 	t.Helper()
 	t.Chdir(t.TempDir())
 	require.NoError(t, os.WriteFile("apps.yml", []byte("links:\n- name: App\n  link: http://nas:8080/a?q=1#f\n  private: true\n"), 0600))
-	require.NoError(t, os.WriteFile("bookmarks.yml", []byte("categories:\n- id: stable-category\n  title: Original\nlinks:\n- name: Bookmark\n  link: custom://server/a?x=1&y=2#f\n  category: stable-category\n"), 0640))
+	require.NoError(t, os.WriteFile("bookmarks.yml", []byte("categories:\n- id: stable-category\n  title: Original\nlinks:\n- name: Bookmark\n  link: custom://server/a?x=1&y=2#f\n  category: stable-category\n"), 0600))
 	doc, err := EditorSnapshot()
 	require.NoError(t, err)
 	return doc
@@ -33,14 +33,16 @@ func TestEditorDocumentStableIDsAndConflict(t *testing.T) {
 	require.True(t, read.Apps[0].Private)
 	_, err = CommitEditorDocument(doc)
 	require.ErrorIs(t, err, ErrBookmarkConflict)
-	raw, err := os.ReadFile("apps.yml")
-	require.NoError(t, err)
-	require.NoError(t, os.WriteFile("apps.yml", append(raw, []byte("\n# external edit\n")...), 0600))
+	file, openErr := os.OpenFile("apps.yml", os.O_APPEND|os.O_WRONLY, 0600)
+	require.NoError(t, openErr)
+	_, writeErr := file.WriteString("\n# external edit\n")
+	require.NoError(t, writeErr)
+	require.NoError(t, file.Close())
 	_, err = CommitEditorDocument(saved)
 	require.ErrorIs(t, err, ErrBookmarkConflict)
 	info, err := os.Stat("bookmarks.yml")
 	require.NoError(t, err)
-	require.Equal(t, os.FileMode(0640), info.Mode().Perm())
+	require.Equal(t, os.FileMode(0600), info.Mode().Perm())
 }
 func TestEditorDocumentValidation(t *testing.T) {
 	doc := editorFixture(t)
@@ -105,4 +107,29 @@ func TestEditorDocumentEmptyAndPreflightFailure(t *testing.T) {
 	after, err := os.ReadFile("apps.yml")
 	require.NoError(t, err)
 	require.Equal(t, raw, after)
+}
+
+func TestEditorDocumentReportsIncompleteRecovery(t *testing.T) {
+	doc := editorFixture(t)
+	doc.Apps[0].Name = "Changed"
+	_, err := commitEditorDocument(doc, func(src, dest string) error {
+		if filepath.Base(dest) == "bookmarks.yml" {
+			if removeErr := os.Remove("apps.yml"); removeErr != nil {
+				return removeErr
+			}
+			if mkdirErr := os.Mkdir("apps.yml", 0700); mkdirErr != nil {
+				return mkdirErr
+			}
+			return errors.New("simulated failure with blocked recovery")
+		}
+		return os.Rename(src, dest)
+	})
+	require.ErrorContains(t, err, "恢复未完成")
+	require.ErrorContains(t, err, "可能存在部分写入")
+	copies, globErr := filepath.Glob(".flare-editor-recovery/save-*/apps.yml")
+	require.NoError(t, globErr)
+	require.Len(t, copies, 1)
+	raw, readErr := os.ReadFile(copies[0])
+	require.NoError(t, readErr)
+	require.Contains(t, string(raw), "name: App")
 }
