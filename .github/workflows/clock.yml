@@ -37,6 +37,8 @@ jobs:
         run: node --test tests/clock/clock.test.cjs
       - name: Editor state regressions
         run: node --test tests/editor/state.test.cjs
+      - name: Mobile editor focus and save recovery regressions
+        run: node --test tests/editor/mobile-ui.test.cjs
       - name: Production HTTP and browser acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock

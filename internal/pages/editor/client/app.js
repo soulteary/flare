@@ -2,9 +2,20 @@
 (async function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  let store, saving=false, editingKey=null, formStart='', lastLocation='', undo=null, migrationID=null, conflict=false, focusBeforeDialog=null, batch=null;
+  let store, saving=false, editingKey=null, formStart='', lastLocation='', undo=null, migrationID=null, conflict=false, recoveryRequired=false, focusBeforeDialog=null, batch=null;
   const entryDialog=$('entry-dialog'), categoryDialog=$('categories-dialog');
   const fields={Name:'entry-name',URL:'entry-url',Category:'entry-location'};
+  // Error text can wrap to several lines at large font sizes; reserve its actual
+  // height instead of assuming the fixed save bar always fits in 150/210 pixels.
+  const savebar=document.querySelector('.savebar');
+  function measureSavebar() {document.documentElement.style.setProperty('--savebar-height',savebar.getBoundingClientRect().height+'px');}
+  if(window.ResizeObserver)new ResizeObserver(measureSavebar).observe(savebar);
+  window.addEventListener('resize',measureSavebar);measureSavebar();
+  // Mobile keyboards shrink the visual viewport without always changing dvh.
+  function measureViewport() {document.documentElement.style.setProperty('--editor-viewport-height',(window.visualViewport?.height || window.innerHeight)+'px');}
+  window.visualViewport?.addEventListener('resize',measureViewport);measureViewport();
+  function focusEntry(key) {const row=[...$('entry-list').children].find(item=>item.dataset.key===key);(row?.querySelector('.entry-name') || $('new-entry')).focus();}
+
   function el(tag, text, className) { const node=document.createElement(tag); if(text!==undefined)node.textContent=text;if(className)node.className=className;return node; }
   function button(text, action, className) {const node=el('button',text,className);node.type='button';node.addEventListener('click',action);return node;}
   function categoryName(id) {
@@ -25,9 +36,9 @@
   function setStatus(message, error=false) {
     $('save-status').textContent=message;
     document.querySelector('.savebar').dataset.error=String(error);
-    if(store){const dirty=store.dirty || !!batch?.dirty;$('save-changes').disabled=saving || !dirty;$('discard-changes').disabled=saving || !dirty;}
+    if(store){const dirty=store.dirty || !!batch?.dirty;$('save-changes').disabled=saving || recoveryRequired || !dirty;$('discard-changes').disabled=saving || !dirty;}
   }
-  function syncStatus() {setStatus(conflict ? '服务器数据已变化，请保留修改后重新载入。' : (store.dirty || batch?.dirty)?'有未保存的更改':'所有更改已保存', conflict);}
+  function syncStatus() {if(recoveryRequired){setStatus('保存恢复未完成，请先导出草稿并检查服务端恢复副本，再重新载入。',true);return;}setStatus(conflict ? '服务器数据已变化，请保留修改后重新载入。' : (store.dirty || batch?.dirty)?'有未保存的更改':'所有更改已保存', conflict);}
   function render() {
     const filter=$('location-filter').value, query=$('entry-search').value.trim().toLocaleLowerCase();
     locations($('location-filter'),filter,true);
@@ -48,7 +59,7 @@
     $('undo-area').hidden=!undo;syncStatus();
   }
   function open(dialog) {focusBeforeDialog=document.activeElement;dialog.showModal();}
-  function close(dialog) {dialog.close();if(focusBeforeDialog?.isConnected)focusBeforeDialog.focus();}
+  function close(dialog) {dialog.close();if(focusBeforeDialog?.isConnected)focusBeforeDialog.focus();else $('new-entry').focus();}
   function formValue() {return JSON.stringify(Object.fromEntries(new FormData($('entry-form'))));}
   function hasUnsavedChanges() {return store?.dirty || batch?.dirty || (entryDialog.open && formValue()!==formStart);}
   function clearErrors() {for(const name of ['name','url','location']){$('error-'+name).textContent='';$(fields[name==='name'?'Name':name==='url'?'URL':'Category']).removeAttribute('aria-invalid');}}
@@ -78,15 +89,14 @@
     if(values.Location!=='apps' && values.Location!=='category:' && !store.working.categories.some(c=>'category:'+c.ID===values.Location))return fieldError('Category','请选择有效位置');
     const existed=editingKey && store.find(editingKey);
     const item={Name:values.Name.trim(),URL:values.URL.trim(),Icon:values.Icon,Desc:values.Desc};
-    store.put(item,values.Location,editingKey);lastLocation=values.Location;undo=null;close(entryDialog);render();
-    const updated=[...$('entry-list').children].find(row=>row.dataset.key===editingKey);
-    (updated?.querySelector('.entry-name') || $('new-entry')).focus();
+    editingKey=store.put(item,values.Location,editingKey);lastLocation=values.Location;undo=null;close(entryDialog);render();
+    focusEntry(editingKey);
     if(existed && $('location-filter').value!=='all' && $('location-filter').value!==values.Location)setStatus('条目已移至“'+categoryName(values.Location)+'”，保存后生效。');
   });
   function removeEntry(key) {
-    if(saving)return;undo=store.remove(key);render();setStatus('条目已移除，保存后生效；可撤销本次删除。');
+    if(saving)return;undo=store.remove(key);render();$('undo-delete').focus();setStatus('条目已移除，保存后生效；可撤销本次删除。');
   }
-  $('undo-delete').onclick=()=>{store.restore(undo);undo=null;render();};
+  $('undo-delete').onclick=()=>{const key=undo?.item._key;store.restore(undo);undo=null;render();focusEntry(key);};
   $('new-entry').onclick=()=>openEntry();$('cancel-entry').onclick=cancelEntry;
   entryDialog.addEventListener('cancel',event=>{event.preventDefault();cancelEntry();});
   function validCategoryName(name,id) {return name.trim() && name.trim()!=='[Flare 应用]' && !store.working.categories.some(c=>c.ID!==id && c.Name.trim()===name.trim());}
@@ -107,7 +117,7 @@
       const error=el('p',undefined,'field-error');error.setAttribute('role','status');
       input.onchange=()=>{if(!validCategoryName(input.value,category.ID)){error.textContent='名称不能为空、重复或使用保留名称';input.setAttribute('aria-invalid','true');return;}category.Name=input.value.trim();error.textContent='';input.removeAttribute('aria-invalid');render();};top.append(input);row.append(top,error);
       const tools=el('div',undefined,'category-tools');const count=store.working.bookmarks.filter(b=>b.Category===category.ID).length;tools.append(el('span',count+' 条书签'));
-      for(const [label,offset] of [['上移',-1],['下移',1]]){const move=button(label,()=>{const target=index+offset;[store.working.categories[index],store.working.categories[target]]=[store.working.categories[target],store.working.categories[index]];renderCategories();render();});move.disabled=index+offset<0||index+offset>=store.working.categories.length;tools.append(move);}
+      for(const [label,offset] of [['上移',-1],['下移',1]]){const move=button(label,()=>{const target=index+offset;[store.working.categories[index],store.working.categories[target]]=[store.working.categories[target],store.working.categories[index]];renderCategories();render();categoryDialog.querySelectorAll('[data-category]')[target]?.focus();});move.disabled=index+offset<0||index+offset>=store.working.categories.length;tools.append(move);}
       tools.append(button('删除',()=>{if(count){migrationID=category.ID;renderCategories();}else if(confirm('删除空分类“'+category.Name+'”？'))removeCategory(category.ID,'apps');},'danger'));row.append(tools);
       if(migrationID===category.ID){const migration=el('div',undefined,'migration');migration.append(el('p','包含 '+count+' 条书签，请选择迁入位置。'));
         const select=el('select');select.setAttribute('aria-label','迁入位置');locations(select,'',false,category.ID);
@@ -133,20 +143,26 @@
     else {const item=store.working[collection]?.[Number(index)];if(item){openEntry(item._key);fieldError(field,result.error);}}
   }
   async function save() {
-    if(!store||saving||entryDialog.open||categoryDialog.open)return;
+    if(!store||saving||recoveryRequired||entryDialog.open||categoryDialog.open)return;
     if(batch?.active && !batch.flush())return;
     if(!store.dirty){syncStatus();return;}
     const invalid=validateDocument();if(invalid){locateError(invalid);setStatus(invalid.error,true);return;}
-    busy(true);setStatus('正在保存…');let message='所有更改已保存',error=false;
+    busy(true);setStatus('正在保存…');let message='所有更改已保存',error=false, responseParsed=false, serverInvalid=null;
     try {
       const response=await fetch('/editor/document',{method:'POST',headers:{'Content-Type':'application/json','X-Flare-Editor':'1'},body:JSON.stringify(store.toJSON()),signal:AbortSignal.timeout(30000)});
       if(response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error('登录可能已过期，请在新窗口登录后重试。');
-      const result=await response.json();
-      if(!response.ok){if(response.status===409){conflict=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(result.field)locateError(result);throw Error(result.error||'保存失败，请重试。');}
+      const result=await response.json();responseParsed=true;
+      if(!response.ok){if(result.recoveryRequired){recoveryRequired=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(response.status===409){conflict=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(result.field)serverInvalid=result;throw Error(result.error||'保存失败，请重试。');}
       if(!result.saved||!result.document)throw Error('保存响应不完整，请检查数据后重试。');
       store.accept(result.document);batch?.refresh();undo=null;conflict=false;$('export-draft').hidden=true;$('reload-data').hidden=true;render();
-    } catch(err){error=true;message=err.message+' 当前编辑内容已保留。';}
-    finally{busy(false);setStatus(message,error);}
+    } catch(err){
+      error=true;
+      if(!responseParsed && (err.name==='TimeoutError'||err.name==='AbortError'||err instanceof TypeError||err instanceof SyntaxError)){
+        message='保存结果待确认：请求中断或响应无法读取，服务端可能已经保存。请先导出草稿，再检查服务端数据；重新保存仍会校验版本。 当前编辑内容已保留。';
+        $('export-draft').hidden=false;$('reload-data').hidden=false;
+      }else message=err.message+' 当前编辑内容已保留。';
+    }
+    finally{busy(false);if(serverInvalid)locateError(serverInvalid);setStatus(message,error);}
   }
   $('save-changes').onclick=save;
   $('discard-changes').onclick=()=>{if(!saving&&confirm('放弃全部未保存的更改？')){store.discard();batch?.refresh();undo=null;$('location-filter').value='all';render();if(conflict)setStatus('已恢复加载时的数据；服务器已有更新，请重新载入。',true);}};
