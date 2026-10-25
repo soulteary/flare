@@ -1,0 +1,98 @@
+name: Publish GHCR images
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Published stable Flare version, without a v prefix
+        required: true
+        type: string
+      expected_commit:
+        description: Commit that the release workflow built
+        required: true
+        type: string
+      update_latest:
+        description: Promote only if this is still the latest stable release
+        default: false
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Published stable Flare version to mirror, such as 0.6.1
+        required: true
+        type: string
+      update_latest:
+        description: Also update latest if this is still the latest stable release
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# Serialize both automatic releases and manual backfills, including latest.
+concurrency:
+  group: flare-ghcr-publish
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  publish:
+    name: Copy and verify published container images
+    if: >-
+      github.repository == 'soulteary/flare' &&
+      (
+        ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/')) ||
+        (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout publishing scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install verified crane binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/crane-v0.22.1.tar.gz"
+          curl --fail --location --retry 3 \
+            https://github.com/google/go-containerregistry/releases/download/v0.22.1/go-containerregistry_Linux_x86_64.tar.gz \
+            --output "$archive"
+          echo "0ab7a1d6932a213aed964ce97666c3077fe691c8606413674a8b3e0b9ec4cda0  $archive" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/flare-container-tools"
+          tar -xzf "$archive" -C "$RUNNER_TEMP/flare-container-tools" crane
+          echo "$RUNNER_TEMP/flare-container-tools" >> "$GITHUB_PATH"
+          echo "DOCKER_CONFIG=$RUNNER_TEMP/flare-ghcr-auth" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR with the job token
+        id: login
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' "$GH_TOKEN" | crane auth login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Mirror and verify all four platforms
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+          UPDATE_LATEST: ${{ inputs.update_latest }}
+        run: |
+          set -euo pipefail
+          args=(--tag "$RELEASE_VERSION" --expected-commit "$EXPECTED_COMMIT")
+          if [[ "$UPDATE_LATEST" == "true" ]]; then
+            args+=(--update-latest)
+          fi
+          python3 .github/scripts/publish_ghcr.py "${args[@]}"
+
+      - name: Remove temporary registry credentials
+        if: always() && steps.login.outcome == 'success'
+        shell: bash
+        run: rm -rf -- "$DOCKER_CONFIG"

@@ -1,0 +1,8 @@
+# GitHub supports concurrency.queue, but actionlint v1.7.12 does not yet parse
+# it. Keep this exception limited to the one confirmed diagnostic in this file;
+# test_publish_ghcr.py verifies the literal queue and cancellation settings.
+# https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency
+paths:
+  .github/workflows/publish-ghcr.yml:
+    ignore:
+      - '^unexpected key "queue" for "concurrency" section\. expected one of "cancel-in-progress", "group"$'
