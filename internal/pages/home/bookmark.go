@@ -17,7 +17,7 @@ func GenerateBookmarkTemplate(filter string, options *model.Application) templat
 }
 
 // GenerateBookmarkNavigationTemplate keeps category navigation server-rendered and search-scoped.
-func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *model.Application) template.HTML {
+func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *model.Application, requestInfo ...*fn.DynamicURL) template.HTML {
 	if options == nil {
 		op, err := data.GetAllSettingsOptions()
 		if err != nil {
@@ -39,7 +39,7 @@ func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *
 	n := len(bookmarksData.Items)
 	parseBookmarks := make([]model.Bookmark, 0, n)
 	for _, bookmark := range bookmarksData.Items {
-		bookmark.URL = fn.ParseDynamicUrl(bookmark.URL)
+		bookmark.URL = fn.ParseDynamicUrlWith(bookmark.URL, firstRequestInfo(requestInfo))
 		parseBookmarks = append(parseBookmarks, bookmark)
 	}
 
@@ -80,21 +80,21 @@ func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *
 				continue
 			}
 			categoryCopy := category
-			renderBookmarksWithCategories(b, &bookmarks, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, mode == "collapse" && filter == "")
+			renderBookmarksWithCategoriesForRequest(b, &bookmarks, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, firstRequestInfo(requestInfo), mode == "collapse" && filter == "")
 		}
 	} else {
-		renderBookmarksWithoutCategories(b, &bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
+		renderBookmarksWithoutCategories(b, &bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, firstRequestInfo(requestInfo))
 	}
 
 	return template.HTML(b.String())
 }
 
-func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]model.Bookmark, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) {
+func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]model.Bookmark, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string, requestInfo ...*fn.DynamicURL) {
 	b.WriteString(`<div class="bookmark-group-container pull-left"><ul class="bookmark-list">`)
 	for _, bookmark := range *bookmarks {
 		templateURL := bookmark.URL
 		if strings.HasPrefix(bookmark.URL, "chrome-extension://") || EnableEncryptedLink {
-			templateURL = "/redir/url?go=" + data.Base64EncodeUrl(bookmark.URL)
+			templateURL = fn.EncodedNavigationURL(bookmark.URL, firstRequestInfo(requestInfo))
 		}
 		templateIcon := mdi.GetIconByName(bookmark.Icon)
 		if strings.HasPrefix(bookmark.Icon, "http://") || strings.HasPrefix(bookmark.Icon, "https://") {
@@ -126,11 +126,15 @@ func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]model.Boo
 }
 
 func renderBookmarksWithCategories(b *strings.Builder, bookmarks *[]model.Bookmark, category *model.Category, defaultCategory *model.Category, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string, collapse ...bool) {
+	renderBookmarksWithCategoriesForRequest(b, bookmarks, category, defaultCategory, OpenBookmarkNewTab, EnableEncryptedLink, IconMode, nil, collapse...)
+}
+
+func renderBookmarksWithCategoriesForRequest(b *strings.Builder, bookmarks *[]model.Bookmark, category *model.Category, defaultCategory *model.Category, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string, info *fn.DynamicURL, collapse ...bool) {
 	var itemBuf strings.Builder
 	for _, bookmark := range *bookmarks {
 		templateURL := bookmark.URL
 		if strings.HasPrefix(bookmark.URL, "chrome-extension://") || EnableEncryptedLink {
-			templateURL = "/redir/url?go=" + data.Base64EncodeUrl(bookmark.URL)
+			templateURL = fn.EncodedNavigationURL(bookmark.URL, info)
 		}
 		templateIcon := mdi.GetIconByName(bookmark.Icon)
 		if strings.HasPrefix(bookmark.Icon, "http://") || strings.HasPrefix(bookmark.Icon, "https://") {
