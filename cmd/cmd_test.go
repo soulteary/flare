@@ -53,6 +53,7 @@ func TestParse(t *testing.T) {
 
 	defaults := define.DefaultEnvVars
 	expectedFlags.User = defaults.User
+	expectedFlags.AccessLog = defaults.AccessLog
 	expectedFlags.Port = defaults.Port
 	expectedFlags.EnableGuide = defaults.EnableGuide
 	expectedFlags.EnableEditor = defaults.EnableEditor

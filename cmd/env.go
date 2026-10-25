@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	env "github.com/caarlos0/env/v6"
 
@@ -57,6 +59,12 @@ func ParseEnvVars() (stor model.Flags) {
 	)
 
 	// 4. merge
+	// env.Parse treats an empty environment value as unset; validate an explicit
+	// empty access mode as well, without changing other configuration parsing.
+	if value, ok := os.LookupEnv("FLARE_ACCESS_LOG"); ok {
+		defaults.AccessLog = value
+	}
+	stor.AccessLog = normalizeAccessLog(defaults.AccessLog, "FLARE_ACCESS_LOG")
 	stor.Port = defaults.Port
 	stor.EnableGuide = defaults.EnableGuide
 	stor.EnableDeprecatedNotice = defaults.EnableDeprecatedNotice
@@ -71,4 +79,14 @@ func ParseEnvVars() (stor model.Flags) {
 	stor.CookieSecure = defaults.CookieSecure
 
 	return stor
+}
+
+func normalizeAccessLog(value, source string) string {
+	switch mode := strings.ToLower(strings.TrimSpace(value)); mode {
+	case "errors", "all", "off":
+		return mode
+	default:
+		logger.GetLogger().Warn(fmt.Sprintf("%s 的访问日志模式无效，使用 errors；可选值：errors、all、off。", source))
+		return define.DEFAULT_ACCESS_LOG
+	}
 }

@@ -84,6 +84,19 @@ See [docker-flare](https://github.com/soulteary/docker-flare) for deployment
 examples and [container publishing](.github/CONTAINER-RELEASES.md) for the release
 workflow, verification, and historical backfills.
 
+### Access logs and Docker log rotation
+
+HTTP access logs now default to failed requests (returned errors and HTTP 4xx/5xx).
+Set `FLARE_ACCESS_LOG=all` or `--access_log=all` to restore ordinary access logs,
+or use `off` to disable access logs. Application startup and diagnostic logs keep
+their existing levels. The `all` mode keeps the existing successful health-check,
+static-resource and redirect filters.
+
+Container deployments also need Docker log rotation to bound retained logs.
+See [logging configuration and upgrade steps / 日志配置与升级说明](docs/logging.md)
+for the `local` driver with `10m` files and a limit of 3 files, configuration
+precedence, and rebuilding existing containers while preserving application data.
+
 ### Login configuration
 
 Login is disabled by default. To enable it, set `FLARE_DISABLE_LOGIN=false`.

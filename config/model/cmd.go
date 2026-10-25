@@ -5,6 +5,7 @@ type Flags struct {
 	DebugMode   bool
 	ShowVersion bool
 	ShowHelp    bool
+	AccessLog   string
 
 	Port                   int
 	EnableGuide            bool
@@ -30,6 +31,8 @@ type Flags struct {
 
 // Application Envs Data Model
 type Envs struct {
+	AccessLog string `env:"FLARE_ACCESS_LOG"`
+
 	Port                   int  `env:"FLARE_PORT"`
 	EnableGuide            bool `env:"FLARE_GUIDE"`
 	EnableEditor           bool `env:"FLARE_EDITOR"`
@@ -51,6 +54,8 @@ type Envs struct {
 
 // Application Envfile Data Model
 type EnvFile struct {
+	AccessLog string `ini:"FLARE_ACCESS_LOG,omitempty"`
+
 	Port                   int  `ini:"FLARE_PORT,omitempty"`
 	EnableGuide            bool `ini:"FLARE_GUIDE,omitempty"`
 	EnableEditor           bool `ini:"FLARE_EDITOR,omitempty"`

@@ -37,7 +37,7 @@ func TestNewFiberWithConfig_AsyncLogOwnsPooledStrings(t *testing.T) {
 		started: make(chan struct{}, 2), release: make(chan struct{}), records: make(chan slog.Record, 2),
 	}
 	app := fiber.New() // Exercise borrowed strings even without Immutable mode.
-	app.Use(NewFiber(slog.New(handler)))
+	app.Use(NewFiberWithConfig(slog.New(handler), LoggerConfig{AccessLog: "all"}))
 	app.Get("/:name", func(c fiber.Ctx) error { return c.SendString("ok") })
 	bridge := adaptor.FiberApp(app)
 	for _, value := range []string{"first", "other"} {
@@ -98,6 +98,39 @@ func (w requestLogWriter) Write(data []byte) (int, error) {
 	return len(data), nil
 }
 
+func TestNewFiberWithConfig_OffPreservesApplicationLogs(t *testing.T) {
+	records := make(chan []byte, 2)
+	log := slog.New(slog.NewJSONHandler(requestLogWriter{records: records}, nil))
+	app := fiber.New()
+	app.Use(NewFiberWithConfig(log, LoggerConfig{AccessLog: "off"}))
+	app.Get("/example", func(c fiber.Ctx) error {
+		log.Info("application event")
+		return fiber.ErrBadRequest
+	})
+	response := httptest.NewRecorder()
+	adaptor.FiberApp(app).ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/example", nil))
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
+	}
+	select {
+	case raw := <-records:
+		var record map[string]any
+		if err := json.Unmarshal(raw, &record); err != nil {
+			t.Fatal(err)
+		}
+		if record["msg"] != "application event" || record["level"] != "INFO" {
+			t.Fatalf("application log changed: %s", raw)
+		}
+	default:
+		t.Fatal("application log was suppressed")
+	}
+	select {
+	case raw := <-records:
+		t.Fatalf("off mode produced an access log: %s", raw)
+	default:
+	}
+}
+
 func TestNewFiberWithConfig_RequestOutcomes(t *testing.T) {
 	internalErr := errors.New("file does not implement io.ReadSeeker")
 	wrappedNotFound := fmt.Errorf("lookup failed: %w", fiber.NewError(http.StatusNotFound, "Not Found"))
@@ -122,6 +155,11 @@ func TestNewFiberWithConfig_RequestOutcomes(t *testing.T) {
 			status:  http.StatusNoContent,
 		},
 		{
+			name: "successful favicon is skipped", path: "/favicon.ico",
+			handler: func(c fiber.Ctx) error { return c.SendString("icon") },
+			status:  http.StatusOK, body: "icon",
+		},
+		{
 			name: "successful redirect is skipped", path: "/redir/example",
 			handler: func(c fiber.Ctx) error { return c.Redirect().Status(http.StatusFound).To("/") },
 			status:  http.StatusFound,
@@ -140,6 +178,11 @@ func TestNewFiberWithConfig_RequestOutcomes(t *testing.T) {
 			name: "failed health check is logged", path: "/ping",
 			handler: func(c fiber.Ctx) error { return c.Status(http.StatusServiceUnavailable).Send(nil) },
 			status:  http.StatusServiceUnavailable, level: "ERROR",
+		},
+		{
+			name: "client failure without returned error is logged", path: "/assets/missing.svg",
+			handler: func(c fiber.Ctx) error { return c.Status(http.StatusNotFound).Send(nil) },
+			status:  http.StatusNotFound, level: "WARN",
 		},
 		{
 			name: "wrapped HTTP error uses its status", path: "/missing",
@@ -172,86 +215,119 @@ func TestNewFiberWithConfig_RequestOutcomes(t *testing.T) {
 			status: http.StatusInternalServerError, body: internalErr.Error(), level: "ERROR", errMessage: internalErr.Error(),
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			records := make(chan []byte, 4)
-			log := slog.New(slog.NewJSONHandler(requestLogWriter{records: records}, nil))
-			errorHandlerCalls := 0
-			e := fiber.New(fiber.Config{ErrorHandler: func(c fiber.Ctx, err error) error {
-				errorHandlerCalls++
-				return fiber.DefaultErrorHandler(c, err)
-			}})
-			e.Use(NewFiberWithConfig(log, LoggerConfig{Skipper: DefaultRequestLogSkipper}))
-			route := tt.route
-			if route == "" {
-				route = tt.path
-			}
-			e.Get(route, tt.handler)
-			rec := httptest.NewRecorder()
-			adaptor.FiberApp(e).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tt.path, nil))
+	for _, mode := range []struct {
+		name, accessLog string
+		logsSuccess     bool
+		disabled        bool
+	}{
+		{name: "default"},
+		{name: "errors", accessLog: "errors"},
+		{name: "all", accessLog: "all", logsSuccess: true},
+		{name: "off", accessLog: "off", disabled: true},
+		{name: "invalid falls back to errors", accessLog: "invalid"},
+	} {
+		for _, tt := range tests {
+			t.Run(mode.name+"/"+tt.name, func(t *testing.T) {
+				wantLevel := tt.level
+				if mode.disabled || (!mode.logsSuccess && tt.errMessage == "" && tt.status < http.StatusBadRequest) {
+					wantLevel = ""
+				}
+				records := make(chan []byte, 4)
+				log := slog.New(slog.NewJSONHandler(requestLogWriter{records: records}, nil))
+				errorHandlerCalls := 0
+				e := fiber.New(fiber.Config{ErrorHandler: func(c fiber.Ctx, err error) error {
+					errorHandlerCalls++
+					return fiber.DefaultErrorHandler(c, err)
+				}})
+				var returnedErr error
+				e.Use(func(c fiber.Ctx) error {
+					returnedErr = c.Next()
+					return returnedErr
+				})
+				e.Use(NewFiberWithConfig(log, LoggerConfig{AccessLog: mode.accessLog, Skipper: DefaultRequestLogSkipper}))
+				route := tt.route
+				if route == "" {
+					route = tt.path
+				}
+				handlerCalls := 0
+				var handlerErr error
+				e.Get(route, func(c fiber.Ctx) error {
+					handlerCalls++
+					handlerErr = tt.handler(c)
+					return handlerErr
+				})
+				rec := httptest.NewRecorder()
+				adaptor.FiberApp(e).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tt.path, nil))
 
-			if rec.Code != tt.status {
-				t.Fatalf("status = %d, want %d", rec.Code, tt.status)
-			}
-			if got := strings.TrimSpace(rec.Body.String()); got != tt.body {
-				t.Errorf("body = %q, want %q", got, tt.body)
-			}
-			if tt.status == http.StatusFound && rec.Header().Get("Location") != "/" {
-				t.Errorf("redirect location = %q, want /", rec.Header().Get("Location"))
-			}
-			wantErrorHandlerCalls := 0
-			if tt.errMessage != "" {
-				wantErrorHandlerCalls = 1
-			}
-			if errorHandlerCalls != wantErrorHandlerCalls {
-				t.Errorf("error handler called %d times, want %d", errorHandlerCalls, wantErrorHandlerCalls)
-			}
-			if tt.level == "" {
+				if rec.Code != tt.status {
+					t.Fatalf("status = %d, want %d", rec.Code, tt.status)
+				}
+				if handlerCalls != 1 {
+					t.Errorf("handler called %d times, want 1", handlerCalls)
+				}
+				if returnedErr != handlerErr {
+					t.Errorf("returned error = %v, want original error %v", returnedErr, handlerErr)
+				}
+				if got := strings.TrimSpace(rec.Body.String()); got != tt.body {
+					t.Errorf("body = %q, want %q", got, tt.body)
+				}
+				if tt.status == http.StatusFound && rec.Header().Get("Location") != "/" {
+					t.Errorf("redirect location = %q, want /", rec.Header().Get("Location"))
+				}
+				wantErrorHandlerCalls := 0
+				if tt.errMessage != "" {
+					wantErrorHandlerCalls = 1
+				}
+				if errorHandlerCalls != wantErrorHandlerCalls {
+					t.Errorf("error handler called %d times, want %d", errorHandlerCalls, wantErrorHandlerCalls)
+				}
+				if wantLevel == "" {
+					select {
+					case record := <-records:
+						t.Fatalf("disabled request log was written: %s", record)
+					case <-time.After(20 * time.Millisecond):
+					}
+					return
+				}
+
+				var data []byte
 				select {
-				case record := <-records:
-					t.Fatalf("successful skipped request produced a log: %s", record)
-				case <-time.After(20 * time.Millisecond):
+				case data = <-records:
+				case <-time.After(time.Second):
+					t.Fatal("request log was not written")
 				}
-				return
-			}
-
-			var data []byte
-			select {
-			case data = <-records:
-			case <-time.After(time.Second):
-				t.Fatal("request log was not written")
-			}
-			var record map[string]any
-			if err := json.Unmarshal(data, &record); err != nil {
-				t.Fatal(err)
-			}
-			if record["status"] != float64(tt.status) {
-				t.Errorf("logged status = %v, want %d", record["status"], tt.status)
-			}
-			if record["level"] != tt.level {
-				t.Errorf("logged level = %v, want %s", record["level"], tt.level)
-			}
-			if record["path"] != tt.path || record["route"] != route {
-				t.Errorf("logged path/route = %v/%v, want %s/%s", record["path"], record["route"], tt.path, route)
-			}
-			if tt.errMessage != "" {
-				if record["error"] != tt.errMessage || record["msg"] != tt.errMessage {
-					t.Errorf("logged error/message = %v/%v, want %s", record["error"], record["msg"], tt.errMessage)
+				var record map[string]any
+				if err := json.Unmarshal(data, &record); err != nil {
+					t.Fatal(err)
 				}
-			} else if record["error"] != nil || record["msg"] != "REQUEST" {
-				t.Errorf("unexpected error/message: %v/%v", record["error"], record["msg"])
-			}
-			if tt.route != "" {
-				params, ok := record["params"].(map[string]any)
-				if !ok || params["name"] != "missing.svg" {
-					t.Errorf("logged route params = %v", record["params"])
+				if record["status"] != float64(tt.status) {
+					t.Errorf("logged status = %v, want %d", record["status"], tt.status)
 				}
-			}
-			select {
-			case duplicate := <-records:
-				t.Errorf("duplicate request log: %s", duplicate)
-			default:
-			}
-		})
+				if record["level"] != wantLevel {
+					t.Errorf("logged level = %v, want %s", record["level"], wantLevel)
+				}
+				if record["path"] != tt.path || record["route"] != route {
+					t.Errorf("logged path/route = %v/%v, want %s/%s", record["path"], record["route"], tt.path, route)
+				}
+				if tt.errMessage != "" {
+					if record["error"] != tt.errMessage || record["msg"] != tt.errMessage {
+						t.Errorf("logged error/message = %v/%v, want %s", record["error"], record["msg"], tt.errMessage)
+					}
+				} else if record["error"] != nil || record["msg"] != "REQUEST" {
+					t.Errorf("unexpected error/message: %v/%v", record["error"], record["msg"])
+				}
+				if tt.route != "" {
+					params, ok := record["params"].(map[string]any)
+					if !ok || params["name"] != "missing.svg" {
+						t.Errorf("logged route params = %v", record["params"])
+					}
+				}
+				select {
+				case duplicate := <-records:
+					t.Errorf("duplicate request log: %s", duplicate)
+				default:
+				}
+			})
+		}
 	}
 }
