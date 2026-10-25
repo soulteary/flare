@@ -21,3 +21,9 @@ passwords, signing keys, session cookies or complete private bookmark exports.
 Use [physical-device acceptance](mobile-device-acceptance.md) for Safari/Via,
 software keyboards, safe areas and native font enlargement. Desktop Chromium
 emulation does not close these reports without real-device evidence.
+
+
+Development editor, favicon and generated MDI references use content versions to
+bypass old fresh browser entries. Other unchanged unversioned guide assets may
+still need one hard refresh if a pre-fix one-year response is already cached;
+new revalidation headers cannot retroactively expire that existing entry.
