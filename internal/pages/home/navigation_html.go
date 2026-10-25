@@ -16,7 +16,10 @@ func navigationHref(raw string, encoded bool) string {
 	if !fn.IsSafeNavigationURL(raw) {
 		return "#"
 	}
-	parsed, _ := url.Parse(raw)
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return "#"
+	}
 	if encoded || strings.EqualFold(parsed.Scheme, "chrome-extension") {
 		return "/redir/url?go=" + data.Base64EncodeUrl(raw)
 	}
