@@ -96,7 +96,8 @@ func GetIconSVGByName(name string) string {
 	if icon == "" {
 		return _EMPTY_ICON
 	}
-	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="` + icon + `" style="fill:` + define.ThemePrimaryColor + `;"></path></svg>`
+	_, color := define.ThemeSnapshot()
+	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="` + icon + `" style="fill:` + color + `;"></path></svg>`
 }
 
 func GetIconByName(name string) string {
@@ -119,9 +120,10 @@ func GetIconByName(name string) string {
 		}
 		return _CACHE_MDI_ICON_DATA[name]
 	}
-	svgFile := filepath.ToSlash(filepath.Join(_ASSETS_BASE_DIR, (define.ThemeCurrent + "-" + name + ".svg")))
-	if !_CACHE_MDI_ICON_EXIST[define.ThemeCurrent+"-"+name] {
-		content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="` + icon + `" style="fill:` + define.ThemePrimaryColor + `;"></path></svg>`
+	theme, color := define.ThemeSnapshot()
+	svgFile := filepath.ToSlash(filepath.Join(_ASSETS_BASE_DIR, (theme + "-" + name + ".svg")))
+	if !_CACHE_MDI_ICON_EXIST[theme+"-"+name] {
+		content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="` + icon + `" style="fill:` + color + `;"></path></svg>`
 		err := MemFs.WriteFile(svgFile, []byte(content), 0755)
 		if err != nil {
 			log.Println("缓存内置图标出错:", err)
@@ -132,7 +134,7 @@ func GetIconByName(name string) string {
 			log.Println("读取内置图标缓存出错:", err)
 			return _EMPTY_ICON
 		}
-		_CACHE_MDI_ICON_EXIST[define.ThemeCurrent+"-"+name] = true
+		_CACHE_MDI_ICON_EXIST[theme+"-"+name] = true
 	}
 	return `<img src="/` + svgFile + `" width="68" height="68" alt="">`
 }
