@@ -16,3 +16,12 @@ BenchmarkCategorizedNavigation/entries-10000/categories-100-8       	       1	 5
 BenchmarkCategorizedNavigation/entries-10000/categories-100-8       	       1	 486930866 ns/op	315677160 B/op	 2363905 allocs/op
 PASS
 ok  	github.com/soulteary/flare/internal/pages/home	9.700s
+goos: linux
+goarch: amd64
+pkg: github.com/soulteary/flare/internal/pages/home
+cpu: AMD EPYC 9V74 80-Core Processor                
+BenchmarkCategorizedNavigation/entries-20/categories-4-8         	    1453	    161061 ns/op	   85479 B/op	    1068 allocs/op
+BenchmarkCategorizedNavigation/entries-20/categories-4-8         	    1597	    141417 ns/op	   85473 B/op	    1068 allocs/op
+BenchmarkCategorizedNavigation/entries-20/categories-4-8         	    1807	    128673 ns/op	   85474 B/op	    1068 allocs/op
+PASS
+ok  	github.com/soulteary/flare/internal/pages/home	0.767s

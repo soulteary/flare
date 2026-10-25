@@ -21,6 +21,9 @@ handling, grouping, escaping and HTML construction; it does not include HTTP,
 client/browser work, server CPU profiling or RSS measurement. Fixtures use no
 icons and no dynamic URL placeholders. There is no parsed-document cache in this
 comparison. Other work was running on the host, so wall-clock timings are noisy.
+The additional 20-entry/4-category check used the same fixture code on both
+revisions and was run with concurrent host activity; its allocation counts are
+more useful than its short wall-clock timings.
 
 Run on each revision with the same fixture:
 
@@ -33,6 +36,7 @@ Medians from three observations (decimal MB for allocated bytes):
 
 | Entries | Categories | Before ms/op | After ms/op | Before MB/op | After MB/op | Before allocs/op | After allocs/op |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 20 | 4 | 0.141 | 0.122 | 0.085 | 0.074 | 1,068 | 964 |
 | 1000 | 10 | 11.98 | 5.71 | 5.52 | 3.17 | 56,461 | 38,544 |
 | 1000 | 100 | 57.86 | 5.68 | 31.46 | 3.25 | 239,194 | 41,695 |
 | 10000 | 10 | 135.97 | 56.25 | 56.01 | 33.12 | 560,553 | 380,673 |

@@ -9,8 +9,11 @@ import (
 )
 
 func BenchmarkCategorizedNavigation(b *testing.B) {
-	for _, size := range []int{1000, 10000} {
-		for _, groups := range []int{10, 100} {
+	for _, size := range []int{20, 1000, 10000} {
+		for _, groups := range []int{4, 10, 100} {
+			if (size == 20 && groups != 4) || (size != 20 && groups == 4) {
+				continue
+			}
 			b.Run(fmt.Sprintf("entries-%d/categories-%d", size, groups), func(b *testing.B) {
 				b.Chdir(b.TempDir())
 				fixture := model.Bookmarks{}
