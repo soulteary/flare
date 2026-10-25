@@ -36,6 +36,11 @@ func TestCategoryNavigationHTTP(t *testing.T) {
 	require.Contains(t, output, ">Beta match<")
 	require.NotContains(t, output, ">Alpha match<")
 	require.Regexp(t, `name="?category"? value="?beta"?`, output)
+	// Category navigation links must not count as matching search results.
+	output = get("/?category=beta&search=no-such-entry")
+	require.Contains(t, output, "没有匹配的书签或应用")
+	require.NotContains(t, output, ">Beta match<")
+	require.Regexp(t, `name="?category"? value="?beta"?`, output)
 	output = get("/bookmarks?category=alpha")
 	require.Contains(t, output, ">Alpha match<")
 	require.NotContains(t, output, ">Beta match<")

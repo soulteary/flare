@@ -19,6 +19,7 @@ import (
 	"github.com/soulteary/flare/internal/fn"
 	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/pool"
+	searchcore "github.com/soulteary/flare/internal/search"
 	"github.com/soulteary/flare/internal/settings/weather"
 	weatherip "github.com/soulteary/funny-china-weather"
 )
@@ -93,6 +94,7 @@ func RegisterRouting(e *fiber.App) {
 		e.Get(define.RegularPages.Applications.Path, auth.AuthRequired, pageApplication)
 		e.Get(define.RegularPages.Bookmarks.Path, auth.AuthRequired, pageBookmark)
 	}
+	registerSearchSuggestions(e)
 }
 
 func pageHome(c fiber.Ctx) error {
@@ -154,17 +156,36 @@ func renderHelp(c fiber.Ctx) error {
 }
 
 func pageSearch(c fiber.Ctx) error {
-	var body struct {
-		Search string `form:"search"`
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
-	if err := c.Bind().Body(&body); err != nil {
-		return render(c, "")
+	query := c.FormValue("search")
+	target := c.FormValue("target")
+	// Missing target is the legacy POST contract, irrespective of the configured default.
+	if target == "" {
+		target = "local"
 	}
-	search := strings.TrimSpace(body.Search)
-	if len(search) > 50 {
-		return render(c, "")
+	opts := searchcore.Normalize(options.Search)
+	configMessage := ""
+	if validationErr := searchcore.Validate(opts); validationErr != nil {
+		opts = searchcore.Normalize(nil)
+		configMessage = "External search configuration is invalid; local search remains available."
+		if target != "local" {
+			return renderSearch(c, "", query, "local", configMessage)
+		}
 	}
-	return render(c, search)
+	result, err := searchcore.Resolve(opts, query, target)
+	if err != nil {
+		return renderSearch(c, "", query, target, err.Error())
+	}
+	if result.URL != "" {
+		c.Set("Referrer-Policy", "no-referrer")
+		c.Set("Cache-Control", "no-store")
+		c.Set("Location", result.URL)
+		return c.SendStatus(http.StatusSeeOther)
+	}
+	return renderSearch(c, result.Query, result.Query, result.Target, configMessage)
 }
 
 var _CACHE_WEATHER_DATA model.Weather
@@ -259,6 +280,10 @@ func pageApplication(c fiber.Ctx) error {
 }
 
 func render(c fiber.Ctx, filter string) error {
+	return renderSearch(c, filter, filter, "", "")
+}
+
+func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
@@ -300,14 +325,20 @@ func render(c fiber.Ctx, filter string) error {
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
-	m["Applications"] = GenerateApplicationsTemplate(filter, &options)
+	apps := GenerateApplicationsTemplate(filter, &options)
 	selected := c.Query("category")
 	if c.Method() == http.MethodPost {
 		selected = c.FormValue("category")
 	}
 	m["BookmarkCategory"] = selected
-	m["Bookmarks"] = GenerateBookmarkNavigationTemplate(filter, selected, c.Path(), &options)
-	m["SearchKeyword"] = template.HTML(searchKeyword)
+	bookmarks := GenerateBookmarkNavigationTemplate(filter, selected, c.Path(), &options)
+	m["Applications"] = apps
+	m["Bookmarks"] = bookmarks
+	if filter != "" {
+		m["SearchNoResults"] = (!options.ShowApps || !strings.Contains(string(apps), `class="app-item"`)) && (!options.ShowBookmarks || !strings.Contains(string(bookmarks), `class="bookmark"`))
+	}
+	m["SearchKeyword"] = searchKeyword
+	PopulateSearch(m, options, query, target, searchError)
 	m["HasKeyword"] = hasKeyword
 	m["ShowSearchComponent"] = options.ShowSearchComponent
 	// Keep the script-free homepage while avoiding an unsolicited mobile keyboard.
@@ -334,9 +365,8 @@ func renderClockPage(c fiber.Ctx, m map[string]any, options model.Application, g
 		options.Locale = "zh"
 	}
 	resolved := clock.Populate(m, options, time.Now(), greeting)
-	if resolved.Enhance && !define.AppFlags.DisableCSP {
-		c.Set("Content-Security-Policy", clock.Policy())
-	}
+	populateHybridSearch(m, options)
+	applyHomeScriptPolicy(c, resolved.Enhance, m["SearchHybrid"] == true)
 	return c.Status(http.StatusOK).Render("home.html", m)
 }
 

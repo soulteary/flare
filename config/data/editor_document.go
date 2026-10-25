@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/soulteary/flare/config/model"
@@ -28,6 +29,25 @@ type EditorValidationError struct {
 }
 
 func (e *EditorValidationError) Error() string { return e.Message }
+
+// EditorSaveError identifies failed replacement and whether manual recovery is needed.
+// RecoveryPath contains the original pair of files, not a new editor draft.
+type EditorSaveError struct {
+	RecoveryPath     string
+	RecoveryRequired bool
+	Cause            error
+}
+
+// Error retains an actionable recovery location for authenticated editor users.
+func (e *EditorSaveError) Error() string {
+	if e.RecoveryRequired {
+		return fmt.Sprintf("保存失败且恢复未完成，可能存在部分写入；原文件保存在 %s：%v", e.RecoveryPath, e.Cause)
+	}
+	return fmt.Sprintf("保存失败，已恢复已替换文件；恢复副本保存在 %s：%v", e.RecoveryPath, e.Cause)
+}
+
+// Unwrap preserves the replacement failure and any rollback failures for logging.
+func (e *EditorSaveError) Unwrap() error { return e.Cause }
 
 func editorVersion(apps, bookmarks []byte) string {
 	raw := append([]byte(fmt.Sprintf("%d:", len(apps))), apps...)
@@ -127,6 +147,13 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	if next.Version == "" || next.Version != before.Version {
 		return EditorDocument{}, ErrBookmarkConflict
 	}
+	// Avoid rewriting untouched collections: YAML comments and formatting are not
+	// represented by the editor document, so re-encoding would discard them.
+	appsUnchanged := slices.Equal(next.Apps, before.Apps)
+	bookmarksUnchanged := slices.Equal(next.Categories, before.Categories) && slices.Equal(next.Bookmarks, before.Bookmarks)
+	if appsUnchanged && bookmarksUnchanged {
+		return before, nil
+	}
 	output := [2][]byte{}
 	output[0], err = yaml.Marshal(model.Bookmarks{Items: next.Apps})
 	if err != nil {
@@ -135,6 +162,12 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	output[1], err = yaml.Marshal(model.Bookmarks{Categories: next.Categories, Items: next.Bookmarks})
 	if err != nil {
 		return EditorDocument{}, err
+	}
+	if appsUnchanged {
+		output[0] = raw[0]
+	}
+	if bookmarksUnchanged {
+		output[1] = raw[1]
 	}
 	type stagedFile struct {
 		name, path, stage string
@@ -219,9 +252,9 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 			invalidateFileCache("apps")
 			invalidateFileCache("bookmarks")
 			if len(restoreErrors) > 0 {
-				return EditorDocument{}, fmt.Errorf("保存失败且恢复未完成，可能存在部分写入；原文件保存在 %s：%w", recovery, errors.Join(restoreErrors...))
+				return EditorDocument{}, &EditorSaveError{RecoveryPath: recovery, RecoveryRequired: true, Cause: errors.Join(append([]error{err}, restoreErrors...)...)}
 			}
-			return EditorDocument{}, fmt.Errorf("保存失败，已恢复已替换文件；恢复副本保存在 %s：%w", recovery, err)
+			return EditorDocument{}, &EditorSaveError{RecoveryPath: recovery, Cause: err}
 		}
 		replaced = append(replaced, file)
 	}

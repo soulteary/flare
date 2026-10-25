@@ -2,7 +2,7 @@ name: Clock acceptance
 
 on:
   pull_request:
-    branches: [main, feat/editor-state, feat/editor-list]
+    branches: [main, feat/editor-state, feat/editor-list, 'feat/search-*']
   push:
     branches: [main]
 
@@ -49,6 +49,8 @@ jobs:
         run: node --test tests/clock/clock.test.cjs
       - name: Editor state regressions
         run: node --test tests/editor/state.test.cjs
+      - name: Mobile editor focus and save recovery regressions
+        run: node --test tests/editor/mobile-ui.test.cjs
       - name: Production HTTP and browser acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
@@ -62,6 +64,11 @@ jobs:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
           EDITOR_SCREENSHOT_DIR: ${{ runner.temp }}/flare-editor-screenshots
         run: node tests/editor/browser.cjs
+      - name: Hybrid search browser acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+          NODE_PATH: ${{ github.workspace }}/tests/clock/node_modules
+        run: node tests/search/hybrid.cjs
       - name: Upload editor view screenshots
         if: always()
         uses: actions/upload-artifact@v6
@@ -73,6 +80,8 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/editor/legacy.browser.cjs
+      - name: Icon picker browser acceptance
+        run: node tests/editor/icon-picker.browser.cjs
       - name: Minimal scratch-container timezone acceptance
         shell: bash
         run: |

@@ -71,6 +71,9 @@ func TestEditorDocumentRollbackAndRecovery(t *testing.T) {
 		return os.Rename(src, dest)
 	})
 	require.ErrorContains(t, err, "已恢复")
+	var recovery *EditorSaveError
+	require.ErrorAs(t, err, &recovery)
+	require.False(t, recovery.RecoveryRequired)
 	apps, err := os.ReadFile("apps.yml")
 	require.NoError(t, err)
 	require.Equal(t, beforeApps, apps)
@@ -103,6 +106,7 @@ func TestEditorDocumentEmptyAndPreflightFailure(t *testing.T) {
 	require.NoError(t, os.WriteFile(".flare-editor-recovery/sentinel", []byte("keep"), 0600))
 	require.NoError(t, os.RemoveAll(".flare-editor-recovery"))
 	require.NoError(t, os.WriteFile(".flare-editor-recovery", []byte("blocked"), 0600))
+	doc.Apps = []model.Bookmark{{Name: "Changed", URL: "http://nas"}}
 	_, err = CommitEditorDocument(doc)
 	require.Error(t, err)
 	after, err := os.ReadFile("apps.yml")
@@ -127,6 +131,11 @@ func TestEditorDocumentReportsIncompleteRecovery(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "恢复未完成")
 	require.ErrorContains(t, err, "可能存在部分写入")
+	require.ErrorContains(t, err, "simulated failure with blocked recovery")
+	var recovery *EditorSaveError
+	require.ErrorAs(t, err, &recovery)
+	require.True(t, recovery.RecoveryRequired)
+	require.NotEmpty(t, recovery.RecoveryPath)
 	copies, globErr := filepath.Glob(".flare-editor-recovery/save-*/apps.yml")
 	require.NoError(t, globErr)
 	require.Len(t, copies, 1)
@@ -165,4 +174,46 @@ func TestEditorDocumentPreservesImplicitDefaultCategory(t *testing.T) {
 			require.NotContains(t, string(written), "category:")
 		})
 	}
+}
+
+// Unrelated edits must not destroy comments or rewrite the other collection.
+func TestEditorDocumentPreservesUnchangedYAML(t *testing.T) {
+	_ = editorFixture(t)
+	require.NoError(t, os.WriteFile("bookmarks.yml", []byte("# Preserve this comment\ncategories:\n- id: stable-category\n  title: Original\nlinks:\n- name: Bookmark\n  link: custom://server/a?x=1&y=2#f\n  category: stable-category\n"), 0600))
+	doc, err := EditorSnapshot()
+	require.NoError(t, err)
+	raw, err := os.ReadFile("bookmarks.yml")
+	require.NoError(t, err)
+	doc.Apps[0].Desc = "Application edit only"
+	saved, err := CommitEditorDocument(doc)
+	require.NoError(t, err)
+	after, err := os.ReadFile("bookmarks.yml")
+	require.NoError(t, err)
+	require.Equal(t, raw, after)
+	require.NotEqual(t, doc.Version, saved.Version)
+}
+
+// A semantic no-op must neither replace files nor manufacture a new revision.
+func TestEditorDocumentNoopPreservesExactBytesAndRevision(t *testing.T) {
+	doc := editorFixture(t)
+	beforeApps, err := os.ReadFile("apps.yml")
+	require.NoError(t, err)
+	beforeBookmarks, err := os.ReadFile("bookmarks.yml")
+	require.NoError(t, err)
+	saved, err := commitEditorDocument(doc, func(string, string) error {
+		t.Fatal("unchanged documents must not replace files")
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, doc.Version, saved.Version)
+	apps, err := os.ReadFile("apps.yml")
+	require.NoError(t, err)
+	bookmarks, err := os.ReadFile("bookmarks.yml")
+	require.NoError(t, err)
+	require.Equal(t, beforeApps, apps)
+	require.Equal(t, beforeBookmarks, bookmarks)
+	// Even no-op submissions must not bypass stale-version detection.
+	doc.Version = "old"
+	_, err = CommitEditorDocument(doc)
+	require.ErrorIs(t, err, ErrBookmarkConflict)
 }

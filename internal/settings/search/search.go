@@ -1,14 +1,18 @@
 package search
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v3"
-
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/pool"
+	searchcore "github.com/soulteary/flare/internal/search"
 )
 
 func RegisterRouting(e *fiber.App) {
@@ -17,15 +21,107 @@ func RegisterRouting(e *fiber.App) {
 }
 
 func updateSearchOptions(c fiber.Ctx) error {
-	var body struct {
-		ShowSearchComponent     bool `form:"show-search-component"`
-		DisabledSearchAutoFocus bool `form:"disabled-search-auto-focus"`
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
-	if err := c.Bind().Body(&body); err != nil {
-		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
+	options.ShowSearchComponent = c.FormValue("show-search-component") == "1"
+	options.DisabledSearchAutoFocus = c.FormValue("disabled-search-auto-focus") == "1"
+	if c.FormValue("engine-count") == "" {
+		if saveErr := data.UpdateSearchOptions(options.ShowSearchComponent, options.DisabledSearchAutoFocus, options.Search); saveErr != nil {
+			return renderSettings(c, options, "Unable to save search settings: "+saveErr.Error(), false)
+		}
+		return renderSettings(c, options, "", true)
 	}
-	data.UpdateSearch(body.ShowSearchComponent, body.DisabledSearchAutoFocus)
-	return pageSearch(c)
+	opts, err := parseSearchForm(c)
+	options.Search = &opts
+	if err != nil {
+		return renderSettings(c, options, err.Error(), false)
+	}
+	action := c.FormValue("action", "save")
+	// Editing actions change the working form only. Save explicitly commits all rows.
+	switch {
+	case action == "add":
+		if len(opts.Engines) >= 32 {
+			return renderSettings(c, options, "At most 32 search engines are allowed", false)
+		}
+		opts.Engines = append(opts.Engines, model.SearchEngine{Enabled: true})
+	case strings.HasPrefix(action, "preset:"):
+		id := strings.TrimPrefix(action, "preset:")
+		for _, preset := range searchcore.Presets() {
+			if preset.ID == id {
+				exists := false
+				for _, e := range opts.Engines {
+					if e.ID == id {
+						exists = true
+					}
+				}
+				if !exists {
+					if len(opts.Engines) >= 32 {
+						return renderSettings(c, options, "At most 32 search engines are allowed", false)
+					}
+					opts.Engines = append(opts.Engines, preset)
+				}
+			}
+		}
+	case strings.HasPrefix(action, "delete:") || strings.HasPrefix(action, "up:") || strings.HasPrefix(action, "down:"):
+		parts := strings.SplitN(action, ":", 2)
+		index, e := strconv.Atoi(parts[1])
+		if e != nil || index < 0 || index >= len(opts.Engines) {
+			return renderSettings(c, options, "Invalid engine row", false)
+		}
+		switch parts[0] {
+		case "delete":
+			opts.Engines = append(opts.Engines[:index], opts.Engines[index+1:]...)
+		case "up":
+			if index > 0 {
+				opts.Engines[index-1], opts.Engines[index] = opts.Engines[index], opts.Engines[index-1]
+			}
+		case "down":
+			if index+1 < len(opts.Engines) {
+				opts.Engines[index+1], opts.Engines[index] = opts.Engines[index], opts.Engines[index+1]
+			}
+		}
+	case strings.HasPrefix(action, "test:"):
+		index, e := strconv.Atoi(strings.TrimPrefix(action, "test:"))
+		if e != nil || index < 0 || index >= len(opts.Engines) {
+			return renderSettings(c, options, "Invalid engine row", false)
+		}
+		target, e := searchcore.BuildURL(opts.Engines[index], "Flare search test")
+		if e != nil {
+			return renderSettings(c, options, e.Error(), false)
+		}
+		c.Set("Referrer-Policy", "no-referrer")
+		c.Set("Cache-Control", "no-store")
+		c.Set("Location", target)
+		return c.SendStatus(http.StatusSeeOther)
+	case action == "save":
+		if err := searchcore.Validate(opts); err != nil {
+			return renderSettings(c, options, err.Error(), false)
+		}
+		if err := data.UpdateSearchOptions(options.ShowSearchComponent, options.DisabledSearchAutoFocus, &opts); err != nil {
+			return renderSettings(c, options, "Unable to save search settings: "+err.Error(), false)
+		}
+		options.Search = &opts
+		return renderSettings(c, options, "", true)
+	default:
+		return renderSettings(c, options, "Unknown form action", false)
+	}
+	options.Search = &opts
+	return renderSettings(c, options, "", false)
+}
+
+func parseSearchForm(c fiber.Ctx) (model.SearchOptions, error) {
+	opts := model.SearchOptions{Mode: c.FormValue("search-mode", "select"), DefaultTarget: c.FormValue("default-target", "local"), OpenNewTab: c.FormValue("open-new-tab") == "1", EnableKeywords: c.FormValue("enable-keywords") == "1"}
+	count, err := strconv.Atoi(c.FormValue("engine-count", "0"))
+	if err != nil || count < 0 || count > 32 {
+		return opts, fmt.Errorf("search supports at most 32 engines")
+	}
+	for i := 0; i < count; i++ {
+		key := "engine-" + strconv.Itoa(i) + "-"
+		opts.Engines = append(opts.Engines, model.SearchEngine{ID: c.FormValue(key + "id"), Name: c.FormValue(key + "name"), URLTemplate: c.FormValue(key + "url"), Keyword: c.FormValue(key + "keyword"), Enabled: c.FormValue(key+"enabled") == "1"})
+	}
+	return opts, nil
 }
 
 func pageSearch(c fiber.Ctx) error {
@@ -33,6 +129,10 @@ func pageSearch(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
+	return renderSettings(c, options, "", false)
+}
+
+func renderSettings(c fiber.Ctx, options model.Application, message string, saved bool) error {
 	locale := options.Locale
 	if locale == "" {
 		locale = "zh"
@@ -49,5 +149,17 @@ func pageSearch(c fiber.Ctx) error {
 	m["ShowSearchComponent"] = options.ShowSearchComponent
 	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus
 	m["OptionTitle"] = options.Title
+	opts := searchcore.Normalize(options.Search)
+	m["SearchOptions"] = opts
+	defaultPresent := opts.DefaultTarget == "local"
+	for _, engine := range opts.Engines {
+		if engine.ID == opts.DefaultTarget {
+			defaultPresent = true
+		}
+	}
+	m["SearchDefaultUnavailable"] = !defaultPresent
+	m["SearchPresets"] = searchcore.Presets()
+	m["SearchError"] = message
+	m["SearchSaved"] = saved
 	return c.Status(http.StatusOK).Render("settings.html", m)
 }

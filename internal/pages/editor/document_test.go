@@ -3,6 +3,7 @@ package editor
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -49,4 +50,32 @@ func TestEditorDocumentHTTP(t *testing.T) {
 	rec = httptest.NewRecorder()
 	serveTransferHTTP(t, app, rec, req)
 	require.NotEqual(t, 200, rec.Code)
+}
+
+func TestEditorSaveFailureRecoveryMetadata(t *testing.T) {
+	for _, recoveryRequired := range []bool{false, true} {
+		t.Run(map[bool]string{false: "restored", true: "manual recovery"}[recoveryRequired], func(t *testing.T) {
+			app := fiber.New()
+			cause := errors.New("replacement failed")
+			app.Post("/failure", func(c fiber.Ctx) error {
+				return editorSaveFailure(c, &data.EditorSaveError{RecoveryPath: ".flare-editor-recovery/save-test", RecoveryRequired: recoveryRequired, Cause: cause})
+			})
+			rec := httptest.NewRecorder()
+			serveTransferHTTP(t, app, rec, httptest.NewRequest(http.MethodPost, "/failure", nil))
+			require.Equal(t, http.StatusInternalServerError, rec.Code)
+			var result struct {
+				Saved            bool   `json:"saved"`
+				Code             string `json:"code"`
+				RecoveryRequired bool   `json:"recoveryRequired"`
+				RecoveryPath     string `json:"recoveryPath"`
+				Error            string `json:"error"`
+			}
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
+			require.False(t, result.Saved)
+			require.Equal(t, recoveryRequired, result.RecoveryRequired)
+			require.Equal(t, ".flare-editor-recovery/save-test", result.RecoveryPath)
+			require.Contains(t, result.Error, cause.Error())
+			require.Equal(t, map[bool]string{false: "save_failed", true: "recovery_required"}[recoveryRequired], result.Code)
+		})
+	}
 }

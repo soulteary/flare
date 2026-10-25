@@ -1,8 +1,11 @@
 package data
 
 import (
+	"fmt"
+
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/clock"
+	"github.com/soulteary/flare/internal/search"
 )
 
 func GetThemeName() string {
@@ -57,6 +60,29 @@ func UpdateSearch(showSearchComponent bool, disabledSearchAutoFocus bool) bool {
 	options.ShowSearchComponent = showSearchComponent
 	options.DisabledSearchAutoFocus = disabledSearchAutoFocus
 	return saveAppConfigToYamlFile("config", options)
+}
+
+// UpdateSearchOptions validates and atomically saves search settings without changing other settings.
+func UpdateSearchOptions(showSearchComponent, disabledSearchAutoFocus bool, update *model.SearchOptions) error {
+	var next *model.SearchOptions
+	if update != nil {
+		normalized := search.Normalize(update)
+		if err := search.Validate(normalized); err != nil {
+			return err
+		}
+		next = &normalized
+	}
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		return err
+	}
+	options.ShowSearchComponent = showSearchComponent
+	options.DisabledSearchAutoFocus = disabledSearchAutoFocus
+	options.Search = next
+	if !saveAppConfigToYamlFile("config", options) {
+		return fmt.Errorf("could not save search settings")
+	}
+	return nil
 }
 
 func GetAllSettingsOptions() (model.Application, error) {

@@ -2,6 +2,7 @@ package model
 
 // Application Data Model
 type Application struct {
+	Search                  *SearchOptions   `yaml:"Search,omitempty"`
 	Homepage                *HomepageOptions `yaml:"Homepage,omitempty"`
 	Clock                   *ClockOptions    `yaml:"Clock,omitempty"`
 	Title                   string           `yaml:"Title"`
