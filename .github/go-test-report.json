@@ -1,15 +1,15 @@
 {
   "schema_version": "1.0",
   "tests": {
-    "total": 117,
-    "passed": 117,
+    "total": 141,
+    "passed": 141,
     "failed": 0,
     "skipped": 0
   },
   "coverage": {
-    "covered_statements": 1266,
-    "total_statements": 2673,
-    "percentage": 47.36,
+    "covered_statements": 1434,
+    "total_statements": 2847,
+    "percentage": 50.37,
     "threshold": 0
   },
   "packages": [
@@ -37,16 +37,16 @@
     {
       "name": "cmd",
       "status": "pass",
-      "tests": 24,
+      "tests": 25,
       "failed": 0,
-      "coverage": 92.23
+      "coverage": 92.68
     },
     {
       "name": "config/data",
       "status": "pass",
-      "tests": 22,
+      "tests": 26,
       "failed": 0,
-      "coverage": 82
+      "coverage": 84.19
     },
     {
       "name": "config/define",
@@ -67,7 +67,7 @@
       "status": "pass",
       "tests": 30,
       "failed": 0,
-      "coverage": 78.82
+      "coverage": 87.36
     },
     {
       "name": "internal/bookmarks",
@@ -91,6 +91,13 @@
       "coverage": 71.43
     },
     {
+      "name": "internal/formvalue",
+      "status": "pass",
+      "tests": 1,
+      "failed": 0,
+      "coverage": 100
+    },
+    {
       "name": "internal/i18n",
       "status": "no_tests",
       "tests": 0,
@@ -100,9 +107,9 @@
     {
       "name": "internal/logger",
       "status": "pass",
-      "tests": 1,
+      "tests": 6,
       "failed": 0,
-      "coverage": 68.42
+      "coverage": 72.16
     },
     {
       "name": "internal/misc/deprecated",
@@ -128,9 +135,9 @@
     {
       "name": "internal/pages/editor",
       "status": "pass",
-      "tests": 2,
+      "tests": 3,
       "failed": 0,
-      "coverage": 55.95
+      "coverage": 58.72
     },
     {
       "name": "internal/pages/guide",
@@ -144,7 +151,7 @@
       "status": "pass",
       "tests": 2,
       "failed": 0,
-      "coverage": 0.5
+      "coverage": 0.49
     },
     {
       "name": "internal/pool",
@@ -158,14 +165,14 @@
       "status": "pass",
       "tests": 3,
       "failed": 0,
-      "coverage": 92.11
+      "coverage": 92.59
     },
     {
       "name": "internal/resources/mdi",
       "status": "pass",
       "tests": 6,
       "failed": 0,
-      "coverage": 91.67
+      "coverage": 89.47
     },
     {
       "name": "internal/resources/templates",
@@ -177,9 +184,9 @@
     {
       "name": "internal/server",
       "status": "pass",
-      "tests": 8,
+      "tests": 14,
       "failed": 0,
-      "coverage": 48.33
+      "coverage": 56.82
     },
     {
       "name": "internal/settings",
@@ -211,10 +218,10 @@
     },
     {
       "name": "internal/settings/theme",
-      "status": "no_tests",
-      "tests": 0,
+      "status": "pass",
+      "tests": 1,
       "failed": 0,
-      "coverage": 0
+      "coverage": 90
     },
     {
       "name": "internal/settings/weather",
@@ -225,10 +232,10 @@
     },
     {
       "name": "tools/baseline",
-      "status": "no_tests",
-      "tests": 0,
+      "status": "pass",
+      "tests": 5,
       "failed": 0,
-      "coverage": 0
+      "coverage": 21.56
     }
   ],
   "failures": null

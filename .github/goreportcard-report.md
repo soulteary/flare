@@ -1,11 +1,11 @@
 # Go Report Card
 
-**Grade: A+** (99.1%)
+**Grade: A+** (99.0%)
 
 | Metric | Value |
 | ------ | ----- |
-| Files | 103 |
-| Issues | 15 |
+| Files | 122 |
+| Issues | 17 |
 
 ## Checks
 
@@ -14,53 +14,41 @@
 | go_vet | 100% |
 | gofmt | 100% |
 | ineffassign | 100% |
-| gocyclo | 92% |
+| gocyclo | 91% |
 | license | 100% |
-| misspell | 93% |
+| misspell | 94% |
 
 ## Issues
 
 ### gocyclo
 
+- `internal/logger/request_handler.go`
+  - Line 52: cyclomatic complexity 25 for function NewFiberWithConfig
+- `internal/resources/mdi/mdi_test.go`
+  - Line 89: cyclomatic complexity 22 for function TestIconRoute_ServesSVGAndHTTPRequests
 - `internal/pages/home/application.go`
   - Line 18: cyclomatic complexity 21 for function GenerateApplicationsTemplate
-- `internal/pages/editor/transfer_test.go`
-  - Line 21: cyclomatic complexity 21 for function TestTransferHTTP
-- `internal/logger/echo_handler.go`
-  - Line 36: cyclomatic complexity 20 for function NewEchoWithConfig
 - `config/data/clock_test.go`
   - Line 9: cyclomatic complexity 20 for function TestClockSettingsPersistenceAndValidation
-- `tools/baseline/main.go`
-  - Line 266: cyclomatic complexity 19 for function main
+- `internal/logger/request_handler_test.go`
+  - Line 134: cyclomatic complexity 36 for function TestNewFiberWithConfig_RequestOutcomes
+- `internal/pages/editor/transfer_test.go`
+  - Line 22: cyclomatic complexity 21 for function TestTransferHTTP
+- `internal/auth/formvalue_test.go`
+  - Line 17: cyclomatic complexity 17 for function TestLoginFormValuePrecedence
+- `internal/formvalue/formvalue.go`
+  - Line 16: cyclomatic complexity 16 for function Get
 - `internal/bookmarks/transfer.go`
   - Line 175: cyclomatic complexity 40 for function Build
   - Line 62: cyclomatic complexity 29 for function parseHTML
   - Line 146: cyclomatic complexity 22 for function URLKey
   - Line 19: cyclomatic complexity 16 for function Parse
-- `internal/logger/echo_handler_test.go`
-  - Line 28: cyclomatic complexity 29 for function TestNewEchoWithConfig_RequestOutcomes
-- `internal/resources/mdi/mdi_test.go`
-  - Line 77: cyclomatic complexity 22 for function TestIconRoute_ServesSVGAndHTTPRequests
+- `tools/baseline/main.go`
+  - Line 293: cyclomatic complexity 25 for function main
+  - Line 155: cyclomatic complexity 22 for function runScenario
 
 ### misspell
 
-- `internal/resources/mdi/mdi-cheat-sheets/index.html`
-  - Line 476: "stange" is a misspelling of "strange"
-- `config/define/style.go`
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
-  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
 - `embed/assets/css/base.css`
   - Line 91: "bookmakrs" is a misspelling of "bookmarks"
 - `embed/assets/css/home/bookmarks.css`
@@ -77,12 +65,39 @@
   - Line 58: "bookmakrs" is a misspelling of "bookmarks"
   - Line 62: "bookmakrs" is a misspelling of "bookmarks"
   - Line 67: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 73: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 74: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 75: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 76: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 77: "bookmakrs" is a misspelling of "bookmarks"
+- `config/define/style.go`
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
+  - Line 3: "bookmakrs" is a misspelling of "bookmarks"
 - `embed/templates/home.html`
   - Line 89: "bookmakrs" is a misspelling of "bookmarks"
 - `internal/resources/templates/html/home.html`
   - Line 17: "bookmakrs" is a misspelling of "bookmarks"
 - `internal/resources/mdi/mdi-cheat-sheets/css/materialdesignicons.min.css`
   - Line 1: "stange" is a misspelling of "strange"
+- `internal/resources/mdi/mdi-cheat-sheets/index.html`
+  - Line 476: "stange" is a misspelling of "strange"
 
 ---
 
