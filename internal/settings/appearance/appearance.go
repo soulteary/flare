@@ -46,6 +46,13 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
 	}
 	var update model.Application
+	if value := formvalue.Get(c, "mobile-bookmark-layout"); value != "" {
+		update.Homepage = &model.HomepageOptions{MobileBookmarkLayout: value}
+		if err := update.Homepage.Validate(); err != nil {
+			return c.Status(http.StatusBadRequest).SendString(err.Error())
+		}
+	}
+
 	// Missing fields from older forms must not erase existing clock preferences.
 	if formvalue.Get(c, "clock-timezone-mode") != "" {
 		dynamic, seconds := formvalue.Get(c, "clock-dynamic"), formvalue.Get(c, "clock-seconds")
@@ -102,6 +109,10 @@ func pageAppearance(c fiber.Ctx) error {
 	m["PageAppearance"] = define.GetAppBodyStyle()
 	m["SettingPages"] = define.SettingPages
 	m["SettingsURI"] = define.RegularPages.Settings.Path
+	m["OptionMobileBookmarkLayout"] = "single"
+	if options.Homepage != nil && options.Homepage.MobileBookmarkLayout == "compact" {
+		m["OptionMobileBookmarkLayout"] = "compact"
+	}
 	m["OptionTitle"] = options.Title
 	m["OptionFooter"] = template.HTML(options.Footer)
 	m["OptionOpenAppNewTab"] = options.OpenAppNewTab

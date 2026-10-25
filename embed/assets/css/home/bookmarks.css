@@ -76,3 +76,9 @@
   #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark { min-height: 44px; padding: 8px 0; line-height: 1.6; }
   #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark:hover { padding-left: 0; }
 }
+
+/* Opt-in newspaper flow preserves DOM order and keeps each group together. */
+@media (min-width: 360px) and (max-width: 768px) {
+ .mobile-bookmarks-compact #container-bookmakrs .bookmark-groups { column-count: 2; column-gap: 16px; }
+ .mobile-bookmarks-compact #container-bookmakrs .bookmark-group-container { break-inside: avoid; page-break-inside: avoid; }
+}

@@ -98,5 +98,9 @@
   "clock_preview": "当前时间预览",
   "clock_preview_error": "无法预览，请使用有效的 IANA 时区；服务器 Local 时区请显式配置 TZ。",
   "clock_help": "实时更新使用访问设备的系统时间，不提供网络校时。设备时区模式需要 JavaScript；禁用脚本时保留服务器生成的时间。预览在修改选项时更新。",
-  "clock_noscript": "设备时区需要 JavaScript，当前显示服务器生成的时间。"
+  "clock_noscript": "设备时区需要 JavaScript，当前显示服务器生成的时间。",
+  "mobile_bookmark_layout": "手机书签布局",
+  "mobile_bookmark_single": "单列 · 按数据顺序",
+  "mobile_bookmark_compact": "双列紧凑布局",
+  "mobile_bookmark_help": "双列先从上到下、再从左到右阅读；小于360 CSS像素时恢复单列，不改变已保存的分类顺序。"
 }

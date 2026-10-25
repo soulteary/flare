@@ -282,7 +282,7 @@ func render(c fiber.Ctx, filter string) error {
 		}
 	}
 	setCSPHeader(c)
-	bodyClassName := ""
+	bodyClassName := options.Homepage.Classes()
 	if !options.KeepLetterCase {
 		bodyClassName += "app-content-uppercase "
 	}

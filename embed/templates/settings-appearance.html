@@ -97,6 +97,14 @@
             {{ end }}
         </div>
 
+        <div class="form-group">
+            <label for="mobile-bookmark-layout">{{ T .Locale "mobile_bookmark_layout" }}</label>
+            <select name="mobile-bookmark-layout" id="mobile-bookmark-layout">
+                <option value="single" {{ if eq .OptionMobileBookmarkLayout "single" }}selected{{ end }}>{{ T .Locale "mobile_bookmark_single" }}</option>
+                <option value="compact" {{ if eq .OptionMobileBookmarkLayout "compact" }}selected{{ end }}>{{ T .Locale "mobile_bookmark_compact" }}</option>
+            </select>
+            <p class="help-text">{{ T .Locale "mobile_bookmark_help" }}</p>
+        </div>
         <h2>{{ T .Locale "module_settings" }}</h2>
 
         <div class="form-group">
