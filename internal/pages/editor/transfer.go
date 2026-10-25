@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -115,7 +116,11 @@ func previewTransfer(c *echo.Context) error {
 		return transferError(c, http.StatusBadRequest, fmt.Errorf("无法读取文件（最大 8 MiB）: %w", err))
 	}
 	if r.MultipartForm != nil {
-		defer func() { _ = r.MultipartForm.RemoveAll() }()
+		defer func() {
+			if cleanupErr := r.MultipartForm.RemoveAll(); cleanupErr != nil {
+				log.Printf("cleaning bookmark upload: %v", cleanupErr)
+			}
+		}()
 	}
 	f, _, err := r.FormFile("file")
 	if err != nil {

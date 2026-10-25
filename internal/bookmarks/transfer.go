@@ -233,8 +233,10 @@ func Build(current model.Bookmarks, entries []Entry, options Options) (Plan, err
 			continue
 		}
 		if strings.TrimSpace(b.Name) == "" {
-			u, _ := url.Parse(b.URL)
-			b.Name = u.Hostname()
+			b.Name = ""
+			if u, parseErr := url.Parse(b.URL); parseErr == nil {
+				b.Name = u.Hostname()
+			}
 			if b.Name == "" {
 				b.Name = b.URL
 			}
