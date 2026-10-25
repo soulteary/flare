@@ -21,6 +21,22 @@ var requestAttrsPool = sync.Pool{
 	},
 }
 
+func acquireRequestAttrs(pool *sync.Pool) *[]slog.Attr {
+	attrs, ok := pool.Get().(*[]slog.Attr)
+	if !ok || attrs == nil {
+		fresh := make([]slog.Attr, 0, requestAttrsCap)
+		attrs = &fresh
+	}
+	*attrs = (*attrs)[:0]
+	return attrs
+}
+
+func releaseRequestAttrs(pool *sync.Pool, attrs *[]slog.Attr) {
+	clear(*attrs)
+	*attrs = (*attrs)[:0]
+	pool.Put(attrs)
+}
+
 type LoggerConfig struct {
 	// Successful health checks and static assets may be skipped. Errors and
 	// HTTP 4xx/5xx responses are always logged.
@@ -60,8 +76,7 @@ func NewFiberWithConfig(logger *slog.Logger, config LoggerConfig) fiber.Handler 
 				}
 			}
 		}
-		attrs := requestAttrsPool.Get().(*[]slog.Attr)
-		*attrs = (*attrs)[:0]
+		attrs := acquireRequestAttrs(&requestAttrsPool)
 		// Fiber strings can alias pooled request buffers. Copy every retained
 		// string before the successful request log moves to its goroutine.
 		*attrs = append(*attrs,
@@ -94,14 +109,17 @@ func NewFiberWithConfig(logger *slog.Logger, config LoggerConfig) fiber.Handler 
 		}
 		write := func(ctx context.Context) {
 			logger.LogAttrs(ctx, level, message, (*attrs)...)
-			clear(*attrs)
-			*attrs = (*attrs)[:0]
-			requestAttrsPool.Put(attrs)
+			releaseRequestAttrs(&requestAttrsPool, attrs)
 		}
+		logContext := c.Context()
 		if err == nil && status >= http.StatusOK && status < http.StatusMultipleChoices {
-			go write(context.Background())
+			// Context() supplies the independent user context, unlike Fiber's
+			// pooled Ctx/RequestCtx. Retain its values while allowing the log to
+			// finish after request cancellation, without capturing c itself.
+			logContext = context.WithoutCancel(logContext)
+			go write(logContext)
 		} else {
-			write(c.Context())
+			write(logContext)
 		}
 		return err
 	}

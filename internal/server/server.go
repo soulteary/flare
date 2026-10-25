@@ -19,13 +19,13 @@ func StartDaemon(AppFlags *model.Flags) {
 	defer stop()
 
 	log := logger.GetLogger()
-	router, err := NewRouter(AppFlags)
+	srv, err := newRouter(AppFlags)
 	if err != nil {
 		log.Error("路由初始化失败", "error", err.Error())
 		os.Exit(1)
 	}
 
-	srv := router.(*fiberRouter)
+	// #nosec G102 -- Container port publishing and LAN access require all interfaces; deployments control exposure.
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(AppFlags.Port))
 	if err != nil {
 		log.Error("程序启动出错：", slog.Any("error", err))

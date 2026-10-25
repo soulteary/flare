@@ -132,6 +132,14 @@ type fiberRouter struct {
 }
 
 func NewRouter(flags *model.Flags) (http.Handler, error) {
+	router, err := newRouter(flags)
+	if err != nil {
+		return nil, err
+	}
+	return router, nil
+}
+
+func newRouter(flags *model.Flags) (*fiberRouter, error) {
 	app, err := NewFiberApp(flags)
 	if err != nil {
 		return nil, err

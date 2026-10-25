@@ -112,8 +112,9 @@ func CheckUserIsLogin(c fiber.Ctx) bool {
 func GetUserName(c fiber.Ctx) string {
 	if !define.AppFlags.DisableLoginMode {
 		if state, err := getSession(c); err == nil {
-			value, _ := state.session.Values[SESSION_KEY_USER_NAME].(string)
-			return value
+			if value, ok := state.session.Values[SESSION_KEY_USER_NAME].(string); ok {
+				return value
+			}
 		}
 	}
 	return ""
@@ -122,8 +123,9 @@ func GetUserName(c fiber.Ctx) string {
 func GetUserLoginDate(c fiber.Ctx) string {
 	if !define.AppFlags.DisableLoginMode {
 		if state, err := getSession(c); err == nil {
-			value, _ := state.session.Values[SESSION_KEY_LOGIN_DATE].(string)
-			return value
+			if value, ok := state.session.Values[SESSION_KEY_LOGIN_DATE].(string); ok {
+				return value
+			}
 		}
 	}
 	return ""
