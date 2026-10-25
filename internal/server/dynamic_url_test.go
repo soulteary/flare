@@ -68,6 +68,7 @@ func TestEncodedDynamicNavigationPreservesSourceAndAllowlist(t *testing.T) {
 	cases := []struct{ target, expected string }{
 		{"{origin}/target?q=one%20two#fragment", "http://source.example:5005/target?q=one%20two#fragment"},
 		{"http://{host}/target", "http://source.example:5005/target"},
+		{"https://example.com/?q=~~~", "https://example.com/?q=~~~"},
 		{"https://target.example{pathname}?fixed=1", "https://target.example/applications?fixed=1"},
 		{"{href}#saved", "http://source.example:5005/applications?source=1#saved"},
 	}
