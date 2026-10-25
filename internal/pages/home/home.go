@@ -345,7 +345,8 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["Applications"] = apps
 	m["Bookmarks"] = bookmarks
 	if filter != "" {
-		m["SearchNoResults"] = (!options.ShowApps || !strings.Contains(string(apps), `class="app-item"`)) && (!options.ShowBookmarks || !strings.Contains(string(bookmarks), `class="bookmark"`))
+		dataFailed := strings.Contains(string(apps), `class="navigation-data-error"`) || strings.Contains(string(bookmarks), `class="navigation-data-error"`)
+		m["SearchNoResults"] = !dataFailed && (!options.ShowApps || !strings.Contains(string(apps), `class="app-item"`)) && (!options.ShowBookmarks || !strings.Contains(string(bookmarks), `class="bookmark"`))
 	}
 	m["SearchKeyword"] = searchKeyword
 	PopulateSearch(m, options, query, target, searchError)

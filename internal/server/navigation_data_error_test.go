@@ -28,7 +28,7 @@ func TestHiddenNavigationModulesDoNotLoadOrCreateData(t *testing.T) {
 	options.ShowApps = false
 	options.ShowBookmarks = false
 	require.True(t, data.UpdateAppearance(options))
-	for _, path := range []string{"/", "/applications", "/bookmarks"} {
+	for _, path := range []string{"/", "/?search=needle", "/applications", "/bookmarks"} {
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
 		require.Equal(t, 200, recorder.Code)
@@ -61,7 +61,7 @@ func TestMalformedNavigationDataIsVisibleWithoutInternalDetails(t *testing.T) {
 	for _, name := range []string{"apps.yml", "bookmarks.yml"} {
 		require.NoError(t, os.WriteFile(name, []byte("links: [sensitive-sentinel"), 0600))
 	}
-	for _, path := range []string{"/", "/applications", "/bookmarks"} {
+	for _, path := range []string{"/", "/?search=needle", "/applications", "/bookmarks"} {
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
 		require.Equal(t, 200, recorder.Code)
@@ -69,6 +69,7 @@ func TestMalformedNavigationDataIsVisibleWithoutInternalDetails(t *testing.T) {
 		require.NotContains(t, recorder.Body.String(), dir)
 		require.NotContains(t, recorder.Body.String(), "sensitive-sentinel")
 		require.NotContains(t, recorder.Body.String(), "yaml:")
+		require.NotContains(t, recorder.Body.String(), "No matching bookmarks or applications.")
 	}
 	require.Contains(t, logs.String(), "Cannot render navigation module")
 	require.Contains(t, logs.String(), "module=applications")
