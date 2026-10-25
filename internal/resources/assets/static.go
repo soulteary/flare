@@ -60,7 +60,9 @@ func StaticFS(files fs.FS, prefix string) fiber.Handler {
 			contentType = http.DetectContentType(data)
 		}
 		info = staticMetadata{etag: fmt.Sprintf(`"%x"`, sha256.Sum256(data)), contentType: contentType, size: int64(len(data))}
-		metadata[name] = info
+		// Fiber can lend URI storage when Immutable is disabled. Only a cold
+		// cache insertion needs an owned key; warmed lookups stay allocation-free.
+		metadata[strings.Clone(name)] = info
 		return info, nil
 	}
 	return func(c fiber.Ctx) error {

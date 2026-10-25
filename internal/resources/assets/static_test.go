@@ -1,8 +1,10 @@
 package assets
 
 import (
+	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/require"
+	"github.com/valyala/fasthttp"
 )
 
 type countedStaticFS struct {
@@ -104,4 +107,38 @@ func TestStaticFSNonSeekableFallback(t *testing.T) {
 	serveHTTP(app, rec, req)
 	require.Equal(t, http.StatusPartialContent, rec.Code)
 	require.Equal(t, "def", rec.Body.String())
+}
+
+func TestStaticMetadataOwnsKeysAcrossReusedNativeURIStorage(t *testing.T) {
+	fixtures := fstest.MapFS{}
+	for i := range 128 {
+		fixtures[fmt.Sprintf("%03d.js", i)] = &fstest.MapFile{Data: []byte(fmt.Sprintf("script-%03d", i))}
+	}
+	files := &countedStaticFS{files: fixtures}
+	app := fiber.New(fiber.Config{Immutable: false})
+	app.Use("/assets/editor-ui", StaticFS(files, "/assets/editor-ui"))
+	handler := app.Handler()
+	var request fasthttp.Request
+	request.SetRequestURI("http://flare.test/assets/editor-ui/000.js")
+	var ctx fasthttp.RequestCtx
+	ctx.Init(&request, &net.TCPAddr{}, nil)
+	etags := make([]string, 128)
+	for i := range 128 {
+		ctx.Request.SetRequestURI(fmt.Sprintf("http://flare.test/assets/editor-ui/%03d.js", i))
+		ctx.Response.Reset()
+		handler(&ctx)
+		require.Equal(t, http.StatusOK, ctx.Response.StatusCode())
+		etags[i] = string(ctx.Response.Header.Peek("ETag"))
+	}
+	files.opens.Store(0)
+	files.reads.Store(0)
+	for i := 127; i >= 0; i-- {
+		ctx.Request.SetRequestURI(fmt.Sprintf("http://flare.test/assets/editor-ui/%03d.js", i))
+		ctx.Request.Header.Set("If-None-Match", etags[i])
+		ctx.Response.Reset()
+		handler(&ctx)
+		require.Equal(t, http.StatusNotModified, ctx.Response.StatusCode(), "file %d", i)
+	}
+	require.Zero(t, files.opens.Load(), "URI reuse must not mutate retained metadata keys")
+	require.Zero(t, files.reads.Load())
 }

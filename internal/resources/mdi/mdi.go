@@ -162,6 +162,9 @@ func GetIconByName(name string) string {
 		version := fmt.Sprintf("%x", sha256.Sum256([]byte(content)))
 		markup = `<img src="/` + svgFile + `?v=` + version + `" width="68" height="68" alt="">`
 	}
+	// Do not retain a borrowed request string from a caller using Fiber's
+	// mutable request mode. Canonical hot lookups need no additional copy.
+	key.name = strings.Clone(key.name)
 	iconMarkupCache[key] = iconCacheEntry{markup: markup, color: color}
 	return markup
 }
