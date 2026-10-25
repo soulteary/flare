@@ -8,8 +8,10 @@ Concurrent bookmark readers share a read lock; first-file initialization and
 writers still take the exclusive persistence lock.
 
 Every existing in-process save/import/editor commit invalidates the bytes, parsed
-snapshot and its lazy indexes together. A deleted file is regenerated and cannot
-reuse the previous snapshot. Editor revisions and import previews continue reading
+snapshot and its lazy indexes together. A deleted file cannot reuse the previous
+snapshot. It is regenerated only when no retained editor recovery copies exist;
+otherwise normal reads, target lookups, search and import previews leave it missing
+and require manual recovery instead of creating example data. Editor revisions and import previews continue reading
 exact on-disk bytes and strict-decoding them; the display cache never replaces
 those external-edit/conflict checks. Display caches still require a restart after
 manual edits to existing YAML files, as before.

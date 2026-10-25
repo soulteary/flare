@@ -208,3 +208,44 @@ func TestNavigationIndexesFollowEditorImportAndDeletion(t *testing.T) {
 		t.Fatal("deleted file kept stale target index")
 	}
 }
+
+func TestNavigationIndexesDoNotInitializeMissingFilesDuringRecovery(t *testing.T) {
+	for _, operation := range []string{"target", "search"} {
+		t.Run(operation, func(t *testing.T) {
+			prepareBookmarkHotPath(t)
+			if !SaveFavoriteBookmarks(model.Bookmarks{Items: []model.Bookmark{{Name: "Original", URL: "https://original.example"}}}) || !SaveNormalBookmarks(model.Bookmarks{}) {
+				t.Fatal("save")
+			}
+			if !MatchNavigationTarget("https://original.example", nil) {
+				t.Fatal("warm index")
+			}
+			if err := os.MkdirAll(".flare-editor-recovery/save-test", 0700); err != nil {
+				t.Fatal(err)
+			}
+			for _, name := range []string{"apps", "bookmarks"} {
+				raw, err := os.ReadFile(name + ".yml")
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err = os.WriteFile(".flare-editor-recovery/save-test/"+name+".yml", raw, 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := os.Remove("apps.yml"); err != nil {
+				t.Fatal(err)
+			}
+			if operation == "target" {
+				if MatchNavigationTarget("https://original.example", nil) {
+					t.Fatal("missing live file reused stale target")
+				}
+			} else {
+				if _, err := SearchNavigationMatches("Original", true, true, 8, nil, nil); err == nil {
+					t.Fatal("missing live file did not block search during recovery")
+				}
+			}
+			if _, err := os.Stat("apps.yml"); !os.IsNotExist(err) {
+				t.Fatal("navigation index initialized example data over recovery copies")
+			}
+		})
+	}
+}
