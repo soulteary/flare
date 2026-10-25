@@ -35,7 +35,7 @@ const {spawn} = require('node:child_process');
    const size = await page.locator(selector).evaluate(el => ({scroll: el.scrollWidth, width: el.clientWidth}));
    assert.ok(size.scroll <= size.width + 1, `${selector} overflow: ${JSON.stringify(size)}`);
   }
-  for (const width of [320, 360, 375, 390, 430, 768]) {
+  for (const width of [320, 360, 375, 390, 430, 767, 768, 769, 820, 1024]) {
    console.log("mobile width", width);
    await page.setViewportSize({width, height: 844});
    await page.goto(base);
@@ -54,14 +54,50 @@ const {spawn} = require('node:child_process');
     await page.evaluate(scale => { document.body.style.fontSize = `${14 * scale}px`; }, scale);
     await fits('#page-home');
     const hero = await page.locator('#hero-container').evaluate(el => ({dateBottom: el.querySelector('#plugin-datetime').getBoundingClientRect().bottom, weatherTop: el.querySelector('#plugin-weather').getBoundingClientRect().top}));
-    assert.ok(hero.weatherTop >= hero.dateBottom - 1, 'weather overlaps date/greeting');
-    assert.equal(await page.locator('.bookmark-group-container').first().evaluate(el => getComputedStyle(el).float), 'none');
+    // Wider layouts may place weather beside the date. This assertion
+    // verifies the narrow-screen contract of stacking them vertically.
+    if (width <= 768) {
+     assert.ok(hero.weatherTop >= hero.dateBottom - 1, 'weather overlaps date/greeting');
+     assert.equal(await page.locator('.bookmark-group-container').first().evaluate(el => getComputedStyle(el).float), 'none');
+    }
    }
    await page.goto(base + '/settings/appearance');
    await fits('html'); await fits('#page-settings');
-   assert.equal(await page.locator('.sidebar').evaluate(el => getComputedStyle(el).position), 'static');
+   assert.equal(await page.locator('.sidebar').evaluate(el => getComputedStyle(el).position), width <= 768 ? 'static' : 'absolute');
    await page.goto(base + '/editor'); await page.waitForFunction(()=>window.FlareEditorUI?.store); await fits('html');
+   // Forms must remain reachable on both sides of the editor's own 640px
+   // breakpoint, independently of the homepage's 768px breakpoint.
+   await page.locator('#new-entry').click();
+   await fits('html');
+   const dialog = await page.locator('#entry-dialog').boundingBox();
+   assert.ok(dialog.x >= 0 && dialog.x + dialog.width <= width + 1, 'form exceeds viewport');
+   await page.locator('#entry-url').fill('custom://nas:8080/long/path?one=1&two=2#fragment');
+   await page.locator('#entry-form').getByRole('button', {name:'完成',exact:true}).scrollIntoViewIfNeeded();
+   assert.equal(await page.locator('#entry-form').getByRole('button', {name:'完成',exact:true}).isVisible(), true);
+   page.once('dialog', event => event.accept());
+   await page.locator('#cancel-entry').click();
   }
+  // A dropped connection must retain the exact pending document. A subsequent
+  // successful save must use that same document, including untouched entries.
+  await page.setViewportSize({width:390,height:844});
+  await page.goto(base + '/editor'); await page.waitForFunction(()=>window.FlareEditorUI?.store);
+  const original = await page.evaluate(()=>window.FlareEditorUI.store.toJSON());
+  await page.locator('.entry').first().getByRole('button', {name:'编辑',exact:true}).click();
+  await page.locator('#entry-name').fill('Network failure keeps this edit');
+  await page.locator('#entry-form').getByRole('button', {name:'完成',exact:true}).click();
+  const pending = await page.evaluate(()=>window.FlareEditorUI.store.toJSON());
+  await page.route('**/editor/document', route => route.request().method()==='POST' ? route.abort('connectionreset') : route.continue());
+  await page.locator('#save-changes').click();
+  await page.waitForFunction(()=>!document.getElementById('save-changes').disabled && document.querySelector('.savebar').dataset.error==='true');
+  assert.deepEqual(await page.evaluate(()=>window.FlareEditorUI.store.toJSON()), pending);
+  assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.dirty), true);
+  assert.deepEqual(await (await page.request.get(base+'/editor/document')).json(), original);
+  await page.unroute('**/editor/document');
+  await page.locator('#save-changes').click();
+  await page.waitForFunction(()=>!window.FlareEditorUI.store.dirty);
+  const saved = await (await page.request.get(base+'/editor/document')).json();
+  assert.deepEqual(saved.apps, pending.apps); assert.deepEqual(saved.bookmarks, pending.bookmarks);
+  assert.deepEqual(saved.categories, pending.categories);
   if (process.env.MOBILE_SCREENSHOT_DIR) {
    await fs.mkdir(process.env.MOBILE_SCREENSHOT_DIR, {recursive:true});
    for (const [name, url] of [['editor','/editor'],['settings','/settings/appearance'],['home','/']]) {
@@ -77,6 +113,6 @@ const {spawn} = require('node:child_process');
    assert.ok(size.s <= size.w + 1);
   }
   assert.deepEqual(errors, []);
-  console.log('PASS: 6 mobile widths, enlarged text, settings, default editor layout and 3 desktop widths; list/form/batch CRUD is covered by tests/editor/browser.cjs');
+  console.log('PASS: 10 mobile/tablet widths, breakpoint boundaries, enlarged text, settings/forms, failed-connection retry and 3 desktop widths; list/form/batch CRUD is covered by tests/editor/browser.cjs');
  } finally { if (browser) await browser.close(); child.kill(); await fs.rm(dir, {recursive:true,force:true}); }
 })().catch(error => {console.error(error); process.exitCode=1;});
