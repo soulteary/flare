@@ -1,11 +1,11 @@
 # Go Report Card
 
-**Grade: A+** (99.6%)
+**Grade: A+** (99.3%)
 
 | Metric | Value |
 | ------ | ----- |
-| Files | 86 |
-| Issues | 10 |
+| Files | 89 |
+| Issues | 12 |
 
 ## Checks
 
@@ -14,23 +14,31 @@
 | go_vet | 100% |
 | gofmt | 100% |
 | ineffassign | 100% |
-| gocyclo | 96% |
+| gocyclo | 94% |
 | license | 100% |
-| misspell | 91% |
+| misspell | 92% |
 
 ## Issues
 
 ### gocyclo
 
+- `internal/logger/echo_handler_test.go`
+  - Line 28: cyclomatic complexity 29 for function TestNewEchoWithConfig_RequestOutcomes
+- `internal/resources/mdi/mdi_test.go`
+  - Line 77: cyclomatic complexity 22 for function TestIconRoute_ServesSVGAndHTTPRequests
 - `internal/pages/home/application.go`
   - Line 18: cyclomatic complexity 21 for function GenerateApplicationsTemplate
+- `internal/logger/echo_handler.go`
+  - Line 36: cyclomatic complexity 20 for function NewEchoWithConfig
 - `tools/baseline/main.go`
   - Line 266: cyclomatic complexity 19 for function main
-- `internal/logger/echo_handler.go`
-  - Line 35: cyclomatic complexity 18 for function NewEchoWithConfig
 
 ### misspell
 
+- `internal/resources/mdi/mdi-cheat-sheets/css/materialdesignicons.min.css`
+  - Line 1: "stange" is a misspelling of "strange"
+- `internal/resources/mdi/mdi-cheat-sheets/index.html`
+  - Line 476: "stange" is a misspelling of "strange"
 - `embed/assets/css/base.css`
   - Line 91: "bookmakrs" is a misspelling of "bookmarks"
 - `embed/assets/css/home/bookmarks.css`
@@ -66,10 +74,6 @@
   - Line 88: "bookmakrs" is a misspelling of "bookmarks"
 - `internal/resources/templates/html/home.html`
   - Line 16: "bookmakrs" is a misspelling of "bookmarks"
-- `internal/resources/mdi/mdi-cheat-sheets/css/materialdesignicons.min.css`
-  - Line 1: "stange" is a misspelling of "strange"
-- `internal/resources/mdi/mdi-cheat-sheets/index.html`
-  - Line 476: "stange" is a misspelling of "strange"
 
 ---
 
