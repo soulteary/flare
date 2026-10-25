@@ -63,3 +63,13 @@ be added together or presented as a whole-service RSS guarantee:
 Read each report's exact source/fixture, raw rounds and limitations. Snapshot and
 index caches deliberately retain some data to reduce repeated decoding and GC
 work; fewer allocated bytes per request do not alone prove a smaller idle process.
+
+## Immutable resource metadata and navigation parsing
+
+The main-branch resource follow-up prepares strong content validators once per
+immutable embedded file and avoids file opens/reads for warmed conditional and
+HEAD responses. It retains conditional/range semantics, versions favicon/MDI
+references, canonicalizes icon-cache names, and removes repeated navigation URL
+parsing. Mutable generated SVG validators still derive from actual current bytes.
+See the [microbenchmark report and raw rounds](../metrics-reports/resources-and-url-validation-2026-10-26.md).
+Those allocation/time measurements are not a process CPU or RSS reduction claim.

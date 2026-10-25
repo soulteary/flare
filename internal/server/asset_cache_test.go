@@ -30,8 +30,10 @@ func TestEditorAssetsUseVersionedURLsAndRevalidate(t *testing.T) {
 	}
 	page := request(http.MethodGet, "/editor", "")
 	require.Equal(t, http.StatusOK, page.Code)
-	paths := regexp.MustCompile(`/assets/editor-ui/[a-z.-]+\?v=[a-f0-9]{64}`).FindAllString(page.Body.String(), -1)
-	require.Len(t, paths, 6, "all editor styles and scripts must bypass an older fresh cache entry")
+	references := regexp.MustCompile(`/assets/editor-ui/[a-zA-Z0-9._-]+`).FindAllString(page.Body.String(), -1)
+	paths := regexp.MustCompile(`/assets/editor-ui/[a-zA-Z0-9._-]+\?v=[a-f0-9]{64}`).FindAllString(page.Body.String(), -1)
+	require.NotEmpty(t, references)
+	require.Len(t, paths, len(references), "all editor styles and scripts, including i18n, must bypass an older fresh cache entry")
 	for _, path := range paths {
 		get := request(http.MethodGet, path, "")
 		require.Equal(t, http.StatusOK, get.Code, path)

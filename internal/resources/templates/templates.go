@@ -12,6 +12,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/clock"
 	"github.com/soulteary/flare/internal/i18n"
+	"github.com/soulteary/flare/internal/resources/assets"
 	"github.com/soulteary/flare/internal/searchui"
 )
 
@@ -49,7 +50,8 @@ func (r *Renderer) Render(w io.Writer, templateName string, data any, _ ...strin
 }
 
 var templateFuncMap = template.FuncMap{
-	"T": i18n.T,
+	"T":          i18n.T,
+	"FaviconURL": assets.FaviconURL,
 }
 
 // Load satisfies fiber.Views. NewRenderer parses templates before app creation.

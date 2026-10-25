@@ -1,6 +1,8 @@
 package assets
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -207,4 +209,18 @@ func TestStaticFSUpgradeRevalidation(t *testing.T) {
 	require.Equal(t, http.StatusRequestedRangeNotSatisfiable, invalid.Code)
 	require.Equal(t, "no-store", invalid.Header().Get("Cache-Control"))
 	require.Empty(t, invalid.Header().Get("ETag"))
+}
+
+func TestFaviconURLUsesContentVersion(t *testing.T) {
+	data, err := Favicon.ReadFile("favicon.ico")
+	require.NoError(t, err)
+	expected := fmt.Sprintf("/favicon.ico?v=%x", sha256.Sum256(data))
+	require.Equal(t, expected, FaviconURL())
+	require.Equal(t, expected, FaviconURL())
+	app := fiber.New()
+	RegisterRouting(app)
+	response := httptest.NewRecorder()
+	serveHTTP(app, response, httptest.NewRequest(http.MethodGet, FaviconURL(), nil))
+	require.Equal(t, http.StatusOK, response.Code)
+	require.Equal(t, data, response.Body.Bytes())
 }
