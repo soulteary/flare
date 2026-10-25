@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"mime"
 	"net/http"
 	"path"
 	"strings"
@@ -19,6 +18,34 @@ import (
 type staticMetadata struct {
 	etag, contentType string
 	size              int64
+}
+
+// staticContentType is bounded by Flare's bundled resource formats. Consulting
+// mime.TypeByExtension even for a known favicon initializes the process-wide OS
+// MIME registry, retaining host-dependent tables that these files do not need.
+func staticContentType(name string, data []byte) string {
+	switch strings.ToLower(path.Ext(name)) {
+	case ".ico":
+		return "image/x-icon"
+	case ".js", ".mjs":
+		return "text/javascript; charset=utf-8"
+	case ".css":
+		return "text/css; charset=utf-8"
+	case ".html", ".htm":
+		return "text/html; charset=utf-8"
+	case ".svg":
+		return "image/svg+xml"
+	case ".woff2":
+		return "font/woff2"
+	case ".woff":
+		return "font/woff"
+	case ".json", ".map":
+		return "application/json"
+	case ".txt":
+		return "text/plain; charset=utf-8"
+	default:
+		return http.DetectContentType(data)
+	}
 }
 
 // StaticFS serves an immutable embedded filesystem. Metadata is prepared once per
@@ -52,13 +79,7 @@ func StaticFS(files fs.FS, prefix string) fiber.Handler {
 		if err != nil {
 			return info, err
 		}
-		contentType := mime.TypeByExtension(path.Ext(name))
-		if path.Ext(name) == ".ico" {
-			contentType = "image/x-icon"
-		}
-		if contentType == "" {
-			contentType = http.DetectContentType(data)
-		}
+		contentType := staticContentType(name, data)
 		info = staticMetadata{etag: fmt.Sprintf(`"%x"`, sha256.Sum256(data)), contentType: contentType, size: int64(len(data))}
 		// Fiber can lend URI storage when Immutable is disabled. Only a cold
 		// cache insertion needs an owned key; warmed lookups stay allocation-free.
