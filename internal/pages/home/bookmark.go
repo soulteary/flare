@@ -9,7 +9,6 @@ import (
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/fn"
-	"github.com/soulteary/flare/internal/resources/mdi"
 )
 
 func GenerateBookmarkTemplate(filter string, options *model.Application) template.HTML {
@@ -92,33 +91,23 @@ func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *
 func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]model.Bookmark, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) {
 	b.WriteString(`<div class="bookmark-group-container pull-left"><ul class="bookmark-list">`)
 	for _, bookmark := range *bookmarks {
-		templateURL := bookmark.URL
-		if strings.HasPrefix(bookmark.URL, "chrome-extension://") || EnableEncryptedLink {
-			templateURL = "/redir/url?go=" + data.Base64EncodeUrl(bookmark.URL)
-		}
-		templateIcon := mdi.GetIconByName(bookmark.Icon)
-		if strings.HasPrefix(bookmark.Icon, "http://") || strings.HasPrefix(bookmark.Icon, "https://") {
-			templateIcon = `<img src="` + bookmark.Icon + `"/>`
-		} else if bookmark.Icon != "" {
-			templateIcon = mdi.GetIconByName(bookmark.Icon)
-		} else if IconMode == "FILLING" {
-			templateIcon = fn.GetYandexFavicon(bookmark.URL, mdi.GetIconByName(bookmark.Icon))
-		}
+		templateURL := navigationHref(bookmark.URL, EnableEncryptedLink)
+		templateIcon := navigationIcon(bookmark.Icon, bookmark.URL, IconMode)
 		if OpenBookmarkNewTab {
 			b.WriteString(`<li><a target="_blank" rel="noopener" href="`)
-			b.WriteString(templateURL)
+			b.WriteString(html.EscapeString(templateURL))
 			b.WriteString(`" class="bookmark">`)
 			b.WriteString(templateIcon)
 			b.WriteString(`<span>`)
-			b.WriteString(bookmark.Name)
+			b.WriteString(html.EscapeString(bookmark.Name))
 			b.WriteString(`</span></a></li>`)
 		} else {
 			b.WriteString(`<li><a rel="noopener" href="`)
-			b.WriteString(templateURL)
+			b.WriteString(html.EscapeString(templateURL))
 			b.WriteString(`" class="bookmark">`)
 			b.WriteString(templateIcon)
 			b.WriteString(`<span>`)
-			b.WriteString(bookmark.Name)
+			b.WriteString(html.EscapeString(bookmark.Name))
 			b.WriteString(`</span></a></li>`)
 		}
 	}
@@ -128,18 +117,8 @@ func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]model.Boo
 func renderBookmarksWithCategories(b *strings.Builder, bookmarks *[]model.Bookmark, category *model.Category, defaultCategory *model.Category, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string, collapse ...bool) {
 	var itemBuf strings.Builder
 	for _, bookmark := range *bookmarks {
-		templateURL := bookmark.URL
-		if strings.HasPrefix(bookmark.URL, "chrome-extension://") || EnableEncryptedLink {
-			templateURL = "/redir/url?go=" + data.Base64EncodeUrl(bookmark.URL)
-		}
-		templateIcon := mdi.GetIconByName(bookmark.Icon)
-		if strings.HasPrefix(bookmark.Icon, "http://") || strings.HasPrefix(bookmark.Icon, "https://") {
-			templateIcon = `<img src="` + bookmark.Icon + `"/>`
-		} else if bookmark.Icon != "" {
-			templateIcon = mdi.GetIconByName(bookmark.Icon)
-		} else if IconMode == "FILLING" {
-			templateIcon = fn.GetYandexFavicon(bookmark.URL, mdi.GetIconByName(bookmark.Icon))
-		}
+		templateURL := navigationHref(bookmark.URL, EnableEncryptedLink)
+		templateIcon := navigationIcon(bookmark.Icon, bookmark.URL, IconMode)
 		matched := false
 		if bookmark.Category != "" {
 			matched = bookmark.Category == category.ID
@@ -154,11 +133,11 @@ func renderBookmarksWithCategories(b *strings.Builder, bookmarks *[]model.Bookma
 		} else {
 			itemBuf.WriteString(`<li><a rel="noopener" href="`)
 		}
-		itemBuf.WriteString(templateURL)
+		itemBuf.WriteString(html.EscapeString(templateURL))
 		itemBuf.WriteString(`" class="bookmark">`)
 		itemBuf.WriteString(templateIcon)
 		itemBuf.WriteString(`<span>`)
-		itemBuf.WriteString(bookmark.Name)
+		itemBuf.WriteString(html.EscapeString(bookmark.Name))
 		itemBuf.WriteString(`</span></a></li>`)
 	}
 	if itemBuf.Len() == 0 {
