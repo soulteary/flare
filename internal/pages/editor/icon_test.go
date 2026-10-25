@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"net/http"
@@ -96,4 +97,43 @@ func TestEditorIconRequiresAuthentication(t *testing.T) {
 	require.Equal(t, http.StatusFound, rec.Code)
 	require.Equal(t, define.SettingPages.Others.Path, rec.Header().Get("Location"))
 	require.NotContains(t, rec.Body.String(), "<svg")
+}
+
+func TestEditorIconSearchHTTP(t *testing.T) {
+	flags := define.AppFlags
+	t.Cleanup(func() { define.AppFlags = flags })
+	define.AppFlags.DisableLoginMode = true
+	app := fiber.New()
+	registerEditorIcon(app)
+	request := func(query string) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		serveTransferHTTP(t, app, rec, httptest.NewRequest(http.MethodGet, "/editor/icons"+query, nil))
+		return rec
+	}
+	first := request("")
+	require.Equal(t, http.StatusOK, first.Code)
+	require.Equal(t, "no-store", first.Header().Get("Cache-Control"))
+	var result struct {
+		Names []string `json:"names"`
+		Total int      `json:"total"`
+		Limit int      `json:"limit"`
+	}
+	require.NoError(t, json.Unmarshal(first.Body.Bytes(), &result))
+	require.Len(t, result.Names, 48)
+	require.Greater(t, result.Total, 48)
+	require.Equal(t, 48, result.Limit)
+	require.NotContains(t, first.Body.String(), "<svg")
+	for _, query := range []string{"?offset=-1", "?offset=no", "?q=" + strings.Repeat("a", 101)} {
+		require.Equal(t, http.StatusBadRequest, request(query).Code)
+	}
+	require.Equal(t, http.StatusOK, request("?q=SERVER&offset=0").Code)
+	define.AppFlags.DisableLoginMode = false
+	define.AppFlags.CookieSecret = strings.Repeat("s", 32)
+	protected := fiber.New()
+	require.NoError(t, auth.RequestHandle(protected))
+	registerEditorIcon(protected)
+	rec := httptest.NewRecorder()
+	serveTransferHTTP(t, protected, rec, httptest.NewRequest(http.MethodGet, "/editor/icons?q=server", nil))
+	require.Equal(t, http.StatusFound, rec.Code)
+	require.NotContains(t, rec.Body.String(), "names")
 }

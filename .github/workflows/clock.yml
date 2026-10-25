@@ -68,6 +68,8 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/editor/legacy.browser.cjs
+      - name: Icon picker browser acceptance
+        run: node tests/editor/icon-picker.browser.cjs
       - name: Minimal scratch-container timezone acceptance
         shell: bash
         run: |
