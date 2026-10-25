@@ -57,13 +57,6 @@ func ParseEnvFile(baseFlags model.Flags) model.Flags {
 		return baseFlags
 	}
 
-	err = envs.MapTo(&model.Envs{})
-	if err != nil {
-		log.Error("解析 .env 文件出错，请检查文件内容是否正确。")
-		log.Warn("程序使用默认配置继续运行。")
-		return baseFlags
-	}
-
 	port, err := envs.Section("").Key("FLARE_PORT").Int()
 	if err != nil {
 		log.Warn("FLARE_PORT 的值不是有效的数字，使用默认值。")

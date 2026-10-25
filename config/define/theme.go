@@ -4,12 +4,15 @@ package define
 
 import (
 	"html/template"
+	"sync"
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
 )
 
 // 程序运行默认使用内置的主题配色
+var themeMu sync.RWMutex
+
 var ThemePalettes = getDefaultThemePalettes()
 var ThemeCurrent = ""
 var ThemePrimaryColor = ""
@@ -25,7 +28,6 @@ var _CACHE_PAGE_INLINE_STYLE template.CSS
 
 // 用于mdi
 var CACHE_APP_CURRENT_THEME_PRIMARY_COLOR string
-var _CACHE_PREV_THEME_NAME string
 
 func GetPageInlineStyle() template.CSS {
 	return _CACHE_PAGE_INLINE_STYLE
@@ -40,43 +42,62 @@ func initPageInlineStyle() {
 }
 
 func initPagePrimaryColorCache() {
-	theme := data.GetThemeName()
-	ThemeCurrent = theme
-	ThemePrimaryColor = GetThemePrimaryColor(theme)
+	SetTheme(data.GetThemeName())
 }
 
 // 页面 body cssvar 样式
 var _CACHE_PAGE_BODY_THEME_NAME template.CSS
 
 func GetAppBodyStyle() template.CSS {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
 	return _CACHE_PAGE_BODY_THEME_NAME
 }
 
-func GetThemePrimaryColor(theme string) string {
-	if _CACHE_PREV_THEME_NAME == theme {
-		return CACHE_APP_CURRENT_THEME_PRIMARY_COLOR
-	}
-	for _, themePresent := range ThemePalettes {
-		if themePresent.Name == theme {
-			CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = themePresent.Colors.Primary
-			return CACHE_APP_CURRENT_THEME_PRIMARY_COLOR
+// ThemeSnapshot returns a consistent theme name/color pair for one resource.
+func ThemeSnapshot() (string, string) {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	return ThemeCurrent, ThemePrimaryColor
+}
+
+func IsKnownTheme(theme string) bool {
+	for _, item := range ThemePalettes {
+		if item.Name == theme {
+			return true
 		}
 	}
-	return CACHE_APP_CURRENT_THEME_PRIMARY_COLOR
+	return false
+}
+
+func GetThemePrimaryColor(theme string) string {
+	for _, item := range ThemePalettes {
+		if item.Name == theme {
+			return item.Colors.Primary
+		}
+	}
+	return ThemePalettes[0].Colors.Primary
 }
 
 const emptyPageBodyStyle = template.CSS(``)
 
-func UpdatePagePalettes() {
-	theme := data.GetThemeName()
-	for _, themePresent := range ThemePalettes {
-		if themePresent.Name == theme {
-			_CACHE_PAGE_BODY_THEME_NAME = template.CSS(`--color-background:` + themePresent.Colors.Background + `;--color-primary:` + themePresent.Colors.Primary + `;--color-accent:` + themePresent.Colors.Accent + `;`)
+// SetTheme publishes the body style and icon colors together, after persistence.
+func SetTheme(theme string) {
+	themeMu.Lock()
+	defer themeMu.Unlock()
+	ThemeCurrent = theme
+	ThemePrimaryColor = GetThemePrimaryColor(theme)
+	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor
+	_CACHE_PAGE_BODY_THEME_NAME = emptyPageBodyStyle
+	for _, item := range ThemePalettes {
+		if item.Name == theme {
+			_CACHE_PAGE_BODY_THEME_NAME = template.CSS(`--color-background:` + item.Colors.Background + `;--color-primary:` + item.Colors.Primary + `;--color-accent:` + item.Colors.Accent + `;`)
 			return
 		}
 	}
-	_CACHE_PAGE_BODY_THEME_NAME = emptyPageBodyStyle
 }
+
+func UpdatePagePalettes() { SetTheme(data.GetThemeName()) }
 
 func getDefaultThemePalettes() []model.Theme {
 	return []model.Theme{
