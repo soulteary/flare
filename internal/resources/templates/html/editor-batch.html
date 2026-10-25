@@ -15,8 +15,7 @@
         if (!loaded.ok || !(loaded.headers.get('content-type') || '').includes('application/json')) { document.getElementById('save-status').textContent = '无法读取数据，请重新登录或检查配置后刷新。'; return; }
         const store = new FlareEditorState.Store(await loaded.json());
         const categories = store.working.categories;
-        const categoryMap = Object.fromEntries(categories.map(item => [item.ID, item.Name]));
-        const bookmarks = [...store.working.apps.map(item => ({...item, Category: APP})), ...store.working.bookmarks.map(item => ({...item, Category: categoryMap[item.Category] || '[缺失分类：' + item.Category + ']'}))];
+                const bookmarks = [...store.working.apps.map(item => ({...item, Category: 'apps'})), ...store.working.bookmarks.map(item => ({...item, Category: 'category:' + (item.Category || '')}))];
         let dirty = false, saving = false, tableCategories, tableBookmarks;
         const selected = {category: [], bookmark: []};
         const status = document.getElementById('save-status');
@@ -40,8 +39,17 @@
         function categoryNames() {
             return Array.from({length: tableCategories.countRows()}, (_, r) => tableCategories.getDataAtRowProp(r, 'Name')).filter(Boolean);
         }
+        function categoryRows() {
+            return Array.from({length: tableCategories.countRows()}, (_, r) => {const physical = tableCategories.toPhysicalRow(r); let id = tableCategories.getSourceDataAtCell(physical, 'ID'); if (!id) { id = store.categoryID(); tableCategories.setSourceDataAtCell(physical, 'ID', id); } return {ID: id, Name: tableCategories.getDataAtRowProp(r, 'Name')};});
+        }
+        function locationLabels() {
+            const rows = categoryRows();
+            return Object.fromEntries([['apps', APP], ['category:', rows.length ? '默认分类 · ' + rows[0].Name : '未分类书签'], ...rows.map(c => ['category:' + c.ID, c.Name])]);
+        }
         function bookmarkColumns() {
-            return [{data: 'Name'}, {data: 'URL'}, {data: 'Category', editor: 'select', selectOptions: [APP, ...categoryNames()], allowInvalid: false}, {data: 'Icon'}, {data: 'Desc'}];
+            return [{data: 'Name'}, {data: 'URL'}, {data: 'Category', editor: 'select', selectOptions: locationLabels(), allowInvalid: false,
+                renderer(instance, td, row, col, prop, value, properties) { Handsontable.renderers.TextRenderer(instance, td, row, col, prop, locationLabels()[value] || '缺失分类：' + value, properties); }
+            }, {data: 'Icon'}, {data: 'Desc'}];
         }
         tableCategories = new Handsontable(document.getElementById('container-category'), {
             ...common, data: categories, dataSchema: {ID: '', Name: ''}, colHeaders: ['分类名称'], columns: [{data: 'Name'}], colWidths: [240],
@@ -49,18 +57,11 @@
             afterChange(changes, source) {
                 changed(changes, source);
                 if (!tableBookmarks || !changes) return;
-                for (const [row, prop, oldValue, newValue] of changes) {
-                    if (prop !== 'Name' || !oldValue || oldValue === newValue) continue;
-                    for (let r = 0; r < tableBookmarks.countRows(); r++) {
-                        if (tableBookmarks.getDataAtRowProp(r, 'Category') === oldValue)
-                            tableBookmarks.setDataAtRowProp(r, 'Category', newValue || APP);
-                    }
-                }
                 tableBookmarks.updateSettings({columns: bookmarkColumns()});
             }
         });
         tableBookmarks = new Handsontable(document.getElementById('container-bookmarks'), {
-            ...common, data: bookmarks, dataSchema: {Name: '', URL: '', Category: APP, Icon: '', Desc: ''},
+            ...common, data: bookmarks, dataSchema: {Name: '', URL: '', Category: 'apps', Icon: '', Desc: ''},
             colHeaders: ['书签名称', '书签地址', '分类', '图标', '描述'], columns: bookmarkColumns(),
             colWidths: [150, 260, 150, 150, 200], search: true,
             afterSelectionEnd(r1, c1, r2) { selection('bookmark', r1, c1, r2); }, afterChange: changed
@@ -76,7 +77,7 @@
             finishEditing();
             const row = table.countRows();
             table.alter('insert_row', row, 1);
-            if (table === tableCategories) table.getSourceDataAtRow(table.toPhysicalRow(row)).ID = store.categoryID();
+            if (table === tableCategories) table.setSourceDataAtCell(table.toPhysicalRow(row), 'ID', store.categoryID());
             table.selectCell(row, 0);
             const editor = table.getActiveEditor();
             if (editor) { editor.beginEditing(); editor.focus(); }
@@ -101,9 +102,9 @@
             const message = kind === 'category' ? '删除选中分类？其中的书签会移至 Flare 应用，不会删除书签。' : '删除选中的 ' + rows.length + ' 个条目？保存后生效。';
             if (!confirm(message)) return;
             if (kind === 'category') {
-                const names = new Set(rows.map(r => table.getDataAtRowProp(r, 'Name')));
+                const locations = new Set(rows.map(r => 'category:' + table.getDataAtRowProp(r, 'ID')));
                 for (let r = 0; r < tableBookmarks.countRows(); r++) {
-                    if (names.has(tableBookmarks.getDataAtRowProp(r, 'Category'))) tableBookmarks.setDataAtRowProp(r, 'Category', APP);
+                    if (locations.has(tableBookmarks.getDataAtRowProp(r, 'Category'))) tableBookmarks.setDataAtRowProp(r, 'Category', 'apps');
                 }
             }
             rows.forEach(r => table.alter('remove_row', r, 1));
@@ -126,7 +127,7 @@
                 const url = tableBookmarks.getDataAtRowProp(r, 'URL');
                 const category = tableBookmarks.getDataAtRowProp(r, 'Category');
                 if (!name || !String(name).trim() || !url || !String(url).trim()) throw new Error('第 ' + (r + 1) + ' 行缺少名称或地址，请填写或删除该行。');
-                if (category && category !== APP && !names.includes(category)) throw new Error('第 ' + (r + 1) + ' 行分类不存在，请重新选择。');
+                if (!Object.hasOwn(locationLabels(), category)) throw new Error('第 ' + (r + 1) + ' 行分类不存在，请重新选择。');
             }
         }
         async function save() {
@@ -140,16 +141,15 @@
             tableCategories.updateSettings({readOnly: true, contextMenu: false, manualRowMove: false}); tableBookmarks.updateSettings({readOnly: true, contextMenu: false, manualRowMove: false});
             status.textContent = '正在保存…';
             try {
-                const categoryRows = Array.from({length: tableCategories.countRows()}, (_, r) => ({ID: (tableCategories.getSourceDataAtRow(tableCategories.toPhysicalRow(r)).ID ||= store.categoryID()), Name: tableCategories.getDataAtRowProp(r, 'Name')}));
-                const nameToID = Object.fromEntries(categoryRows.map(c => [c.Name, c.ID]));
+                const nextCategories = categoryRows();
                 const apps = [], normal = [];
                 for (let r = 0; r < tableBookmarks.countRows(); r++) {
                     const item = {...tableBookmarks.getSourceDataAtRow(tableBookmarks.toPhysicalRow(r))};
                     delete item._key;
-                    if (item.Category === APP || !item.Category) { item.Category = ''; apps.push(item); }
-                    else { item.Category = nameToID[item.Category] || item.Category; normal.push(item); }
+                    if (item.Category === 'apps') { item.Category = ''; apps.push(item); }
+                    else { item.Category = item.Category.startsWith('category:') ? item.Category.slice(9) : item.Category; normal.push(item); }
                 }
-                store.working = {...store.working, categories: categoryRows, apps, bookmarks: normal};
+                store.working = {...store.working, categories: nextCategories, apps, bookmarks: normal};
                 const response = await fetch('/editor/document', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Flare-Editor': '1'}, body: JSON.stringify(store.toJSON()), signal: AbortSignal.timeout(30000)});
                 if (response.redirected || !(response.headers.get('content-type') || '').includes('application/json')) throw new Error('登录可能已过期，请在新窗口登录后重试；当前编辑内容已保留。');
                 const result = await response.json();

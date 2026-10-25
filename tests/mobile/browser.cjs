@@ -121,7 +121,7 @@ const {spawn} = require('node:child_process');
   await page.locator('#container-bookmarks .ht_master tbody tr').first().locator('td').nth(2).tap();
   await page.locator('#edit-bookmark').click();
   const categorySelect = page.locator('#container-bookmarks select:visible');
-  await categorySelect.selectOption('空表新增分类'); await categorySelect.press('Enter');
+  await categorySelect.selectOption({label:'空表新增分类'}); await categorySelect.press('Enter');
   await page.locator('.update-data').first().click();
   await page.waitForFunction(() => document.getElementById('save-status').textContent === '全部数据已保存');
   await page.reload(); assert.match(await page.locator('#container-bookmarks').textContent(), /空表新增书签/);
