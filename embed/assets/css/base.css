@@ -141,3 +141,14 @@ h2 a {
     padding: 50px 250px;
   }
 }
+
+/* Small screens must shrink with the viewport, including enlarged text. */
+@media (max-width: 768px) {
+  #page-home.pageview .container {
+    min-width: 0;
+    width: 100%;
+    padding: 20px 16px calc(120px + env(safe-area-inset-bottom));
+  }
+  #page-home .footer-container { overflow-wrap: anywhere; }
+  #page-home h1 { font-size: clamp(1.75rem, 8vw, 3rem); overflow-wrap: anywhere; }
+}

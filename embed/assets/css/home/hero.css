@@ -28,3 +28,10 @@
   border-bottom: 1px solid var(--color-primary);
   padding-bottom: 5px;
 }
+
+@media (max-width: 768px) {
+  #page-home #hero-container { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+  #plugin-datetime { min-width: 0; flex: 1 1 100%; }
+  #page-home #hero-container p { height: auto; overflow-wrap: anywhere; }
+  #plugin-weather { position: static; flex: 0 0 auto; }
+}

@@ -26,3 +26,8 @@
 #page-settings .sidebar a.active:hover {
   border-left: 3px solid var(--color-primary);
 }
+
+@media (max-width: 768px) {
+  #page-settings .sidebar { position: static; float: none; width: 100%; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; }
+  #page-settings .sidebar a { min-height: 44px; height: auto; line-height: 1.5; padding: 10px; }
+}
