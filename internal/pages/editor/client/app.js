@@ -50,6 +50,7 @@
   function open(dialog) {focusBeforeDialog=document.activeElement;dialog.showModal();}
   function close(dialog) {dialog.close();if(focusBeforeDialog?.isConnected)focusBeforeDialog.focus();}
   function formValue() {return JSON.stringify(Object.fromEntries(new FormData($('entry-form'))));}
+  function hasUnsavedChanges() {return store?.dirty || (entryDialog.open && formValue()!==formStart);}
   function clearErrors() {for(const name of ['name','url','location']){$('error-'+name).textContent='';$(fields[name==='name'?'Name':name==='url'?'URL':'Category']).removeAttribute('aria-invalid');}}
   function fieldError(name,message) {const id=name==='Name'?'name':name==='URL'?'url':'location';$('error-'+id).textContent=message;$(fields[name]).setAttribute('aria-invalid','true');$(fields[name]).focus();}
   function openEntry(key=null) {
@@ -148,8 +149,8 @@
   $('discard-changes').onclick=()=>{if(!saving&&confirm('放弃全部未保存的更改？')){store.discard();undo=null;$('location-filter').value='all';render();if(conflict)setStatus('已恢复加载时的数据；服务器已有更新，请重新载入。',true);}};
   $('export-draft').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(store.toJSON(),null,2)],{type:'application/json'}));const a=el('a');a.href=url;a.download='flare-editor-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   $('reload-data').onclick=()=>{if(!saving&&(!store.dirty||confirm('重新载入会放弃当前修改，请先导出需要保留的内容。继续？')))location.reload();};
-  document.querySelectorAll('[data-leave]').forEach(link=>link.onclick=event=>{if(saving||(store?.dirty&&!confirm('更改尚未保存，确定离开？')))event.preventDefault();});
-  window.addEventListener('beforeunload',event=>{if(saving||store?.dirty){event.preventDefault();event.returnValue='';}});
+  document.querySelectorAll('[data-leave]').forEach(link=>link.onclick=event=>{if(saving||(hasUnsavedChanges()&&!confirm('更改尚未保存，确定离开？')))event.preventDefault();});
+  window.addEventListener('beforeunload',event=>{if(saving||hasUnsavedChanges()){event.preventDefault();event.returnValue='';}});
   // The batch adapter in the next PR attaches to this single working store.
   window.FlareEditorUI={get store(){return store;},get saving(){return saving;},render,setStatus,validateDocument,locateError};
   try {const response=await fetch('/editor/document',{cache:'no-store'});if(!response.ok||response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error('无法读取导航数据，请重新登录或检查配置。');store=new FlareEditorState.Store(await response.json());$('workspace').setAttribute('aria-busy','false');render();document.dispatchEvent(new Event('flare-editor-ready'));}
