@@ -48,3 +48,13 @@
 - 历史重放短烟雾测试验证四个目标、五场景、响应一致性与 8/64 KiB/1 MiB 实际配置。入口拒绝复用来源不明的二进制或不兼容参考提交；短测数据不作为吞吐收益证据。
 
 具体命令和采样范围见 [基线方法](baseline-metrics.md)。
+
+## Immutable resource metadata and navigation parsing
+
+The main-branch resource follow-up prepares strong content validators once per
+immutable embedded file and avoids file opens/reads for warmed conditional and
+HEAD responses. It retains conditional/range semantics, versions favicon/MDI
+references, canonicalizes icon-cache names, and removes repeated navigation URL
+parsing. Mutable generated SVG validators still derive from actual current bytes.
+See the [microbenchmark report and raw rounds](../metrics-reports/resources-and-url-validation-2026-10-26.md).
+Those allocation/time measurements are not a process CPU or RSS reduction claim.

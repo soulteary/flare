@@ -1,0 +1,493 @@
+{
+  "baseline_revision": "722d17d",
+  "candidate_revision": "d09e939",
+  "environment": {
+    "os": "linux",
+    "arch": "amd64",
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "go": "1.27.3",
+    "GOMAXPROCS": 4,
+    "GOGC": "unset",
+    "GOMEMLIMIT": "unset",
+    "benchtime": "1s",
+    "rounds": 3,
+    "order": "all baseline rounds, then all candidate rounds"
+  },
+  "scope": "Native in-process server-dispatch and function microbenchmarks; no network/client allocations; not process CPU or RSS",
+  "rounds": {
+    "before": {
+      "BenchmarkStaticResourceDispatch/full-4": [
+        {
+          "iterations": 1970,
+          "ns_per_op": 626339.0,
+          "bytes_per_op": 1428545,
+          "allocations_per_op": 43
+        },
+        {
+          "iterations": 2119,
+          "ns_per_op": 662584.0,
+          "bytes_per_op": 1438894,
+          "allocations_per_op": 43
+        },
+        {
+          "iterations": 2098,
+          "ns_per_op": 608576.0,
+          "bytes_per_op": 1433578,
+          "allocations_per_op": 43
+        }
+      ],
+      "BenchmarkStaticResourceDispatch/conditional-4": [
+        {
+          "iterations": 4368,
+          "ns_per_op": 261014.0,
+          "bytes_per_op": 273135,
+          "allocations_per_op": 29
+        },
+        {
+          "iterations": 3940,
+          "ns_per_op": 306030.0,
+          "bytes_per_op": 273119,
+          "allocations_per_op": 29
+        },
+        {
+          "iterations": 3514,
+          "ns_per_op": 299565.0,
+          "bytes_per_op": 273129,
+          "allocations_per_op": 29
+        }
+      ],
+      "BenchmarkIconCacheHit/external/serial-4": [
+        {
+          "iterations": 2968070,
+          "ns_per_op": 356.3,
+          "bytes_per_op": 192,
+          "allocations_per_op": 4
+        },
+        {
+          "iterations": 3345718,
+          "ns_per_op": 341.9,
+          "bytes_per_op": 192,
+          "allocations_per_op": 4
+        },
+        {
+          "iterations": 3421513,
+          "ns_per_op": 337.9,
+          "bytes_per_op": 192,
+          "allocations_per_op": 4
+        }
+      ],
+      "BenchmarkIconCacheHit/external/parallel-4": [
+        {
+          "iterations": 2674410,
+          "ns_per_op": 433.2,
+          "bytes_per_op": 192,
+          "allocations_per_op": 4
+        },
+        {
+          "iterations": 3077290,
+          "ns_per_op": 420.6,
+          "bytes_per_op": 192,
+          "allocations_per_op": 4
+        },
+        {
+          "iterations": 2756588,
+          "ns_per_op": 408.0,
+          "bytes_per_op": 192,
+          "allocations_per_op": 4
+        }
+      ],
+      "BenchmarkIconCacheHit/inline/serial-4": [
+        {
+          "iterations": 14262394,
+          "ns_per_op": 88.76,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 14086258,
+          "ns_per_op": 90.09,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 13593182,
+          "ns_per_op": 92.12,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        }
+      ],
+      "BenchmarkIconCacheHit/inline/parallel-4": [
+        {
+          "iterations": 12624703,
+          "ns_per_op": 88.08,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 17590184,
+          "ns_per_op": 76.01,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 17759437,
+          "ns_per_op": 63.03,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        }
+      ],
+      "BenchmarkNavigationURLValidation/href-4": [
+        {
+          "iterations": 2829528,
+          "ns_per_op": 417.5,
+          "bytes_per_op": 288,
+          "allocations_per_op": 2
+        },
+        {
+          "iterations": 2832740,
+          "ns_per_op": 422.1,
+          "bytes_per_op": 288,
+          "allocations_per_op": 2
+        },
+        {
+          "iterations": 2829602,
+          "ns_per_op": 421.6,
+          "bytes_per_op": 288,
+          "allocations_per_op": 2
+        }
+      ],
+      "BenchmarkNavigationURLValidation/remote-image-4": [
+        {
+          "iterations": 3003745,
+          "ns_per_op": 430.2,
+          "bytes_per_op": 288,
+          "allocations_per_op": 2
+        },
+        {
+          "iterations": 2687020,
+          "ns_per_op": 454.1,
+          "bytes_per_op": 288,
+          "allocations_per_op": 2
+        },
+        {
+          "iterations": 2868538,
+          "ns_per_op": 436.7,
+          "bytes_per_op": 288,
+          "allocations_per_op": 2
+        }
+      ],
+      "BenchmarkNavigationURLValidation/builtin-icon-4": [
+        {
+          "iterations": 4522923,
+          "ns_per_op": 286.5,
+          "bytes_per_op": 288,
+          "allocations_per_op": 2
+        },
+        {
+          "iterations": 4025626,
+          "ns_per_op": 318.0,
+          "bytes_per_op": 288,
+          "allocations_per_op": 2
+        },
+        {
+          "iterations": 3968485,
+          "ns_per_op": 307.6,
+          "bytes_per_op": 288,
+          "allocations_per_op": 2
+        }
+      ]
+    },
+    "after": {
+      "BenchmarkStaticResourceDispatch/full-4": [
+        {
+          "iterations": 3223,
+          "ns_per_op": 322132.0,
+          "bytes_per_op": 1131671,
+          "allocations_per_op": 32
+        },
+        {
+          "iterations": 3384,
+          "ns_per_op": 318189.0,
+          "bytes_per_op": 1133305,
+          "allocations_per_op": 32
+        },
+        {
+          "iterations": 4268,
+          "ns_per_op": 286151.0,
+          "bytes_per_op": 1136221,
+          "allocations_per_op": 32
+        }
+      ],
+      "BenchmarkStaticResourceDispatch/conditional-4": [
+        {
+          "iterations": 129588,
+          "ns_per_op": 9272.0,
+          "bytes_per_op": 2386,
+          "allocations_per_op": 20
+        },
+        {
+          "iterations": 131362,
+          "ns_per_op": 9111.0,
+          "bytes_per_op": 2386,
+          "allocations_per_op": 20
+        },
+        {
+          "iterations": 132687,
+          "ns_per_op": 9564.0,
+          "bytes_per_op": 2386,
+          "allocations_per_op": 20
+        }
+      ],
+      "BenchmarkIconCacheHit/external/serial-4": [
+        {
+          "iterations": 13142142,
+          "ns_per_op": 91.13,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 13050684,
+          "ns_per_op": 94.45,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 12757125,
+          "ns_per_op": 96.1,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        }
+      ],
+      "BenchmarkIconCacheHit/external/parallel-4": [
+        {
+          "iterations": 23337175,
+          "ns_per_op": 52.48,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 19540276,
+          "ns_per_op": 58.69,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 24320416,
+          "ns_per_op": 51.45,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        }
+      ],
+      "BenchmarkIconCacheHit/inline/serial-4": [
+        {
+          "iterations": 13830888,
+          "ns_per_op": 87.27,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 14222967,
+          "ns_per_op": 87.21,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 13034812,
+          "ns_per_op": 88.14,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        }
+      ],
+      "BenchmarkIconCacheHit/inline/parallel-4": [
+        {
+          "iterations": 36015273,
+          "ns_per_op": 40.24,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 29238390,
+          "ns_per_op": 46.11,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 25518472,
+          "ns_per_op": 50.5,
+          "bytes_per_op": 16,
+          "allocations_per_op": 1
+        }
+      ],
+      "BenchmarkNavigationURLValidation/href-4": [
+        {
+          "iterations": 4302597,
+          "ns_per_op": 268.5,
+          "bytes_per_op": 144,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 4538642,
+          "ns_per_op": 276.2,
+          "bytes_per_op": 144,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 4259206,
+          "ns_per_op": 273.4,
+          "bytes_per_op": 144,
+          "allocations_per_op": 1
+        }
+      ],
+      "BenchmarkNavigationURLValidation/remote-image-4": [
+        {
+          "iterations": 5057046,
+          "ns_per_op": 239.2,
+          "bytes_per_op": 144,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 5062000,
+          "ns_per_op": 249.6,
+          "bytes_per_op": 144,
+          "allocations_per_op": 1
+        },
+        {
+          "iterations": 4955106,
+          "ns_per_op": 585.5,
+          "bytes_per_op": 144,
+          "allocations_per_op": 1
+        }
+      ],
+      "BenchmarkNavigationURLValidation/builtin-icon-4": [
+        {
+          "iterations": 233524185,
+          "ns_per_op": 6.739,
+          "bytes_per_op": 0,
+          "allocations_per_op": 0
+        },
+        {
+          "iterations": 225324985,
+          "ns_per_op": 4.913,
+          "bytes_per_op": 0,
+          "allocations_per_op": 0
+        },
+        {
+          "iterations": 245716156,
+          "ns_per_op": 7.78,
+          "bytes_per_op": 0,
+          "allocations_per_op": 0
+        }
+      ]
+    }
+  },
+  "medians": {
+    "BenchmarkStaticResourceDispatch/full-4": {
+      "before": {
+        "ns_per_op": 626339.0,
+        "bytes_per_op": 1433578,
+        "allocations_per_op": 43
+      },
+      "after": {
+        "ns_per_op": 318189.0,
+        "bytes_per_op": 1133305,
+        "allocations_per_op": 32
+      }
+    },
+    "BenchmarkStaticResourceDispatch/conditional-4": {
+      "before": {
+        "ns_per_op": 299565.0,
+        "bytes_per_op": 273129,
+        "allocations_per_op": 29
+      },
+      "after": {
+        "ns_per_op": 9272.0,
+        "bytes_per_op": 2386,
+        "allocations_per_op": 20
+      }
+    },
+    "BenchmarkIconCacheHit/external/serial-4": {
+      "before": {
+        "ns_per_op": 341.9,
+        "bytes_per_op": 192,
+        "allocations_per_op": 4
+      },
+      "after": {
+        "ns_per_op": 94.45,
+        "bytes_per_op": 16,
+        "allocations_per_op": 1
+      }
+    },
+    "BenchmarkIconCacheHit/external/parallel-4": {
+      "before": {
+        "ns_per_op": 420.6,
+        "bytes_per_op": 192,
+        "allocations_per_op": 4
+      },
+      "after": {
+        "ns_per_op": 52.48,
+        "bytes_per_op": 16,
+        "allocations_per_op": 1
+      }
+    },
+    "BenchmarkIconCacheHit/inline/serial-4": {
+      "before": {
+        "ns_per_op": 90.09,
+        "bytes_per_op": 16,
+        "allocations_per_op": 1
+      },
+      "after": {
+        "ns_per_op": 87.27,
+        "bytes_per_op": 16,
+        "allocations_per_op": 1
+      }
+    },
+    "BenchmarkIconCacheHit/inline/parallel-4": {
+      "before": {
+        "ns_per_op": 76.01,
+        "bytes_per_op": 16,
+        "allocations_per_op": 1
+      },
+      "after": {
+        "ns_per_op": 46.11,
+        "bytes_per_op": 16,
+        "allocations_per_op": 1
+      }
+    },
+    "BenchmarkNavigationURLValidation/href-4": {
+      "before": {
+        "ns_per_op": 421.6,
+        "bytes_per_op": 288,
+        "allocations_per_op": 2
+      },
+      "after": {
+        "ns_per_op": 273.4,
+        "bytes_per_op": 144,
+        "allocations_per_op": 1
+      }
+    },
+    "BenchmarkNavigationURLValidation/remote-image-4": {
+      "before": {
+        "ns_per_op": 436.7,
+        "bytes_per_op": 288,
+        "allocations_per_op": 2
+      },
+      "after": {
+        "ns_per_op": 249.6,
+        "bytes_per_op": 144,
+        "allocations_per_op": 1
+      }
+    },
+    "BenchmarkNavigationURLValidation/builtin-icon-4": {
+      "before": {
+        "ns_per_op": 307.6,
+        "bytes_per_op": 288,
+        "allocations_per_op": 2
+      },
+      "after": {
+        "ns_per_op": 6.739,
+        "bytes_per_op": 0,
+        "allocations_per_op": 0
+      }
+    }
+  }
+}
