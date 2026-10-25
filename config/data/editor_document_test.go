@@ -106,3 +106,28 @@ func TestEditorDocumentEmptyAndPreflightFailure(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, raw, after)
 }
+
+func TestEditorDocumentReportsIncompleteRecovery(t *testing.T) {
+	doc := editorFixture(t)
+	doc.Apps[0].Name = "Changed"
+	_, err := commitEditorDocument(doc, func(src, dest string) error {
+		if filepath.Base(dest) == "bookmarks.yml" {
+			if removeErr := os.Remove("apps.yml"); removeErr != nil {
+				return removeErr
+			}
+			if mkdirErr := os.Mkdir("apps.yml", 0700); mkdirErr != nil {
+				return mkdirErr
+			}
+			return errors.New("simulated failure with blocked recovery")
+		}
+		return os.Rename(src, dest)
+	})
+	require.ErrorContains(t, err, "恢复未完成")
+	require.ErrorContains(t, err, "可能存在部分写入")
+	copies, globErr := filepath.Glob(".flare-editor-recovery/save-*/apps.yml")
+	require.NoError(t, globErr)
+	require.Len(t, copies, 1)
+	raw, readErr := os.ReadFile(copies[0])
+	require.NoError(t, readErr)
+	require.Contains(t, string(raw), "name: App")
+}

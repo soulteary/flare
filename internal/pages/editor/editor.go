@@ -2,7 +2,6 @@ package editor
 
 import (
 	"embed"
-	"html/template"
 	"io/fs"
 	"net/http"
 
@@ -10,10 +9,8 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/static"
 	memfs "github.com/soulteary/memfs-kit"
 
-	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/auth"
-	"github.com/soulteary/flare/internal/pool"
 )
 
 var MemFs *memfs.FS
@@ -51,31 +48,5 @@ func updateData(c fiber.Ctx) error {
 }
 
 func render(c fiber.Ctx) error {
-	options, err := data.GetAllSettingsOptions()
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).SendString("config error")
-	}
-	dataCategories, dataBookmarks := data.GetBookmarksForEditor()
-	m := pool.GetTemplateMap()
-	defer pool.PutTemplateMap(m)
-	m["PageName"] = "Editor"
-	m["PageAppearance"] = define.GetAppBodyStyle()
-	m["SettingPages"] = define.SettingPages
-	m["DebugMode"] = define.AppFlags.DebugMode
-	m["PageInlineStyle"] = define.GetPageInlineStyle()
-	m["DataCategories"] = template.HTML(dataCategories)
-	m["DataBookmarks"] = template.HTML(dataBookmarks)
-	m["OptionTitle"] = options.Title
-	m["OptionFooter"] = template.HTML(options.Footer)
-	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
-	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
-	m["OptionShowTitle"] = options.ShowTitle
-	m["OptionShowDateTime"] = options.ShowDateTime
-	m["OptionShowApps"] = options.ShowApps
-	m["OptionShowBookmarks"] = options.ShowBookmarks
-	name := "editor.html"
-	if c.Path() == "/editor/batch" {
-		name = "editor-batch.html"
-	}
-	return c.Status(http.StatusOK).Render(name, m)
+	return c.Status(http.StatusOK).Render("editor.html", nil)
 }

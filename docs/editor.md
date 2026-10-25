@@ -31,8 +31,8 @@ second-file failure with recovery. `node --test tests/editor/state.test.cjs` tes
 the shared working state. The mobile browser acceptance test exercises the legacy
 table UI against the versioned document interface.
 
-This change is the persistence foundation; the list/form interface and integrated
-batch view follow as separate dependent pull requests.
+The editor is delivered as three dependent pull requests: persistence/shared
+state, list/forms, then batch integration and acceptance.
 
 ## List and form workflow
 
@@ -47,10 +47,39 @@ undo. Category ordering has up/down controls and never changes category IDs.
 Actual data comparison clears dirty state when values are restored. Save errors
 preserve the working document; conflicts expose a JSON draft download and an
 explicit reload action. The JSON draft is an editor-state export, not a browser
-bookmark import file. The standalone batch route remains available during this
-intermediate PR and warns before leaving unsaved list edits; the next PR replaces
-that navigation with an integrated adapter.
+bookmark import file. The batch route remains a compatible entry URL; the integrated adapter shares
+all pending data with the list. Switching views does not navigate or discard edits.
 
 `node tests/editor/browser.cjs` runs the list/form acceptance suite with the same
 FLARE_BINARY and CHROMIUM_EXECUTABLE variables as the mobile tests. Optional
 EDITOR_SCREENSHOT_DIR captures mobile list/form and desktop list screenshots.
+
+## Integrated batch editing
+
+More > Batch editing opens a lazy-loaded table over the same pending document.
+No navigation, separate save button or second edit buffer survives a successful
+mode switch. Active cells are committed before save/switch. Incomplete or invalid
+rows block save/switch and identify the first problem; they are not silently
+filtered out. Reset table changes restores the last synchronized working document;
+Discard changes restores the last server snapshot. These actions are deliberately
+labelled differently. Category management synchronizes valid table changes first.
+
+The table retains row movement, clipboard paste, undo/redo and optional fields.
+Application order and bookmark order are reconstructed from visual row order,
+without renumbering category IDs or losing private flags. Application placement
+uses a different token namespace from category IDs, including legacy IDs `apps`.
+The table instance is reused and stops listening to keyboard input when hidden.
+
+Conflicts offer a JSON draft export. More > Restore editor draft explicitly loads
+one back into pending data, after confirmation; it retains the revision loaded by
+the current page, does not auto-merge, and still requires Save changes. Invalid
+rows in a recovered draft must be fixed before saving. Native HTML/browser import
+formats remain available through the existing import/export page.
+
+Acceptance includes shared unsaved edits across modes, incomplete rows, active
+cell save, actual clipboard paste, visual row ordering, empty-table repopulation,
+JSON draft recovery and private flag preservation. A 1000-entry list render is
+measured in the acceptance suite rather than adding pagination prematurely.
+Browser timings are environment-specific measurements, not performance promises.
+CI retains editor screenshots as workflow artifacts. Physical Safari/Via keyboard,
+font scaling and safe areas remain a manual device checklist.

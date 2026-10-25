@@ -24,12 +24,12 @@
     discard() { this.working = clone(this.saved); }
     toJSON() { return payload(this.working); }
     categoryID() { return id(); }
-    entries() { return [...this.working.apps.map(item => ({item, location:'apps'})), ...this.working.bookmarks.map(item => ({item,location:item.Category}))]; }
+    entries() { return [...this.working.apps.map(item => ({item, location:'apps'})), ...this.working.bookmarks.map(item => ({item,location:'category:'+item.Category}))]; }
     find(entryKey) { return this.entries().find(({item}) => item._key===entryKey); }
     put(item, location, entryKey) {
       const current=entryKey && this.find(entryKey);
       if (entryKey && !current) throw Error('条目不存在');
-      const next={...(current ? current.item : {}), ...item, _key:entryKey || key(), Category:location==='apps' ? '' : location};
+      const next={...(current ? current.item : {}), ...item, _key:entryKey || key(), Category:location==='apps' ? '' : location.slice('category:'.length)};
       if (current && current.location===location) { Object.assign(current.item,next); return next._key; }
       if (current) this.remove(entryKey);
       (location==='apps' ? this.working.apps : this.working.bookmarks).push(next);

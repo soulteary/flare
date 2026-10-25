@@ -2,27 +2,27 @@
 (async function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  let store, saving=false, editingKey=null, formStart='', lastLocation='', undo=null, migrationID=null, conflict=false, focusBeforeDialog=null;
+  let store, saving=false, editingKey=null, formStart='', lastLocation='', undo=null, migrationID=null, conflict=false, focusBeforeDialog=null, batch=null;
   const entryDialog=$('entry-dialog'), categoryDialog=$('categories-dialog');
   const fields={Name:'entry-name',URL:'entry-url',Category:'entry-location'};
   function el(tag, text, className) { const node=document.createElement(tag); if(text!==undefined)node.textContent=text;if(className)node.className=className;return node; }
   function button(text, action, className) {const node=el('button',text,className);node.type='button';node.addEventListener('click',action);return node;}
-  function categoryName(id) {return id==='apps' ? '应用区' : (store.working.categories.find(c=>c.ID===id)?.Name || '分类缺失：'+id);}
+  function categoryName(id) {return id==='apps' ? '应用区' : (store.working.categories.find(c=>'category:'+c.ID===id)?.Name || '分类缺失：'+id);}
   function locations(select, value, includeAll=false, exclude=null) {
     select.replaceChildren();
     function option(v,t){const o=el('option',t);o.value=v;select.append(o);}
     if(includeAll)option('all','全部位置');else option('','请选择位置');
     option('apps','应用区');
-    for(const c of store.working.categories)if(c.ID!==exclude)option(c.ID,c.Name);
+    for(const c of store.working.categories)if(c.ID!==exclude)option('category:'+c.ID,c.Name);
     if(value && ![...select.options].some(o=>o.value===value))option(value,'分类缺失：'+value);
     select.value=value || (includeAll?'all':'');
   }
   function setStatus(message, error=false) {
     $('save-status').textContent=message;
     document.querySelector('.savebar').dataset.error=String(error);
-    if(store){$('save-changes').disabled=saving || !store.dirty;$('discard-changes').disabled=saving || !store.dirty;}
+    if(store){const dirty=store.dirty || !!batch?.dirty;$('save-changes').disabled=saving || !dirty;$('discard-changes').disabled=saving || !dirty;}
   }
-  function syncStatus() {setStatus(conflict ? '服务器数据已变化，请保留修改后重新载入。' : store.dirty?'有未保存的更改':'所有更改已保存', conflict);}
+  function syncStatus() {setStatus(conflict ? '服务器数据已变化，请保留修改后重新载入。' : (store.dirty || batch?.dirty)?'有未保存的更改':'所有更改已保存', conflict);}
   function render() {
     const filter=$('location-filter').value, query=$('entry-search').value.trim().toLocaleLowerCase();
     locations($('location-filter'),filter,true);
@@ -69,7 +69,7 @@
   $('entry-form').addEventListener('submit',event=>{
     event.preventDefault();clearErrors();const values=Object.fromEntries(new FormData(event.target));
     if(!values.Name.trim())return fieldError('Name','请填写名称');if(!values.URL.trim())return fieldError('URL','请填写地址');
-    if(values.Location!=='apps' && !store.working.categories.some(c=>c.ID===values.Location))return fieldError('Category','请选择有效位置');
+    if(values.Location!=='apps' && !store.working.categories.some(c=>'category:'+c.ID===values.Location))return fieldError('Category','请选择有效位置');
     const existed=editingKey && store.find(editingKey);
     const item={Name:values.Name.trim(),URL:values.URL.trim(),Icon:values.Icon,Desc:values.Desc};
     store.put(item,values.Location,editingKey);lastLocation=values.Location;undo=null;close(entryDialog);render();
@@ -88,9 +88,9 @@
     const moved=store.working.bookmarks.filter(item=>item.Category===id);
     store.working.bookmarks=store.working.bookmarks.filter(item=>item.Category!==id);
     if(destination==='apps')store.working.apps.push(...moved.map(item=>({...item,Category:''})));
-    else store.working.bookmarks.push(...moved.map(item=>({...item,Category:destination})));
+    else store.working.bookmarks.push(...moved.map(item=>({...item,Category:destination.slice('category:'.length)})));
     store.working.categories=store.working.categories.filter(c=>c.ID!==id);migrationID=null;undo=null;
-    if($('location-filter').value===id)$('location-filter').value='all';renderCategories();render();
+    if($('location-filter').value==='category:'+id)$('location-filter').value='all';renderCategories();render();
   }
   function renderCategories() {
     const list=$('category-list');list.replaceChildren();
@@ -111,7 +111,7 @@
   }
   $('manage-categories').onclick=()=>{if(saving)return;migrationID=null;$('category-error').textContent='';renderCategories();open(categoryDialog);};
   $('category-add-form').onsubmit=event=>{event.preventDefault();const name=$('new-category-name').value.trim();if(!validCategoryName(name)){$('category-error').textContent='名称不能为空、重复或使用保留名称';$('new-category-name').focus();return;}store.working.categories.push({ID:store.categoryID(),Name:name});$('new-category-name').value='';$('category-error').textContent='';renderCategories();render();};
-  function closeCategories() {if(categoryDialog.querySelector('[aria-invalid="true"]')){categoryDialog.querySelector('[aria-invalid="true"]').focus();return;}if($('new-category-name').value.trim()&&!confirm('尚未添加的新分类名称将被放弃，继续？'))return;$('new-category-name').value='';close(categoryDialog);}
+  function closeCategories() {if(categoryDialog.querySelector('[aria-invalid="true"]')){categoryDialog.querySelector('[aria-invalid="true"]').focus();return;}if($('new-category-name').value.trim()&&!confirm('尚未添加的新分类名称将被放弃，继续？'))return;$('new-category-name').value='';close(categoryDialog);batch?.refresh();}
   $('close-categories').onclick=closeCategories;categoryDialog.addEventListener('cancel',event=>{event.preventDefault();closeCategories();});
   $('entry-search').oninput=()=>{if(store)render();};$('location-filter').onchange=()=>{if(store)render();};
   function busy(value) {saving=value;$('workspace').inert=value;$('workspace').setAttribute('aria-busy',String(value));document.querySelectorAll('.save-actions button').forEach(b=>b.disabled=value);if(!value)syncStatus();}
@@ -121,12 +121,15 @@
     for(const collection of ['apps','bookmarks'])for(let i=0;i<store.working[collection].length;i++){const item=store.working[collection][i];for(const name of ['Name','URL'])if(!String(item[name]||'').trim())return{field:collection+'.'+i+'.'+name,error:name==='Name'?'请填写名称':'请填写地址'};if(collection==='bookmarks'&&!ids.has(item.Category))return{field:collection+'.'+i+'.Category',error:'请选择有效位置'};}
   }
   function locateError(result) {
+    if(batch?.active && !result.field.startsWith('categories.')) { batch.locateError(result); return; }
     const [collection,index,field]=result.field.split('.');
     if(collection==='categories'){renderCategories();open(categoryDialog);const input=categoryDialog.querySelectorAll('[data-category]')[Number(index)];if(input){input.setAttribute('aria-invalid','true');input.focus();}}
     else {const item=store.working[collection]?.[Number(index)];if(item){openEntry(item._key);fieldError(field,result.error);}}
   }
   async function save() {
-    if(!store||saving||!store.dirty||entryDialog.open||categoryDialog.open)return;
+    if(!store||saving||entryDialog.open||categoryDialog.open)return;
+    if(batch?.active && !batch.flush())return;
+    if(!store.dirty){syncStatus();return;}
     const invalid=validateDocument();if(invalid){locateError(invalid);setStatus(invalid.error,true);return;}
     busy(true);setStatus('正在保存…');let message='所有更改已保存',error=false;
     try {
@@ -135,18 +138,32 @@
       const result=await response.json();
       if(!response.ok){if(response.status===409){conflict=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(result.field)locateError(result);throw Error(result.error||'保存失败，请重试。');}
       if(!result.saved||!result.document)throw Error('保存响应不完整，请检查数据后重试。');
-      store.accept(result.document);undo=null;conflict=false;$('export-draft').hidden=true;$('reload-data').hidden=true;render();
+      store.accept(result.document);batch?.refresh();undo=null;conflict=false;$('export-draft').hidden=true;$('reload-data').hidden=true;render();
     } catch(err){error=true;message=err.message+' 当前编辑内容已保留。';}
     finally{busy(false);setStatus(message,error);}
   }
   $('save-changes').onclick=save;
-  $('discard-changes').onclick=()=>{if(!saving&&confirm('放弃全部未保存的更改？')){store.discard();undo=null;$('location-filter').value='all';render();if(conflict)setStatus('已恢复加载时的数据；服务器已有更新，请重新载入。',true);}};
-  $('export-draft').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(store.toJSON(),null,2)],{type:'application/json'}));const a=el('a');a.href=url;a.download='flare-editor-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-  $('reload-data').onclick=()=>{if(!saving&&(!store.dirty||confirm('重新载入会放弃当前修改，请先导出需要保留的内容。继续？')))location.reload();};
-  document.querySelectorAll('[data-leave]').forEach(link=>link.onclick=event=>{if(saving||(store?.dirty&&!confirm('更改尚未保存，确定离开？')))event.preventDefault();});
-  window.addEventListener('beforeunload',event=>{if(saving||store?.dirty){event.preventDefault();event.returnValue='';}});
-  // The batch adapter in the next PR attaches to this single working store.
-  window.FlareEditorUI={get store(){return store;},get saving(){return saving;},render,setStatus,validateDocument,locateError};
+  $('discard-changes').onclick=()=>{if(!saving&&confirm('放弃全部未保存的更改？')){store.discard();batch?.refresh();undo=null;$('location-filter').value='all';render();if(conflict)setStatus('已恢复加载时的数据；服务器已有更新，请重新载入。',true);}};
+  $('export-draft').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(batch?.active ? batch.exportDraft() : store.toJSON(),null,2)],{type:'application/json'}));const a=el('a');a.href=url;a.download='flare-editor-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+  $('reload-data').onclick=()=>{if(!saving&&(!(store.dirty||batch?.dirty)||confirm('重新载入会放弃当前修改，请先导出需要保留的内容。继续？')))location.reload();};
+  $('restore-draft').onclick=()=>{if(!saving&&!entryDialog.open&&!categoryDialog.open)$('draft-file').click();};
+  $('draft-file').onchange=async event=>{
+    const file=event.target.files[0];if(!file)return;
+    try {
+      if(file.size>4*1024*1024)throw Error('草稿文件不能超过 4 MiB');
+      const draft=JSON.parse(await file.text());
+      if(!draft || !Array.isArray(draft.categories) || !Array.isArray(draft.apps) || !Array.isArray(draft.bookmarks))throw Error('不是有效的编辑器草稿');
+      const categories=draft.categories.map(c=>{if(!c||typeof c.ID!=='string'||typeof c.Name!=='string')throw Error('分类格式无效');return{ID:c.ID,Name:c.Name};});
+      const items=rows=>rows.map(item=>{if(!item||typeof item.Name!=='string'||typeof item.URL!=='string')throw Error('条目格式无效');const out={Name:item.Name,URL:item.URL,Category:typeof item.Category==='string'?item.Category:''};for(const name of ['Icon','Desc'])if(typeof item[name]==='string')out[name]=item[name];if(typeof item.Private==='boolean')out.Private=item.Private;return out;});
+      const next={version:store.working.version,categories,apps:items(draft.apps),bookmarks:items(draft.bookmarks)};
+      if(!confirm('以草稿替换当前待保存内容？保存时仍会检查本页加载的服务器版本。'))return;
+      store.working=FlareEditorState.normalize(next);batch?.refresh();undo=null;$('location-filter').value='all';render();setStatus('草稿已恢复到待保存内容，请检查后保存。');
+    }catch(error){setStatus('无法恢复草稿：'+error.message,true);}finally{event.target.value='';}
+  };
+  document.querySelectorAll('[data-leave]').forEach(link=>link.onclick=event=>{if(saving||((store?.dirty || batch?.dirty)&&!confirm('更改尚未保存，确定离开？')))event.preventDefault();});
+  window.addEventListener('beforeunload',event=>{if(saving||store?.dirty||batch?.dirty){event.preventDefault();event.returnValue='';}});
+  // The lazy batch adapter attaches to this single working store.
+  window.FlareEditorUI={get store(){return store;},get saving(){return saving;},render,setStatus,syncStatus,validateDocument,locateError,registerBatch(adapter){batch=adapter;},get hasOpenDialog(){return entryDialog.open||categoryDialog.open;}};
   try {const response=await fetch('/editor/document',{cache:'no-store'});if(!response.ok||response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error('无法读取导航数据，请重新登录或检查配置。');store=new FlareEditorState.Store(await response.json());$('workspace').setAttribute('aria-busy','false');render();document.dispatchEvent(new Event('flare-editor-ready'));}
   catch(error){$('result-count').textContent='加载失败';setStatus(error.message,true);$('workspace').inert=true;}
 })();
