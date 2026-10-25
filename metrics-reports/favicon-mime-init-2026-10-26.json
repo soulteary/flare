@@ -1,0 +1,186 @@
+{
+  "scope": "Fresh native process; control heap profile with gc=1, one GET /favicon.ico, control heap profile with gc=1. HeapAlloc only, not RSS.",
+  "source_revisions": {
+    "before": "39df281349fccfa2d51ccc8b1a749be7c54af62d",
+    "regression": "7b76abb94d9c103599c452e9299733c37c60288b",
+    "fixed": "48e432fefe09afb94373d8595d8a2c3c853308f0"
+  },
+  "environment": {
+    "os": "linux",
+    "arch": "amd64",
+    "go": "1.27.3",
+    "GOMAXPROCS": 4,
+    "rounds": 5,
+    "order": "rotated process order across rounds",
+    "host_mime_database": "freedesktop/system mappings installed; overhead varies by operating system and image"
+  },
+  "summary": {
+    "before": {
+      "median_delta_bytes": 77848,
+      "min_delta_bytes": 71648,
+      "max_delta_bytes": 88936
+    },
+    "regression": {
+      "median_delta_bytes": 563600,
+      "min_delta_bytes": 549600,
+      "max_delta_bytes": 565920
+    },
+    "fixed": {
+      "median_delta_bytes": 72376,
+      "min_delta_bytes": 61048,
+      "max_delta_bytes": 83768
+    }
+  },
+  "rows": [
+    {
+      "target": "before-round-1",
+      "binary_sha256": "7ba9e0bf47267ce447c69750bdae5fc3e9c5bdc18a4667bd5a77aa2bb6b5363d",
+      "before_favicon_live_heap_bytes": 1403248,
+      "after_favicon_live_heap_bytes": 1481096,
+      "delta_bytes": 77848,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "regression-round-1",
+      "binary_sha256": "06716770891ea6d074b8d0d74256c3d28d4101fe54bef5a99142efb3c801d8c6",
+      "before_favicon_live_heap_bytes": 1462552,
+      "after_favicon_live_heap_bytes": 2028472,
+      "delta_bytes": 565920,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "fixed-round-1",
+      "binary_sha256": "5315b7fe34085feaa944a3c226389db8e18d0b691924a3eaea965ee0ef2776d5",
+      "before_favicon_live_heap_bytes": 1463432,
+      "after_favicon_live_heap_bytes": 1545392,
+      "delta_bytes": 81960,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "regression-round-2",
+      "binary_sha256": "06716770891ea6d074b8d0d74256c3d28d4101fe54bef5a99142efb3c801d8c6",
+      "before_favicon_live_heap_bytes": 1463896,
+      "after_favicon_live_heap_bytes": 2028424,
+      "delta_bytes": 564528,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "fixed-round-2",
+      "binary_sha256": "5315b7fe34085feaa944a3c226389db8e18d0b691924a3eaea965ee0ef2776d5",
+      "before_favicon_live_heap_bytes": 1463768,
+      "after_favicon_live_heap_bytes": 1547536,
+      "delta_bytes": 83768,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "before-round-2",
+      "binary_sha256": "7ba9e0bf47267ce447c69750bdae5fc3e9c5bdc18a4667bd5a77aa2bb6b5363d",
+      "before_favicon_live_heap_bytes": 1415664,
+      "after_favicon_live_heap_bytes": 1487344,
+      "delta_bytes": 71680,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "fixed-round-3",
+      "binary_sha256": "5315b7fe34085feaa944a3c226389db8e18d0b691924a3eaea965ee0ef2776d5",
+      "before_favicon_live_heap_bytes": 1474600,
+      "after_favicon_live_heap_bytes": 1536432,
+      "delta_bytes": 61832,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "before-round-3",
+      "binary_sha256": "7ba9e0bf47267ce447c69750bdae5fc3e9c5bdc18a4667bd5a77aa2bb6b5363d",
+      "before_favicon_live_heap_bytes": 1404576,
+      "after_favicon_live_heap_bytes": 1487888,
+      "delta_bytes": 83312,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "regression-round-3",
+      "binary_sha256": "06716770891ea6d074b8d0d74256c3d28d4101fe54bef5a99142efb3c801d8c6",
+      "before_favicon_live_heap_bytes": 1469408,
+      "after_favicon_live_heap_bytes": 2033008,
+      "delta_bytes": 563600,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "before-round-4",
+      "binary_sha256": "7ba9e0bf47267ce447c69750bdae5fc3e9c5bdc18a4667bd5a77aa2bb6b5363d",
+      "before_favicon_live_heap_bytes": 1403728,
+      "after_favicon_live_heap_bytes": 1475376,
+      "delta_bytes": 71648,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "regression-round-4",
+      "binary_sha256": "06716770891ea6d074b8d0d74256c3d28d4101fe54bef5a99142efb3c801d8c6",
+      "before_favicon_live_heap_bytes": 1463000,
+      "after_favicon_live_heap_bytes": 2012600,
+      "delta_bytes": 549600,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "fixed-round-4",
+      "binary_sha256": "5315b7fe34085feaa944a3c226389db8e18d0b691924a3eaea965ee0ef2776d5",
+      "before_favicon_live_heap_bytes": 1462616,
+      "after_favicon_live_heap_bytes": 1534992,
+      "delta_bytes": 72376,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "regression-round-5",
+      "binary_sha256": "06716770891ea6d074b8d0d74256c3d28d4101fe54bef5a99142efb3c801d8c6",
+      "before_favicon_live_heap_bytes": 1463144,
+      "after_favicon_live_heap_bytes": 2013912,
+      "delta_bytes": 550768,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "fixed-round-5",
+      "binary_sha256": "5315b7fe34085feaa944a3c226389db8e18d0b691924a3eaea965ee0ef2776d5",
+      "before_favicon_live_heap_bytes": 1474968,
+      "after_favicon_live_heap_bytes": 1536016,
+      "delta_bytes": 61048,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    },
+    {
+      "target": "before-round-5",
+      "binary_sha256": "7ba9e0bf47267ce447c69750bdae5fc3e9c5bdc18a4667bd5a77aa2bb6b5363d",
+      "before_favicon_live_heap_bytes": 1404320,
+      "after_favicon_live_heap_bytes": 1493256,
+      "delta_bytes": 88936,
+      "favicon_status": 200,
+      "favicon_bytes": 2816,
+      "favicon_sha256": "72404fa6497d55d874607c408c30b20a6ead3f9d5cc2538735e030c9b4ebcd9d"
+    }
+  ]
+}
