@@ -39,3 +39,7 @@
   #page-home #hero-container p { height: auto; overflow-wrap: anywhere; }
   #plugin-weather { position: static; flex: 0 0 auto; }
 }
+
+
+.homepage-title-compact #plugin-greetings { font-size: clamp(1.5rem, 5vw, 2.5rem); }
+.homepage-title-prominent #plugin-greetings { font-size: clamp(2rem, 9vw, 4.5rem); }

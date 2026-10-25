@@ -102,5 +102,16 @@
   "mobile_bookmark_layout": "Mobile bookmark layout",
   "mobile_bookmark_single": "Single column · data order",
   "mobile_bookmark_compact": "Two compact columns",
-  "mobile_bookmark_help": "Compact columns read from top to bottom, then left to right. Screens narrower than 360 CSS pixels use one column. This does not change saved category order."
+  "mobile_bookmark_help": "Compact columns read from top to bottom, then left to right. Screens narrower than 360 CSS pixels use one column. This does not change saved category order.",
+  "navigation_text_size": "Navigation text size",
+  "homepage_title_size": "Homepage title size",
+  "size_standard": "Standard",
+  "size_larger": "Larger",
+  "size_large": "Large",
+  "size_compact": "Compact",
+  "size_prominent": "Prominent",
+  "app_descriptions": "Application descriptions",
+  "show": "Show",
+  "hide": "Hide",
+  "readability_help": "These preferences affect the homepage only. Device text scaling still applies."
 }

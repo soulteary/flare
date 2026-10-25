@@ -20,3 +20,28 @@ func TestHomepageLayoutChoices(t *testing.T) {
 		t.Fatal("compact class missing")
 	}
 }
+
+func TestHomepageReadabilityChoices(t *testing.T) {
+	for _, size := range []string{"", "standard", "larger", "large"} {
+		if err := (&HomepageOptions{NavigationTextSize: size}).Validate(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, size := range []string{"", "compact", "standard", "prominent"} {
+		if err := (&HomepageOptions{TitleSize: size}).Validate(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, options := range []HomepageOptions{{NavigationTextSize: "bad"}, {TitleSize: "bad"}} {
+		if options.Validate() == nil {
+			t.Fatal("invalid choice accepted")
+		}
+	}
+	options := &HomepageOptions{NavigationTextSize: "large", TitleSize: "compact", HideAppDescriptions: true}
+	if options.Classes() != "navigation-text-large homepage-title-compact hide-app-descriptions " {
+		t.Fatal(options.Classes())
+	}
+	if (&HomepageOptions{NavigationTextSize: "injected class"}).Classes() != "" {
+		t.Fatal("arbitrary classes accepted")
+	}
+}
