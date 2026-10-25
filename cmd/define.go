@@ -35,4 +35,7 @@ const (
 
 	_KEY_COOKIE_SECRET       = "cookie_secret"
 	_KEY_COOKIE_SECRET_SHORT = "r"
+
+	// _KEY_COOKIE_SECURE selects the explicit HTTPS-only cookie policy.
+	_KEY_COOKIE_SECURE = "cookie_secure"
 )

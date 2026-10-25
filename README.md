@@ -83,6 +83,29 @@ may not survive a power loss; ordinary restarts and other instances reuse it.
 Multiple instances should use the same configured key or share the persistent
 key file so that their session cookies remain compatible.
 
+#### Session cookies and HTTPS proxies
+
+Session cookies use `HttpOnly`, `SameSite=Lax`, `Path=/`, and a 30-day lifetime.
+Plain HTTP deployments work by default. Requests received directly over TLS
+automatically use `Secure` cookies.
+
+**For HTTPS terminated by a reverse proxy, set `FLARE_COOKIE_SECURE=true`.**
+Flare's built-in server listens over HTTP, so this setting preserves the
+`Secure` attribute when the browser uses HTTPS but the proxy connects to Flare
+over HTTP. Clients must then access the application using HTTPS.
+
+```env
+FLARE_DISABLE_LOGIN=false
+FLARE_COOKIE_SECURE=true
+```
+
+`FLARE_COOKIE_SECURE` defaults to `false` and is supported in the environment,
+the `.env` file, and as `--cookie_secure=true` or `--cookie_secure=false`.
+The same precedence applies: command-line flags override `.env`, which
+overrides environment variables. A value of `false` still allows direct TLS
+requests to use `Secure`. Flare does not infer this policy from untrusted
+`X-Forwarded-Proto`, `Forwarded`, or similar request headers.
+
 ## Directory
 
 ```bash

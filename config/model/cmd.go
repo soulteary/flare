@@ -23,6 +23,9 @@ type Flags struct {
 
 	CookieName   string
 	CookieSecret string
+	// CookieSecure forces HTTPS-only session cookies behind a TLS-terminating proxy.
+	// Direct TLS connections use secure cookies even when this flag is false.
+	CookieSecure bool
 }
 
 // Application Envs Data Model
@@ -42,6 +45,8 @@ type Envs struct {
 
 	CookieName   string `env:"FLARE_COOKIE_NAME"`
 	CookieSecret string `env:"FLARE_COOKIE_SECRET"`
+	// CookieSecure explicitly requires HTTPS session cookies; direct TLS is automatic.
+	CookieSecure bool `env:"FLARE_COOKIE_SECURE"`
 }
 
 // Application Envfile Data Model
@@ -61,4 +66,6 @@ type EnvFile struct {
 
 	CookieName   string `ini:"FLARE_COOKIE_NAME,omitempty"`
 	CookieSecret string `ini:"FLARE_COOKIE_SECRET,omitempty"`
+	// CookieSecure explicitly requires HTTPS session cookies; direct TLS is automatic.
+	CookieSecure bool `ini:"FLARE_COOKIE_SECURE,omitempty"`
 }

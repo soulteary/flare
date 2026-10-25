@@ -50,6 +50,7 @@ func TestParseEnvVarsCookies(t *testing.T) {
 		envs       map[string]string
 		wantName   string
 		wantSecret string
+		wantSecure bool
 	}{
 		{
 			name:       "defaults",
@@ -61,15 +62,25 @@ func TestParseEnvVarsCookies(t *testing.T) {
 			envs: map[string]string{
 				"FLARE_COOKIE_NAME":   "custom-session",
 				"FLARE_COOKIE_SECRET": "test-session-secret-32-bytes-long",
+				"FLARE_COOKIE_SECURE": "true",
 			},
 			wantName:   "custom-session",
 			wantSecret: "test-session-secret-32-bytes-long",
+			wantSecure: true,
+		},
+		{
+			name: "explicit HTTP-compatible policy",
+			envs: map[string]string{
+				"FLARE_COOKIE_SECURE": "false",
+			},
+			wantName:   define.DEFAULT_COOKIE_NAME,
+			wantSecret: define.DEFAULT_COOKIE_SECRET,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, key := range []string{"FLARE_COOKIE_NAME", "FLARE_COOKIE_SECRET"} {
+			for _, key := range []string{"FLARE_COOKIE_NAME", "FLARE_COOKIE_SECRET", "FLARE_COOKIE_SECURE"} {
 				t.Setenv(key, "")
 				assert.NoError(t, os.Unsetenv(key))
 			}
@@ -80,6 +91,7 @@ func TestParseEnvVarsCookies(t *testing.T) {
 			flags := cmd.ParseEnvVars()
 			assert.Equal(t, tt.wantName, flags.CookieName)
 			assert.Equal(t, tt.wantSecret, flags.CookieSecret)
+			assert.Equal(t, tt.wantSecure, flags.CookieSecure)
 		})
 	}
 }

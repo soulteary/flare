@@ -48,6 +48,7 @@ func GetCliFlags() (*model.Flags, *flags.FlagSet) {
 	// Cookie
 	options.StringVarP(&cliFlags.CookieName, _KEY_COOKIE_NAME, _KEY_COOKIE_NAME_SHORT, define.DEFAULT_COOKIE_NAME, "调整 Cookie 字段名称")
 	options.StringVarP(&cliFlags.CookieSecret, _KEY_COOKIE_SECRET, _KEY_COOKIE_SECRET_SHORT, define.DEFAULT_COOKIE_SECRET, "设置 Cookie 密钥（建议使用至少 32 字节的随机值；缺省或过短时自动初始化）")
+	options.BoolVar(&cliFlags.CookieSecure, _KEY_COOKIE_SECURE, define.DEFAULT_COOKIE_SECURE, "强制会话 Cookie 仅通过 HTTPS 发送（TLS 直连自动启用）")
 
 	_ = options.Parse(os.Args)
 
@@ -121,6 +122,7 @@ func parseCLI(baseFlags model.Flags) model.Flags {
 
 	baseFlags.CookieName = configutil.ResolveStringPflag(fs, _KEY_COOKIE_NAME, "", baseFlags.CookieName, true)
 	baseFlags.CookieSecret = configutil.ResolveStringPflag(fs, _KEY_COOKIE_SECRET, "", baseFlags.CookieSecret, true)
+	baseFlags.CookieSecure = configutil.ResolveBoolPflag(fs, _KEY_COOKIE_SECURE, "", baseFlags.CookieSecure)
 
 	// Forcibly disable debug mode in non-development mode
 	if !version.Default().IsDev() {
