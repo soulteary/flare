@@ -88,6 +88,90 @@ func TestParseCookiePrecedence(t *testing.T) {
 	}
 }
 
+// TestParseCookieSecurePrecedence keeps explicit false values effective across
+// CLI > .env > environment and leaves lower-priority values intact when unset.
+func TestParseCookieSecurePrecedence(t *testing.T) {
+	originalArgs := os.Args
+	originalFlags := define.AppFlags
+	t.Cleanup(func() {
+		os.Args = originalArgs
+		define.AppFlags = originalFlags
+	})
+
+	tests := []struct {
+		name    string
+		env     string
+		envfile string
+		args    []string
+		want    bool
+	}{
+		{name: "default allows HTTP"},
+		{name: "environment enables HTTPS-only", env: "true", want: true},
+		{name: "environment explicitly allows HTTP", env: "false"},
+		{
+			name:    "unset envfile and CLI preserve environment",
+			env:     "true",
+			envfile: "FLARE_PORT=5005\n",
+			want:    true,
+		},
+		{
+			name:    "envfile true overrides environment false",
+			env:     "false",
+			envfile: "FLARE_COOKIE_SECURE=true\n",
+			want:    true,
+		},
+		{
+			name:    "envfile false overrides environment true",
+			env:     "true",
+			envfile: "FLARE_COOKIE_SECURE=false\n",
+		},
+		{
+			name:    "invalid envfile policy preserves environment",
+			env:     "true",
+			envfile: "FLARE_COOKIE_SECURE=invalid\n",
+			want:    true,
+		},
+		{
+			name:    "bare CLI flag enables HTTPS-only over envfile",
+			env:     "true",
+			envfile: "FLARE_COOKIE_SECURE=false\n",
+			args:    []string{"--cookie_secure"},
+			want:    true,
+		},
+		{
+			name:    "CLI true overrides envfile and environment false",
+			env:     "false",
+			envfile: "FLARE_COOKIE_SECURE=false\n",
+			args:    []string{"--cookie_secure=true"},
+			want:    true,
+		},
+		{
+			name:    "CLI false overrides envfile true without rereading environment",
+			env:     "true",
+			envfile: "FLARE_COOKIE_SECURE=true\n",
+			args:    []string{"--cookie_secure=false"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			t.Setenv("FLARE_COOKIE_SECURE", tt.env)
+			if tt.env == "" {
+				require.NoError(t, os.Unsetenv("FLARE_COOKIE_SECURE"))
+			}
+			if tt.envfile != "" {
+				require.NoError(t, os.WriteFile(".env", []byte(tt.envfile), 0600))
+			}
+			os.Args = append([]string{"flare"}, tt.args...)
+
+			resolved := cmd.Parse()
+			assert.Equal(t, tt.want, resolved.CookieSecure)
+			assert.Equal(t, tt.want, define.AppFlags.CookieSecure)
+		})
+	}
+}
+
 func TestGetCliFlags(t *testing.T) {
 	originalArgs := os.Args
 	defer func() { os.Args = originalArgs }()

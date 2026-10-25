@@ -18,6 +18,8 @@ const (
 
 	DEFAULT_COOKIE_NAME   = "flare"
 	DEFAULT_COOKIE_SECRET = "secret"
+	// DEFAULT_COOKIE_SECURE preserves HTTP access; direct TLS still enables Secure.
+	DEFAULT_COOKIE_SECURE = false
 )
 
 // get default env config
@@ -38,6 +40,7 @@ func GetDefaultEnvVars() model.Envs {
 
 		CookieName:   DEFAULT_COOKIE_NAME,
 		CookieSecret: DEFAULT_COOKIE_SECRET,
+		CookieSecure: DEFAULT_COOKIE_SECURE,
 	}
 }
 

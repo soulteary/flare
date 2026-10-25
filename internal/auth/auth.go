@@ -42,6 +42,16 @@ func RequestHandle(e *echo.Echo) error {
 	sessionName = RequestHandleSessionName(define.AppFlags.CookieName, define.AppFlags.Port)
 	if !define.AppFlags.DisableLoginMode {
 		store := sessions.NewCookieStore([]byte(define.AppFlags.CookieSecret))
+		// Define Flare's policy explicitly: gorilla/sessions defaults to
+		// SameSite=None and Secure, which prevents ordinary HTTP logins.
+		store.Options = &sessions.Options{
+			Path:     "/",
+			MaxAge:   30 * 24 * 60 * 60,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+			Secure:   define.AppFlags.CookieSecure,
+		}
+		store.MaxAge(store.Options.MaxAge)
 		e.Use(session.Middleware(store))
 		e.POST(define.MiscPages.Login.Path, login)
 		e.POST(define.MiscPages.Logout.Path, logout)
@@ -134,7 +144,7 @@ func login(c *echo.Context) error {
 	sess.Values[SESSION_KEY_USER_NAME] = username
 	sess.Values[SESSION_KEY_LOGIN_DATE] = time.Now().Format("2006年01月02日 15:04:05 CST")
 
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
+	if err := saveSession(c, sess); err != nil {
 		return c.HTMLBlob(http.StatusBadRequest, internalErrorSave)
 	}
 
@@ -152,8 +162,17 @@ func logout(c *echo.Context) error {
 	delete(sess.Values, SESSION_KEY_USER_NAME)
 	delete(sess.Values, SESSION_KEY_LOGIN_DATE)
 
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
+	if err := saveSession(c, sess); err != nil {
 		return c.HTMLBlob(http.StatusBadRequest, internalErrorSave)
 	}
 	return c.Redirect(http.StatusFound, define.SettingPages.Others.Path)
+}
+
+// saveSession preserves a forced Secure policy and automatically protects direct
+// TLS requests. CookieStore gives each session its own Options copy, so mixed
+// HTTP/TLS requests cannot change the shared store. Forwarding headers are not
+// trusted; HTTPS termination proxies can force Secure through configuration.
+func saveSession(c *echo.Context, sess *sessions.Session) error {
+	sess.Options.Secure = sess.Options.Secure || c.Request().TLS != nil
+	return sess.Save(c.Request(), c.Response())
 }

@@ -68,6 +68,7 @@ func ParseEnvVars() (stor model.Flags) {
 	stor.DisableCSP = defaults.DisableCSP
 	stor.CookieName = defaults.CookieName
 	stor.CookieSecret = defaults.CookieSecret
+	stor.CookieSecure = defaults.CookieSecure
 
 	return stor
 }

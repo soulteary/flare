@@ -104,6 +104,7 @@ func ParseEnvFile(baseFlags model.Flags) model.Flags {
 	baseFlags.Visibility = GetDotEnvFileStringOrDefault(envs, "FLARE_VISIBILITY", baseFlags.Visibility)
 	baseFlags.CookieName = GetDotEnvFileStringOrDefault(envs, "FLARE_COOKIE_NAME", baseFlags.CookieName)
 	baseFlags.CookieSecret = GetDotEnvFileStringOrDefault(envs, "FLARE_COOKIE_SECRET", baseFlags.CookieSecret)
+	baseFlags.CookieSecure = GetDotEnvFileBoolOrDefault(envs, "FLARE_COOKIE_SECURE", baseFlags.CookieSecure)
 
 	return baseFlags
 }
