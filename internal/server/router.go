@@ -90,6 +90,7 @@ func NewFiberApp(appFlags *model.Flags) (*fiber.App, error) {
 	}
 	// Recover inside the access logger so panics are recorded as failed requests.
 	e.Use(recover.New())
+	e.Use(protectWriteSource)
 	if err := auth.RequestHandle(e); err != nil {
 		return nil, fmt.Errorf("初始化认证: %w", err)
 	}

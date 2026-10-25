@@ -1,8 +1,12 @@
 package theme
 
 import (
+	"github.com/soulteary/flare/config/data"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v3"
@@ -66,5 +70,36 @@ func TestThemeSurvivesFormBufferReuse(t *testing.T) {
 	}
 	if define.ThemeCurrent != "blackboard" {
 		t.Fatalf("retained theme changed after form buffer reuse: %q", define.ThemeCurrent)
+	}
+}
+
+func TestFailedThemeSavePreservesRuntimeState(t *testing.T) {
+	t.Chdir(t.TempDir())
+	flags := define.AppFlags
+	defer func() { define.AppFlags = flags }()
+	define.AppFlags.DisableLoginMode = true
+	if !data.UpdateThemeName("blackboard") {
+		t.Fatal("prepare settings")
+	}
+	define.SetTheme("blackboard")
+	originalStyle := define.GetAppBodyStyle()
+	if err := os.Remove("config.yml"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir("config.yml", 0700); err != nil {
+		t.Fatal(err)
+	}
+	app := fiber.New(fiber.Config{Views: themeTestViews{}})
+	RegisterRouting(app)
+	req := httptest.NewRequest("POST", define.SettingPages.Theme.Path, strings.NewReader("theme=cloud"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := app.Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	current, _ := define.ThemeSnapshot()
+	if res.StatusCode != 500 || current != "blackboard" || define.GetAppBodyStyle() != originalStyle {
+		t.Fatalf("failed save status=%d current=%q", res.StatusCode, current)
 	}
 }
