@@ -5,14 +5,13 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/internal/fn"
 	"github.com/soulteary/flare/internal/resources/mdi"
 )
 
 // navigationHref validates the original destination before hiding it behind the
 // compatibility redirect. Encoding must never turn an executable URL into a link.
-func navigationHref(raw string, encoded bool) string {
+func navigationHref(raw string, encoded bool, requestInfo ...*fn.DynamicURL) string {
 	if !fn.IsSafeNavigationURL(raw) {
 		return "#"
 	}
@@ -21,7 +20,7 @@ func navigationHref(raw string, encoded bool) string {
 		return "#"
 	}
 	if encoded || strings.EqualFold(parsed.Scheme, "chrome-extension") {
-		return "/redir/url?go=" + data.Base64EncodeUrl(raw)
+		return fn.EncodedNavigationURL(raw, firstRequestInfo(requestInfo))
 	}
 	return raw
 }

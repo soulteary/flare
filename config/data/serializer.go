@@ -53,6 +53,12 @@ func Base64EncodeUrl(input string) string {
 }
 
 func Base64DecodeUrl(input string) ([]byte, error) {
+	// HTTP query parsers already decode percent escapes. Decode that form first
+	// so literal '+' characters in standard Base64 are not changed into spaces.
+	if decoded, err := base64.StdEncoding.DecodeString(input); err == nil {
+		return decoded, nil
+	}
+
 	unescaped, err := url.QueryUnescape(input)
 	if err != nil {
 		return []byte{}, err

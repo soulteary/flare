@@ -15,7 +15,7 @@ var builderPool = sync.Pool{
 	New: func() any { return &strings.Builder{} },
 }
 
-func GenerateApplicationsTemplate(filter string, options *model.Application) template.HTML {
+func GenerateApplicationsTemplate(filter string, options *model.Application, requestInfo ...*fn.DynamicURL) template.HTML {
 	if options == nil {
 		op, err := data.GetAllSettingsOptions()
 		if err != nil {
@@ -37,7 +37,7 @@ func GenerateApplicationsTemplate(filter string, options *model.Application) tem
 	n := len(appsData.Items)
 	parseApps := make([]model.Bookmark, 0, n)
 	for _, app := range appsData.Items {
-		app.URL = fn.ParseDynamicUrl(app.URL)
+		app.URL = fn.ParseDynamicUrlWith(app.URL, firstRequestInfo(requestInfo))
 		parseApps = append(parseApps, app)
 	}
 
@@ -62,7 +62,7 @@ func GenerateApplicationsTemplate(filter string, options *model.Application) tem
 		if desc == "" {
 			desc = app.URL
 		}
-		templateURL := navigationHref(app.URL, options.EnableEncryptedLink)
+		templateURL := navigationHref(app.URL, options.EnableEncryptedLink, firstRequestInfo(requestInfo))
 		templateIcon := navigationIcon(app.Icon, app.URL, options.IconMode)
 		if options.OpenAppNewTab {
 			b.WriteString(`<div class="app-container" data-id="`)
@@ -95,4 +95,11 @@ func GenerateApplicationsTemplate(filter string, options *model.Application) tem
 		}
 	}
 	return template.HTML(b.String())
+}
+
+func firstRequestInfo(info []*fn.DynamicURL) *fn.DynamicURL {
+	if len(info) > 0 {
+		return info[0]
+	}
+	return nil
 }
