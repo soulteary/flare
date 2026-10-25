@@ -110,8 +110,15 @@ func parseCLI(baseFlags model.Flags) model.Flags {
 		baseFlags.AccessLog = normalizeAccessLog(cliFlags.AccessLog, "--"+_KEY_ACCESS_LOG)
 	}
 
-	baseFlags.EnableMinimumRequest = configutil.ResolveBoolPflag(fs, _KEY_MINI_REQUEST, "", baseFlags.EnableMinimumRequest)
-	baseFlags.DisableLoginMode = configutil.ResolveBoolPflag(fs, _KEY_DISABLE_LOGIN, "", baseFlags.DisableLoginMode)
+	// Canonical/deprecated spellings share a pflag destination. Use its final
+	// value whenever either name was explicitly set: last occurrence wins across
+	// both spellings and shorthands, and an alias alone overrides env/.env too.
+	if fs.Changed(_KEY_MINI_REQUEST) || fs.Changed(_KEY_MINI_REQUEST_OLD) {
+		baseFlags.EnableMinimumRequest = cliFlags.EnableMinimumRequest
+	}
+	if fs.Changed(_KEY_DISABLE_LOGIN) || fs.Changed(_KEY_DISABLE_LOGIN_OLD) {
+		baseFlags.DisableLoginMode = cliFlags.DisableLoginMode
+	}
 	baseFlags.DisableCSP = configutil.ResolveBoolPflag(fs, _KEY_DISABLE_CSP, "", baseFlags.DisableCSP)
 
 	visibility := baseFlags.Visibility
