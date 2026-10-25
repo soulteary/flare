@@ -67,9 +67,9 @@
     if(!value){preview.textContent='◇';return;}
     let src;
     if(/^https?:\/\//i.test(value))src=value;
-    else if(/^[a-zA-Z0-9-]+$/.test(value))src='/assets/mdi/blackboard-'+value.toLowerCase()+'.svg';
+    else if(/^[a-zA-Z0-9-]+$/.test(value))src='/editor/icon?name='+encodeURIComponent(value);
     if(!src){preview.textContent='◇';return;}
-    const img=el('img');img.alt='';img.referrerPolicy='no-referrer';img.src=src;img.onerror=()=>{preview.textContent='◇';};preview.append(img);
+    const img=el('img');img.alt='';img.referrerPolicy='no-referrer';img.src=src;img.onerror=()=>{if(img.parentNode===preview)preview.textContent='◇';};preview.append(img);
   }
   $('entry-icon').addEventListener('input',iconPreview);
   $('entry-form').addEventListener('submit',event=>{

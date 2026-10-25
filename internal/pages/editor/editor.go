@@ -34,6 +34,7 @@ func RegisterRouting(e *fiber.App) {
 	registerTransfers(e)
 	registerEditorClient(e)
 	registerEditorDocument(e)
+	registerEditorIcon(e)
 	if introAssets, err := fs.Sub(editorAssets, "editor-assets"); err == nil {
 		e.Use(_ASSETS_WEB_URI, static.New("", static.Config{FS: introAssets}))
 	}
