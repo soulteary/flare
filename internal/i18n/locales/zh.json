@@ -7,6 +7,7 @@
   "page_apps": "应用",
   "page_bookmarks": "书签",
   "page_help": "帮助",
+  "search_match_count": "%s 条本地匹配",
   "search_placeholder": "搜索",
   "search_tip_back": ">> TIPS: 点此标签或再次敲击回车，返回首页",
   "search_label": "书签太多？试试搜索你想寻找的书签吧 :)",

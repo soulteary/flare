@@ -2,7 +2,7 @@ name: Clock acceptance
 
 on:
   pull_request:
-    branches: [main, feat/editor-state, feat/editor-list]
+    branches: [main, feat/editor-state, feat/editor-list, 'feat/search-*']
   push:
     branches: [main]
 
@@ -50,6 +50,11 @@ jobs:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
           EDITOR_SCREENSHOT_DIR: ${{ runner.temp }}/flare-editor-screenshots
         run: node tests/editor/browser.cjs
+      - name: Hybrid search browser acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+          NODE_PATH: ${{ github.workspace }}/tests/clock/node_modules
+        run: node tests/search/hybrid.cjs
       - name: Upload editor view screenshots
         if: always()
         uses: actions/upload-artifact@v6

@@ -94,6 +94,7 @@ func RegisterRouting(e *fiber.App) {
 		e.Get(define.RegularPages.Applications.Path, auth.AuthRequired, pageApplication)
 		e.Get(define.RegularPages.Bookmarks.Path, auth.AuthRequired, pageBookmark)
 	}
+	registerSearchSuggestions(e)
 }
 
 func pageHome(c fiber.Ctx) error {
@@ -360,9 +361,8 @@ func renderClockPage(c fiber.Ctx, m map[string]any, options model.Application, g
 		options.Locale = "zh"
 	}
 	resolved := clock.Populate(m, options, time.Now(), greeting)
-	if resolved.Enhance && !define.AppFlags.DisableCSP {
-		c.Set("Content-Security-Policy", clock.Policy())
-	}
+	populateHybridSearch(m, options)
+	applyHomeScriptPolicy(c, resolved.Enhance, m["SearchHybrid"] == true)
 	return c.Status(http.StatusOK).Render("home.html", m)
 }
 
