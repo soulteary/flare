@@ -113,5 +113,10 @@
   "app_descriptions": "应用描述",
   "show": "显示",
   "hide": "隐藏",
-  "readability_help": "仅影响首页，设备字体缩放仍然生效。"
+  "readability_help": "仅影响首页，设备字体缩放仍然生效。",
+  "category_navigation": "书签分类导航",
+  "category_navigation_all": "全部分组",
+  "category_navigation_tabs": "分类切换",
+  "category_navigation_collapse": "折叠分组",
+  "category_navigation_help": "搜索时展开匹配分组。分类选择仅影响展示，不改变权限。"
 }

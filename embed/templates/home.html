@@ -27,6 +27,7 @@
       {{ if .ShowSearchComponent }}
       <div class="module-container" id="search-container">
         <form action="/" method="POST">
+          {{ if .BookmarkCategory }}<input type="hidden" name="category" value="{{.BookmarkCategory}}">{{ end }}
           {{ if .DisabledSearchAutoFocus }}
           <input type="text" name="search" id="search" autocomplete="off" placeholder="{{.SearchKeyword}}"/>
           {{ else }}

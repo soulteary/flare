@@ -257,6 +257,15 @@
         </div>
 
         <div class="form-group">
+ <label for="category-navigation">{{ T .Locale "category_navigation" }}</label>
+ <select id="category-navigation" name="category-navigation">
+ <option value="all" {{if eq .CategoryNavigation "all"}}selected{{end}}>{{ T .Locale "category_navigation_all" }}</option>
+ <option value="tabs" {{if eq .CategoryNavigation "tabs"}}selected{{end}}>{{ T .Locale "category_navigation_tabs" }}</option>
+ <option value="collapse" {{if eq .CategoryNavigation "collapse"}}selected{{end}}>{{ T .Locale "category_navigation_collapse" }}</option>
+ </select>
+ <p class="help-text">{{ T .Locale "category_navigation_help" }}</p>
+ </div>
+ <div class="form-group">
             <input class="btn-submit" type="submit" value="{{ T .Locale "save_changes" }}" />
         </div>
     </form>

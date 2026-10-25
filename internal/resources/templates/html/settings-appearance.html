@@ -65,4 +65,5 @@
 <select name=hide-help-button id=settings-hide-help-button><option value=1 selected>{{ T .Locale "yes" }}<option value=0>{{ T .Locale "no" }}</select>
 {{ else }}
 <select name=hide-help-button id=settings-hide-help-button><option value=0 selected>{{ T .Locale "no" }}<option value=1>{{ T .Locale "yes" }}</select>
-{{ end }}</div><div class=form-group><input class=btn-submit type=submit value="{{ T .Locale "save_changes" }}"></div></form></div>{{ end }}
+{{ end }}</div><div class=form-group><label for=category-navigation>{{ T .Locale "category_navigation" }}</label>
+<select id=category-navigation name=category-navigation><option value=all {{if eq .CategoryNavigation "all"}}selected{{end}}>{{ T .Locale "category_navigation_all" }}<option value=tabs {{if eq .CategoryNavigation "tabs"}}selected{{end}}>{{ T .Locale "category_navigation_tabs" }}<option value=collapse {{if eq .CategoryNavigation "collapse"}}selected{{end}}>{{ T .Locale "category_navigation_collapse" }}</select><p class=help-text>{{ T .Locale "category_navigation_help" }}</div><div class=form-group><input class=btn-submit type=submit value="{{ T .Locale "save_changes" }}"></div></form></div>{{ end }}

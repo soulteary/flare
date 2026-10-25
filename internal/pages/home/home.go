@@ -96,7 +96,7 @@ func RegisterRouting(e *fiber.App) {
 }
 
 func pageHome(c fiber.Ctx) error {
-	return render(c, "")
+	return render(c, strings.TrimSpace(c.Query("search")))
 }
 
 func renderHelp(c fiber.Ctx) error {
@@ -195,6 +195,7 @@ func updateWeatherData(location string) {
 }
 
 func pageBookmark(c fiber.Ctx) error {
+	setCSPHeader(c)
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
@@ -216,7 +217,7 @@ func pageBookmark(c fiber.Ctx) error {
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
-	m["Bookmarks"] = GenerateBookmarkTemplate("", &options)
+	m["Bookmarks"] = GenerateBookmarkNavigationTemplate(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options)
 	m["OptionTitle"] = options.Title
 	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
 	m["OptionShowBookmarks"] = options.ShowBookmarks
@@ -302,7 +303,12 @@ func render(c fiber.Ctx, filter string) error {
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["Applications"] = GenerateApplicationsTemplate(filter, &options)
-	m["Bookmarks"] = GenerateBookmarkTemplate(filter, &options)
+	selected := c.Query("category")
+	if c.Method() == http.MethodPost {
+		selected = c.FormValue("category")
+	}
+	m["BookmarkCategory"] = selected
+	m["Bookmarks"] = GenerateBookmarkNavigationTemplate(filter, selected, c.Path(), &options)
 	m["SearchKeyword"] = template.HTML(searchKeyword)
 	m["HasKeyword"] = hasKeyword
 	m["ShowSearchComponent"] = options.ShowSearchComponent
