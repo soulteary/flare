@@ -75,9 +75,12 @@ func invalidateFileCache(name string) {
 	switch name {
 	case "config":
 		cachedConfig = nil
+		cachedApplication = nil
 	case "apps":
 		cachedApps = nil
+		cachedFavorite = nil
 	case "bookmarks":
 		cachedBookmarks = nil
+		cachedNormal = nil
 	}
 }

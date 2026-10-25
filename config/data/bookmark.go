@@ -100,28 +100,49 @@ func saveBookmarksToYamlFile(name string, data model.Bookmarks) (bool, error) {
 }
 
 func loadBookmarksFromYamlFile(name string, isFavorite bool) (model.Bookmarks, error) {
-	var result model.Bookmarks
+	snapshot, err := loadBookmarkSnapshot(name, isFavorite)
+	if err != nil {
+		return model.Bookmarks{}, err
+	}
+	return cloneBookmarks(snapshot.value), nil
+}
 
-	// Cached reads still check for deletion, but need no absolute path lookup.
-	// Resolve the current directory only when initializing or reading from disk.
+// Caller holds bookmarkMu. Returned snapshots remain private and immutable.
+func loadBookmarkSnapshot(name string, isFavorite bool) (*parsedBookmarks, error) {
 	if !checkExists(name + ".yml") {
 		fmt.Println("找不到配置文件" + name + "，创建默认配置。")
-		var createErr error
-		result, createErr = initBookmarks(getConfigPath(name), isFavorite)
-		if createErr != nil {
-			return result, fmt.Errorf("尝试创建应用配置文件 %s 失败: %w", name, createErr)
+		invalidateFileCache(name)
+		if _, err := initBookmarks(getConfigPath(name), isFavorite); err != nil {
+			return nil, fmt.Errorf("尝试创建应用配置文件 %s 失败: %w", name, err)
 		}
-		return result, nil
 	}
-	configFile, err := readFileCached(name, func() ([]byte, error) { return readFile(getConfigPath(name)) })
+	return readExistingBookmarkSnapshot(name)
+}
+
+func readExistingBookmarkSnapshot(name string) (*parsedBookmarks, error) {
+	raw, err := readFileCached(name, func() ([]byte, error) { return readFile(getConfigPath(name)) })
 	if err != nil {
-		return result, fmt.Errorf("读取配置文件 %s: %w", name, err)
+		return nil, fmt.Errorf("读取配置文件 %s: %w", name, err)
 	}
-	parseErr := yaml.Unmarshal(configFile, &result)
-	if parseErr != nil {
-		return result, fmt.Errorf("解析配置文件 %s 错误，请检查配置文件内容: %w", name, parseErr)
+	snapshot := parsedBookmarkData(name, raw)
+	if snapshot.err != nil {
+		return nil, fmt.Errorf("解析配置文件 %s 错误，请检查配置文件内容: %w", name, snapshot.err)
 	}
-	return result, nil
+	return snapshot, nil
+}
+
+func navigationSnapshot(name string) (*parsedBookmarks, error) {
+	bookmarkMu.RLock()
+	if checkExists(name + ".yml") {
+		snapshot, err := readExistingBookmarkSnapshot(name)
+		bookmarkMu.RUnlock()
+		return snapshot, err
+	}
+	bookmarkMu.RUnlock()
+	// Initialization writes to disk and must exclude other readers and writers.
+	bookmarkMu.Lock()
+	defer bookmarkMu.Unlock()
+	return loadBookmarkSnapshot(name, name == "apps")
 }
 
 func SaveFavoriteBookmarks(data model.Bookmarks) bool {
@@ -139,13 +160,17 @@ func SaveNormalBookmarks(data model.Bookmarks) bool {
 }
 
 func LoadFavoriteBookmarks() (model.Bookmarks, error) {
-	bookmarkMu.Lock()
-	defer bookmarkMu.Unlock()
-	return loadBookmarksFromYamlFile("apps", true)
+	snapshot, err := navigationSnapshot("apps")
+	if err != nil {
+		return model.Bookmarks{}, err
+	}
+	return cloneBookmarks(snapshot.value), nil
 }
 
 func LoadNormalBookmarks() (model.Bookmarks, error) {
-	bookmarkMu.Lock()
-	defer bookmarkMu.Unlock()
-	return loadBookmarksFromYamlFile("bookmarks", false)
+	snapshot, err := navigationSnapshot("bookmarks")
+	if err != nil {
+		return model.Bookmarks{}, err
+	}
+	return cloneBookmarks(snapshot.value), nil
 }
