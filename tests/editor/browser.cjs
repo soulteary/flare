@@ -68,6 +68,27 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   // Restoring a downloaded draft is explicit and keeps the loaded revision.
   const imported=await(await page.request.get(base+'/editor/document')).json();imported.apps[0].Name='Restored draft';
   page.once('dialog',d=>d.accept());await page.locator('#draft-file').setInputFiles({name:'draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(imported))});await page.waitForFunction(()=>document.getElementById('save-status').textContent.includes('草稿已恢复'));assert.equal(await page.getByRole('button',{name:'Restored draft',exact:true}).count(),1);await save();
+  // Handsontable clears cells to null; downloaded incomplete drafts must round-trip.
+  await page.setViewportSize({width:1440,height:844});
+  await page.locator('.menu summary').click();await page.locator('#open-batch').click();await page.waitForFunction(()=>window.FlareEditorBatch?.active);
+  await batchEdit(0,4,'Pending draft description');
+  const newer=await(await page.request.get(base+'/editor/document')).json();newer.apps[0].Name='Newer server value';assert.equal((await page.request.post(base+'/editor/document',{headers:{'X-Flare-Editor':'1'},data:newer})).status(),200);
+  await page.locator('#save-changes').click();await page.waitForFunction(()=>document.getElementById('export-draft').hidden===false);
+  for(const [row,col]of[[0,0],[1,1]]){await page.locator('#batch-table .ht_master tbody tr').nth(row).locator('td').nth(col).tap();await page.keyboard.press('Delete');}
+  await page.locator('#batch-add').click();await page.locator('#batch-table textarea.handsontableInput:visible').fill('Pending draft row');await page.locator('#batch-table textarea.handsontableInput:visible').press('Enter');
+  const clearedDownload=page.waitForEvent('download');await page.locator('#export-draft').click();const clearedFile=await clearedDownload,clearedBuffer=await fs.readFile(await clearedFile.path()),clearedDraft=JSON.parse(clearedBuffer);
+  assert.equal(clearedDraft.apps[0].Name,null);assert.equal(clearedDraft.apps[1].URL,null);assert.equal(clearedDraft.apps[0].Desc,'Pending draft description');assert.equal(clearedDraft.apps.at(-1).Name,'Pending draft row');
+  page.once('dialog',d=>d.accept());await page.locator('#discard-changes').click();await loaded();
+  const loadedVersion=await page.evaluate(()=>window.FlareEditorUI.store.toJSON().version);
+  page.once('dialog',d=>d.accept());await page.locator('#draft-file').setInputFiles({name:'cleared-draft.json',mimeType:'application/json',buffer:clearedBuffer});await page.waitForFunction(()=>document.getElementById('save-status').textContent.includes('草稿已恢复'));
+  const normalizedDraft={...clearedDraft,version:loadedVersion,apps:clearedDraft.apps.map(item=>({...item,Name:item.Name===null?'':item.Name,URL:item.URL===null?'':item.URL}))};
+  assert.deepEqual(await page.evaluate(()=>window.FlareEditorUI.store.toJSON()),normalizedDraft);
+  await page.locator('.menu summary').click();await page.locator('#open-batch').click();await page.waitForFunction(()=>window.FlareEditorBatch?.active);await batchEdit(0,4,'Still pending after restore');
+  const pendingDraft=await page.evaluate(()=>window.FlareEditorBatch.exportDraft());
+  for(const [field,value]of[['Name',42],['URL',{}],['Name',undefined],['URL',false]]){const malformed=JSON.parse(JSON.stringify(normalizedDraft));malformed.apps[0][field]=value;await page.locator('#draft-file').setInputFiles({name:'malformed.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(malformed))});await page.waitForFunction(()=>document.getElementById('draft-file').value==='');assert.match(await page.locator('#save-status').textContent(),/条目格式无效/);assert.deepEqual(await page.evaluate(()=>window.FlareEditorBatch.exportDraft()),pendingDraft);}
+  await page.locator('#save-changes').click();assert.match(await page.locator('#save-status').textContent(),/填写名称/);await batchEdit(0,0,'Recovered cleared name');await page.locator('#save-changes').click();assert.match(await page.locator('#save-status').textContent(),/填写地址/);await batchEdit(1,1,'http://recovered-url');await batchEdit(normalizedDraft.apps.length-1,1,'http://pending-draft-row');await save();await page.locator('#leave-batch').click();
+  const recovered=await(await page.request.get(base+'/editor/document')).json();assert.equal(recovered.apps[0].Name,'Recovered cleared name');assert.equal(recovered.apps[0].Desc,'Still pending after restore');assert.equal(recovered.apps[0].Private,true);assert.equal(recovered.apps[1].URL,'http://recovered-url');assert.equal(recovered.apps.at(-1).Name,'Pending draft row');assert.deepEqual(recovered.categories,clearedDraft.categories);assert.deepEqual(recovered.bookmarks,clearedDraft.bookmarks);
+  await page.setViewportSize({width:390,height:844});
   // A legacy category literally named apps must remain distinct from application placement.
   const current=await(await page.request.get(base+'/editor/document')).json();current.categories.push({ID:'apps',Name:'Legacy apps category'});current.bookmarks.push({Name:'Legacy category bookmark',URL:'https://example.com/legacy',Category:'apps'});await page.request.post(base+'/editor/document',{headers:{'X-Flare-Editor':'1'},data:current});await loaded();await page.locator('#location-filter').selectOption('category:apps');assert.equal(await page.locator('.entry').count(),1);await edit('Legacy category bookmark','Legacy kept');await save();const checked=await(await page.request.get(base+'/editor/document')).json();assert.equal(checked.bookmarks.find(b=>b.Name==='Legacy kept').Category,'apps');await page.locator('#location-filter').selectOption('all');
   // Existing clipboard paste and visual row ordering survive the adapter.
@@ -75,7 +96,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   await context.grantPermissions(['clipboard-read','clipboard-write']);
   await page.locator('.menu summary').click();await page.locator('#open-batch').click();await page.waitForFunction(()=>window.FlareEditorBatch?.active);
   await page.locator('#batch-table .ht_master tbody tr').first().locator('td').first().tap();
-  await page.evaluate(()=>navigator.clipboard.writeText('Pasted one\thttp://paste/1\nPasted two\thttp://paste/2'));await page.keyboard.press('Control+V');
+  await page.evaluate(()=>navigator.clipboard.writeText('Pasted one\thttp://paste/1\nPasted two\thttp://paste/2'));await page.keyboard.press(process.platform==='darwin'?'Meta+V':'Control+V');
   await page.waitForFunction(()=>document.querySelector('#batch-table .ht_master tbody tr td').textContent==='Pasted one');
   await page.locator('#batch-table .ht_master tbody tr').first().locator('td').first().tap();await page.locator('#batch-down').click();await page.locator('#leave-batch').click();await save();
   const pasted=await(await page.request.get(base+'/editor/document')).json();assert.deepEqual(pasted.apps.slice(0,2).map(i=>i.Name),['Pasted two','Pasted one']);assert.equal(pasted.apps.find(i=>i.Name==='Pasted one').Private,true);

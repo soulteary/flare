@@ -160,7 +160,8 @@
       const draft=JSON.parse(await file.text());
       if(!draft || !Array.isArray(draft.categories) || !Array.isArray(draft.apps) || !Array.isArray(draft.bookmarks))throw Error('不是有效的编辑器草稿');
       const categories=draft.categories.map(c=>{if(!c||typeof c.ID!=='string'||typeof c.Name!=='string')throw Error('分类格式无效');return{ID:c.ID,Name:c.Name};});
-      const items=rows=>rows.map(item=>{if(!item||typeof item.Name!=='string'||typeof item.URL!=='string')throw Error('条目格式无效');const out={Name:item.Name,URL:item.URL,Category:typeof item.Category==='string'?item.Category:''};for(const name of ['Icon','Desc'])if(typeof item[name]==='string')out[name]=item[name];if(typeof item.Private==='boolean')out.Private=item.Private;return out;});
+      // Handsontable exports cleared text cells as null; keep them editable as empty strings.
+      const items=rows=>rows.map(item=>{if(!item||!['Name','URL'].every(name=>item[name]===null||typeof item[name]==='string'))throw Error('条目格式无效');const out={Name:item.Name??'',URL:item.URL??'',Category:typeof item.Category==='string'?item.Category:''};for(const name of ['Icon','Desc'])if(typeof item[name]==='string')out[name]=item[name];if(typeof item.Private==='boolean')out.Private=item.Private;return out;});
       const next={version:store.working.version,categories,apps:items(draft.apps),bookmarks:items(draft.bookmarks)};
       if(!confirm('以草稿替换当前待保存内容？保存时仍会检查本页加载的服务器版本。'))return;
       store.working=FlareEditorState.normalize(next);batch?.refresh();undo=null;$('location-filter').value='all';render();setStatus('草稿已恢复到待保存内容，请检查后保存。');
