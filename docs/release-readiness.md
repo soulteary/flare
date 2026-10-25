@@ -1,5 +1,11 @@
 # Development release readiness after 0.6.4
 
+> This preparation checklist is retained from the work leading to
+> [0.6.5](https://github.com/soulteary/flare/releases/tag/0.6.5). Its unchecked
+> boxes are not a live release-status dashboard. Physical-device validation
+> remains unverified; see the release notes for the published limitations.
+> Published artifact checks and remaining limits: [verification record](release-0.6.5-verification.md).
+
 This page is a checklist, not a release announcement. No next version or new
 image is implied. The release owner records the final source SHA, image digest,
 checks and browser evidence before publishing.

@@ -9,8 +9,8 @@ configuration files. Keep the original volume/project identity during upgrades.
 | Browser HTML export | Names, links, categories | Preview and merge through import/export | No account, search settings or full Flare configuration |
 | Flare YAML export | One navigation collection | Preview and merge, or replace that collection while stopped | Merge is not full replacement or full-site restore |
 | `.flare-bookmark-backups/` | Import-before copies | Download recent backup or inspect filesystem copies | Import backups only; not all ordinary edits or `config.yml` |
-| `.flare-editor-recovery/save-*` | Original pair before a development editor replacement | Follow [recovery instructions](editor-recovery.md) for the exact reported directory | Not a new draft; no automatic merge; do not blindly choose a directory |
-| Editor JSON draft | Unsaved development-editor document | Restore into working state, inspect, then explicitly save | Not browser import, not full site/account backup |
+| `.flare-editor-recovery/save-*` | Original pair before an editor replacement (since 0.6.5) | Follow [recovery instructions](editor-recovery.md) for the exact reported directory | Not a new draft; no automatic merge; do not blindly choose a directory |
+| Editor JSON draft | Unsaved editor document (since 0.6.5) | Restore into working state, inspect, then explicitly save | Not browser import, not full site/account backup |
 
 For a default bind mount, preserve `./app` on the host, mounted as `/app` in the
 container. Include the hidden cookie key and recovery/backup directories. Do not

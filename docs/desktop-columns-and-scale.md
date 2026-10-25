@@ -1,6 +1,6 @@
 # Desktop columns and editor scale measurements
 
-> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
 
 Homepage appearance settings retain the existing layout by default. The optional
 Automatic mode fits readable columns to the available width. Explicit 4/5/6/8

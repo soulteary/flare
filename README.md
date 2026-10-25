@@ -6,8 +6,9 @@
 
 Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.
 
-The latest stable release is **0.6.4**. The `main` branch also contains unreleased
-search, editor and layout work; see the [documentation index](docs/README.md).
+The latest stable release is [**0.6.5**](https://github.com/soulteary/flare/releases/tag/0.6.5),
+including the search, navigation editor and layout controls described in the
+[documentation index](docs/README.md).
 
 ## Feature
 
@@ -28,7 +29,8 @@ See [Bookmark transfer](docs/bookmark-transfer.md) for usage and limits.
 ## Screenshots
 
 See the [deployment screenshots](https://github.com/soulteary/docker-flare#快速上手).
-The stable screenshots do not document unreleased development interfaces.
+See the [English and Chinese editor screenshots](docs/screenshots/README.md) for
+the editor shipped in 0.6.5; older deployment screenshots show the earlier UI.
 
 ## Documentation
 
@@ -74,8 +76,8 @@ Echo is no longer part of the production dependency graph. See
 Published stable versions are available from both registries:
 
 ```sh
-docker pull soulteary/flare:0.6.4
-docker pull ghcr.io/soulteary/flare:0.6.4
+docker pull soulteary/flare:0.6.5
+docker pull ghcr.io/soulteary/flare:0.6.5
 ```
 
 Both images support `linux/amd64`, `linux/arm64`, `linux/arm/v7`, and

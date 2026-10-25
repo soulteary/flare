@@ -1,6 +1,6 @@
 # Choosing built-in icons
 
-> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
 
 In an entry form, open **More options**, then **Choose icon** beside the icon
 input. Search uses English substrings of the existing Material Design icon names,

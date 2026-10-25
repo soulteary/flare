@@ -1,5 +1,10 @@
 # Release preflight — 2026-10-26 (Asia/Shanghai)
 
+> Archived preparation record. Flare 0.6.5 has since been published; see the
+> [final release notes](https://github.com/soulteary/flare/releases/tag/0.6.5).
+> The original candidate-time statements below are retained as historical evidence.
+> Published artifact checks and remaining limits: [verification record](release-0.6.5-verification.md).
+
 Status: preparation only; not a release announcement. Suggested next tag: `0.6.5`.
 Latest published stable release checked: `0.6.4`. The `0.6.5` tag does not exist.
 Candidate source: `1c5f4d611f7df49a64635d84dac8a249b64ff021`.

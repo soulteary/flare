@@ -1,10 +1,11 @@
 # Feedback disposition after 0.6.4
 
-This is a development-scope map, not a statement that old issues are all fixed or
-that new images have shipped. Validate the original environment before closing a
-historical report, and link the actual release once it exists.
+This map covers work shipped in [0.6.5](https://github.com/soulteary/flare/releases/tag/0.6.5)
+and explicitly separates remaining scope. It does not establish that every old
+issue is fixed. Validate the original environment before closing a historical
+report and link the actual release and verification evidence.
 
-| docker-flare feedback | Development disposition | Verification / remaining scope |
+| docker-flare feedback | Disposition in 0.6.5 | Verification / remaining scope |
 | --- | --- | --- |
 | #172, #97, #76, #28 search engines | Configurable and hybrid search implemented | Presets/custom query encoding, keywords, local suggestions and browser acceptance |
 | #173 category tabs | Tabs and native collapse implemented | Presentation filtering, not permissions or nested directories |
@@ -12,7 +13,7 @@ historical report, and link the actual release once it exists.
 | #175 mobile grouping | Sequential and optional compact columns | Physical Safari/Via and native fonts remain unverified |
 | #50, #65 readability | Greeting/navigation sizes and hidden descriptions | Device text scaling must remain enabled |
 | #21 editor collection | List/forms/batch and recoverable versioned saves | Check individual original subcases; no automatic conflict merge or cross-file transaction |
-| #183 privacy | Explicit valid private-access combination documented; development parser hardened | Always verify anonymous access; encoded URLs and hidden settings are not authorization |
+| #183 privacy | Explicit valid private-access combination documented; parser hardened in 0.6.5 | Always verify anonymous access; encoded URLs and hidden settings are not authorization |
 | #49 Kubernetes port injection | Typed environment parsing isolated per field | Numeric port / enableServiceLinks workaround documented; verify original cluster setup |
 | #45 setting overwrite | Single-process section updates serialized | Same-section simultaneous edits and external writers are not auto-merged |
 | #54, #133 subpath | Support boundary documented | Complete /flare/ mounting is not implemented; use a dedicated root hostname |

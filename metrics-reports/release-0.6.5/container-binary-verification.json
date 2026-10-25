@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "dockerhub_ghcr_extracted_binary_sha256": {
+    "container-amd64.tar": "6885d07b3269d435f9e18a9f41a8829a0d1b1aa3d3d72702523bb75d74e87360",
+    "container-amd64-ghcr.tar": "6885d07b3269d435f9e18a9f41a8829a0d1b1aa3d3d72702523bb75d74e87360"
+  },
+  "execution_scope": "Actual published image /bin/flare extracted and executed on Linux amd64 host, not Docker-engine container execution."
+}

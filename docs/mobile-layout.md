@@ -1,6 +1,6 @@
 # Mobile bookmark layout
 
-> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
 
 Appearance settings offer a sequential single-column layout (the default) and
 opt-in compact columns on 360–768 CSS-pixel viewports. Compact columns read down

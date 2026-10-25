@@ -73,17 +73,17 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 | --- | --- | --- |
 | `apps.yml` / `bookmarks.yml` | Navigation entries and categories | [Editor](editor.md), [transfer](bookmark-transfer.md) |
 | `config.yml` `Clock` | Display time, seconds, zone; since 0.6.3 | [Clock](clock.md) |
-| `config.yml` `Search` | Development engine and hybrid options | [Search](search.md) |
-| `config.yml` `Homepage` | Development columns, tabs/collapse, text sizes | [Mobile](mobile-layout.md), [desktop](desktop-columns-and-scale.md) |
+| `config.yml` `Search` | Engine and hybrid options; since 0.6.5 | [Search](search.md) |
+| `config.yml` `Homepage` | Columns, tabs/collapse, text sizes; since 0.6.5 | [Mobile](mobile-layout.md), [desktop](desktop-columns-and-scale.md) |
 | `config.yml` `Footer` | Administrator-controlled HTML | Treat it as trusted site content, unlike ordinary bookmark text |
 
 Search settings are not included in bookmark exports. Multiple processes sharing
 YAML do not share in-process locks. Use one writer and normal filesystem backups.
 
 
-## Navigation URL and icon policy (development)
+## Navigation URL and icon policy (since 0.6.5)
 
-After 0.6.4, rendered navigation text/attributes are escaped. Supported schemes
+Since 0.6.5, rendered navigation text/attributes are escaped. Supported schemes
 are HTTP(S), relative links, ftp, ftps, mailto, tel, ssh, smb, rdp, vnc, magnet,
 steam, obsidian and chrome-extension. Executable/document schemes and unsupported
 protocols remain editable in stored data but render as `#`; do not assume an
@@ -111,7 +111,7 @@ is the unbracketed literal, so do not splice it into an IPv6 URL authority witho
 brackets. These values come from the request Flare receives; a TLS-terminating
 HTTP backend still sees HTTP unless the server directly receives TLS. This is not
 a general trusted-proxy feature or a two-address network-switching configuration.
-Development encoded redirects carry validated relative source context so path
+Since 0.6.5, encoded redirects carry validated relative source context so path
 placeholders continue to refer to the originating navigation page.
 
 Per-entry `private` values are preserved for data compatibility; they do not
@@ -121,6 +121,6 @@ buttons to protect individual links on a public homepage.
 
 
 Deprecated boolean alias resolution (`--nologin` and `--mr`) was repaired in
-development after 0.6.4. Use canonical `--disable_login` and `--mini_request` with
-the stable image; do not assume legacy spellings enforce access settings there.
-Development resolves both spellings with normal last-occurrence precedence.
+0.6.5. Both spellings now use normal last-occurrence precedence. Prefer canonical
+`--disable_login` and `--mini_request`; do not assume legacy spellings enforce
+access settings when running 0.6.4.
