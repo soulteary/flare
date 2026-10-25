@@ -1,8 +1,10 @@
 package fn
 
 import (
+	"encoding/base64"
+	"net"
 	"net/http"
-	"regexp"
+	"net/url"
 	"strings"
 )
 
@@ -17,23 +19,59 @@ type DynamicURL struct {
 	Protocol string
 }
 
-// RequestURL is the package-level parsed URL (set by ParseRequestURL). Prefer ParseRequestURLTo and passing *DynamicURL for concurrency-safe use.
-var RequestURL DynamicURL
-
-var hostPortRe = regexp.MustCompile(`([\w+\.-]+):(\d+)$`)
-
 func getPort(host string, defaultPort string) (hostname string, port string) {
-	hostname = host
-	port = defaultPort
-	portMatch := hostPortRe.FindStringSubmatch(host)
-	if portMatch != nil {
-		hostname = portMatch[1]
-		port = portMatch[2]
+	hostname, port = host, defaultPort
+	if h, p, err := net.SplitHostPort(host); err == nil {
+		return h, p
+	}
+	// A bracketed IPv6 literal without a port is a valid HTTP authority.
+	if strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") {
+		hostname = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
 	}
 	return
 }
 
-// ParseRequestURLTo parses r into a DynamicURL without using package-level state. Prefer this over ParseRequestURL when possible.
+// EncodedNavigationURL carries only the source request's relative URI. The
+// redirect endpoint rebuilds authority and scheme from its own request, never
+// from caller-provided forwarding headers or an arbitrary source origin.
+func EncodedNavigationURL(target string, info *DynamicURL) string {
+	link := "/redir/url?go=" + url.QueryEscape(base64.StdEncoding.EncodeToString([]byte(target)))
+	if info != nil {
+		source := strings.TrimPrefix(info.Href, info.Origin)
+		if validSourceURI(source) {
+			link += "&from=" + url.QueryEscape(source)
+		}
+	}
+	return link
+}
+
+func validSourceURI(source string) bool {
+	if !strings.HasPrefix(source, "/") || strings.HasPrefix(source, "//") || strings.ContainsAny(source, "\\\r\n\x00") {
+		return false
+	}
+	parsed, err := url.ParseRequestURI(source)
+	return err == nil && !parsed.IsAbs() && parsed.Host == "" && parsed.Fragment == ""
+}
+
+// ParseNavigationSource restores the source page context for encoded dynamic
+// links. Missing context uses the homepage for compatibility with older links.
+func ParseNavigationSource(r *http.Request, source string) (DynamicURL, bool) {
+	if source == "" {
+		source = "/"
+	}
+	if !validSourceURI(source) {
+		return DynamicURL{}, false
+	}
+	parsed, err := url.ParseRequestURI(source)
+	if err != nil {
+		return DynamicURL{}, false
+	}
+	clone := *r
+	clone.URL, clone.RequestURI = parsed, source
+	return ParseRequestURLTo(&clone), true
+}
+
+// ParseRequestURLTo parses request-local URL metadata without shared state.
 func ParseRequestURLTo(r *http.Request) DynamicURL {
 	scheme := "http:"
 	defaultPort := "80"
@@ -63,11 +101,6 @@ func ParseRequestURLTo(r *http.Request) DynamicURL {
 	}
 }
 
-// ParseRequestURL parses r and updates package-level RequestURL. For new code, prefer ParseRequestURLTo and ParseDynamicUrlWith.
-func ParseRequestURL(r *http.Request) {
-	RequestURL = ParseRequestURLTo(r)
-}
-
 // ParseDynamicUrlWith substitutes URL placeholders using info. Concurrency-safe when info is request-scoped.
 func ParseDynamicUrlWith(url string, info *DynamicURL) string {
 	if info == nil {
@@ -82,8 +115,4 @@ func ParseDynamicUrlWith(url string, info *DynamicURL) string {
 	result = strings.ReplaceAll(result, "{port}", info.Port)
 	result = strings.ReplaceAll(result, "{protocol}", info.Protocol)
 	return result
-}
-
-func ParseDynamicUrl(url string) string {
-	return ParseDynamicUrlWith(url, &RequestURL)
 }

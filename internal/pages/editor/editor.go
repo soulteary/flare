@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/static"
+	"github.com/soulteary/flare/internal/resources/assets"
 	memfs "github.com/soulteary/memfs-kit"
 
 	"github.com/soulteary/flare/config/define"
@@ -45,7 +45,7 @@ func RegisterRouting(e *fiber.App) {
 	registerEditorDocument(e)
 	registerEditorIcon(e)
 	if introAssets, err := fs.Sub(editorAssets, "editor-assets"); err == nil {
-		e.Use(_ASSETS_WEB_URI, static.New("", static.Config{FS: introAssets}))
+		e.Use(_ASSETS_WEB_URI, assets.StaticFS(introAssets, _ASSETS_WEB_URI))
 	}
 	e.Get(define.RegularPages.Editor.Path, auth.AuthRequired, render)
 	e.Get("/editor/batch", auth.AuthRequired, render)
@@ -58,5 +58,10 @@ func updateData(c fiber.Ctx) error {
 }
 
 func render(c fiber.Ctx) error {
-	return c.Status(http.StatusOK).Render("editor.html", map[string]any{"Locale": editorLocale(), "EditorMessages": editorMessageJSON(editorLocale())})
+	version, err := editorAssetVersion()
+	if err != nil {
+		return err
+	}
+	return c.Status(http.StatusOK).Render("editor.html", fiber.Map{"EditorAssetVersion": version, "Locale": editorLocale(), "EditorMessages": editorMessageJSON(editorLocale())})
+
 }

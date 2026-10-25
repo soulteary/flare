@@ -153,6 +153,7 @@
   "search_test_target": "Test sends a query to this configured address:",
   "search_no_results": "No matching bookmarks or applications. Choose an external engine to continue searching.",
   "search_unavailable": "Unavailable — choose a replacement",
+  "weather_save_failed": "Unable to save weather settings. Your input is preserved; check storage permissions and retry.",
   "editor_3b868385bcba": "Applications",
   "editor_b313e29eba9b": "Default category · ",
   "editor_2cce844225aa": "Uncategorized bookmarks",

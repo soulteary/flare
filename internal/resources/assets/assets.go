@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"embed"
+	"errors"
 	"fmt"
 	"io/fs"
+	"mime"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -47,6 +50,40 @@ func ServeContent(c fiber.Ctx, name, contentType string, data []byte) error {
 	})(c)
 }
 
+// StaticFS serves embedded files with content-derived validators. Embedded files
+// have no meaningful modification time, so timestamp/size validators can mistake
+// a changed, same-size script for an unchanged resource after an upgrade.
+func StaticFS(files fs.FS, prefix string) fiber.Handler {
+	return func(c fiber.Ctx) error {
+		if c.Method() != http.MethodGet && c.Method() != http.MethodHead {
+			return c.Next()
+		}
+		name := strings.TrimPrefix(strings.TrimPrefix(c.Path(), prefix), "/")
+		if !fs.ValidPath(name) || strings.Contains(name, "\\") {
+			return c.Next()
+		}
+		info, err := fs.Stat(files, name)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				return c.Next()
+			}
+			return err
+		}
+		if !info.Mode().IsRegular() {
+			return c.Next()
+		}
+		data, err := fs.ReadFile(files, name)
+		if err != nil {
+			return err
+		}
+		contentType := mime.TypeByExtension(path.Ext(name))
+		if contentType == "" {
+			contentType = http.DetectContentType(data)
+		}
+		return ServeContent(c, path.Base(name), contentType, data)
+	}
+}
+
 // optimizeResourceCacheTime applies policy after Fiber has buffered the response,
 // so an absent file or invalid range never inherits a successful asset's ETag.
 func optimizeResourceCacheTime() fiber.Handler {
@@ -64,7 +101,9 @@ func optimizeResourceCacheTime() fiber.Handler {
 			c.Response().Header.Del("Last-Modified")
 		case status >= http.StatusOK && status < http.StatusMultipleChoices || status == http.StatusNotModified:
 			if len(c.Response().Header.Peek("Cache-Control")) == 0 {
-				c.Set("Cache-Control", "public, max-age=31536000")
+				// Current asset URLs are names, not content hashes. A browser must
+				// revalidate them before reuse when a deployment changes their bytes.
+				c.Set("Cache-Control", "public, max-age=0, must-revalidate")
 			}
 		}
 		return err

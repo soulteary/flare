@@ -282,3 +282,17 @@ func TestOrdinaryBookmarkLoadsCannotInitializeOverRecoveryCopies(t *testing.T) {
 		})
 	}
 }
+
+func TestImportPreviewCannotInitializeOverRecoveryCopies(t *testing.T) {
+	for _, name := range []string{"apps", "bookmarks"} {
+		t.Run(name, func(t *testing.T) {
+			prepareBookmarkHotPath(t)
+			require.NoError(t, os.MkdirAll(filepath.Join(".flare-editor-recovery", "save-interrupted"), 0700))
+			_, _, err := BookmarkSnapshot(name)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "recovery copies exist")
+			_, err = os.Stat(name + ".yml")
+			require.True(t, os.IsNotExist(err), "import preview must not create replacement examples")
+		})
+	}
+}

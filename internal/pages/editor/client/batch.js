@@ -25,10 +25,13 @@
     locateError(result){const [collection,index,field]=result.field.split('.');const item=ui.store.working[collection]?.[Number(index)];const row=rows().findIndex(r=>r._key===item?._key);focusError({row:Math.max(0,row),col:{Name:0,URL:1,Category:2}[field]||0,error:result.error});}
   };
   function loadAssets(){
+    const version=document.documentElement.dataset.editorAssetVersion || '';
+    const assetURL=name=>'/assets/editor/'+name+'?v='+encodeURIComponent(version);
     if(assets)return assets;
-    if(!document.querySelector('link[href="/assets/editor/handsontable.full.min.css"]')){const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/editor/handsontable.full.min.css';document.head.append(css);}
+    if(!document.querySelector('link[data-flare-batch-style]')){const css=document.createElement('link');css.rel='stylesheet';css.dataset.flareBatchStyle='';css.href=assetURL('handsontable.full.min.css');document.head.append(css);}
     const load=src=>new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=()=>{script.remove();reject(Error(t('批量编辑组件加载失败，请重试。')));};document.head.append(script);});
-    assets=load('/assets/editor/handsontable.full.min.js').then(()=>load('/assets/editor/zh-CN.min.js')).catch(error=>{assets=null;throw error;});return assets;
+    assets=load(assetURL('handsontable.full.min.js')).then(()=>load(assetURL('zh-CN.min.js'))).catch(error=>{assets=null;throw error;});return assets;
+
   }
 
   async function enter(){if(!ui?.store||ui.saving||ui.hasOpenDialog||active)return;try{ui.setStatus(t('正在加载批量编辑…'));await loadAssets();if(ui.saving||ui.hasOpenDialog)return;active=true;$('list-view').hidden=true;$('batch-view').hidden=false;document.querySelector('.menu').open=false;if(table){adapter.refresh();table.render();$('leave-batch').focus();return;}loading=true;
