@@ -136,35 +136,44 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	if err != nil {
 		return EditorDocument{}, err
 	}
-	var paths, staged [2]string
-	for i, name := range []string{"apps", "bookmarks"} {
-		paths[i] = getConfigPath(name)
-		info, e := os.Lstat(paths[i])
-		if e != nil {
-			return EditorDocument{}, e
+	type stagedFile struct {
+		name, path, stage string
+		original, next    []byte
+		mode              os.FileMode
+	}
+	files := []*stagedFile{
+		{name: "apps", original: raw[0], next: output[0]},
+		{name: "bookmarks", original: raw[1], next: output[1]},
+	}
+	for _, file := range files {
+		file.path = getConfigPath(file.name)
+		info, statErr := os.Lstat(file.path)
+		if statErr != nil {
+			return EditorDocument{}, statErr
 		}
 		if !info.Mode().IsRegular() {
-			return EditorDocument{}, fmt.Errorf("配置目标不是普通文件：%s", name)
+			return EditorDocument{}, fmt.Errorf("配置目标不是普通文件：%s", file.name)
 		}
-		f, e := os.CreateTemp(filepath.Dir(paths[i]), ".flare-editor-stage-*")
-		if e != nil {
-			return EditorDocument{}, e
+		file.mode = info.Mode().Perm()
+		f, stageErr := os.CreateTemp(filepath.Dir(file.path), ".flare-editor-stage-*")
+		if stageErr != nil {
+			return EditorDocument{}, stageErr
 		}
-		staged[i] = f.Name()
-		defer func(p string) { _ = os.Remove(p) }(staged[i])
-		e = f.Chmod(info.Mode().Perm())
-		if e == nil {
-			_, e = f.Write(output[i])
+		file.stage = f.Name()
+		defer func(path string) { _ = os.Remove(path) }(file.stage)
+		stageErr = f.Chmod(file.mode)
+		if stageErr == nil {
+			_, stageErr = f.Write(file.next)
 		}
-		if e == nil {
-			e = f.Sync()
+		if stageErr == nil {
+			stageErr = f.Sync()
 		}
 		closeErr := f.Close()
-		if e == nil {
-			e = closeErr
+		if stageErr == nil {
+			stageErr = closeErr
 		}
-		if e != nil {
-			return EditorDocument{}, e
+		if stageErr != nil {
+			return EditorDocument{}, stageErr
 		}
 	}
 	// Disk versions are checked again after staging, so edits during preparation
@@ -176,7 +185,7 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	if check.Version != next.Version {
 		return EditorDocument{}, ErrBookmarkConflict
 	}
-	recoveryRoot := filepath.Join(filepath.Dir(paths[0]), ".flare-editor-recovery")
+	recoveryRoot := filepath.Join(filepath.Dir(getConfigPath("apps")), ".flare-editor-recovery")
 	if err = os.MkdirAll(recoveryRoot, 0700); err != nil {
 		return EditorDocument{}, err
 	}
@@ -191,18 +200,20 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	if err != nil {
 		return EditorDocument{}, err
 	}
-	for i, name := range []string{"apps.yml", "bookmarks.yml"} {
-		if err = atomicBookmarkWrite(filepath.Join(recovery, name), raw[i], 0600); err != nil {
+	for _, file := range files {
+		if err = atomicBookmarkWrite(filepath.Join(recovery, file.name+".yml"), file.original, 0600); err != nil {
 			return EditorDocument{}, err
 		}
 	}
-	for i := range paths {
-		if err = rename(staged[i], paths[i]); err != nil {
+	// Keep completed replacements themselves, rather than indexing parallel
+	// arrays. The rollback list contains only files actually replaced.
+	var replaced []*stagedFile
+	for _, file := range files {
+		if err = rename(file.stage, file.path); err != nil {
 			var restoreErrors []error
-			// Restore only replaced files; leave the failed destination untouched.
-			for j := 0; j < i; j++ {
-				if e := renameRecovery(paths[j], raw[j]); e != nil {
-					restoreErrors = append(restoreErrors, e)
+			for _, written := range replaced {
+				if restoreErr := atomicBookmarkWrite(written.path, written.original, written.mode); restoreErr != nil {
+					restoreErrors = append(restoreErrors, restoreErr)
 				}
 			}
 			invalidateFileCache("apps")
@@ -212,17 +223,11 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 			}
 			return EditorDocument{}, fmt.Errorf("保存失败，已恢复已替换文件；恢复副本保存在 %s：%w", recovery, err)
 		}
+		replaced = append(replaced, file)
 	}
 	invalidateFileCache("apps")
 	invalidateFileCache("bookmarks")
 	_ = os.RemoveAll(recovery)
 	next.Version = editorVersion(output[0], output[1])
 	return next, nil
-}
-func renameRecovery(path string, raw []byte) error {
-	info, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-	return atomicBookmarkWrite(path, raw, info.Mode().Perm())
 }
