@@ -14,10 +14,18 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   async function load(){await page.goto(base+'/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);}
   async function save(){await page.locator('#save-changes').click();await page.waitForFunction(()=>window.document.getElementById('save-status').textContent==='所有更改已保存');}
   async function edit(name,newName,location){await page.getByRole('button',{name,exact:true}).click();assert.equal(await page.locator('#entry-location').inputValue(),location);await page.locator('#entry-name').fill(newName);await page.locator('#entry-form').getByRole('button',{name:'完成',exact:true}).click();await save();}
+  async function standaloneSave() {
+    if(await page.evaluate(()=>!!window.FlareEditorBatch))return;
+    const before=await document();
+    await page.goto(base+'/editor/batch');await page.waitForFunction(()=>!!window.document.querySelector('#container-bookmarks .handsontable'));
+    await page.locator('.update-data').first().click();await page.waitForFunction(()=>window.document.getElementById('save-status').textContent==='全部数据已保存');
+    const after=await document();assert.deepEqual(after.apps,before.apps);assert.deepEqual(after.bookmarks,before.bookmarks);assert.deepEqual(after.categories,before.categories);
+    await load();
+  }
   await load();await page.locator('#location-filter').selectOption('category:apps');assert.equal(await page.locator('.entry').count(),2);
   await edit('Explicit bookmark','Explicit renamed','category:apps');let doc=await document();assert.equal(doc.apps.length,1);assert.equal(doc.bookmarks.find(b=>b.Name==='Explicit renamed').Category,'apps');
   await page.locator('#new-entry').click();assert.equal(await page.locator('#entry-location').inputValue(),'category:apps');await page.locator('#entry-name').fill('Added to legacy group');await page.locator('#entry-url').fill('http://nas/new');await page.locator('#entry-form').getByRole('button',{name:'完成',exact:true}).click();await save();doc=await document();assert.equal(doc.apps.length,1);assert.equal(doc.bookmarks.find(b=>b.Name==='Added to legacy group').Category,'apps');
-  await page.locator('#location-filter').selectOption('category:');await edit('Implicit bookmark','Implicit renamed','category:');doc=await document();const implicit=doc.bookmarks.find(b=>b.Name==='Implicit renamed');assert.equal(implicit.Category,'');assert.equal(implicit.Private,true);
+  await page.locator('#location-filter').selectOption('category:');await edit('Implicit bookmark','Implicit renamed','category:');doc=await document();const implicit=doc.bookmarks.find(b=>b.Name==='Implicit renamed');assert.equal(implicit.Category,'');assert.equal(implicit.Private,true);await standaloneSave();doc=await document();
   // Removing all named groups remains a valid legacy document when its links
   // are implicit. An application-only edit must not force reclassification.
   const response=await page.request.post(base+'/editor/document',{headers:{'X-Flare-Editor':'1'},data:{...doc,categories:[],bookmarks:[implicit]}});assert.equal(response.status(),200);
@@ -29,6 +37,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
     await page.locator('#batch-table .ht_master tbody tr').nth(1).locator('td').first().tap();await page.locator('#batch-edit').click();const input=page.locator('#batch-table textarea.handsontableInput:visible');await input.fill('Bulk uncategorized');await input.press('Enter');await save();await page.locator('#leave-batch').click();
     doc=await document();assert.equal(doc.apps.length,1);assert.equal(doc.bookmarks.find(b=>b.Name==='Bulk uncategorized').Category,'');
   }
+  await standaloneSave();doc=await document();
   // Nonempty missing IDs are still rejected; compatibility is not a blanket bypass.
   doc.bookmarks[0].Category='missing';const invalid=await page.request.post(base+'/editor/document',{headers:{'X-Flare-Editor':'1'},data:doc});assert.equal(invalid.status(),422);
   const yaml=await fs.readFile(path.join(dir,'bookmarks.yml'),'utf8');assert.equal(/\n\s+category:/.test(yaml),false);
