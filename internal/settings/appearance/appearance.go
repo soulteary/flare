@@ -78,7 +78,7 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		update.Homepage = &homepage
 	}
 
-	if mode := formvalue.Get(c, "category-navigation"); mode != "" {
+	if mode, columns := formvalue.Get(c, "category-navigation"), formvalue.Get(c, "desktop-columns"); mode != "" || columns != "" {
 		existing, err := data.GetAllSettingsOptions()
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).SendString("config error")
@@ -90,7 +90,16 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		if update.Homepage != nil {
 			homepage = *update.Homepage
 		}
-		homepage.CategoryNavigation = mode
+		if mode != "" {
+			homepage.CategoryNavigation = mode
+		}
+		if columns != "" {
+			if columns == "legacy" {
+				homepage.DesktopColumns = ""
+			} else {
+				homepage.DesktopColumns = columns
+			}
+		}
 		if err := homepage.Validate(); err != nil {
 			return c.Status(http.StatusBadRequest).SendString(err.Error())
 		}
@@ -195,6 +204,11 @@ func pageAppearance(c fiber.Ctx) error {
 		c.Set("Content-Security-Policy", clock.SettingsPolicy())
 	}
 	m["OptionLocale"] = options.Locale
+	m["DesktopColumnChoices"] = []string{"4", "5", "6", "8"}
+	m["DesktopColumns"] = ""
+	if options.Homepage != nil {
+		m["DesktopColumns"] = options.Homepage.DesktopColumns
+	}
 	m["CategoryNavigation"] = "all"
 	if options.Homepage != nil && options.Homepage.CategoryNavigation != "" {
 		m["CategoryNavigation"] = options.Homepage.CategoryNavigation

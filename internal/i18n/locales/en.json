@@ -118,5 +118,9 @@
   "category_navigation_all": "All groups",
   "category_navigation_tabs": "Category links",
   "category_navigation_collapse": "Collapsible groups",
-  "category_navigation_help": "Search expands matching groups. Category selection changes presentation only."
+  "category_navigation_help": "Search expands matching groups. Category selection changes presentation only.",
+  "desktop_columns": "Desktop columns",
+  "desktop_columns_default": "Existing layout",
+  "desktop_columns_auto": "Automatic",
+  "desktop_columns_help": "Applies above 768px. The requested count is a maximum; fewer columns are used to keep entries readable."
 }
