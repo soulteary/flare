@@ -28,8 +28,12 @@ type searchSecurity struct {
 }
 
 func newSearchSecurity() *searchSecurity {
-	guard := &searchSecurity{cookieName: fmt.Sprintf("%s_%d", searchCSRFCookie, define.AppFlags.Port)}
+	guard := new(searchSecurity)
 	_, _ = rand.Read(guard.key[:])
+	// Containers often share an internal FLARE_PORT while exposing different
+	// external ports. An instance-specific suffix avoids their cookies colliding.
+	fingerprint := sha256.Sum256(guard.key[:])
+	guard.cookieName = fmt.Sprintf("%s_%d_%s", searchCSRFCookie, define.AppFlags.Port, base64.RawURLEncoding.EncodeToString(fingerprint[:9]))
 	return guard
 }
 

@@ -72,6 +72,8 @@ func TestSearchSettingsTokenExpiryAndInstanceIsolation(t *testing.T) {
 	t.Cleanup(func() { define.AppFlags = original })
 	define.AppFlags.Port = 5005
 	first := newSearchSecurity()
+	samePort := newSearchSecurity()
+	require.NotEqual(t, first.cookieName, samePort.cookieName, "containers with the same internal port must not replace each other's cookies")
 	define.AppFlags.Port = 5006
 	second := newSearchSecurity()
 	require.NotEqual(t, first.cookieName, second.cookieName)
@@ -83,6 +85,7 @@ func TestSearchSettingsTokenExpiryAndInstanceIsolation(t *testing.T) {
 	require.Len(t, response.Cookies(), 1)
 	token := response.Cookies()[0].Value
 	require.True(t, first.validToken(token, time.Now()))
+	require.False(t, samePort.validToken(token, time.Now()))
 	require.False(t, second.validToken(token, time.Now()))
 	require.False(t, first.validToken(token, time.Now().Add(9*time.Hour)))
 	require.False(t, first.validToken(token+"tampered", time.Now()))
