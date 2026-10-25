@@ -48,8 +48,45 @@ def stats(url):
         return json.load(response)
 
 
+_PROC_CHILDREN = {}
+
+
 def rss(pid):
+    # A process namespace can expose host /proc PIDs while Popen returns local
+    # PIDs. Verify both ancestry and NSpid; never sample an unrelated /proc/PID.
+    if sys.platform.startswith('linux'):
+        own = Path('/proc/self/status').read_text()
+        parent = int(re.search(r'^Pid:\s*(\d+)', own, re.M).group(1))
+        candidates = [_PROC_CHILDREN.get(pid), Path('/proc') / str(pid)]
+        candidates += [path for path in Path('/proc').iterdir() if path.name.isdigit()]
+        for path in candidates:
+            if path is None:
+                continue
+            try:
+                status = (path / 'status').read_text()
+            except (FileNotFoundError, ProcessLookupError, PermissionError):
+                continue
+            ancestor = re.search(r'^PPid:\s*(\d+)', status, re.M)
+            namespace = re.search(r'^NSpid:\s*([\d\t ]+)', status, re.M)
+            actual = re.search(r'^Pid:\s*(\d+)', status, re.M)
+            local = int(namespace.group(1).split()[-1]) if namespace else int(actual.group(1))
+            if ancestor and int(ancestor.group(1)) == parent and local == pid:
+                value = re.search(r'^VmRSS:\s*(\d+)\s+kB', status, re.M)
+                if value:
+                    _PROC_CHILDREN[pid] = path
+                    return int(value.group(1)) * 1024
+        raise RuntimeError(f'Cannot identify live child process {pid} in /proc')
     return int(subprocess.check_output(['ps', '-o', 'rss=', '-p', str(pid)], text=True).strip()) * 1024
+
+
+def proc_high_water_rss(pid):
+    """Linux mm high-water RSS resets on exec, unlike inherited RUSAGE MaxRSS."""
+    if not sys.platform.startswith('linux'):
+        return None
+    rss(pid)  # Confirm namespace identity and populate the verified path cache.
+    status = (_PROC_CHILDREN[pid] / 'status').read_text()
+    value = re.search(r'^VmHWM:\s*(\d+)\s+kB', status, re.M)
+    return int(value.group(1)) * 1024 if value else None
 
 
 def ready(process):
@@ -89,6 +126,8 @@ def preflight(info, scenario):
         response = error
     with response:
         content = response.read()
+        if info.get('_capture_response_path'):
+            Path(info['_capture_response_path']).write_bytes(content)
         expected = 302 if scenario == 'redir-url' else 200
         if response.status != expected:
             raise RuntimeError(f'{scenario} returned {response.status}, expected {expected}')
@@ -106,6 +145,8 @@ def isolated(binary, client, scenario, args, env, logfile):
                                    stdout=subprocess.PIPE, stderr=errors, text=True)
         try:
             info = ready(process)
+            if getattr(args, 'capture_response_path', None):
+                info['_capture_response_path'] = str(args.capture_response_path)
             validation = preflight(info, scenario)
             run(client_command(client, info, scenario, args.resource_warmup, args.concurrency, args.keepalive_connections), env)
             idle_rss = rss(process.pid)
@@ -143,9 +184,36 @@ def isolated(binary, client, scenario, args, env, logfile):
                 'idle_rss_bytes': idle_rss,
                 'sampled_peak_rss_bytes': sampled_peak,
                 'lifetime_peak_rss_bytes': after['PeakRSSBytes'],
+                'server_proc_high_water_rss_bytes': proc_high_water_rss(process.pid),
                 'preflight': validation,
                 'read_buffer_bytes': info.get('read_buffer_bytes'),
             })
+            if getattr(args, 'capture_live_heap', False):
+                # Run only after both measured resource snapshots: forced GC and
+                # profile encoding are diagnostics, never load CPU/allocation cost.
+                profile_path = logfile.with_suffix('.heap.txt')
+                with OPENER.open(info['control'] + '/debug/pprof/heap?gc=1&debug=1', timeout=30) as response:
+                    profile_path.write_bytes(response.read())
+                text_profile = profile_path.read_text()
+                live = re.search(r'^# HeapAlloc = (\d+)$', text_profile, re.M)
+                objects = re.search(r'^# HeapObjects = (\d+)$', text_profile, re.M)
+                if not live or not objects:
+                    raise RuntimeError('Forced-GC text profile lacks exact runtime heap statistics')
+                result['server_live_heap_after_gc_bytes'] = int(live.group(1))
+                result['server_live_objects_after_gc'] = int(objects.group(1))
+                raw_profile = run(['go', 'tool', 'pprof', '-raw', binary, profile_path], env)
+                expected_samples = 'alloc_objects/count alloc_space/bytes inuse_objects/count inuse_space/bytes'
+                if expected_samples not in raw_profile:
+                    raise RuntimeError('Unexpected heap profile sample order; refuse to mislabel live heap')
+                samples = re.findall(r'^\s*(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+):', raw_profile, re.M)
+                if not samples:
+                    raise RuntimeError('No allocation samples in forced-GC heap profile')
+                period = re.search(r'^Period:\s*(\d+)', raw_profile, re.M)
+                result['heap_profile_sampling_period_bytes'] = int(period.group(1)) if period else None
+                result['server_live_heap_sampled_bytes'] = sum(int(sample[3]) for sample in samples)
+                result['server_live_objects_sampled'] = sum(int(sample[2]) for sample in samples)
+                result['heap_profile_sha256'] = hashlib.sha256(profile_path.read_bytes()).hexdigest()
+                result['heap_profile_file'] = profile_path.name
             return result
         finally:
             if process.poll() is None:

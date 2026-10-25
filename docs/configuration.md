@@ -118,3 +118,9 @@ Per-entry `private` values are preserved for data compatibility; they do not
 implement a per-entry access-control list. Use whole-site authentication for
 private navigation, and never rely on a stored flag, link encoding, tabs or hidden
 buttons to protect individual links on a public homepage.
+
+
+Deprecated boolean alias resolution (`--nologin` and `--mr`) was repaired in
+development after 0.6.4. Use canonical `--disable_login` and `--mini_request` with
+the stable image; do not assume legacy spellings enforce access settings there.
+Development resolves both spellings with normal last-occurrence precedence.

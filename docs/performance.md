@@ -49,6 +49,27 @@
 
 具体命令和采样范围见 [基线方法](baseline-metrics.md)。
 
+
+## Development observations after 0.6.4
+
+The following reports measure separate optimizations; their percentages must not
+be added together or presented as a whole-service RSS guarantee:
+
+- [Parsed snapshots and lazy indexes](../metrics-reports/navigation-snapshots-2026-10-26.md): warmed data reads, ownership/invalidation semantics and allocation costs.
+- [Category rendering](../metrics-reports/navigation-render-2026-10-26.md): matching/grouping and disabled-module work with small and large fixtures.
+- [Editor client](../metrics-reports/editor-client-2026-10-26.md): repeated rendering, dirty checks, listeners, initial-load tradeoffs and JS heap; not server RSS.
+- [Resources and URL validation](../metrics-reports/resources-and-url-validation-2026-10-26.md): conditional requests, icon-cache paths and parser microbenchmarks.
+
+The [combined isolated-process report](../metrics-reports/audit-resource-comparison-2026-10-26.md)
+compares pre-audit main `39df281` with reviewed head `94d2c0a` (merged as
+`a116b716`). It retains the initial MIME-registry memory regression and a separate
+final rerun: CPU/allocation traffic falls, while RSS/retained memory remains mixed.
+It does not establish uniformly lower memory or whole-page browser latency.
+
+Read each report's exact source/fixture, raw rounds and limitations. Snapshot and
+index caches deliberately retain some data to reduce repeated decoding and GC
+work; fewer allocated bytes per request do not alone prove a smaller idle process.
+
 ## Immutable resource metadata and navigation parsing
 
 The main-branch resource follow-up prepares strong content validators once per
