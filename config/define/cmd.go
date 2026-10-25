@@ -15,6 +15,8 @@ const (
 	DEFAULT_ENABLE_EDITOR            = true
 	DEFAULT_VISIBILITY               = "DEFAULT"
 	DEFAULT_DISABLE_CSP              = false
+	// DEFAULT_ACCESS_LOG records failed requests while keeping successful access quiet.
+	DEFAULT_ACCESS_LOG = "errors"
 
 	DEFAULT_COOKIE_NAME   = "flare"
 	DEFAULT_COOKIE_SECRET = "secret"
@@ -25,6 +27,7 @@ const (
 // get default env config
 func GetDefaultEnvVars() model.Envs {
 	return model.Envs{
+		AccessLog:              DEFAULT_ACCESS_LOG,
 		Port:                   DEFAULT_PORT,
 		EnableGuide:            DEFAULT_ENABLE_GUIDE,
 		EnableDeprecatedNotice: DEFAULT_ENABLE_DEPRECATED_NOTICE,

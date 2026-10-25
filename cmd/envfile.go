@@ -105,6 +105,9 @@ func ParseEnvFile(baseFlags model.Flags) model.Flags {
 	baseFlags.CookieName = GetDotEnvFileStringOrDefault(envs, "FLARE_COOKIE_NAME", baseFlags.CookieName)
 	baseFlags.CookieSecret = GetDotEnvFileStringOrDefault(envs, "FLARE_COOKIE_SECRET", baseFlags.CookieSecret)
 	baseFlags.CookieSecure = GetDotEnvFileBoolOrDefault(envs, "FLARE_COOKIE_SECURE", baseFlags.CookieSecure)
+	if envs.Section("").HasKey("FLARE_ACCESS_LOG") {
+		baseFlags.AccessLog = normalizeAccessLog(envs.Section("").Key("FLARE_ACCESS_LOG").String(), ".env FLARE_ACCESS_LOG")
+	}
 
 	return baseFlags
 }

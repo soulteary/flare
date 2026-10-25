@@ -62,7 +62,7 @@ func TestNewFiber_AsyncContextSurvivesCancellationAndRequestReuse(t *testing.T) 
 		}
 		return c.Next()
 	})
-	app.Use(NewFiber(slog.New(handler)))
+	app.Use(NewFiberWithConfig(slog.New(handler), LoggerConfig{AccessLog: "all"}))
 	app.Get("/:name", func(c fiber.Ctx) error { return c.SendString("ok") })
 	serve := app.Handler()
 	var requestCtx fasthttp.RequestCtx

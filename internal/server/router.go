@@ -81,11 +81,15 @@ func NewFiberApp(appFlags *model.Flags) (*fiber.App, error) {
 		WriteTimeout:                 10 * time.Second,
 		IdleTimeout:                  60 * time.Second,
 	})
-	e.Use(recover.New())
 	if os.Getenv("FLARE_BASELINE") != "1" {
 		log := logger.GetLogger()
-		e.Use(logger.NewFiberWithConfig(log, logger.LoggerConfig{Skipper: logger.DefaultRequestLogSkipper}))
+		e.Use(logger.NewFiberWithConfig(log, logger.LoggerConfig{
+			AccessLog: define.AppFlags.AccessLog,
+			Skipper:   logger.DefaultRequestLogSkipper,
+		}))
 	}
+	// Recover inside the access logger so panics are recorded as failed requests.
+	e.Use(recover.New())
 	if err := auth.RequestHandle(e); err != nil {
 		return nil, fmt.Errorf("初始化认证: %w", err)
 	}

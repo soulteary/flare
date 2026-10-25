@@ -38,8 +38,10 @@ func releaseRequestAttrs(pool *sync.Pool, attrs *[]slog.Attr) {
 }
 
 type LoggerConfig struct {
+	// AccessLog selects errors (the default), all, or off. Unknown values use errors.
+	AccessLog string
 	// Successful health checks and static assets may be skipped. Errors and
-	// HTTP 4xx/5xx responses are always logged.
+	// HTTP 4xx/5xx responses are logged unless AccessLog is off.
 	Skipper func(fiber.Ctx) bool
 }
 
@@ -48,8 +50,17 @@ func NewFiber(logger *slog.Logger) fiber.Handler {
 }
 
 func NewFiberWithConfig(logger *slog.Logger, config LoggerConfig) fiber.Handler {
+	accessLog := strings.ToLower(strings.TrimSpace(config.AccessLog))
+	switch accessLog {
+	case "all", "off":
+	default:
+		accessLog = "errors"
+	}
 	return func(c fiber.Ctx) error {
-		skip := config.Skipper != nil && config.Skipper(c)
+		if accessLog == "off" {
+			return c.Next()
+		}
+		skip := accessLog == "all" && config.Skipper != nil && config.Skipper(c)
 		start := time.Now()
 		path := c.Path()
 		query := c.Request().URI().QueryString()
@@ -64,7 +75,7 @@ func NewFiberWithConfig(logger *slog.Logger, config LoggerConfig) fiber.Handler 
 				status = httpErr.Code
 			}
 		}
-		if skip && err == nil && status < http.StatusBadRequest {
+		if err == nil && status < http.StatusBadRequest && (accessLog == "errors" || skip) {
 			return nil
 		}
 		var params map[string]string
