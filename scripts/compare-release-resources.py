@@ -157,7 +157,7 @@ def render_report(data, destination):
                ('idle_rss_bytes', 2**20, 'warmed idle RSS MiB'),
                ('sampled_peak_rss_bytes', 2**20, 'sampled load peak RSS MiB'),
                ('lifetime_peak_rss_bytes', 2**20, 'process lifecycle peak RSS MiB'),
-               ('server_live_heap_sampled_bytes', 2**20, 'sampled live heap MiB after forced GC'),
+               ('server_live_heap_after_gc_bytes', 2**20, 'live runtime heap MiB after forced GC'),
                ('P95', 10**6, 'client-observed P95 ms')]
     for key, scale, title in columns:
         lines += ['', f'## {title}', '', '| Scene | Before median | After median | Change |', '| --- | ---: | ---: | ---: |']
@@ -171,7 +171,7 @@ def render_report(data, destination):
               '- P95 is measured by the fixed client over loopback and includes scheduling and network latency. Four rounds do not establish confidence intervals.',
               '- On Linux, RSS is read from a /proc child verified by both parent PID and namespace-local NSpid. This avoids sampling an unrelated host process in mixed PID-namespace environments.',
               '- Warmed idle RSS is measured after warmup. Sampled peak RSS is sampled every ~50 ms during load; lifecycle peak RSS is retained separately in raw observations.',
-              '- Live heap is a sampled `inuse_space` estimate from the server heap profile after forced GC, collected after load counters. It is not exact MemStats HeapAlloc and is not RSS. Default Go heap profiling sampling can make small live-heap differences noisy.',
+              '- Live heap is exact runtime HeapAlloc recorded by Go’s debug=1 heap handler after forced GC and before profile encoding, collected after all load counters. It includes the control request’s small instrumentation overhead and is not RSS. Sampled inuse_space/profile-period estimates remain separately recorded; do not substitute them for exact HeapAlloc.',
               '- Both binaries use offline mode, disabled login/request logs, and default fixtures. This does not measure production authentication, weather, browser CPU, ARM hardware, or large bookmark datasets.',
               '- Raw response bodies, literal fingerprints, parsed semantic projections, icon response statuses/content hashes, binary hashes, build metadata, heap profiles and per-round observations/orders are retained. Only clock-time text is normalized.',
               '- Semantic equivalence requires matching HTTP status/type/CSP/Location, visible text, navigation destinations/targets/order, form controls, and ordered icon/favicon content hashes. Icon URL/cache-key changes remain recorded. Rel-token changes permit only additions of noopener/noreferrer; removals or other changes fail validation.',

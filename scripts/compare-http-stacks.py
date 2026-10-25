@@ -180,9 +180,16 @@ def isolated(binary, client, scenario, args, env, logfile):
             if getattr(args, 'capture_live_heap', False):
                 # Run only after both measured resource snapshots: forced GC and
                 # profile encoding are diagnostics, never load CPU/allocation cost.
-                profile_path = logfile.with_suffix('.heap.pprof')
-                with OPENER.open(info['control'] + '/debug/pprof/heap?gc=1', timeout=30) as response:
+                profile_path = logfile.with_suffix('.heap.txt')
+                with OPENER.open(info['control'] + '/debug/pprof/heap?gc=1&debug=1', timeout=30) as response:
                     profile_path.write_bytes(response.read())
+                text_profile = profile_path.read_text()
+                live = re.search(r'^# HeapAlloc = (\d+)$', text_profile, re.M)
+                objects = re.search(r'^# HeapObjects = (\d+)$', text_profile, re.M)
+                if not live or not objects:
+                    raise RuntimeError('Forced-GC text profile lacks exact runtime heap statistics')
+                result['server_live_heap_after_gc_bytes'] = int(live.group(1))
+                result['server_live_objects_after_gc'] = int(objects.group(1))
                 raw_profile = run(['go', 'tool', 'pprof', '-raw', binary, profile_path], env)
                 expected_samples = 'alloc_objects/count alloc_space/bytes inuse_objects/count inuse_space/bytes'
                 if expected_samples not in raw_profile:
