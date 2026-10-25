@@ -40,205 +40,202 @@
             height: 90%;
         }
 
-        #search-container {
-            background-color: #fff;
-            padding: 10px;
+        body { margin: 0; padding: 20px; }
+        h1, h2, .notice { overflow-wrap: anywhere; }
+        a { color: #acd5ff; }
+        button, input { font: inherit; }
+        button, input[type=submit] { min-height: 44px; padding: 8px 12px; cursor: pointer; }
+        .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+        #search-container { background: #fff; color: #111; padding: 10px; }
+        #search-container label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        #search { min-height: 44px; width: min(100%, 240px); box-sizing: border-box; font-size: 16px; }
+        .table-scroll { width: 100%; max-width: 100%; overflow-x: auto; }
+        .table-scroll:focus-visible { outline: 2px solid #acd5ff; }
+        #save-status { color: var(--color-primary); overflow-wrap: anywhere; }
+        @media (max-width: 768px) {
+            body { padding: 16px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+            h1 { font-size: 1.8rem; }
+            .controls > * { max-width: 100%; }
         }
     </style>
 </head>
 
 <body>
-<p class="notice"><a href="/editor/transfer" style="color:#acd5ff">导入 / 导出浏览器书签与 Flare YAML</a>（请先保存当前编辑内容）</p>
     <h1>Flare 在线数据编辑</h1>
-    <p class="notice">嗨👋，在线编辑功能还在开发中，目前已满足基本功能，故开放使用。</p>
-    <p class="notice">在使用本编辑器前，强烈建议先手动保存您的数据文件（如使用 Git 进行版本管理、或定时进行数据备份），避免因浏览器兼容性差异导致的极小概率的糟糕状况出现。</p>
-    <p class="notice">使用方法：在页面中的 “Excel” 中完成你想要的数据更新，或内容添加（右键添加“新行”）之后，点击任意保存按钮，即可完成书签数据的修改。</p>
-
+    <p class="notice"><a href="/editor/transfer" id="transfer-link">导入 / 导出浏览器书签与 Flare YAML</a>（请先保存当前编辑内容）</p>
+    <p class="notice">可使用下方按钮新增和删除。点击单元格编辑；窄屏可在表格内左右滑动。删除前会要求确认。</p>
+    <p class="notice">建议定期备份数据文件。保存会同时更新分类、应用和书签。</p>
+    <p id="save-status" role="status" aria-live="polite"></p>
     <h2>分类管理</h2>
-    <div id="container-category"></div>
     <div class="controls">
-        <input type="submit" value="保存数据" class="update-data" style="margin-top: 10px;" />
-        <form action="/editor" method="POST" id="form-categories">
-            <input type="hidden" name="categories" id="field-categories" value="" />
-            <input type="hidden" name="bookmarks" id="field-bookmarks" value="" />
-        </form>
+        <button type="button" id="add-category">新增分类</button>
+        <button type="button" id="edit-category" disabled>编辑选中单元格</button>
+        <button type="button" id="delete-category" disabled>删除选中分类</button>
+        <button type="button" class="update-data">保存全部数据</button>
     </div>
-
-    <h2>应用编辑</h2>
-
-    <div id="search-container" style="text-align: right;">
-        <span style="float: left; margin: 2px;">
-            <span>高亮筛选:</span>
-            <input type="text" name="" id="search">
-        </span>
-        <input style="margin: 0 10px;" type="submit" value="保存数据" class="update-data" />
-        <input type="submit" value="返回首页" id="back-home" />
+    <div class="table-scroll" tabindex="0" role="region" aria-label="分类编辑表格，可横向滚动"><div id="container-category"></div></div>
+    <h2>应用与书签</h2>
+    <div id="search-container" class="controls">
+        <label for="search">高亮筛选 <input type="search" id="search" autocomplete="off"></label>
+        <button type="button" id="add-bookmark">新增书签 / 应用</button>
+        <button type="button" id="edit-bookmark" disabled>编辑选中单元格</button>
+        <button type="button" id="delete-bookmark" disabled>删除选中条目</button>
+        <button type="button" class="update-data">保存全部数据</button>
+        <button type="button" id="back-home">返回首页</button>
     </div>
-
-    <div id="container-bookmarks"></div>
-
+    <div class="table-scroll" tabindex="0" role="region" aria-label="书签编辑表格，可横向滚动"><div id="container-bookmarks"></div></div>
     <script type="text/html" id="data-categories">{{.DataCategories}}</script>
     <script type="text/html" id="data-bookmarks">{{.DataBookmarks}}</script>
-
     <script>
-        let categories = JSON.parse(document.getElementById("data-categories").innerHTML) || [];
-        const dataBookmarks = JSON.parse(document.getElementById("data-bookmarks").innerHTML) || [];
-
-        let categoriesMap = categories.reduce((prev, item) => {
-            prev[item.ID] = item.Name; return prev;
-        }, {})
-        const FLARE_FIX_CATEGORY = ["[Flare 应用]"];
-        let bookmarks = dataBookmarks.filter(item => item.Category && item.Name && item.URL).map(item => {
-            if (item.Category === '_FLARE_FIXED_CATEGORY') {
-                item.Category = FLARE_FIX_CATEGORY[0];
-            } else {
-                item.Category = categoriesMap[item.Category]
+    (() => {
+        const APP = '[Flare 应用]';
+        const categories = JSON.parse(document.getElementById('data-categories').textContent) || [];
+        const categoryMap = Object.fromEntries(categories.map(item => [item.ID, item.Name]));
+        const bookmarks = (JSON.parse(document.getElementById('data-bookmarks').textContent) || []).map(item => ({
+            ...item, Category: item.Category === '_FLARE_FIXED_CATEGORY' ? APP : (categoryMap[item.Category] || APP)
+        }));
+        let dirty = false, saving = false, tableCategories, tableBookmarks;
+        const selected = {category: [], bookmark: []};
+        const status = document.getElementById('save-status');
+        function changed(changes, source) {
+            if (source !== 'loadData' && changes) { dirty = true; status.textContent = '有未保存的修改'; }
+        }
+        function selection(kind, r1, c1, r2) {
+            const table = kind === 'category' ? tableCategories : tableBookmarks;
+            selected[kind] = Array.from({length: Math.abs(r2 - r1) + 1}, (_, i) => Math.min(r1, r2) + i).filter(r => r >= 0 && r < table.countRows());
+            document.getElementById('delete-' + kind).disabled = selected[kind].length === 0;
+            document.getElementById('edit-' + kind).disabled = selected[kind].length === 0;
+        }
+        const common = {
+            language: 'zh-CN', rowHeaders: true, manualRowMove: true, height: 'auto',
+            outsideClickDeselects: false, licenseKey: 'non-commercial-and-evaluation',
+            contextMenu: ['row_above', 'row_below', '---------', 'undo', 'redo', '---------', 'cut', 'copy'],
+            afterCreateRow() { dirty = true; status.textContent = '有未保存的修改'; },
+            afterRemoveRow() { dirty = true; status.textContent = '有未保存的修改'; },
+            afterRowMove(rows, finalIndex, dropIndex, possible, moved) { if (moved) { dirty = true; status.textContent = '有未保存的修改'; } }
+        };
+        function categoryNames() {
+            return Array.from({length: tableCategories.countRows()}, (_, r) => tableCategories.getDataAtRowProp(r, 'Name')).filter(Boolean);
+        }
+        function bookmarkColumns() {
+            return [{data: 'Name'}, {data: 'URL'}, {data: 'Category', editor: 'select', selectOptions: [APP, ...categoryNames()], allowInvalid: false}, {data: 'Icon'}, {data: 'Desc'}];
+        }
+        tableCategories = new Handsontable(document.getElementById('container-category'), {
+            ...common, data: categories, dataSchema: {Name: ''}, colHeaders: ['分类名称'], columns: [{data: 'Name'}], colWidths: [240],
+            afterSelectionEnd(r1, c1, r2) { selection('category', r1, c1, r2); },
+            afterChange(changes, source) {
+                changed(changes, source);
+                if (!tableBookmarks || !changes) return;
+                for (const [row, prop, oldValue, newValue] of changes) {
+                    if (prop !== 'Name' || !oldValue || oldValue === newValue) continue;
+                    for (let r = 0; r < tableBookmarks.countRows(); r++) {
+                        if (tableBookmarks.getDataAtRowProp(r, 'Category') === oldValue)
+                            tableBookmarks.setDataAtRowProp(r, 'Category', newValue || APP);
+                    }
+                }
+                tableBookmarks.updateSettings({columns: bookmarkColumns()});
             }
-            return item;
-        }).sort((a, b) => (a.Category + "").localeCompare(b.Category + ""));
-    </script>
-
-    <script>
-        const instanceCategories = new Handsontable(document.getElementById('container-category'), {
-            language: 'zh-CN',
-            data: categories,
-            colHeaders: ['分类名称'],
-            rowHeaders: true,
-            manualRowMove: true,
-            contextMenu: ["row_above", "row_below", "---------", "undo", "redo", "---------", "cut", "copy"],
-            columns: [
-                { data: 'Name' },
-            ],
-            height: 'auto',
-            afterChange: (changes) => {
-                if (!changes) { return }
-                changes.forEach(function ([row, prop, oldValue, newValue]) {
-                    categoriesMap = Object.keys(categoriesMap).reduce(function (prev, key) {
-                        if (categoriesMap[key] == oldValue) {
-                            prev[key] = newValue;
-                        } else {
-                            prev[key] = categoriesMap[key]
-                        }
-                        return prev;
-                    }, {});
-
-                    bookmarks = bookmarks.map(function (bookmark) {
-                        if (bookmark.Category == oldValue) {
-                            bookmark.Category = newValue;
-                        }
-                        return bookmark;
-                    });
-                });
-                updateDataTable()
-            },
-            licenseKey: 'non-commercial-and-evaluation'
         });
-
-        function coverRenderer(instance, td, row, col, prop, value, cellProperties) {
-            const stringifiedValue = Handsontable.helper.stringify(value);
-
-            Handsontable.renderers.TextRenderer.apply(this, arguments);
-            return;
-
-            if (stringifiedValue.startsWith('http')) {
-                const img = document.createElement('IMG');
-
-                img.src = value;
-
-                Handsontable.dom.addEvent(img, 'mousedown', event => {
-                    event.preventDefault(); // prevent selection quirk
-                });
-
-                Handsontable.dom.empty(td);
-                td.appendChild(img);
-            } else if (stringifiedValue !== '') {
-
-                const img = document.createElement('IMG');
-
-                img.src = '/assets/mdi/blackboard-' + (value + '').toLowerCase() + '.svg';
-
-                Handsontable.dom.addEvent(img, 'mousedown', event => {
-                    event.preventDefault(); // prevent selection quirk
-                });
-
-                Handsontable.dom.empty(td);
-                td.className = 'bookmark-icon'
-                td.appendChild(img);
-
-            } else {
-                Handsontable.renderers.TextRenderer.apply(this, arguments);
+        tableBookmarks = new Handsontable(document.getElementById('container-bookmarks'), {
+            ...common, data: bookmarks, dataSchema: {Name: '', URL: '', Category: APP, Icon: '', Desc: ''},
+            colHeaders: ['书签名称', '书签地址', '分类', '图标', '描述'], columns: bookmarkColumns(),
+            colWidths: [150, 260, 150, 150, 200], search: true,
+            afterSelectionEnd(r1, c1, r2) { selection('bookmark', r1, c1, r2); }, afterChange: changed
+        });
+        function finishEditing() {
+            // Button clicks normally commit first; explicitly flush the active editor as well.
+            for (const table of [tableCategories, tableBookmarks]) {
+                const editor = table.getActiveEditor();
+                if (editor && editor.isOpened()) editor.finishEditing(false);
             }
         }
-
-
-        const searchField = document.querySelector('#search');
-        const container = document.getElementById('container-bookmarks');
-        const dataTableColumns = buildDataTableColumns();
-        let instanceBookmarks = new Handsontable(container, {
-            language: 'zh-CN',
-            data: Array.from(bookmarks),
-            colHeaders: ['书签名称', '书签地址', /*'私密',*/ '类型', '图标', '描述'],
-            rowHeaders: true,
-            manualRowMove: true,
-            contextMenu: ["row_above", "row_below", "---------", "undo", "redo", "---------", "cut", "copy"],
-            columns: dataTableColumns,
-            // hiddenColumns: true,
-            // hiddenColumns: {
-            //     columns: [2],
-            //     copyPasteEnabled: false,
-            //     indicators: false
-            // },
-            height: 'auto',
-            stretchH: 'all',
-            search: true,
-            licenseKey: 'non-commercial-and-evaluation'
-        });
-        Handsontable.dom.addEvent(searchField, 'keyup', function (event) {
-            const queryResult = instanceBookmarks.getPlugin('search').query(this.value);
-            instanceBookmarks.render();
-        });
-
-
-        function bindData() {
-            const options = { bom: false, columnDelimiter: ',', columnHeaders: false, exportHiddenColumns: true, exportHiddenRows: true, rowDelimiter: '\r\n', rowHeaders: true };
-            const exportedCategories = instanceCategories.getPlugin('exportFile').exportAsString('csv', options);
-            const exportedBookmarks = instanceBookmarks.getPlugin('exportFile').exportAsString('csv', options);
-            document.getElementById('field-categories').value = exportedCategories;
-            document.getElementById('field-bookmarks').value = exportedBookmarks;
+        function addRow(table) {
+            finishEditing();
+            const row = table.countRows();
+            table.alter('insert_row', row, 1);
+            table.selectCell(row, 0);
+            const editor = table.getActiveEditor();
+            if (editor) { editor.beginEditing(); editor.focus(); }
         }
-
-        Array.from(document.getElementsByClassName('update-data')).forEach(function (btn) {
-            btn.addEventListener('click', function (event) {
-                event.preventDefault();
-                bindData();
-                document.getElementById('form-categories').submit();
-            });
+        function editSelected(table, kind) {
+            finishEditing();
+            const cell = table.getSelectedLast();
+            if (!cell || !selected[kind].length) return;
+            table.selectCell(selected[kind][0], Math.max(0, cell[1]));
+            const editor = table.getActiveEditor();
+            if (editor) { editor.beginEditing(); editor.focus(); }
+        }
+        document.getElementById('edit-category').onclick = () => editSelected(tableCategories, 'category');
+        document.getElementById('edit-bookmark').onclick = () => editSelected(tableBookmarks, 'bookmark');
+        document.getElementById('add-category').onclick = () => addRow(tableCategories);
+        document.getElementById('add-bookmark').onclick = () => addRow(tableBookmarks);
+        function removeRows(kind) {
+            finishEditing();
+            const table = kind === 'category' ? tableCategories : tableBookmarks;
+            const rows = selected[kind].filter(r => r < table.countRows()).sort((a, b) => b - a);
+            if (!rows.length) return;
+            const message = kind === 'category' ? '删除选中分类？其中的书签会移至 Flare 应用，不会删除书签。' : '删除选中的 ' + rows.length + ' 个条目？保存后生效。';
+            if (!confirm(message)) return;
+            if (kind === 'category') {
+                const names = new Set(rows.map(r => table.getDataAtRowProp(r, 'Name')));
+                for (let r = 0; r < tableBookmarks.countRows(); r++) {
+                    if (names.has(tableBookmarks.getDataAtRowProp(r, 'Category'))) tableBookmarks.setDataAtRowProp(r, 'Category', APP);
+                }
+            }
+            rows.forEach(r => table.alter('remove_row', r, 1));
+            if (kind === 'category') tableBookmarks.updateSettings({columns: bookmarkColumns()});
+            selected[kind] = [];
+            document.getElementById('delete-' + kind).disabled = true;
+            document.getElementById('edit-' + kind).disabled = true;
+        }
+        document.getElementById('delete-category').onclick = () => removeRows('category');
+        document.getElementById('delete-bookmark').onclick = () => removeRows('bookmark');
+        document.getElementById('search').addEventListener('input', function () {
+            tableBookmarks.getPlugin('search').query(this.value); tableBookmarks.render();
         });
-
-        function buildDataTableColumns() {
-            return [
-                { data: 'Name' },
-                { data: 'URL' },
-                // { data: 'Private', type: 'checkbox' },
-                { data: 'Category', editor: 'select', selectOptions: FLARE_FIX_CATEGORY.concat(categories.map(item => item.Name)), allowInvalid: false },
-                { data: 'Icon', renderer: coverRenderer },
-                { data: 'Desc' }
-            ]
+        function validate() {
+            const names = categoryNames();
+            if (names.length !== tableCategories.countRows() || names.some(name => !String(name).trim())) throw new Error('请填写所有分类名称，或删除空行。');
+            if (new Set(names).size !== names.length || names.includes(APP)) throw new Error('分类名称不能重复，也不能使用保留名称 ' + APP);
+            for (let r = 0; r < tableBookmarks.countRows(); r++) {
+                const name = tableBookmarks.getDataAtRowProp(r, 'Name');
+                const url = tableBookmarks.getDataAtRowProp(r, 'URL');
+                const category = tableBookmarks.getDataAtRowProp(r, 'Category');
+                if (!name || !String(name).trim() || !url || !String(url).trim()) throw new Error('第 ' + (r + 1) + ' 行缺少名称或地址，请填写或删除该行。');
+                if (category && category !== APP && !names.includes(category)) throw new Error('第 ' + (r + 1) + ' 行分类不存在，请重新选择。');
+            }
         }
-
-        document.getElementById('back-home').addEventListener('click', function (e) {
-            e.preventDefault();
-            location.href = "/";
-        })
-
-
-        function updateDataTable() {
-            instanceBookmarks.updateData(bookmarks)
-            instanceBookmarks.updateSettings({ columns: buildDataTableColumns() })
+        async function save() {
+            if (saving) return;
+            finishEditing();
+            try { validate(); } catch (error) { status.textContent = error.message; return; }
+            saving = true;
+            const buttons = [...document.querySelectorAll('button')];
+            const disabled = buttons.map(button => button.disabled);
+            buttons.forEach(button => button.disabled = true);
+            tableCategories.updateSettings({readOnly: true, contextMenu: false, manualRowMove: false}); tableBookmarks.updateSettings({readOnly: true, contextMenu: false, manualRowMove: false});
+            status.textContent = '正在保存…';
+            try {
+                const options = {bom: false, columnDelimiter: ',', columnHeaders: false, exportHiddenColumns: true, exportHiddenRows: true, rowDelimiter: '\r\n', rowHeaders: true};
+                const body = new URLSearchParams({categories: tableCategories.getPlugin('exportFile').exportAsString('csv', options), bookmarks: tableBookmarks.getPlugin('exportFile').exportAsString('csv', options)});
+                const response = await fetch('/editor', {method: 'POST', headers: {'Accept': 'application/json'}, body});
+                if (response.redirected || !(response.headers.get('content-type') || '').includes('application/json')) throw new Error('登录可能已过期，请在新窗口登录后重试；当前编辑内容已保留。');
+                const result = await response.json();
+                if (!response.ok || !result.saved) throw new Error(result.error || '保存失败，请重试并检查服务端日志。');
+                dirty = false; status.textContent = '全部数据已保存';
+            } catch (error) { status.textContent = error.message + ' 未清除当前编辑内容。'; }
+            finally {
+                saving = false;
+                buttons.forEach((button, i) => button.disabled = disabled[i]);
+                tableCategories.updateSettings({readOnly: false, contextMenu: common.contextMenu, manualRowMove: true}); tableBookmarks.updateSettings({readOnly: false, contextMenu: common.contextMenu, manualRowMove: true});
+            }
         }
-
+        document.querySelectorAll('.update-data').forEach(button => button.onclick = save);
+        function leave(url) { if (!saving && (!dirty || confirm('修改尚未保存，确定离开？'))) location.href = url; }
+        document.getElementById('back-home').onclick = () => leave('/');
+        document.getElementById('transfer-link').onclick = event => { event.preventDefault(); leave('/editor/transfer'); };
+        window.addEventListener('beforeunload', event => { if (dirty || saving) { event.preventDefault(); event.returnValue = ''; } });
+    })();
     </script>
-    <script>document.addEventListener('keydown',function(e){if(e.key==='Escape')history.back();});</script>
 </body>
-
 </html>

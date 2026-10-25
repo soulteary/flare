@@ -304,7 +304,11 @@ func render(c *echo.Context, filter string) error {
 	m["SearchKeyword"] = template.HTML(searchKeyword)
 	m["HasKeyword"] = hasKeyword
 	m["ShowSearchComponent"] = options.ShowSearchComponent
-	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus
+	// Keep the script-free homepage while avoiding an unsolicited mobile keyboard.
+	ua := strings.ToLower(c.Request().UserAgent())
+	mobile := strings.Contains(ua, "mobile") || strings.Contains(ua, "android") || strings.Contains(ua, "ipad") || strings.Contains(ua, "iphone")
+	c.Response().Header().Add("Vary", "User-Agent")
+	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus || mobile
 	m["OptionTitle"] = options.Title
 	m["OptionFooter"] = template.HTML(options.Footer)
 	m["OptionOpenAppNewTab"] = options.OpenAppNewTab

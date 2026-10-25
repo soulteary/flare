@@ -79,4 +79,9 @@
 .toolbar-btn-settings{
   margin: 0 0 10px 0;
 }
+
+
+@media (max-width: 768px), (hover: none), (pointer: coarse) {
+  .toolbar-container { width: 44px; bottom: calc(10px + env(safe-area-inset-bottom)); left: calc(10px + env(safe-area-inset-left)); }
+  .toolbar-btn-bg { width: 44px; height: 44px; opacity: 1; }
 }

@@ -69,3 +69,10 @@
     float: none;
   }
 }
+@media (max-width: 768px) {
+  #container-bookmakrs .bookmark-group-container { display: block; float: none; width: 100%; margin-bottom: 20px; }
+  #container-bookmakrs .bookmark-group-container h3,
+  #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark { white-space: normal; overflow-wrap: anywhere; }
+  #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark { min-height: 44px; padding: 8px 0; line-height: 1.6; }
+  #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark:hover { padding-left: 0; }
+}
