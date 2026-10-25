@@ -1,5 +1,7 @@
 # Choosing built-in icons
 
+> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+
 In an entry form, open **More options**, then **Choose icon** beside the icon
 input. Search uses English substrings of the existing Material Design icon names,
 ignores letter case, and displays at most 48 results per page. Selecting a result

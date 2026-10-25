@@ -1,5 +1,7 @@
 # Hybrid homepage search
 
+> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+
 Hybrid search is an optional enhancement to the ordinary search form. Configure a
 valid external default target and `Search.Mode: hybrid` in search settings. The
 legacy/select mode remains script-free. If JavaScript is unavailable, the normal

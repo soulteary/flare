@@ -37,22 +37,10 @@ func RegisterRouting(e *fiber.App) {
 		if !valid || !fn.IsSafeNavigationURL(decodeURL) {
 			return c.Status(http.StatusBadRequest).Type("html", "utf-8").Send(internalError)
 		}
-		appsData, errApps := data.LoadFavoriteBookmarks()
-		if errApps == nil {
-			for _, bookmark := range appsData.Items {
-				if fn.ParseDynamicUrlWith(bookmark.URL, &info) == decodeURL {
-					return c.Redirect().Status(http.StatusFound).To(string(decoded))
-				}
-			}
+		if data.MatchNavigationTarget(decodeURL, func(template string) bool { return fn.ParseDynamicUrlWith(template, &info) == decodeURL }) {
+			return c.Redirect().Status(http.StatusFound).To(string(decoded))
 		}
-		bookmarksData, errBookmarks := data.LoadNormalBookmarks()
-		if errBookmarks == nil {
-			for _, bookmark := range bookmarksData.Items {
-				if fn.ParseDynamicUrlWith(bookmark.URL, &info) == decodeURL {
-					return c.Redirect().Status(http.StatusFound).To(string(decoded))
-				}
-			}
-		}
+
 		return c.Status(http.StatusOK).Type("html", "utf-8").Send(internalError)
 	})
 }

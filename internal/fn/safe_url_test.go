@@ -22,3 +22,16 @@ func TestNavigationURLPolicy(t *testing.T) {
 		t.Fatal("case-insensitive HTTPS rejected")
 	}
 }
+
+func TestSafeImageURLWebPrefixDoesNotBroadenValidation(t *testing.T) {
+	for _, value := range []string{"HTTP://example.com/icon.svg", "HTTPS://example.com/icon.svg"} {
+		if !IsSafeImageURL(value) {
+			t.Errorf("valid web image rejected: %s", value)
+		}
+	}
+	for _, value := range []string{"http:opaque", "https:///missing-host", "http://x/\n", "http://x/\\bad", "http://%zz", "//example.com/icon.svg", "serverNetwork", "data:image/svg+xml,icon"} {
+		if IsSafeImageURL(value) {
+			t.Errorf("invalid image accepted: %q", value)
+		}
+	}
+}
