@@ -381,10 +381,10 @@ func parseRequestURL(c fiber.Ctx) {
 }
 
 // homepageBodyClasses keeps appearance and letter-case preferences consistent on navigation pages.
-func homepageBodyClasses(options model.Application) template.HTMLAttr {
+func homepageBodyClasses(options model.Application) string {
 	classes := options.Homepage.Classes()
 	if !options.KeepLetterCase {
 		classes += "app-content-uppercase "
 	}
-	return template.HTMLAttr(classes)
+	return classes
 }
