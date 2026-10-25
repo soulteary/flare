@@ -120,6 +120,8 @@ func getBookmarksFromCSV(input string, categories []model.Category) (favoriteBoo
 }
 
 func UpdateBookmarksFromEditor(categoriesCSV string, bookmakrsCSV string) bool {
+	bookmarkMu.Lock()
+	defer bookmarkMu.Unlock()
 
 	categories, err := getCategoriesFromCSV(categoriesCSV)
 	if err != nil {
@@ -136,11 +138,15 @@ func UpdateBookmarksFromEditor(categoriesCSV string, bookmakrsCSV string) bool {
 	var normalBookmarks model.Bookmarks
 	normalBookmarks.Items = normal
 	normalBookmarks.Categories = categories
-	SaveNormalBookmarks(normalBookmarks)
+	if ok, err := saveBookmarksToYamlFile("bookmarks", normalBookmarks); !ok || err != nil {
+		return false
+	}
 
 	var favoriteBookmarks model.Bookmarks
 	favoriteBookmarks.Items = favorite
-	SaveFavoriteBookmarks(favoriteBookmarks)
+	if ok, err := saveBookmarksToYamlFile("apps", favoriteBookmarks); !ok || err != nil {
+		return false
+	}
 
 	return true
 }

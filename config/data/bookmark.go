@@ -124,19 +124,27 @@ func loadBookmarksFromYamlFile(name string, isFavorite bool) (model.Bookmarks, e
 }
 
 func SaveFavoriteBookmarks(data model.Bookmarks) bool {
+	bookmarkMu.Lock()
+	defer bookmarkMu.Unlock()
 	result, err := saveBookmarksToYamlFile("apps", data)
 	return err == nil && result
 }
 
 func SaveNormalBookmarks(data model.Bookmarks) bool {
+	bookmarkMu.Lock()
+	defer bookmarkMu.Unlock()
 	result, err := saveBookmarksToYamlFile("bookmarks", data)
 	return err == nil && result
 }
 
 func LoadFavoriteBookmarks() (model.Bookmarks, error) {
+	bookmarkMu.Lock()
+	defer bookmarkMu.Unlock()
 	return loadBookmarksFromYamlFile("apps", true)
 }
 
 func LoadNormalBookmarks() (model.Bookmarks, error) {
+	bookmarkMu.Lock()
+	defer bookmarkMu.Unlock()
 	return loadBookmarksFromYamlFile("bookmarks", false)
 }
