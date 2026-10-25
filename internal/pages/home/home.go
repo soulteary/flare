@@ -98,7 +98,7 @@ func RegisterRouting(e *fiber.App) {
 }
 
 func pageHome(c fiber.Ctx) error {
-	return render(c, "")
+	return render(c, strings.TrimSpace(c.Query("search")))
 }
 
 func renderHelp(c fiber.Ctx) error {
@@ -216,6 +216,7 @@ func updateWeatherData(location string) {
 }
 
 func pageBookmark(c fiber.Ctx) error {
+	setCSPHeader(c)
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
@@ -233,11 +234,12 @@ func pageBookmark(c fiber.Ctx) error {
 	m["PageName"] = i18n.T(locale, "page_bookmarks")
 	m["SubPage"] = true
 	m["PageAppearance"] = define.GetAppBodyStyle()
+	m["BodyClassName"] = homepageBodyClasses(options)
 	m["SettingPages"] = define.SettingPages
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
-	m["Bookmarks"] = GenerateBookmarkTemplate("", &options)
+	m["Bookmarks"] = GenerateBookmarkNavigationTemplate(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options)
 	m["OptionTitle"] = options.Title
 	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
 	m["OptionShowBookmarks"] = options.ShowBookmarks
@@ -268,6 +270,7 @@ func pageApplication(c fiber.Ctx) error {
 	m["PageName"] = i18n.T(locale, "page_apps")
 	m["SubPage"] = true
 	m["PageAppearance"] = define.GetAppBodyStyle()
+	m["BodyClassName"] = homepageBodyClasses(options)
 	m["OptionTitle"] = options.Title
 	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
 	m["OptionShowApps"] = options.ShowApps
@@ -307,10 +310,6 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 		}
 	}
 	setCSPHeader(c)
-	bodyClassName := ""
-	if !options.KeepLetterCase {
-		bodyClassName += "app-content-uppercase "
-	}
 	m := pool.GetTemplateMap()
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
@@ -327,11 +326,16 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	apps := GenerateApplicationsTemplate(filter, &options)
-	bookmarks := GenerateBookmarkTemplate(filter, &options)
+	selected := c.Query("category")
+	if c.Method() == http.MethodPost {
+		selected = c.FormValue("category")
+	}
+	m["BookmarkCategory"] = selected
+	bookmarks := GenerateBookmarkNavigationTemplate(filter, selected, c.Path(), &options)
 	m["Applications"] = apps
 	m["Bookmarks"] = bookmarks
 	if filter != "" {
-		m["SearchNoResults"] = (!options.ShowApps || !strings.Contains(string(apps), `href="`)) && (!options.ShowBookmarks || !strings.Contains(string(bookmarks), `href="`))
+		m["SearchNoResults"] = (!options.ShowApps || !strings.Contains(string(apps), `class="app-item"`)) && (!options.ShowBookmarks || !strings.Contains(string(bookmarks), `class="bookmark"`))
 	}
 	m["SearchKeyword"] = searchKeyword
 	PopulateSearch(m, options, query, target, searchError)
@@ -352,7 +356,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["OptionShowBookmarks"] = options.ShowBookmarks
 	m["OptionHideSettingsButton"] = options.HideSettingsButton
 	m["OptionHideHelpButton"] = options.HideHelpButton
-	m["BodyClassName"] = template.HTMLAttr(bodyClassName)
+	m["BodyClassName"] = homepageBodyClasses(options)
 	return renderClockPage(c, m, options, true)
 }
 
@@ -374,4 +378,13 @@ func parseRequestURL(c fiber.Ctx) {
 		r.TLS = &tls.ConnectionState{}
 	}
 	fn.ParseRequestURL(&r)
+}
+
+// homepageBodyClasses keeps appearance and letter-case preferences consistent on navigation pages.
+func homepageBodyClasses(options model.Application) string {
+	classes := options.Homepage.Classes()
+	if !options.KeepLetterCase {
+		classes += "app-content-uppercase "
+	}
+	return classes
 }

@@ -115,6 +115,9 @@ func GetAllSettingsOptions() (model.Application, error) {
 func UpdateAppearance(update model.Application) bool {
 	settingsUpdateMu.Lock()
 	defer settingsUpdateMu.Unlock()
+	if update.Homepage != nil && update.Homepage.Validate() != nil {
+		return false
+	}
 	if update.Clock != nil && clock.Validate(*update.Clock) != nil {
 		return false
 	}
@@ -125,6 +128,9 @@ func UpdateAppearance(update model.Application) bool {
 
 	if update.Clock != nil {
 		options.Clock = update.Clock
+	}
+	if update.Homepage != nil {
+		options.Homepage = update.Homepage
 	}
 	options.Title = update.Title
 	options.Footer = update.Footer

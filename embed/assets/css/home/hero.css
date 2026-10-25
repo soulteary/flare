@@ -1,20 +1,24 @@
+#plugin-datetime { min-width: 0; flex: 1 1 28rem; overflow-wrap: anywhere; }
 #page-home #hero-container {
-  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
 }
 
 #clock { font-variant-numeric: tabular-nums; }
 #clock-time { display: inline-block; min-width: 5ch; }
 
 #plugin-weather{
-  position: absolute;
-  right: 20px;
-  top: 30px;
+  position: static;
+  flex: 0 0 auto;
 }
 
 #page-home #hero-container p {
   font-weight: 300;
   text-transform: uppercase;
-  height: 30px;
+  height: auto;
+  overflow-wrap: anywhere;
 }
 
 #hero-container .weather-value-container {
@@ -35,3 +39,7 @@
   #page-home #hero-container p { height: auto; overflow-wrap: anywhere; }
   #plugin-weather { position: static; flex: 0 0 auto; }
 }
+
+
+.homepage-title-compact #plugin-greetings { font-size: clamp(1.5rem, 5vw, 2.5rem); }
+.homepage-title-prominent #plugin-greetings { font-size: clamp(2rem, 9vw, 4.5rem); }

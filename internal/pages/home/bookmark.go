@@ -1,7 +1,9 @@
 package home
 
 import (
+	"html"
 	"html/template"
+	"net/url"
 	"strings"
 
 	"github.com/soulteary/flare/config/data"
@@ -11,6 +13,11 @@ import (
 )
 
 func GenerateBookmarkTemplate(filter string, options *model.Application) template.HTML {
+	return GenerateBookmarkNavigationTemplate(filter, "", "/", options)
+}
+
+// GenerateBookmarkNavigationTemplate keeps category navigation server-rendered and search-scoped.
+func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *model.Application) template.HTML {
 	if options == nil {
 		op, err := data.GetAllSettingsOptions()
 		if err != nil {
@@ -51,10 +58,29 @@ func GenerateBookmarkTemplate(filter string, options *model.Application) templat
 	}
 
 	if len(bookmarksData.Categories) > 0 {
+		mode := "all"
+		if options.Homepage != nil && options.Homepage.CategoryNavigation != "" {
+			mode = options.Homepage.CategoryNavigation
+		}
+		valid := false
+		for _, category := range bookmarksData.Categories {
+			if category.ID == selected {
+				valid = true
+			}
+		}
+		if !valid || mode != "tabs" {
+			selected = ""
+		}
+		if mode == "tabs" {
+			renderCategoryNavigation(b, bookmarksData.Categories, selected, filter, path, options.Locale)
+		}
 		defaultCategory := bookmarksData.Categories[0]
 		for _, category := range bookmarksData.Categories {
+			if selected != "" && category.ID != selected {
+				continue
+			}
 			categoryCopy := category
-			renderBookmarksWithCategories(b, &bookmarks, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
+			renderBookmarksWithCategories(b, &bookmarks, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, mode == "collapse" && filter == "")
 		}
 	} else {
 		renderBookmarksWithoutCategories(b, &bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode)
@@ -99,7 +125,7 @@ func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]model.Boo
 	b.WriteString(`</ul></div>`)
 }
 
-func renderBookmarksWithCategories(b *strings.Builder, bookmarks *[]model.Bookmark, category *model.Category, defaultCategory *model.Category, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string) {
+func renderBookmarksWithCategories(b *strings.Builder, bookmarks *[]model.Bookmark, category *model.Category, defaultCategory *model.Category, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string, collapse ...bool) {
 	var itemBuf strings.Builder
 	for _, bookmark := range *bookmarks {
 		templateURL := bookmark.URL
@@ -138,9 +164,57 @@ func renderBookmarksWithCategories(b *strings.Builder, bookmarks *[]model.Bookma
 	if itemBuf.Len() == 0 {
 		return
 	}
-	b.WriteString(`<div class="bookmark-group-container pull-left"><h3 class="bookmark-group-title">`)
-	b.WriteString(category.Name)
-	b.WriteString(`</h3><ul class="bookmark-list">`)
+	collapsible := len(collapse) > 0 && collapse[0]
+	if collapsible {
+		b.WriteString(`<details class="bookmark-group-container bookmark-collapsible"><summary class="bookmark-group-title">`)
+	} else {
+		b.WriteString(`<div class="bookmark-group-container pull-left"><h3 class="bookmark-group-title">`)
+	}
+	b.WriteString(html.EscapeString(category.Name))
+	if collapsible {
+		b.WriteString(`</summary><ul class="bookmark-list">`)
+	} else {
+		b.WriteString(`</h3><ul class="bookmark-list">`)
+	}
 	b.WriteString(itemBuf.String())
-	b.WriteString(`</ul></div>`)
+	if collapsible {
+		b.WriteString(`</ul></details>`)
+	} else {
+		b.WriteString(`</ul></div>`)
+	}
+}
+
+// renderCategoryNavigation preserves search terms and category IDs in escaped links.
+func renderCategoryNavigation(b *strings.Builder, categories []model.Category, selected, filter, path, locale string) {
+	b.WriteString(`<nav class="bookmark-category-nav" aria-label="`)
+	all, label := "All", "Bookmark categories"
+	if locale == "zh" || locale == "" {
+		all, label = "全部", "书签分类"
+	}
+	b.WriteString(label)
+	b.WriteString(`">`)
+	items := append([]model.Category{{Name: all}}, categories...)
+	for _, category := range items {
+		query := url.Values{}
+		if category.ID != "" {
+			query.Set("category", category.ID)
+		}
+		if filter != "" {
+			query.Set("search", filter)
+		}
+		href := path
+		if len(query) > 0 {
+			href += "?" + query.Encode()
+		}
+		b.WriteString(`<a href="`)
+		b.WriteString(html.EscapeString(href))
+		b.WriteString(`"`)
+		if category.ID == selected {
+			b.WriteString(` aria-current="page"`)
+		}
+		b.WriteString(`>`)
+		b.WriteString(html.EscapeString(category.Name))
+		b.WriteString(`</a>`)
+	}
+	b.WriteString(`</nav>`)
 }
