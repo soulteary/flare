@@ -44,3 +44,33 @@ estimate. All rows remain in the DOM and shared working document, keyboard/searc
 semantics are retained, and unsupported browsers use normal layout. No pagination
 or JavaScript virtualization was added. CI runs functional checks and emits fresh
 measurements; the table is a single local observation, not a speed guarantee.
+
+## Incremental editor updates
+
+List search input is debounced by 100 ms. Location changes and explicit rendering
+remain immediate; a later immediate render cancels a pending search render.
+Existing row nodes are reused on unchanged renders and compatible updates. One
+list-level click listener handles entry actions instead of three listeners per
+row. Hidden rows are not kept in a detached-node cache.
+
+The editor observes working-document mutations and caches the exact dirty result
+until another mutation. Display filtering does not repeatedly canonicalize and
+serialize both full documents. The first check after a real data change still
+compares complete data, so reverting values, undoing a deletion and discarding
+changes retain their exact semantics. Display views contain frozen flat bookmark
+copies; writes use the observed working document or explicit store operations.
+
+The scale harness now also records unchanged rerender time, 100 unchanged dirty
+checks, post-GC JavaScript heap, DOM nodes and listeners. Measurements use Chromium
+DevTools counters and do not represent whole-browser RSS or service memory.
+Compare another source checkout with the same harness:
+
+```sh
+EDITOR_SOURCE_ROOT=/path/to/reference EXPECT_ROW_REUSE=0 node tests/editor/scale.browser.cjs
+node tests/editor/scale.browser.cjs
+```
+
+See [the client measurement report](../metrics-reports/editor-client-2026-10-26.md)
+for alternating-order observations and their limits. No timing threshold is used
+as a CI assertion; functional ownership, dirty-state, data-count, focus and node
+reuse checks remain mandatory.

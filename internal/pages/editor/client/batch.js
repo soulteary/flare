@@ -5,7 +5,7 @@
   const $=id=>document.getElementById(id);
   let ui,table=null,active=false,loading=false,baseline='',selected=[],column=0,assets;
   const clone=value=>JSON.parse(JSON.stringify(value));
-  function snapshotRows(){return ui.store.entries().map(({item,location})=>({...clone(item),Location:location}));}
+  function snapshotRows(){return ui.store.viewEntries().map(({item,location})=>({...clone(item),Location:location}));}
   function rows(){return Array.from({length:table.countRows()},(_,r)=>({...table.getSourceDataAtRow(table.toPhysicalRow(r))}));}
   function serial(data){return JSON.stringify(data.map(r=>[r._key||'',r.Name||'',r.URL||'',r.Location||'',r.Icon||'',r.Desc||'',!!r.Private]));}
   function notify(){if(!loading&&ui)ui.syncStatus();}

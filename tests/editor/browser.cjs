@@ -42,7 +42,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   await page.getByRole('button',{name:'Application',exact:true}).click();assert.equal(await unloadBlocked(),false);
   await page.locator('#entry-name').fill('Pending edit');assert.equal(await unloadBlocked(),true);await page.locator('#entry-name').fill('Application');assert.equal(await unloadBlocked(),false);
   await page.locator('#cancel-entry').click();
-  await page.locator('#entry-search').fill('First');assert.equal(await page.locator('.entry').count(),1);
+  await page.locator('#entry-search').fill('First');await page.waitForFunction(()=>document.querySelectorAll('.entry').length===1);assert.equal(await page.locator('.entry').count(),1);
   await edit('First bookmark','First edited');await save();
   let doc=await (await page.request.get(base+'/editor/document')).json();assert.equal(doc.bookmarks.length,2);assert.equal(doc.bookmarks[1].Name,'Hidden bookmark');assert.equal(doc.bookmarks[0].Desc,'Preserve me');assert.equal(doc.apps[0].Private,true);
   // Reverting the actual value removes dirty state, rather than retaining a sticky flag.
