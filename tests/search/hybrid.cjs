@@ -36,6 +36,11 @@ Search:
       Keyword: ex
       URLTemplate: "https://search.example/search?q={query}"
       Enabled: true
+    - ID: secondary
+      Name: Secondary
+      Keyword: s
+      URLTemplate: "https://search.example/secondary?q={query}"
+      Enabled: true
 `);
  await fs.writeFile(path.join(dir,'apps.yml'),'links:\n- name: Needle application\n  link: "'+base+'/chosen"\n  desc: Find me\n');
  await fs.writeFile(path.join(dir,'bookmarks.yml'),'links:\n- name: "Needle bookmark"\n  link: "https://bookmark.example/"\n');
@@ -88,21 +93,72 @@ Search:
   assert.equal(await page.locator('#search-suggestions img').count(),0);
   await page.locator('#search').fill('!unknown');
   await page.waitForFunction(()=>document.querySelector('#search-suggestions a')?.textContent==='!unknown');
+  await page.locator('#search').fill('old');
+  await page.waitForTimeout(210);
+  await page.locator('#search-target').focus();
+  await page.waitForTimeout(500);
+  assert.equal(await page.locator('#search-suggestions').isVisible(),false,'blurred requests must not reopen suggestions');
   await page.unroute('**/search/suggest');
   await page.context().route('https://search.example/**',route=>route.fulfill({body:'external search'}));
-  await page.locator('#search').fill('!ex external');
-  const requestPromise=page.context().waitForEvent('request',request=>request.url().startsWith('https://search.example/'));
-  const popupPromise=page.waitForEvent('popup');
+  async function knownCommandDoesNotSuggest(query) {
+   const before=requests;
+   await page.locator('#search').fill(query);
+   await page.waitForTimeout(230);
+   assert.equal(requests,before,query+' must bypass suggestions');
+   assert.equal(await page.locator('#search-suggestions').isVisible(),false);
+  }
+  async function externalSubmit(query, selected, expectedPath) {
+   await page.locator('#search-target').selectOption(selected);
+   await knownCommandDoesNotSuggest(query);
+   const requestPromise=page.context().waitForEvent('request',request=>request.url().startsWith('https://search.example/'));
+   const popupPromise=page.waitForEvent('popup');
+   await page.locator('#search').press('Enter');
+   const popup=await popupPromise;
+   assert.equal(new URL((await requestPromise).url()).pathname,expectedPath);
+   await popup.close();
+   assert.equal(page.url(),base+'/');
+  }
+  // A shortcut must override a contradictory selection, including names containing s.
+  await externalSubmit('!ex external','local','/search');
+  await externalSubmit('!s external','local','/secondary');
+  await page.locator('#search-target').selectOption('example');
+  await knownCommandDoesNotSuggest('!local Needle');
+  const pagesBefore=page.context().pages().length;
+  const localResponse=page.waitForResponse(response=>response.url()===base+'/' && response.request().method()==='POST');
   await page.locator('#search').press('Enter');
-  const popup=await popupPromise; await popup.waitForLoadState();
-  assert.match((await requestPromise).url(),/search\.example\/search\?q=external/);
-  await popup.close();
-  assert.equal(page.url(),base+'/');
-  await page.locator('#search-target').selectOption('local');
-  await page.locator('#search').fill('Needle');
-  await page.locator('#search').press('Enter');
+  await localResponse;
   await page.waitForLoadState();
-  assert.equal(page.url(),base+'/','local search must stay in the same tab');
+  assert.equal(page.context().pages().length,pagesBefore,'!local from external default must stay in current tab');
+  assert.equal(await page.locator('#search-target').inputValue(),'local');
+  // Changing the engine invalidates the previously keyboard-selected local match.
+  await page.goto(base);
+  await page.locator('#search').fill('Needle');
+  await page.waitForFunction(()=>document.querySelectorAll('#search-suggestions a').length===2);
+  await page.locator('#search').press('ArrowDown');
+  await page.locator('#search-target').selectOption('secondary');
+  assert.equal(await page.locator('#search').getAttribute('aria-activedescendant'),null);
+  assert.equal(await page.locator('#search-suggestions').isVisible(),false);
+  await page.locator('#search').focus();
+  const changedRequest=page.context().waitForEvent('request',request=>request.url().startsWith('https://search.example/secondary'));
+  const changedPopup=page.waitForEvent('popup');
+  await page.locator('#search').press('Enter');
+  await changedRequest;
+  await (await changedPopup).close();
+  assert.equal(page.url(),base+'/');
+  // Native anchor mouse and touch activation must survive the input losing focus.
+  await page.goto(base);
+  await page.locator('#search').fill('Needle');
+  await page.waitForFunction(()=>document.querySelectorAll('#search-suggestions a').length===2);
+  await page.locator('#search-suggestions a').first().click();
+  await page.waitForURL(base+'/chosen');
+  const touchContext=await browser.newContext({hasTouch:true,isMobile:true,viewport:{width:390,height:844}});
+  const touchPage=await touchContext.newPage();
+  await touchPage.goto(base);
+  await touchPage.locator('#search').fill('Needle');
+  await touchPage.waitForFunction(()=>document.querySelectorAll('#search-suggestions a').length===2);
+  await touchPage.locator('#search-suggestions a').first().tap();
+  await touchPage.waitForURL(base+'/chosen');
+  await touchContext.close();
   assert.deepEqual(errors,[]);
   console.log('Hybrid browser acceptance passed');
  } finally { if(browser)await browser.close(); child.kill('SIGTERM'); await fs.rm(dir,{recursive:true,force:true}); }

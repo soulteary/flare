@@ -33,3 +33,56 @@ unreliable popup scripting and never makes ordinary local searches open a new ta
 Only submitted queries are sent to an external engine. Flare does not fetch search
 results, query suggestions, engine icons, or test engine reachability. Browser
 network access determines whether an external or internal target is reachable.
+
+## Search settings request protection
+
+Search settings forms now carry an eight-hour, instance-signed token paired with
+an HttpOnly, host-only, SameSite=Strict cookie with an instance-specific name. Refresh any form opened before an
+upgrade or application restart before saving. Programmatic clients must first GET
+`/settings/search`, retain its cookie, and submit the hidden `csrf-token` field.
+The compatibility handling for older search fields does not bypass this token.
+
+The guard rejects cross-site and same-site sibling browser requests, opaque or
+foreign Origin values, and foreign Referer values when present. It does not use
+Forwarded or X-Forwarded headers to decide whether a request is trusted. A valid
+token permits HTTPS termination at a reverse proxy while the backend uses HTTP;
+keep the original Host (including a nondefault public port) and configure `FLARE_COOKIE_SECURE=true` for HTTPS-only
+cookies in that deployment. Token-bearing clients without browser metadata remain
+supported. Form responses use `Cache-Control: no-store`.
+
+This protection covers the search settings endpoint, not every administrative
+endpoint. Concurrent edits to the same search section still use last-writer-wins
+behavior; separate processes writing the same configuration are not coordinated.
+
+## Configuration example
+
+Merge this block into `config.yml`; keep the existing unrelated settings. No
+`Search` block is required for local-only search. Use `Mode: hybrid` and an enabled
+external `DefaultTarget` (for example `bing`) to opt into local suggestions.
+
+```yaml
+ShowSearchComponent: true
+DisabledSearchAutoFocus: false
+Search:
+  Mode: select
+  DefaultTarget: local
+  OpenNewTab: true
+  EnableKeywords: true
+  Engines:
+    - ID: bing
+      Name: Bing
+      URLTemplate: "https://www.bing.com/search?q={query}"
+      Keyword: b
+      Enabled: true
+    - ID: internal-docs
+      Name: Internal documentation
+      URLTemplate: "https://docs.example.com/search?q={query}"
+      Keyword: docs
+      Enabled: true
+```
+
+Restart after editing YAML directly: the running process caches configuration.
+Only enabled homepage modules participate in local suggestions; a malformed file
+for a hidden module does not disable matches from a visible module. Independent
+settings sections are serialized within one Flare process so an appearance or
+weather save cannot discard a simultaneous engine update.

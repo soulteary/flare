@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -115,5 +116,36 @@ func TestHybridDebugTemplateHashes(t *testing.T) {
 	for _, script := range scripts {
 		sum := sha256.Sum256([]byte(script[1]))
 		require.Contains(t, rec.Header().Get("Content-Security-Policy"), "'sha256-"+base64.StdEncoding.EncodeToString(sum[:])+"'")
+	}
+}
+
+func TestHybridHiddenMalformedModuleDoesNotBlockVisibleSuggestions(t *testing.T) {
+	for _, visibleApps := range []bool{true, false} {
+		t.Run(fmt.Sprintf("apps-visible-%t", visibleApps), func(t *testing.T) {
+			app := newNativeFiberApp(t, false)
+			opts := &model.SearchOptions{Mode: "hybrid", DefaultTarget: "example", Engines: []model.SearchEngine{{ID: "example", Name: "Example", URLTemplate: "https://search.example/?q={query}", Enabled: true}}}
+			require.NoError(t, data.UpdateSearchOptions(true, true, opts))
+			settings, err := data.GetAllSettingsOptions()
+			require.NoError(t, err)
+			settings.ShowApps, settings.ShowBookmarks = visibleApps, !visibleApps
+			require.True(t, data.UpdateAppearance(settings))
+			entries := model.Bookmarks{Items: []model.Bookmark{{Name: "Visible needle", URL: "https://visible.example/"}}}
+			require.True(t, data.SaveFavoriteBookmarks(entries))
+			require.True(t, data.SaveNormalBookmarks(entries))
+			hiddenFile := "bookmarks.yml"
+			if !visibleApps {
+				hiddenFile = "apps.yml"
+			}
+			require.NoError(t, os.WriteFile(hiddenFile, []byte("links: ["), 0600))
+			req := httptest.NewRequest(http.MethodPost, "/search/suggest", strings.NewReader("search=needle"))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			response, err := app.Test(req)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, response.StatusCode)
+			var matches []map[string]any
+			require.NoError(t, json.Unmarshal([]byte(nativeFiberBody(t, response)), &matches))
+			require.Len(t, matches, 1)
+			require.Equal(t, "Visible needle", matches[0]["name"])
+		})
 	}
 }

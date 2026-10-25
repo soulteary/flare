@@ -1,6 +1,7 @@
 {{ define "settings-search.html" }}
 <div class="setting-group-container">
 <form method="POST" action="{{.SettingPages.Search.Path}}" rel="noopener noreferrer">
+<input type="hidden" name="csrf-token" value="{{.SearchCSRFToken}}">
 <h2>{{T .Locale "page_search"}}</h2>
 <button type="submit" name="action" value="save" hidden>{{T .Locale "save_changes"}}</button>
 {{if .SearchError}}<p role="alert">{{.SearchError}}</p>{{end}}
