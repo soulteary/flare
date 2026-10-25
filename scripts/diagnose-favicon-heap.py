@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
+sys.dont_write_bytecode = True
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--helper', type=Path, default=Path(__file__).resolve().with_name('compare-http-stacks.py'))
