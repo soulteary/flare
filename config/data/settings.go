@@ -73,11 +73,11 @@ func UpdateSearch(showSearchComponent bool, disabledSearchAutoFocus bool) bool {
 	}
 	options.ShowSearchComponent = showSearchComponent
 	options.DisabledSearchAutoFocus = disabledSearchAutoFocus
-	return saveAppConfigToYamlFile("config", options)
+	return saveSearchConfigPreservingData(options) == nil
 }
 
 // UpdateSearchOptions validates and atomically saves search settings without changing other settings.
-func UpdateSearchOptions(showSearchComponent, disabledSearchAutoFocus bool, update *model.SearchOptions) error {
+func UpdateSearchOptions(showSearchComponent, disabledSearchAutoFocus bool, update *model.SearchOptions, revision ...string) error {
 	settingsUpdateMu.Lock()
 	defer settingsUpdateMu.Unlock()
 	var next *model.SearchOptions
@@ -95,8 +95,11 @@ func UpdateSearchOptions(showSearchComponent, disabledSearchAutoFocus bool, upda
 	options.ShowSearchComponent = showSearchComponent
 	options.DisabledSearchAutoFocus = disabledSearchAutoFocus
 	options.Search = next
-	if !saveAppConfigToYamlFile("config", options) {
-		return fmt.Errorf("could not save search settings")
+	if len(revision) > 0 && revision[0] != "" {
+		options.ConfigRevision = revision[0]
+	}
+	if err := saveSearchConfigPreservingData(options); err != nil {
+		return fmt.Errorf("could not save search settings: %w", err)
 	}
 	return nil
 }
@@ -106,6 +109,7 @@ func GetAllSettingsOptions() (model.Application, error) {
 	if err != nil {
 		return options, err
 	}
+	options.ConfigVersionState = ConfigurationVersionState(options.AppVersion)
 	if options.Locale == "" {
 		options.Locale = "zh"
 	}

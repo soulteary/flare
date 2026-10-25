@@ -50,7 +50,7 @@ func Presets() []model.SearchEngine {
 
 func Validate(options model.SearchOptions) error {
 	options = Normalize(&options)
-	if options.Mode != "select" && options.Mode != "hybrid" {
+	if options.Mode != "select" && options.Mode != "hybrid" && options.Mode != "local-first" {
 		return fmt.Errorf("unsupported search mode")
 	}
 	if len(options.Engines) > 32 {
@@ -187,6 +187,9 @@ func Resolve(options model.SearchOptions, query, target string) (Result, error) 
 	}
 	if target == "" {
 		target = options.DefaultTarget
+		if options.Mode == "local-first" {
+			target = "local"
+		}
 	}
 	if options.EnableKeywords && strings.HasPrefix(query, "!") {
 		boundary := strings.IndexFunc(query, unicode.IsSpace)

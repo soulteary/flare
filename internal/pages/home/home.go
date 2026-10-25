@@ -166,7 +166,7 @@ func pageSearch(c fiber.Ctx) error {
 	if target == "" {
 		target = "local"
 	}
-	opts := searchcore.Normalize(options.Search)
+	opts, _ := searchcore.Upgrade(options.Search)
 	configMessage := ""
 	if validationErr := searchcore.Validate(opts); validationErr != nil {
 		opts = searchcore.Normalize(nil)

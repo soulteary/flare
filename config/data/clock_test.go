@@ -55,7 +55,7 @@ func TestClockSettingsPersistenceAndValidation(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, f := range files {
-		if f.Name() != "config.yml" && f.Name() != "blocked" {
+		if f.Name() != "config.yml" && f.Name() != "blocked" && f.Name() != searchBackupDir {
 			t.Fatalf("temporary file leaked: %s", f.Name())
 		}
 	}

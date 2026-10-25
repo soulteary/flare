@@ -11,6 +11,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/pool"
 	searchcore "github.com/soulteary/flare/internal/search"
 )
@@ -24,10 +25,22 @@ func RegisterRouting(e *fiber.App) {
 func updateSearchOptions(c fiber.Ctx) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).SendString("config error")
+		// Retain the submitted form for recovery, but never use fallback data to write.
+		options = model.Application{Locale: "zh", ShowSearchComponent: c.FormValue("show-search-component") == "1", DisabledSearchAutoFocus: c.FormValue("disabled-search-auto-focus") == "1"}
+		if c.FormValue("auto-focus-setting") == "1" {
+			options.DisabledSearchAutoFocus = c.FormValue("search-auto-focus") != "1"
+		}
+		if c.FormValue("engine-count") != "" {
+			pending, _ := parseSearchForm(c)
+			options.Search = &pending
+		}
+		return renderSettings(c, options, "Unable to save search settings: "+err.Error(), false)
 	}
 	options.ShowSearchComponent = c.FormValue("show-search-component") == "1"
 	options.DisabledSearchAutoFocus = c.FormValue("disabled-search-auto-focus") == "1"
+	if c.FormValue("auto-focus-setting") == "1" {
+		options.DisabledSearchAutoFocus = c.FormValue("search-auto-focus") != "1"
+	}
 	if c.FormValue("engine-count") == "" {
 		if !data.UpdateSearch(options.ShowSearchComponent, options.DisabledSearchAutoFocus) {
 			return renderSettings(c, options, "Unable to save search settings", false)
@@ -97,10 +110,24 @@ func updateSearchOptions(c fiber.Ctx) error {
 		c.Set("Location", target)
 		return c.SendStatus(http.StatusSeeOther)
 	case action == "save":
+		// Choosing web-submit explicitly authorizes an external default, but never
+		// adds or enables an engine on the user's behalf.
+		if opts.Mode == "hybrid" && opts.DefaultTarget == "local" {
+			for _, engine := range opts.Engines {
+				if engine.Enabled {
+					opts.DefaultTarget = engine.ID
+					break
+				}
+			}
+			if opts.DefaultTarget == "local" {
+				return renderSettings(c, options, i18n.T(options.Locale, "search_engine_required"), false)
+			}
+		}
+		options.Search = &opts
 		if err := searchcore.Validate(opts); err != nil {
 			return renderSettings(c, options, err.Error(), false)
 		}
-		if err := data.UpdateSearchOptions(options.ShowSearchComponent, options.DisabledSearchAutoFocus, &opts); err != nil {
+		if err := data.UpdateSearchOptions(options.ShowSearchComponent, options.DisabledSearchAutoFocus, &opts, c.FormValue("config-revision")); err != nil {
 			return renderSettings(c, options, "Unable to save search settings: "+err.Error(), false)
 		}
 		options.Search = &opts
@@ -143,6 +170,15 @@ func renderSettings(c fiber.Ctx, options model.Application, message string, save
 	if guard, ok := c.Locals(searchSecurityKey{}).(*searchSecurity); ok {
 		m["SearchCSRFToken"] = guard.formToken(c)
 	}
+	m["SearchConfigRevision"] = options.ConfigRevision
+	if pending := c.FormValue("config-revision"); pending != "" && !saved {
+		m["SearchConfigRevision"] = pending
+	}
+	if saved {
+		if current, err := data.GetAllSettingsOptions(); err == nil {
+			m["SearchConfigRevision"] = current.ConfigRevision
+		}
+	}
 	m["Locale"] = locale
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
@@ -153,8 +189,19 @@ func renderSettings(c fiber.Ctx, options model.Application, message string, save
 	m["ShowSearchComponent"] = options.ShowSearchComponent
 	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus
 	m["OptionTitle"] = options.Title
-	opts := searchcore.Normalize(options.Search)
+	opts, upgraded := searchcore.Upgrade(options.Search)
+	if message != "" {
+		opts = searchcore.Normalize(options.Search)
+	}
+	m["SearchCompatibility"] = (upgraded || options.Search == nil) && !saved
+	m["SearchVersionDowngrade"] = options.ConfigVersionState == "downgrade"
+	m["SearchConfigVersion"] = options.AppVersion
 	m["SearchOptions"] = opts
+	m["SearchModes"] = []struct{ ID, Title, Help string }{
+		{"hybrid", "search_mode_hybrid", "search_mode_hybrid_help"},
+		{"local-first", "search_mode_local_first", "search_mode_local_first_help"},
+		{"select", "search_mode_select", "search_mode_select_help"},
+	}
 	defaultPresent := opts.DefaultTarget == "local"
 	for _, engine := range opts.Engines {
 		if engine.ID == opts.DefaultTarget {

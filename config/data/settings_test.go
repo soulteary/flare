@@ -8,6 +8,7 @@ import (
 )
 
 func TestGetAndSetThemeName(t *testing.T) {
+	t.Chdir(t.TempDir())
 	const target = "test"
 	UpdateThemeName(target)
 	theme := GetThemeName()
@@ -20,6 +21,7 @@ func TestGetAndSetThemeName(t *testing.T) {
 }
 
 func TestGetAndSetWeatherAndLocation(t *testing.T) {
+	t.Chdir(t.TempDir())
 	targetEnable := false
 	targetLocation := "地球"
 
@@ -51,6 +53,9 @@ func TestGetAndSetWeatherAndLocation(t *testing.T) {
 }
 
 func TestUpdateSearchAndGetAllSettingsOptions(t *testing.T) {
+	t.Chdir(t.TempDir())
+	invalidateFileCache("config")
+	defer invalidateFileCache("config")
 	showSearchComponent := true
 	disabledSearchAutoFocus := false
 
@@ -72,6 +77,7 @@ func TestUpdateSearchAndGetAllSettingsOptions(t *testing.T) {
 }
 
 func TestUpdateAppearance(t *testing.T) {
+	t.Chdir(t.TempDir())
 	const Title = "Test"
 	var update model.Application
 	update.Title = Title

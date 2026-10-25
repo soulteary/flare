@@ -96,7 +96,9 @@
   });
   form.addEventListener('submit', function (event) {
     if (composing) { event.preventDefault(); return; }
-    var selectedTarget = target ? target.value : 'local';
+    var checkedTarget = target && target.querySelector('input[name="target"]:checked');
+    var selectedTarget = checkedTarget ? checkedTarget.value : 'local';
+    if (event.submitter && event.submitter.name === 'target') selectedTarget = event.submitter.value;
     var command = /^!([^\s]+)/.exec(input.value.trim());
     if (command && Object.prototype.hasOwnProperty.call(keywords, command[1].toLowerCase())) selectedTarget = keywords[command[1].toLowerCase()];
     var explicitTarget = event.submitter && event.submitter.getAttribute('formtarget');

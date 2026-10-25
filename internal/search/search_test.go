@@ -117,3 +117,15 @@ func TestQueryBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestLocalFirstDoesNotUseExternalDefaultImplicitly(t *testing.T) {
+	options := model.SearchOptions{Mode: "local-first", DefaultTarget: "bing", Engines: Presets()}
+	result, err := Resolve(options, "hello", "")
+	if err != nil || result.Target != "local" || result.URL != "" {
+		t.Fatalf("implicit search: %+v, %v", result, err)
+	}
+	result, err = Resolve(options, "hello", "bing")
+	if err != nil || result.Target != "bing" || result.URL == "" {
+		t.Fatalf("explicit web search: %+v, %v", result, err)
+	}
+}

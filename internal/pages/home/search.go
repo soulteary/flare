@@ -7,7 +7,7 @@ import (
 
 // PopulateSearch exposes only configured search targets and escaped text to templates.
 func PopulateSearch(m map[string]any, options model.Application, query, target, message string) {
-	opts := searchcore.Normalize(options.Search)
+	opts, _ := searchcore.Upgrade(options.Search)
 	if err := searchcore.Validate(opts); err != nil {
 		opts = searchcore.Normalize(nil)
 		if message == "" {
@@ -15,6 +15,12 @@ func PopulateSearch(m map[string]any, options model.Application, query, target, 
 		}
 	}
 	if target == "" {
+		target = opts.DefaultTarget
+	}
+	if opts.Mode == "local-first" {
+		target = "local"
+	}
+	if opts.Mode == "hybrid" && target == "local" {
 		target = opts.DefaultTarget
 	}
 	engines := make([]model.SearchEngine, 0, len(opts.Engines))
@@ -30,6 +36,9 @@ func PopulateSearch(m map[string]any, options model.Application, query, target, 
 	if !valid {
 		target = "local"
 	}
+	m["SearchLocalFirst"] = opts.Mode == "local-first"
+	m["SearchExternalFirst"] = opts.Mode == "hybrid"
+	m["SearchHasEngines"] = len(engines) > 0
 	m["SearchOptions"] = opts
 	m["SearchEngines"] = engines
 	m["SearchTarget"] = target

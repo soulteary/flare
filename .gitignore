@@ -42,3 +42,7 @@ RELEASE_*
 tests/clock/node_modules/
 
 .flare-editor-recovery/
+
+# Private configuration backups
+.flare-search-backups/
+config.yml.pre-search-*.bak

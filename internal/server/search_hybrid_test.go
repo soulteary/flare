@@ -149,3 +149,49 @@ func TestHybridHiddenMalformedModuleDoesNotBlockVisibleSuggestions(t *testing.T)
 		})
 	}
 }
+
+func TestThreeSearchModes(t *testing.T) {
+	original := define.AppFlags
+	defer func() { define.AppFlags = original }()
+	t.Chdir(t.TempDir())
+	t.Setenv("FLARE_BASELINE", "1")
+	handler, err := NewRouter(&model.Flags{Port: 5005, DisableLoginMode: true, EnableOfflineMode: true})
+	require.NoError(t, err)
+	for _, mode := range []string{"hybrid", "local-first", "select"} {
+		t.Run(mode, func(t *testing.T) {
+			opts := &model.SearchOptions{Mode: mode, DefaultTarget: "example", Engines: []model.SearchEngine{{ID: "example", Name: "Example", URLTemplate: "https://search.example/?q={query}", Enabled: true}}}
+			require.NoError(t, data.UpdateSearchOptions(true, true, opts))
+			get := httptest.NewRecorder()
+			handler.ServeHTTP(get, httptest.NewRequest(http.MethodGet, "/", nil))
+			require.Equal(t, 200, get.Code)
+			if mode == "local-first" {
+				require.NotContains(t, get.Body.String(), `id=search-target`)
+			} else {
+				require.Contains(t, get.Body.String(), `id=search-target`)
+			}
+			for _, target := range []string{"local", "example"} {
+				post := httptest.NewRecorder()
+				req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(url.Values{"search": {"missing-result"}, "target": {target}}.Encode()))
+				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+				handler.ServeHTTP(post, req)
+				if target == "example" {
+					require.Equal(t, http.StatusSeeOther, post.Code)
+					require.Equal(t, "https://search.example/?q=missing-result", post.Header().Get("Location"))
+				} else {
+					require.Equal(t, http.StatusOK, post.Code)
+					if mode == "local-first" {
+						require.Contains(t, post.Body.String(), "search-external-actions")
+					}
+				}
+			}
+		})
+	}
+	require.NoError(t, data.UpdateSearchOptions(true, true, &model.SearchOptions{Mode: "local-first", DefaultTarget: "local"}))
+	post := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("search=missing-result&target=local"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	handler.ServeHTTP(post, req)
+	require.Equal(t, 200, post.Code)
+	require.NotContains(t, post.Body.String(), `class="search-external-actions"`)
+	require.Contains(t, post.Body.String(), "没有找到匹配的书签或应用。")
+}
