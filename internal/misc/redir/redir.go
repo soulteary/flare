@@ -1,12 +1,15 @@
 package redir
 
 import (
+	"crypto/tls"
 	"net/http"
+	"net/url"
 
 	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/fn"
 )
 
 func RegisterRouting(e *fiber.App) {
@@ -26,10 +29,18 @@ func RegisterRouting(e *fiber.App) {
 			return c.Status(http.StatusBadRequest).Type("html", "utf-8").Send(internalError)
 		}
 		decodeURL := string(decoded)
+		request := http.Request{Host: string(c.Request().Host()), URL: &url.URL{Path: c.Path()}, RequestURI: c.OriginalURL()}
+		if c.RequestCtx().IsTLS() {
+			request.TLS = &tls.ConnectionState{}
+		}
+		info, valid := fn.ParseNavigationSource(&request, c.Query("from"))
+		if !valid || !fn.IsSafeNavigationURL(decodeURL) {
+			return c.Status(http.StatusBadRequest).Type("html", "utf-8").Send(internalError)
+		}
 		appsData, errApps := data.LoadFavoriteBookmarks()
 		if errApps == nil {
 			for _, bookmark := range appsData.Items {
-				if bookmark.URL == decodeURL {
+				if fn.ParseDynamicUrlWith(bookmark.URL, &info) == decodeURL {
 					return c.Redirect().Status(http.StatusFound).To(string(decoded))
 				}
 			}
@@ -37,7 +48,7 @@ func RegisterRouting(e *fiber.App) {
 		bookmarksData, errBookmarks := data.LoadNormalBookmarks()
 		if errBookmarks == nil {
 			for _, bookmark := range bookmarksData.Items {
-				if bookmark.URL == decodeURL {
+				if fn.ParseDynamicUrlWith(bookmark.URL, &info) == decodeURL {
 					return c.Redirect().Status(http.StatusFound).To(string(decoded))
 				}
 			}
