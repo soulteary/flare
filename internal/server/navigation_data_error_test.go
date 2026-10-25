@@ -45,7 +45,7 @@ func TestMalformedNavigationDataIsVisibleWithoutInternalDetails(t *testing.T) {
 	oldLogger := logger.GetLogger()
 	defer logger.SetLogger(oldLogger)
 	var logs bytes.Buffer
-	logger.SetLogger(slog.New(slog.NewTextHandler(&logs, nil)))
+	logger.SetLogger(slog.New(logger.NewPrettyHandler(&logs, logger.PrettyHandlerOptions{})))
 	dir := t.TempDir()
 	t.Chdir(dir)
 	t.Cleanup(func() { data.SaveFavoriteBookmarks(model.Bookmarks{}); data.SaveNormalBookmarks(model.Bookmarks{}) })
@@ -72,7 +72,10 @@ func TestMalformedNavigationDataIsVisibleWithoutInternalDetails(t *testing.T) {
 		require.NotContains(t, recorder.Body.String(), "No matching bookmarks or applications.")
 	}
 	require.Contains(t, logs.String(), "Cannot render navigation module")
-	require.Contains(t, logs.String(), "module=applications")
-	require.Contains(t, logs.String(), "module=bookmarks")
+	require.Contains(t, logs.String(), `"module":"applications"`)
+	require.Contains(t, logs.String(), `"module":"bookmarks"`)
 	require.Contains(t, logs.String(), "解析配置文件")
+	require.Contains(t, logs.String(), `"error":"`)
+	require.Contains(t, logs.String(), "yaml:")
+	require.NotContains(t, logs.String(), `"error":{}`)
 }

@@ -10,7 +10,7 @@ import (
 // navigationDataError keeps saved-data failures visible without exposing local
 // filenames or parser details to page visitors. Operators get the original error.
 func navigationDataError(module, locale string, err error) template.HTML {
-	logger.GetLogger().Error("Cannot render navigation module", "module", module, "error", err)
+	logger.GetLogger().Error("Cannot render navigation module", "module", module, "error", err.Error())
 	message := "Unable to load saved bookmarks. Check the configuration and server logs."
 	if module == "applications" {
 		message = "Unable to load saved applications. Check the configuration and server logs."
