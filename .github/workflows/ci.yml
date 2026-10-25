@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, feat/editor-state, feat/editor-list]
 
 env:
   GO_VERSION: "1.27.3"
