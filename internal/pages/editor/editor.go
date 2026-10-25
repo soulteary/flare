@@ -2,7 +2,9 @@ package editor
 
 import (
 	"embed"
+	"github.com/soulteary/flare/config/data"
 	"io/fs"
+	"log/slog"
 	"net/http"
 
 	"github.com/gofiber/fiber/v3"
@@ -22,8 +24,15 @@ const _ASSETS_WEB_URI = "/" + _ASSETS_BASE_DIR
 var editorAssets embed.FS
 
 func Init() error {
+	recoveries, err := data.EditorRecoveryDirectories()
+	if err != nil {
+		return err
+	}
+	for _, path := range recoveries {
+		slog.Warn("Editor recovery copies detected; stop writers, preserve current files, and inspect both YAML files before saving", "recovery_path", path)
+	}
 	MemFs = memfs.New()
-	err := MemFs.MkdirAll(_ASSETS_BASE_DIR, 0777)
+	err = MemFs.MkdirAll(_ASSETS_BASE_DIR, 0777)
 	if err != nil {
 		return err
 	}
@@ -45,9 +54,9 @@ func RegisterRouting(e *fiber.App) {
 
 // Old CSV pages have no revision token and cannot safely overwrite a document.
 func updateData(c fiber.Ctx) error {
-	return c.Status(http.StatusConflict).JSON(map[string]any{"saved": false, "error": "编辑器已升级，请先保留当前内容，再刷新页面后重新编辑。"})
+	return c.Status(http.StatusConflict).JSON(map[string]any{"saved": false, "error": editorText(editorLocale(), "编辑器已升级，请先保留当前内容，再刷新页面后重新编辑。")})
 }
 
 func render(c fiber.Ctx) error {
-	return c.Status(http.StatusOK).Render("editor.html", nil)
+	return c.Status(http.StatusOK).Render("editor.html", map[string]any{"Locale": editorLocale(), "EditorMessages": editorMessageJSON(editorLocale())})
 }

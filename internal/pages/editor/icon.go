@@ -35,13 +35,13 @@ func searchEditorIcons(c fiber.Ctx) error {
 	c.Set("Cache-Control", "no-store")
 	query := strings.TrimSpace(c.Query("q"))
 	if len(query) > 100 {
-		return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "搜索文字过长"})
+		return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": editorText(editorLocale(), "搜索文字过长")})
 	}
 	offset := 0
 	if raw := c.Query("offset"); raw != "" {
 		parsed, err := strconv.Atoi(raw)
 		if err != nil || parsed < 0 {
-			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "无效分页位置"})
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": editorText(editorLocale(), "无效分页位置")})
 		}
 		offset = parsed
 	}
