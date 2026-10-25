@@ -13,9 +13,15 @@ FLARE_BINARY=/tmp/flare-mobile node tests/editor/browser.cjs
 ```
 
 `CHROMIUM_EXECUTABLE` may point to an existing Chromium binary. The mobile suite
-covers home/settings/default-editor widths at 320/360/375/390/430/768 CSS pixels,
+covers home/settings/default-editor widths at
+320/360/375/390/430/767/768/769/820/1024 CSS pixels,
 long titles, unequal groups, enlarged home body text (110/125/200%), weather/date
-reflow and search autofocus. Desktop checks cover 1024/1440/1920 widths.
+reflow through 768px and search autofocus. The 767/768/769 boundary is checked
+explicitly; tablet checks exercise overflow and the settings navigation transition.
+Forms are opened at every width and must fit horizontally with reachable actions.
+A dropped save connection must retain the complete pending document, leave disk
+data unchanged, and allow a successful retry. Desktop checks cover
+1024/1440/1920 widths.
 `MOBILE_SCREENSHOT_DIR` optionally captures screenshots.
 
 Editor CRUD moved into `tests/editor/browser.cjs`, which covers the default
@@ -35,3 +41,7 @@ These suites use Chromium touch emulation. Physical iOS Safari, Android Via at
 110% native font size, keyboards and safe-area behavior still need device checks.
 Search autofocus is suppressed for mobile user agents without adding homepage
 scripts; desktop-agent tablets can use the existing autofocus setting.
+
+Follow [the physical device checklist](../../docs/mobile-device-acceptance.md)
+before declaring Safari/Via, keyboard and safe-area issues resolved. The checklist
+starts as Not verified and requires device/version evidence for each real run.
