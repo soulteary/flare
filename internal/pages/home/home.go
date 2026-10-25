@@ -239,7 +239,9 @@ func pageBookmark(c fiber.Ctx) error {
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
-	m["Bookmarks"] = GenerateBookmarkNavigationTemplate(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options, &requestURL)
+	if options.ShowBookmarks {
+		m["Bookmarks"] = GenerateBookmarkNavigationTemplate(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options, &requestURL)
+	}
 	m["OptionTitle"] = options.Title
 	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
 	m["OptionShowBookmarks"] = options.ShowBookmarks
@@ -266,7 +268,9 @@ func pageApplication(c fiber.Ctx) error {
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
-	m["Applications"] = GenerateApplicationsTemplate("", &options, &requestURL)
+	if options.ShowApps {
+		m["Applications"] = GenerateApplicationsTemplate("", &options, &requestURL)
+	}
 	m["PageName"] = i18n.T(locale, "page_apps")
 	m["SubPage"] = true
 	m["PageAppearance"] = define.GetAppBodyStyle()
@@ -325,13 +329,19 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
-	apps := GenerateApplicationsTemplate(filter, &options, &requestURL)
+	var apps template.HTML
+	if options.ShowApps {
+		apps = GenerateApplicationsTemplate(filter, &options, &requestURL)
+	}
 	selected := c.Query("category")
 	if c.Method() == http.MethodPost {
 		selected = c.FormValue("category")
 	}
 	m["BookmarkCategory"] = selected
-	bookmarks := GenerateBookmarkNavigationTemplate(filter, selected, c.Path(), &options, &requestURL)
+	var bookmarks template.HTML
+	if options.ShowBookmarks {
+		bookmarks = GenerateBookmarkNavigationTemplate(filter, selected, c.Path(), &options, &requestURL)
+	}
 	m["Applications"] = apps
 	m["Bookmarks"] = bookmarks
 	if filter != "" {

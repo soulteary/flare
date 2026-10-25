@@ -19,13 +19,13 @@ func GenerateApplicationsTemplate(filter string, options *model.Application, req
 	if options == nil {
 		op, err := data.GetAllSettingsOptions()
 		if err != nil {
-			op = model.Application{}
+			return navigationDataError("applications", "", err)
 		}
 		options = &op
 	}
 	appsData, err := data.LoadFavoriteBookmarks()
 	if err != nil {
-		return template.HTML("")
+		return navigationDataError("applications", options.Locale, err)
 	}
 	b, ok := builderPool.Get().(*strings.Builder)
 	if !ok {
@@ -34,27 +34,14 @@ func GenerateApplicationsTemplate(filter string, options *model.Application, req
 	b.Reset()
 	defer builderPool.Put(b)
 
-	n := len(appsData.Items)
-	parseApps := make([]model.Bookmark, 0, n)
+	apps := make([]model.Bookmark, 0, len(appsData.Items))
+	filterLower := strings.ToLower(filter)
 	for _, app := range appsData.Items {
 		app.URL = fn.ParseDynamicUrlWith(app.URL, firstRequestInfo(requestInfo))
-		parseApps = append(parseApps, app)
-	}
-
-	var apps []model.Bookmark
-	if filter != "" {
-		apps = make([]model.Bookmark, 0, n)
-	}
-
-	if filter != "" {
-		filterLower := strings.ToLower(filter)
-		for _, bookmark := range parseApps {
-			if strings.Contains(strings.ToLower(bookmark.Name), filterLower) || strings.Contains(strings.ToLower(bookmark.URL), filterLower) || strings.Contains(strings.ToLower(bookmark.Desc), filterLower) {
-				apps = append(apps, bookmark)
-			}
+		if filter != "" && !strings.Contains(strings.ToLower(app.Name), filterLower) && !strings.Contains(strings.ToLower(app.URL), filterLower) && !strings.Contains(strings.ToLower(app.Desc), filterLower) {
+			continue
 		}
-	} else {
-		apps = parseApps
+		apps = append(apps, app)
 	}
 
 	for _, app := range apps {
