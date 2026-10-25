@@ -24,23 +24,33 @@ var ErrBookmarkConflict = errors.New("书签已发生变化，请重新预览")
 
 const bookmarkBackupDir = ".flare-bookmark-backups"
 
-func validBookmarkCollection(name string) bool { return name == "bookmarks" || name == "apps" }
-func bookmarkVersion(raw []byte) string        { sum := sha256.Sum256(raw); return hex.EncodeToString(sum[:]) }
+// bookmarkCollectionPaths maps input to literal filenames before any filesystem access.
+func bookmarkCollectionPaths(name string) (path, prefix string, err error) {
+	switch name {
+	case "bookmarks":
+		return getConfigPath("bookmarks"), "bookmarks-", nil
+	case "apps":
+		return getConfigPath("apps"), "apps-", nil
+	default:
+		return "", "", fmt.Errorf("无效的数据类型")
+	}
+}
+func bookmarkVersion(raw []byte) string { sum := sha256.Sum256(raw); return hex.EncodeToString(sum[:]) }
 
 // BookmarkSnapshot reads disk rather than the display cache to detect external edits.
 func BookmarkSnapshot(name string) (model.Bookmarks, string, error) {
 	bookmarkMu.Lock()
 	defer bookmarkMu.Unlock()
-	if !validBookmarkCollection(name) {
-		return model.Bookmarks{}, "", fmt.Errorf("无效的数据类型")
+	path, _, err := bookmarkCollectionPaths(name)
+	if err != nil {
+		return model.Bookmarks{}, "", err
 	}
-	path := getConfigPath(name)
 	if !checkExists(path) {
 		if _, err := initBookmarks(path, name == "apps"); err != nil {
 			return model.Bookmarks{}, "", err
 		}
 	}
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return model.Bookmarks{}, "", err
 	}
@@ -79,11 +89,11 @@ func atomicBookmarkWrite(path string, raw []byte, mode os.FileMode) error {
 func CommitBookmarkImport(name, version string, next model.Bookmarks) error {
 	bookmarkMu.Lock()
 	defer bookmarkMu.Unlock()
-	if !validBookmarkCollection(name) {
-		return fmt.Errorf("无效的数据类型")
+	path, prefix, err := bookmarkCollectionPaths(name)
+	if err != nil {
+		return err
 	}
-	path := getConfigPath(name)
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return err
 	}
@@ -105,7 +115,7 @@ func CommitBookmarkImport(name, version string, next model.Bookmarks) error {
 	if !info.IsDir() {
 		return fmt.Errorf("备份目录无效")
 	}
-	backup := filepath.Join(bookmarkBackupDir, name+"-"+time.Now().UTC().Format("20060102T150405.000000000")+"-"+GenerateRandomString(12)+".yml")
+	backup := filepath.Join(bookmarkBackupDir, prefix+time.Now().UTC().Format("20060102T150405.000000000")+"-"+GenerateRandomString(12)+".yml")
 	if err = atomicBookmarkWrite(backup, raw, 0600); err != nil {
 		return fmt.Errorf("保存导入前备份: %w", err)
 	}
@@ -124,8 +134,9 @@ func CommitBookmarkImport(name, version string, next model.Bookmarks) error {
 func LatestBookmarkBackup(name string) ([]byte, time.Time, error) {
 	bookmarkMu.RLock()
 	defer bookmarkMu.RUnlock()
-	if !validBookmarkCollection(name) {
-		return nil, time.Time{}, fmt.Errorf("无效的数据类型")
+	_, prefix, err := bookmarkCollectionPaths(name)
+	if err != nil {
+		return nil, time.Time{}, err
 	}
 	entries, err := os.ReadDir(bookmarkBackupDir)
 	if err != nil {
@@ -133,7 +144,7 @@ func LatestBookmarkBackup(name string) ([]byte, time.Time, error) {
 	}
 	var names []string
 	for _, entry := range entries {
-		if entry.Type().IsRegular() && strings.HasPrefix(entry.Name(), name+"-") && strings.HasSuffix(entry.Name(), ".yml") {
+		if entry.Type().IsRegular() && strings.HasPrefix(entry.Name(), prefix) && strings.HasSuffix(entry.Name(), ".yml") {
 			names = append(names, entry.Name())
 		}
 	}
@@ -146,6 +157,6 @@ func LatestBookmarkBackup(name string) ([]byte, time.Time, error) {
 	if err != nil {
 		return nil, time.Time{}, err
 	}
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(filepath.Clean(path))
 	return raw, info.ModTime(), err
 }
