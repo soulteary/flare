@@ -33,6 +33,14 @@ jobs:
         run: |
           npm ci --ignore-scripts
           npx playwright install --with-deps chromium
+      - name: Compact mobile layout acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/mobile/layout.browser.cjs
+      - name: Homepage readability acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/mobile/readability.browser.cjs
       - name: Clock logic and lifecycle regressions
         run: node --test tests/clock/clock.test.cjs
       - name: Editor state regressions
@@ -61,14 +69,6 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/editor/legacy.browser.cjs
-      - name: Compact mobile layout acceptance
-        env:
-          FLARE_BINARY: ${{ runner.temp }}/flare-clock
-        run: node tests/mobile/layout.browser.cjs
-      - name: Homepage readability acceptance
-        env:
-          FLARE_BINARY: ${{ runner.temp }}/flare-clock
-        run: node tests/mobile/readability.browser.cjs
       - name: Minimal scratch-container timezone acceptance
         shell: bash
         run: |
