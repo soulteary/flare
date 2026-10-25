@@ -50,6 +50,7 @@
   function open(dialog) {focusBeforeDialog=document.activeElement;dialog.showModal();}
   function close(dialog) {dialog.close();if(focusBeforeDialog?.isConnected)focusBeforeDialog.focus();}
   function formValue() {return JSON.stringify(Object.fromEntries(new FormData($('entry-form'))));}
+  function hasUnsavedChanges() {return store?.dirty || batch?.dirty || (entryDialog.open && formValue()!==formStart);}
   function clearErrors() {for(const name of ['name','url','location']){$('error-'+name).textContent='';$(fields[name==='name'?'Name':name==='url'?'URL':'Category']).removeAttribute('aria-invalid');}}
   function fieldError(name,message) {const id=name==='Name'?'name':name==='URL'?'url':'location';$('error-'+id).textContent=message;$(fields[name]).setAttribute('aria-invalid','true');$(fields[name]).focus();}
   function openEntry(key=null) {
@@ -165,8 +166,8 @@
       store.working=FlareEditorState.normalize(next);batch?.refresh();undo=null;$('location-filter').value='all';render();setStatus('草稿已恢复到待保存内容，请检查后保存。');
     }catch(error){setStatus('无法恢复草稿：'+error.message,true);}finally{event.target.value='';}
   };
-  document.querySelectorAll('[data-leave]').forEach(link=>link.onclick=event=>{if(saving||((store?.dirty || batch?.dirty)&&!confirm('更改尚未保存，确定离开？')))event.preventDefault();});
-  window.addEventListener('beforeunload',event=>{if(saving||store?.dirty||batch?.dirty){event.preventDefault();event.returnValue='';}});
+  document.querySelectorAll('[data-leave]').forEach(link=>link.onclick=event=>{if(saving||(hasUnsavedChanges()&&!confirm('更改尚未保存，确定离开？')))event.preventDefault();});
+  window.addEventListener('beforeunload',event=>{if(saving||hasUnsavedChanges()){event.preventDefault();event.returnValue='';}});
   // The lazy batch adapter attaches to this single working store.
   window.FlareEditorUI={get store(){return store;},get saving(){return saving;},render,setStatus,syncStatus,validateDocument,locateError,registerBatch(adapter){batch=adapter;},get hasOpenDialog(){return entryDialog.open||categoryDialog.open;}};
   try {const response=await fetch('/editor/document',{cache:'no-store'});if(!response.ok||response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error('无法读取导航数据，请重新登录或检查配置。');store=new FlareEditorState.Store(await response.json());$('workspace').setAttribute('aria-busy','false');render();document.dispatchEvent(new Event('flare-editor-ready'));}

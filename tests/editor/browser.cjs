@@ -14,6 +14,22 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   async function edit(name,newName,p=page){await p.getByRole('button',{name,exact:true}).click();assert.equal(await p.locator('#entry-name').inputValue(),name);await p.locator('#entry-name').fill(newName);await p.locator('#entry-form').getByRole('button',{name:'完成',exact:true}).click();}
   for(const width of [320,360,390,430,768,1440]){await page.setViewportSize({width,height:844});await loaded();const size=await page.locator('html').evaluate(e=>({s:e.scrollWidth,w:e.clientWidth}));assert.ok(size.s<=size.w+1,JSON.stringify(size));assert.ok((await page.locator('.entry').first().boundingBox()).y<600);assert.equal(await page.locator('#save-changes').isDisabled(),true);}
   await page.setViewportSize({width:390,height:844});await loaded();
+  // Pending dialog values must be protected before they enter the working document.
+  async function unloadBlocked(){return page.evaluate(()=>{const event=new Event('beforeunload',{cancelable:true});window.dispatchEvent(event);return event.defaultPrevented;});}
+  assert.equal(await unloadBlocked(),false);
+  await page.locator('#new-entry').click();assert.equal(await unloadBlocked(),false);
+  for(const [selector,value] of [['#entry-name','Pending name'],['#entry-url','http://pending'],['#entry-description','Pending description']]){
+   await page.locator('#entry-options').evaluate(e=>e.open=true);await page.locator(selector).fill(value);assert.equal(await unloadBlocked(),true,selector);assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.dirty),false);
+   await page.locator(selector).fill('');assert.equal(await unloadBlocked(),false,selector+' reverted');
+  }
+  await page.locator('#entry-name').fill('Keep this form');
+  const beforeUnload=page.waitForEvent('dialog');const reloading=page.reload().catch(error=>error);
+  const leave=await beforeUnload;assert.equal(leave.type(),'beforeunload');await leave.dismiss();assert.ok((await reloading) instanceof Error);
+  assert.equal(await page.locator('#entry-name').inputValue(),'Keep this form');assert.equal(await page.locator('#entry-dialog').evaluate(e=>e.open),true);
+  page.once('dialog',d=>d.accept());await page.locator('#cancel-entry').click();assert.equal(await unloadBlocked(),false);
+  await page.getByRole('button',{name:'Application',exact:true}).click();assert.equal(await unloadBlocked(),false);
+  await page.locator('#entry-name').fill('Pending edit');assert.equal(await unloadBlocked(),true);await page.locator('#entry-name').fill('Application');assert.equal(await unloadBlocked(),false);
+  await page.locator('#cancel-entry').click();
   await page.locator('#entry-search').fill('First');assert.equal(await page.locator('.entry').count(),1);
   await edit('First bookmark','First edited');await save();
   let doc=await (await page.request.get(base+'/editor/document')).json();assert.equal(doc.bookmarks.length,2);assert.equal(doc.bookmarks[1].Name,'Hidden bookmark');assert.equal(doc.bookmarks[0].Desc,'Preserve me');assert.equal(doc.apps[0].Private,true);
@@ -71,6 +87,6 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   // Measure, rather than prematurely adding pagination or virtualization.
   const performanceResult=await page.evaluate(()=>{const ui=window.FlareEditorUI,original=ui.store.toJSON();const start=performance.now();ui.store.accept({...original,bookmarks:Array.from({length:1000},(_,i)=>({Name:'Load '+i,URL:'http://nas/'+i,Category:'beta'}))});ui.render();const result={rows:document.querySelectorAll('.entry').length,milliseconds:Math.round(performance.now()-start)};ui.store.accept(original);ui.render();return result;});assert.ok(performanceResult.rows>=1000);console.log('1000-entry render',performanceResult);
   if(process.env.EDITOR_SCREENSHOT_DIR){await fs.mkdir(process.env.EDITOR_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.EDITOR_SCREENSHOT_DIR,'mobile-list.png'),fullPage:true});await page.locator('#new-entry').click();await page.screenshot({path:path.join(process.env.EDITOR_SCREENSHOT_DIR,'mobile-form.png')});await page.locator('#cancel-entry').click();await page.setViewportSize({width:1440,height:960});await page.screenshot({path:path.join(process.env.EDITOR_SCREENSHOT_DIR,'desktop-list.png'),fullPage:true});await page.locator('.menu summary').click();await page.locator('#open-batch').click();await page.waitForFunction(()=>window.FlareEditorBatch?.active);await page.screenshot({path:path.join(process.env.EDITOR_SCREENSHOT_DIR,'desktop-batch.png'),fullPage:true});await page.locator('#leave-batch').click();}
-  assert.deepEqual(errors,[]);console.log('PASS: responsive list, real filtering, complete filtered saves, forms, stable IDs, category migration, undo, actual dirty state, stale-window conflict, draft export/restore, retry/reload, shared batch state, active-cell saves, incomplete rows and legacy category IDs');
+  assert.deepEqual(errors,[]);console.log('PASS: responsive list, real filtering, complete filtered saves, forms, pending form unload protection, stable IDs, category migration, undo, actual dirty state, stale-window conflict, draft export/restore, retry/reload, shared batch state, active-cell saves, incomplete rows and legacy category IDs');
  }finally{if(browser)await browser.close();child.kill();await fs.rm(dir,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exitCode=1;});
