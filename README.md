@@ -6,7 +6,8 @@
 
 Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.
 
-🚧 **Code is being prepared and refactored, commits are slow.**
+The latest stable release is **0.6.4**. The `main` branch also contains unreleased
+search, editor and layout work; see the [documentation index](docs/README.md).
 
 ## Feature
 
@@ -24,23 +25,26 @@ The editor includes browser HTML and native Flare YAML import/export, with
 preview, duplicate handling, conflict detection, and automatic pre-import backups.
 See [Bookmark transfer](docs/bookmark-transfer.md) for usage and limits.
 
-## ScreenShot
+## Screenshots
 
-TBD
+See the [deployment screenshots](https://github.com/soulteary/docker-flare#快速上手).
+The stable screenshots do not document unreleased development interfaces.
 
 ## Documentation
 
-TBD
-
-- Browse automatically generated program documentation:
-    - `godoc --http=localhost:8080`
+Start with the [documentation index](docs/README.md), including configuration,
+backup/restore, reverse proxies, development builds and release availability.
 
 ### Build and HTTP behavior
 
 ```sh
-go run .
-go build -o flare .
+go run build/build.go
+go build -o /tmp/flare .
+/tmp/flare
 ```
+
+Generate resources after a clean checkout or changes under `embed/`; see
+[build and test instructions](docs/development.md).
 
 All normal builds, container builds and tests use Fiber on its native fasthttp
 listener. The migration keeps Gorilla signed session cookies, direct TLS and
