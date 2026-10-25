@@ -33,3 +33,24 @@ table UI against the versioned document interface.
 
 This change is the persistence foundation; the list/form interface and integrated
 batch view follow as separate dependent pull requests.
+
+## List and form workflow
+
+The default editor is a searchable list. Search matches name, address and
+description; the location filter only affects display. A form edits one entry's
+name, exact address, destination and optional icon/description. Completing a form
+updates the working document; only the bottom Save changes button writes files.
+Cancel leaves the document unchanged. Category deletion requires an explicit
+migration destination for nonempty groups; entry deletion offers single-action
+undo. Category ordering has up/down controls and never changes category IDs.
+
+Actual data comparison clears dirty state when values are restored. Save errors
+preserve the working document; conflicts expose a JSON draft download and an
+explicit reload action. The JSON draft is an editor-state export, not a browser
+bookmark import file. The standalone batch route remains available during this
+intermediate PR and warns before leaving unsaved list edits; the next PR replaces
+that navigation with an integrated adapter.
+
+`node tests/editor/browser.cjs` runs the list/form acceptance suite with the same
+FLARE_BINARY and CHROMIUM_EXECUTABLE variables as the mobile tests. Optional
+EDITOR_SCREENSHOT_DIR captures mobile list/form and desktop list screenshots.

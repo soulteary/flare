@@ -41,6 +41,7 @@ func RegisterRouting(e *fiber.App) {
 		e.Use(_ASSETS_WEB_URI, static.New("", static.Config{FS: introAssets}))
 	}
 	e.Get(define.RegularPages.Editor.Path, auth.AuthRequired, render)
+	e.Get("/editor/batch", auth.AuthRequired, render)
 	e.Post(define.RegularPages.Editor.Path, auth.AuthRequired, updateData)
 }
 
@@ -72,5 +73,9 @@ func render(c fiber.Ctx) error {
 	m["OptionShowDateTime"] = options.ShowDateTime
 	m["OptionShowApps"] = options.ShowApps
 	m["OptionShowBookmarks"] = options.ShowBookmarks
-	return c.Status(http.StatusOK).Render("editor.html", m)
+	name := "editor.html"
+	if c.Path() == "/editor/batch" {
+		name = "editor-batch.html"
+	}
+	return c.Status(http.StatusOK).Render(name, m)
 }
