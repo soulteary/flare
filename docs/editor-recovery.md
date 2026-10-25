@@ -1,5 +1,7 @@
 # Editor save failures and recovery
 
+> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+
 The editor reads the exact bytes of `apps.yml` and `bookmarks.yml` into one
 revision. Saving a stale revision returns HTTP 409 before either file is
 replaced. Reload only after exporting any pending editor draft you need to keep.

@@ -1,5 +1,7 @@
 # Desktop columns and editor scale measurements
 
+> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+
 Homepage appearance settings retain the existing layout by default. The optional
 Automatic mode fits readable columns to the available width. Explicit 4/5/6/8
 choices are maximum counts, not a promise to squeeze that many columns into every

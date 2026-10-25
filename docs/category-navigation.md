@@ -1,5 +1,7 @@
 # Bookmark category navigation
 
+> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+
 Appearance settings offer three bookmark category modes. All groups remains the
 backward-compatible default. Category links filter the server-rendered response;
 All restores every group. Links preserve the current search query and category

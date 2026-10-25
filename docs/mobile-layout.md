@@ -1,5 +1,7 @@
 # Mobile bookmark layout
 
+> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+
 Appearance settings offer a sequential single-column layout (the default) and
 opt-in compact columns on 360–768 CSS-pixel viewports. Compact columns read down
 the first column and then down the second; a bookmark group is kept together.

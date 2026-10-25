@@ -1,5 +1,7 @@
 # Navigation editor
 
+> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+
 ## State and persistence
 
 The editor loads `/editor/document` with a revision covering the exact on-disk
@@ -31,8 +33,8 @@ second-file failure with recovery. `node --test tests/editor/state.test.cjs` tes
 the shared working state. The mobile browser acceptance test exercises the legacy
 table UI against the versioned document interface.
 
-The editor is delivered as three dependent pull requests: persistence/shared
-state, list/forms, then batch integration and acceptance.
+The integrated editor shares one working document across persistence, list/forms
+and the optional batch view.
 
 ## List and form workflow
 
@@ -109,3 +111,9 @@ shared 64 MiB export/restore limit; see [recovery behavior](editor-recovery.md).
 Run `FLARE_BINARY=/path/to/flare node tests/editor/reliability.browser.cjs` after
 building production resources to verify the English UI, startup recovery notice,
 and a draft larger than the historical 4 MiB restore limit.
+
+
+## Screenshots
+
+See the [English and Chinese development screenshots](screenshots/README.md) for
+the list, entry form and batch views. Stable 0.6.4 screenshots show the older UI.

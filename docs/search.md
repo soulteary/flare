@@ -1,5 +1,7 @@
 # Search targets
 
+> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+
 The home page retains one search field. Existing installations and legacy POST
 requests continue to search local bookmarks and applications. Add engines under
 Settings → Search to enable the target selector. The basic selector works without
