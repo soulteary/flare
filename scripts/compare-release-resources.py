@@ -28,7 +28,7 @@ def binary_metadata(path, revision, env):
 
 
 class PageSemantics(HTMLParser):
-    """Retain visible text, navigation order, controls and ordered image contents."""
+    """Retain document text, navigation order, controls and ordered image contents."""
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.stack = []
@@ -95,7 +95,7 @@ def semantic_preflight(info, body_path):
                 if response.status != 200:
                     raise RuntimeError(f'Baseline icon {path} returned {response.status}')
         assets.append({'kind': kind, **fetched[path]})
-    projection = {'visible_text': page.text, 'navigation': page.links, 'forms': page.forms,
+    projection = {'document_text': page.text, 'navigation': page.links, 'forms': page.forms,
                   'controls': page.controls, 'ordered_assets': [
                       {key: value for key, value in asset.items() if key not in ('path', 'cache_control')}
                       for asset in assets]}
@@ -127,7 +127,7 @@ def describe_semantics(rows):
         result[scenario] = {'equal': equal, 'literal_equal': literal_equal, 'content_equal': content_equal,
                             'link_rel_equal': security_equal, 'only_safe_rel_additions': safe_security_delta,
                             'responses': variants, 'link_rel_observations': securities,
-                            'interpretation': 'HTTP, visible text, navigation, forms and ordered asset bytes match' if equal else
+                            'interpretation': 'HTTP, document text, navigation, forms and ordered asset bytes match' if equal else
                             'Meaningful response differs: inspect recorded bodies/assets before interpreting a speedup'}
     return result
 
@@ -174,7 +174,8 @@ def render_report(data, destination):
               '- Live heap is exact runtime HeapAlloc recorded by Go’s debug=1 heap handler after forced GC and before profile encoding, collected after all load counters. It includes the control request’s small instrumentation overhead and is not RSS. Sampled inuse_space/profile-period estimates remain separately recorded; do not substitute them for exact HeapAlloc.',
               '- Both binaries use offline mode, disabled login/request logs, and default fixtures. This does not measure production authentication, weather, browser CPU, ARM hardware, or large bookmark datasets.',
               '- Raw response bodies, literal fingerprints, parsed semantic projections, icon response statuses/content hashes, binary hashes, build metadata, heap profiles and per-round observations/orders are retained. Only clock-time text is normalized.',
-              '- Semantic equivalence requires matching HTTP status/type/CSP/Location, visible text, navigation destinations/targets/order, form controls, and ordered icon/favicon content hashes. Icon URL/cache-key changes remain recorded. Rel-token changes permit only additions of noopener/noreferrer; removals or other changes fail validation.',
+              '- Semantic equivalence requires matching HTTP status/type/CSP/Location, document text (excluding script/style), navigation destinations/targets/order, form controls, and ordered icon/favicon content hashes. Icon URL/cache-key changes remain recorded. Rel-token changes permit only additions of noopener/noreferrer; removals or other changes fail validation.',
+              '- The parsed-DOM projection does not establish computed CSS visibility or layout equivalence; browser acceptance is separate.',
               '- A response mismatch remains a mismatch. Explain it before interpreting resource differences; do not claim a like-for-like improvement if functionality was removed.', '']
     destination.write_text('\n'.join(lines))
 
