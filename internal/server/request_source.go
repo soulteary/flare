@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// protectWriteSource rejects browser cross-origin writes, including same-site
+// protectWriteSource rejects browser cross-origin management writes, including same-site
 // sibling origins. Headerless API clients remain compatible; authentication and
 // route-specific signed tokens/custom headers are still required independently.
 // Host must be preserved by TLS-terminating proxies. Forwarding headers never

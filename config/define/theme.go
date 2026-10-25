@@ -91,6 +91,7 @@ func SetTheme(theme string) {
 	_CACHE_PAGE_BODY_THEME_NAME = emptyPageBodyStyle
 	for _, item := range ThemePalettes {
 		if item.Name == theme {
+			// #nosec G203 -- CSS values come exclusively from the bundled palette; the request only selects a known name.
 			_CACHE_PAGE_BODY_THEME_NAME = template.CSS(`--color-background:` + item.Colors.Background + `;--color-primary:` + item.Colors.Primary + `;--color-accent:` + item.Colors.Accent + `;`)
 			return
 		}

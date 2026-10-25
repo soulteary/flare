@@ -56,9 +56,9 @@ func TestWriteSourceProtection(t *testing.T) {
 func TestWriteSourceProtectionRejectsDuplicateMetadata(t *testing.T) {
 	app := fiber.New()
 	app.Use(protectWriteSource)
-	app.Post("/", func(c fiber.Ctx) error { return c.SendStatus(200) })
+	app.Post("/write", func(c fiber.Ctx) error { return c.SendStatus(200) })
 	for _, name := range []string{"Origin", "Referer", "Sec-Fetch-Site"} {
-		req := httptest.NewRequest(http.MethodPost, "http://flare.example/", nil)
+		req := httptest.NewRequest(http.MethodPost, "http://flare.example/write", nil)
 		value := "http://flare.example"
 		if name == "Sec-Fetch-Site" {
 			value = "same-origin"
@@ -73,5 +73,22 @@ func TestWriteSourceProtectionRejectsDuplicateMetadata(t *testing.T) {
 		if res.StatusCode != 403 {
 			t.Fatalf("duplicate %s status=%d", name, res.StatusCode)
 		}
+	}
+}
+
+func TestSearchPOSTRejectsOpaqueOrigin(t *testing.T) {
+	app := fiber.New()
+	app.Use(protectWriteSource)
+	app.Post("/", func(c fiber.Ctx) error { return c.SendStatus(200) })
+	req := httptest.NewRequest("POST", "http://flare.example/", strings.NewReader("search=hello"))
+	req.Header.Set("Origin", "null")
+	req.Header.Set("Sec-Fetch-Site", "same-origin")
+	res, err := app.Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 403 {
+		t.Fatalf("opaque search POST status=%d", res.StatusCode)
 	}
 }
