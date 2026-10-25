@@ -105,6 +105,13 @@ func loadBookmarksFromYamlFile(name string, isFavorite bool) (model.Bookmarks, e
 	// Cached reads still check for deletion, but need no absolute path lookup.
 	// Resolve the current directory only when initializing or reading from disk.
 	if !checkExists(name + ".yml") {
+		recoveries, recoveryErr := EditorRecoveryDirectories()
+		if recoveryErr != nil {
+			return result, recoveryErr
+		}
+		if len(recoveries) > 0 {
+			return result, fmt.Errorf("live bookmark file %s is missing while editor recovery copies exist; inspect %s before restoring files", name, recoveries[0])
+		}
 		fmt.Println("找不到配置文件" + name + "，创建默认配置。")
 		var createErr error
 		result, createErr = initBookmarks(getConfigPath(name), isFavorite)

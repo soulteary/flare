@@ -268,3 +268,17 @@ func TestRecoveryCopiesPreventInitializationOfMissingLiveFiles(t *testing.T) {
 	_, err = os.Stat("apps.yml")
 	require.True(t, os.IsNotExist(err), "must not silently initialize replacement data")
 }
+
+func TestOrdinaryBookmarkLoadsCannotInitializeOverRecoveryCopies(t *testing.T) {
+	for _, collection := range bookmarkHotPathCollections() {
+		t.Run(collection.name, func(t *testing.T) {
+			prepareBookmarkHotPath(t)
+			require.NoError(t, os.MkdirAll(filepath.Join(".flare-editor-recovery", "save-interrupted"), 0700))
+			_, err := collection.load()
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "recovery copies exist")
+			_, err = os.Stat(collection.name + ".yml")
+			require.True(t, os.IsNotExist(err), "navigation must not create example data over recovery state")
+		})
+	}
+}
