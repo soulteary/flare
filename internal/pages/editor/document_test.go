@@ -23,8 +23,8 @@ func TestEditorDocumentHTTP(t *testing.T) {
 	snapshot, err := data.EditorSnapshot()
 	require.NoError(t, err)
 	post := func(doc any, header bool) *httptest.ResponseRecorder {
-		b, err := json.Marshal(doc)
-		require.NoError(t, err)
+		b, marshalErr := json.Marshal(doc)
+		require.NoError(t, marshalErr)
 		req := httptest.NewRequest(http.MethodPost, "/editor/document", bytes.NewReader(b))
 		req.Header.Set("Content-Type", "application/json")
 		if header {

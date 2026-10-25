@@ -3,7 +3,6 @@ package data
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -31,7 +30,8 @@ type EditorValidationError struct {
 func (e *EditorValidationError) Error() string { return e.Message }
 
 func editorVersion(apps, bookmarks []byte) string {
-	raw, _ := json.Marshal([][]byte{apps, bookmarks})
+	raw := append([]byte(fmt.Sprintf("%d:", len(apps))), apps...)
+	raw = append(raw, bookmarks...)
 	sum := sha256.Sum256(raw)
 	return hex.EncodeToString(sum[:])
 }
