@@ -83,3 +83,16 @@ measured in the acceptance suite rather than adding pagination prematurely.
 Browser timings are environment-specific measurements, not performance promises.
 CI retains editor screenshots as workflow artifacts. Physical Safari/Via keyboard,
 font scaling and safe areas remain a manual device checklist.
+
+
+## Legacy placement compatibility
+
+Application placement is separate from category IDs: a historical category with
+ID `apps` remains a bookmark group. An omitted/empty bookmark category remains in
+`bookmarks.yml`, following the homepage's first named group (or the ungrouped
+bookmark list if no groups exist). The editor labels this default placement
+explicitly and does not force users to reclassify it before unrelated saves.
+Filtering the first named category includes default-placement links; the default
+placement filter can also show just those links. Unknown nonempty category IDs
+remain validation errors. `tests/editor/legacy.browser.cjs` covers both legacy
+layouts, app-only saves, add/edit preservation and the special-ID collision.

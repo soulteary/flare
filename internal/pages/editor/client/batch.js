@@ -9,7 +9,7 @@
   function serial(data){return JSON.stringify(data.map(r=>[r._key||'',r.Name||'',r.URL||'',r.Location||'',r.Icon||'',r.Desc||'',!!r.Private]));}
   function notify(){if(!loading&&ui)ui.syncStatus();}
   function finish(){const editor=table?.getActiveEditor();if(editor?.isOpened())editor.finishEditing(false);}
-  function labels(){return Object.fromEntries([['apps','应用区'],...ui.store.working.categories.map(c=>['category:'+c.ID,c.Name])]);}
+  function labels(){return Object.fromEntries([['apps','应用区'],['category:',ui.store.working.categories.length?'默认分类 · '+ui.store.working.categories[0].Name:'未分类书签'],...ui.store.working.categories.map(c=>['category:'+c.ID,c.Name])]);}
   function columns(){return [{data:'Name'},{data:'URL'},{data:'Location',editor:'select',selectOptions:labels(),renderer(instance,td,row,col,prop,value,properties){Handsontable.renderers.TextRenderer(instance,td,row,col,prop,labels()[value]||'分类缺失：'+value,properties);}},{data:'Icon'},{data:'Desc'}];}
   function select(r1,c1,r2){selected=Array.from({length:Math.abs(r2-r1)+1},(_,i)=>Math.min(r1,r2)+i).filter(r=>r>=0&&r<table.countRows());column=Math.max(0,c1);$('batch-selection').textContent=`共 ${table.countRows()} 行，已选择 ${selected.length} 行`;$('batch-delete').disabled=!selected.length;$('batch-edit').disabled=!selected.length;$('batch-up').disabled=selected.length!==1||selected[0]===0;$('batch-down').disabled=selected.length!==1||selected[0]===table.countRows()-1;}
   function buildDocument(data){const doc=ui.store.toJSON();doc.apps=[];doc.bookmarks=[];for(const row of data){const {Location,...item}=row;item.Category=Location==='apps'?'':String(Location||'').startsWith('category:')?Location.slice(9):String(Location||'');(Location==='apps'?doc.apps:doc.bookmarks).push(item);}return doc;}

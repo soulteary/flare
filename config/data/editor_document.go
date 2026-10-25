@@ -100,7 +100,7 @@ func ValidateEditorDocument(doc EditorDocument) error {
 			if group.name == "apps" && b.Category != "" {
 				return invalid(field+".Category", "应用不能引用书签分类")
 			}
-			if group.name == "bookmarks" && !ids[b.Category] {
+			if group.name == "bookmarks" && b.Category != "" && !ids[b.Category] {
 				return invalid(field+".Category", "书签引用的分类不存在，请选择有效位置")
 			}
 		}
