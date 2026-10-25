@@ -213,6 +213,7 @@ func pageBookmark(c fiber.Ctx) error {
 	m["PageName"] = i18n.T(locale, "page_bookmarks")
 	m["SubPage"] = true
 	m["PageAppearance"] = define.GetAppBodyStyle()
+	m["BodyClassName"] = homepageBodyClasses(options)
 	m["SettingPages"] = define.SettingPages
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
@@ -248,6 +249,7 @@ func pageApplication(c fiber.Ctx) error {
 	m["PageName"] = i18n.T(locale, "page_apps")
 	m["SubPage"] = true
 	m["PageAppearance"] = define.GetAppBodyStyle()
+	m["BodyClassName"] = homepageBodyClasses(options)
 	m["OptionTitle"] = options.Title
 	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
 	m["OptionShowApps"] = options.ShowApps
@@ -283,10 +285,6 @@ func render(c fiber.Ctx, filter string) error {
 		}
 	}
 	setCSPHeader(c)
-	bodyClassName := options.Homepage.Classes()
-	if !options.KeepLetterCase {
-		bodyClassName += "app-content-uppercase "
-	}
 	m := pool.GetTemplateMap()
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
@@ -327,7 +325,7 @@ func render(c fiber.Ctx, filter string) error {
 	m["OptionShowBookmarks"] = options.ShowBookmarks
 	m["OptionHideSettingsButton"] = options.HideSettingsButton
 	m["OptionHideHelpButton"] = options.HideHelpButton
-	m["BodyClassName"] = template.HTMLAttr(bodyClassName)
+	m["BodyClassName"] = homepageBodyClasses(options)
 	return renderClockPage(c, m, options, true)
 }
 
@@ -350,4 +348,13 @@ func parseRequestURL(c fiber.Ctx) {
 		r.TLS = &tls.ConnectionState{}
 	}
 	fn.ParseRequestURL(&r)
+}
+
+// homepageBodyClasses keeps appearance and letter-case preferences consistent on navigation pages.
+func homepageBodyClasses(options model.Application) template.HTMLAttr {
+	classes := options.Homepage.Classes()
+	if !options.KeepLetterCase {
+		classes += "app-content-uppercase "
+	}
+	return template.HTMLAttr(classes)
 }

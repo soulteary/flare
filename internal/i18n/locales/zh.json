@@ -118,5 +118,9 @@
   "category_navigation_all": "全部分组",
   "category_navigation_tabs": "分类切换",
   "category_navigation_collapse": "折叠分组",
-  "category_navigation_help": "搜索时展开匹配分组。分类选择仅影响展示，不改变权限。"
+  "category_navigation_help": "搜索时展开匹配分组。分类选择仅影响展示，不改变权限。",
+  "desktop_columns": "桌面列数",
+  "desktop_columns_default": "原有布局",
+  "desktop_columns_auto": "自动",
+  "desktop_columns_help": "适用于宽于768px的窗口。指定列数为上限，空间不足时减少列数以保持可读。"
 }

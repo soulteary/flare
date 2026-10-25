@@ -4,6 +4,7 @@ import "fmt"
 
 // HomepageOptions controls presentation without changing stored bookmark order.
 type HomepageOptions struct {
+	DesktopColumns       string `yaml:"DesktopColumns,omitempty"`
 	CategoryNavigation   string `yaml:"CategoryNavigation,omitempty"`
 	MobileBookmarkLayout string `yaml:"MobileBookmarkLayout,omitempty"`
 	NavigationTextSize   string `yaml:"NavigationTextSize,omitempty"`
@@ -13,6 +14,11 @@ type HomepageOptions struct {
 
 // Validate rejects unsupported choices instead of accepting arbitrary CSS values.
 func (o HomepageOptions) Validate() error {
+	switch o.DesktopColumns {
+	case "", "auto", "4", "5", "6", "8":
+	default:
+		return fmt.Errorf("invalid desktop columns: %q", o.DesktopColumns)
+	}
 	switch o.CategoryNavigation {
 	case "", "all", "tabs", "collapse":
 	default:
@@ -42,6 +48,10 @@ func (o *HomepageOptions) Classes() string {
 		return ""
 	}
 	classes := ""
+	switch o.DesktopColumns {
+	case "auto", "4", "5", "6", "8":
+		classes += "desktop-columns-" + o.DesktopColumns + " "
+	}
 	if o.MobileBookmarkLayout == "compact" {
 		classes += "mobile-bookmarks-compact "
 	}

@@ -56,3 +56,17 @@ func TestCategoryNavigationModes(t *testing.T) {
 		t.Fatal("invalid mode accepted")
 	}
 }
+
+func TestDesktopColumnChoices(t *testing.T) {
+	for _, columns := range []string{"", "auto", "4", "5", "6", "8"} {
+		options := HomepageOptions{DesktopColumns: columns}
+		if err := options.Validate(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, columns := range []string{"3", "7", "999", "4; color:red"} {
+		if (HomepageOptions{DesktopColumns: columns}).Validate() == nil {
+			t.Fatalf("accepted %q", columns)
+		}
+	}
+}

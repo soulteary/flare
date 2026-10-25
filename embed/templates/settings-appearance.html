@@ -266,6 +266,14 @@
  <p class="help-text">{{ T .Locale "category_navigation_help" }}</p>
  </div>
  <div class="form-group">
+ <label for="desktop-columns">{{ T .Locale "desktop_columns" }}</label>
+ <select id="desktop-columns" name="desktop-columns">
+ <option value="legacy" {{if eq .DesktopColumns ""}}selected{{end}}>{{ T .Locale "desktop_columns_default" }}</option>
+ <option value="auto" {{if eq .DesktopColumns "auto"}}selected{{end}}>{{ T .Locale "desktop_columns_auto" }}</option>
+ {{range $count := .DesktopColumnChoices}}<option value="{{$count}}" {{if eq $.DesktopColumns $count}}selected{{end}}>{{$count}}</option>{{end}}
+ </select><p class="help-text">{{ T .Locale "desktop_columns_help" }}</p>
+ </div>
+ <div class="form-group">
             <input class="btn-submit" type="submit" value="{{ T .Locale "save_changes" }}" />
         </div>
     </form>
