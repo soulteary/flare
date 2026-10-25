@@ -11,7 +11,8 @@ test('mobile editor preserves focus and drafts when save outcome is unknown',asy
  const doc={version:'initial',categories:[{ID:'one',Name:'First'},{ID:'two',Name:'Second'}],apps:[{Name:'Original',URL:'http://nas:8080',Category:''}],bookmarks:[]};
  const server=http.createServer(async(req,res)=>{
   if(req.url==='/editor/document'){res.setHeader('content-type','application/json');res.end(JSON.stringify(doc));return;}
-  const file=req.url==='/editor'?path.join(root,'embed/templates/editor.html'):req.url.startsWith('/assets/editor-ui/')?path.join(root,'internal/pages/editor/client',path.basename(req.url)):null;
+  const pathname=new URL(req.url,'http://flare.test').pathname;
+  const file=pathname==='/editor'?path.join(root,'embed/templates/editor.html'):pathname.startsWith('/assets/editor-ui/')?path.join(root,'internal/pages/editor/client',path.basename(pathname)):null;
   if(!file){res.writeHead(404);res.end();return;}
   res.setHeader('content-type',file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(await fs.readFile(file));
  });

@@ -114,7 +114,9 @@ Search:
    const popupPromise=page.waitForEvent('popup');
    await page.locator('#search').press('Enter');
    const popup=await popupPromise;
-   assert.equal(new URL((await requestPromise).url()).pathname,expectedPath);
+   const submitted=await requestPromise;
+   assert.equal(new URL(submitted.url()).pathname,expectedPath);
+   assert.equal((await submitted.allHeaders()).referer,undefined,'external redirect must not disclose the Flare page');
    await popup.close();
    assert.equal(page.url(),base+'/');
   }
@@ -159,6 +161,17 @@ Search:
   await touchPage.locator('#search-suggestions a').first().tap();
   await touchPage.waitForURL(base+'/chosen');
   await touchContext.close();
+  // Administrative test-engine POSTs retain a verifiable Origin even in a new
+  // tab; the external redirect itself must still suppress the Referer.
+  await page.goto(base+'/settings/search');
+  const settingsPost=page.context().waitForEvent('request',request=>request.url()===base+'/settings/search' && request.method()==='POST');
+  const testRequest=page.context().waitForEvent('request',request=>request.url().startsWith('https://search.example/search'));
+  const testPopup=page.waitForEvent('popup');
+  await page.locator('button[value="test:0"]').click();
+  assert.equal((await (await settingsPost).allHeaders()).origin,base,'settings POST must keep a verifiable Origin');
+  assert.equal((await (await testRequest).allHeaders()).referer,undefined,'test-engine redirect must suppress Referer');
+  await (await testPopup).close();
+  assert.equal(page.url(),base+'/settings/search');
   assert.deepEqual(errors,[]);
   console.log('Hybrid browser acceptance passed');
  } finally { if(browser)await browser.close(); child.kill('SIGTERM'); await fs.rm(dir,{recursive:true,force:true}); }
