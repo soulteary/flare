@@ -46,8 +46,8 @@ func BookmarkSnapshot(name string) (model.Bookmarks, string, error) {
 		return model.Bookmarks{}, "", err
 	}
 	if !checkExists(path) {
-		if _, err := initBookmarks(path, name == "apps"); err != nil {
-			return model.Bookmarks{}, "", err
+		if _, initErr := initBookmarks(path, name == "apps"); initErr != nil {
+			return model.Bookmarks{}, "", initErr
 		}
 	}
 	raw, err := os.ReadFile(filepath.Clean(path))
