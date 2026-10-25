@@ -1,12 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"math"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -23,11 +23,12 @@ import (
 )
 
 type scenario struct {
-	Name        string
-	Method      string
-	Path        string
-	Body        string
-	ContentType string
+	Name           string
+	Method         string
+	Path           string
+	Body           string
+	ContentType    string
+	ExpectedStatus int
 }
 
 type metrics struct {
@@ -129,9 +130,10 @@ func buildScenarios() map[string]scenario {
 			Path:   "/applications",
 		},
 		"redir-url": {
-			Name:   "redir-url",
-			Method: http.MethodGet,
-			Path:   "/redir/url?go=" + encoded,
+			Name:           "redir-url",
+			Method:         http.MethodGet,
+			Path:           "/redir/url?go=" + encoded,
+			ExpectedStatus: http.StatusFound,
 		},
 	}
 }
@@ -150,7 +152,7 @@ func quantile(latencies []int64, q float64) time.Duration {
 	return time.Duration(latencies[index])
 }
 
-func runScenario(router http.Handler, s scenario, requests int, concurrency int, warmup int) (metrics, error) {
+func runScenario(router http.Handler, targetURL string, s scenario, requests int, concurrency int, warmup int, keepaliveConnections int) (metrics, error) {
 	if requests <= 0 {
 		return metrics{}, fmt.Errorf("requests must be > 0")
 	}
@@ -165,12 +167,27 @@ func runScenario(router http.Handler, s scenario, requests int, concurrency int,
 		},
 	}
 
-	server := httptest.NewServer(router)
-	defer server.Close()
+	if keepaliveConnections > 0 {
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.MaxIdleConnsPerHost = keepaliveConnections
+		if transport.MaxIdleConns < keepaliveConnections {
+			transport.MaxIdleConns = keepaliveConnections
+		}
+		client.Transport = transport
+	}
+	if targetURL == "" {
+		target, err := startTarget(router)
+		if err != nil {
+			return metrics{}, err
+		}
+		defer target.Close()
+		targetURL = target.URL
+	}
+	defer client.CloseIdleConnections()
 
 	doReq := func() (time.Duration, error) {
 		bodyReader := strings.NewReader(s.Body)
-		req, err := http.NewRequest(s.Method, server.URL+s.Path, bodyReader)
+		req, err := http.NewRequest(s.Method, targetURL+s.Path, bodyReader)
 		if err != nil {
 			return 0, err
 		}
@@ -182,9 +199,19 @@ func runScenario(router http.Handler, s scenario, requests int, concurrency int,
 		if err != nil {
 			return 0, err
 		}
-		_, _ = io.Copy(io.Discard, resp.Body)
-		_ = resp.Body.Close()
-		if resp.StatusCode >= 500 {
+		_, drainErr := io.Copy(io.Discard, resp.Body)
+		closeErr := resp.Body.Close()
+		if drainErr != nil {
+			return 0, fmt.Errorf("read response: %w", drainErr)
+		}
+		if closeErr != nil {
+			return 0, fmt.Errorf("close response: %w", closeErr)
+		}
+		expectedStatus := s.ExpectedStatus
+		if expectedStatus == 0 {
+			expectedStatus = http.StatusOK
+		}
+		if resp.StatusCode != expectedStatus {
 			return 0, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
 		return time.Since(start), nil
@@ -271,6 +298,10 @@ func main() {
 	cpuProfile := flag.String("cpuprofile", "", "cpu profile output file path")
 	memProfile := flag.String("memprofile", "", "heap profile output file path")
 	markdown := flag.Bool("markdown", false, "print markdown table rows")
+	jsonOutput := flag.Bool("json", false, "print machine-readable metrics")
+	targetURL := flag.String("url", "", "test an external server; allocation metrics then describe only the client")
+	serve := flag.Bool("serve", false, "serve an isolated native target with loopback-only resource control")
+	keepaliveConnections := flag.Int("keepalive-connections", 0, "idle connections per host; 0 preserves the original default transport")
 	flag.Parse()
 
 	if *cpuProfile != "" {
@@ -290,12 +321,28 @@ func main() {
 		*memProfile = abs
 	}
 
-	router, cleanup, err := setupRouter()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "setup router failed: %v\n", err)
-		os.Exit(1)
+	var router http.Handler
+	if *targetURL == "" {
+		var cleanup func()
+		var err error
+		router, cleanup, err = setupRouter()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "setup router failed: %v\n", err)
+			os.Exit(1)
+		}
+		defer cleanup()
 	}
-	defer cleanup()
+	if *serve {
+		if *targetURL != "" {
+			fmt.Fprintln(os.Stderr, "-serve and -url cannot be combined")
+			os.Exit(1)
+		}
+		if err := serveTarget(router); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	scenarios := buildScenarios()
 	var selected []scenario
@@ -334,7 +381,7 @@ func main() {
 
 	results := make([]metrics, 0, len(selected))
 	for _, s := range selected {
-		result, err := runScenario(router, s, *requests, *concurrency, *warmup)
+		result, err := runScenario(router, *targetURL, s, *requests, *concurrency, *warmup, *keepaliveConnections)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "run scenario %s failed: %v\n", s.Name, err)
 			os.Exit(1)
@@ -355,6 +402,14 @@ func main() {
 			os.Exit(1)
 		}
 		_ = f.Close()
+	}
+
+	if *jsonOutput {
+		if err := json.NewEncoder(os.Stdout).Encode(results); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	if *markdown {

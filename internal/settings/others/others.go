@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
@@ -13,14 +13,14 @@ import (
 	version "github.com/soulteary/version-kit/v4"
 )
 
-func RegisterRouting(e *echo.Echo) {
-	e.GET(define.SettingPages.Others.Path, pageOthers)
+func RegisterRouting(e *fiber.App) {
+	e.Get(define.SettingPages.Others.Path, pageOthers)
 }
 
-func pageOthers(c *echo.Context) error {
+func pageOthers(c fiber.Ctx) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "config error")
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	locale := options.Locale
 	if locale == "" {
@@ -52,5 +52,5 @@ func pageOthers(c *echo.Context) error {
 	m["BuildDate"] = version.BuildDate
 	m["COMMIT"] = version.Commit
 	m["OptionFooter"] = template.HTML(options.Footer)
-	return c.Render(http.StatusOK, "settings.html", m)
+	return c.Status(http.StatusOK).Render("settings.html", m)
 }

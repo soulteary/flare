@@ -1,23 +1,21 @@
 package mdi
 
 import (
-	"bytes"
-	"crypto/sha256"
 	"embed"
 	"errors"
 	"fmt"
 	"io/fs"
 	"log"
-	"net/http"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/static"
 	memfs "github.com/soulteary/memfs-kit"
 
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/resources/assets"
 )
 
 var MemFs *memfs.FS
@@ -49,28 +47,28 @@ func Init() error {
 	return nil
 }
 
-func RegisterRouting(e *echo.Echo) {
+func RegisterRouting(e *fiber.App) {
 	iconCacheMu.RLock()
 	icons, err := fs.Sub(MemFs, _ASSETS_BASE_DIR)
 	iconCacheMu.RUnlock()
 	if err == nil {
 		handler := iconFileHandler(icons)
-		e.GET(_ASSETS_WEB_URI+"/:name", handler)
-		e.HEAD(_ASSETS_WEB_URI+"/:name", handler)
+		e.Get(_ASSETS_WEB_URI+"/:name", handler)
+		e.Head(_ASSETS_WEB_URI+"/:name", handler)
 	}
 	if mdiExample, err := fs.Sub(MdiExampleAssets, "mdi-cheat-sheets"); err == nil {
-		e.StaticFS(define.RegularPages.Icons.Path, mdiExample)
+		e.Use(define.RegularPages.Icons.Path, static.New("", static.Config{FS: mdiExample, ByteRange: true}))
 	}
 }
 
 // iconFileHandler serves generated SVGs with a content-derived ETag and an
 // independent reader per request so HTTP ranges and repeated requests stay
 // consistent. Only direct SVG filenames inside the icon subtree are accepted.
-func iconFileHandler(icons fs.FS) echo.HandlerFunc {
-	return func(c *echo.Context) error {
-		name := c.Param("name")
+func iconFileHandler(icons fs.FS) fiber.Handler {
+	return func(c fiber.Ctx) error {
+		name := c.Params("name")
 		if !fs.ValidPath(name) || strings.ContainsAny(name, `/\`) || !strings.HasSuffix(name, ".svg") {
-			return echo.ErrNotFound
+			return fiber.ErrNotFound
 		}
 
 		iconCacheMu.RLock()
@@ -78,17 +76,14 @@ func iconFileHandler(icons fs.FS) echo.HandlerFunc {
 		iconCacheMu.RUnlock()
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
-				return echo.ErrNotFound
+				return fiber.ErrNotFound
 			}
 			return fmt.Errorf("read MDI icon %q: %w", name, err)
 		}
 
 		// Validate existence before setting a validator. A different resource's
 		// ETag must never turn a missing icon into a successful 304 response.
-		c.Response().Header().Set("ETag", fmt.Sprintf(`"%x"`, sha256.Sum256(data)))
-		c.Response().Header().Set("Content-Type", "image/svg+xml")
-		http.ServeContent(c.Response(), c.Request(), name, time.Time{}, bytes.NewReader(data))
-		return nil
+		return assets.ServeContent(c, name, "image/svg+xml", data)
 	}
 }
 

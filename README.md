@@ -13,7 +13,7 @@ Challenge all bookmarking apps and websites directories, Aim to Be a best perfor
 **Simple**, **Fast**, **Lightweight** and super **Easy** to install and use.
 
 - Written in Go (Golang) and a little Modern vanilla Javascript only.
-- HTTP stack: [Echo](https://echo.labstack.com/) v5.
+- HTTP stack: native [Fiber](https://gofiber.io/) v3 with a 64 KiB request reader.
 - Doesn't depend on any database or any complicated framework.
 - Single executable, no dependencies required, good docker support.
 - You can choose whether to enable various functions according to your needs: offline mode, weather, editor, account, and so on.
@@ -34,6 +34,36 @@ TBD
 
 - Browse automatically generated program documentation:
     - `godoc --http=localhost:8080`
+
+### Build and HTTP behavior
+
+```sh
+go run .
+go build -o flare .
+```
+
+All normal builds, container builds and tests use Fiber on its native fasthttp
+listener. The migration keeps Gorilla signed session cookies, direct TLS and
+explicit proxy Secure-cookie behavior, `Immutable` request ownership, and the
+existing editor upload limits. The 64 KiB reader limits request lines and
+headers; requests exceeding its capacity can receive HTTP 431. Bodies have a
+32 MiB global limit. Embedded favicon and SVG resources retain
+`net/http.ServeContent` for conditional and range responses.
+
+### Performance records
+
+[Performance decisions and complete experiment index](docs/performance.md)
+records the 1 MiB, default 8 KiB and 64 KiB comparisons, raw per-round data,
+server CPU/allocation profiles, and redirect optimization. The final choice is
+64 KiB: memory is close to 8 KiB while allowing larger request headers and URLs.
+The measurements do not establish that Fiber uses less RSS than Echo.
+
+Run the current Fiber baseline with `./scripts/baseline-metrics.sh`. The original
+in-process baseline includes client allocations; separate server measurements
+and profiling use `scripts/analyze-redirect.py`. Historical Echo/Fiber comparisons
+are replayed from a frozen experiment commit by `scripts/compare-http-stacks.py`;
+Echo is no longer part of the production dependency graph. See
+[methods and reproduction](docs/baseline-metrics.md) for the two measurement scopes.
 
 ### Container images
 

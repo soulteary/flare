@@ -1,13 +1,15 @@
 package home
 
 import (
+	"crypto/tls"
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
@@ -25,9 +27,9 @@ const _weatherLocationDetectTimeout = 5 * time.Second
 
 const _cspValue = "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';"
 
-func setCSPHeader(c *echo.Context) {
+func setCSPHeader(c fiber.Ctx) {
 	if !define.AppFlags.DisableCSP {
-		c.Response().Header().Set("Content-Security-Policy", _cspValue)
+		c.Set("Content-Security-Policy", _cspValue)
 	}
 }
 
@@ -77,30 +79,30 @@ func getMyIPLocationWithTimeout(timeout time.Duration) string {
 	}
 }
 
-func RegisterRouting(e *echo.Echo) {
+func RegisterRouting(e *fiber.App) {
 	if define.AppFlags.Visibility != "PRIVATE" {
-		e.GET(define.RegularPages.Home.Path, pageHome)
-		e.GET(define.RegularPages.Help.Path, renderHelp)
-		e.POST(define.RegularPages.Home.Path, pageSearch)
-		e.GET(define.RegularPages.Applications.Path, pageApplication)
-		e.GET(define.RegularPages.Bookmarks.Path, pageBookmark)
+		e.Get(define.RegularPages.Home.Path, pageHome)
+		e.Get(define.RegularPages.Help.Path, renderHelp)
+		e.Post(define.RegularPages.Home.Path, pageSearch)
+		e.Get(define.RegularPages.Applications.Path, pageApplication)
+		e.Get(define.RegularPages.Bookmarks.Path, pageBookmark)
 	} else {
-		e.GET(define.RegularPages.Home.Path, pageHome, auth.AuthRequired)
-		e.GET(define.RegularPages.Help.Path, renderHelp, auth.AuthRequired)
-		e.POST(define.RegularPages.Home.Path, pageSearch, auth.AuthRequired)
-		e.GET(define.RegularPages.Applications.Path, pageApplication, auth.AuthRequired)
-		e.GET(define.RegularPages.Bookmarks.Path, pageBookmark, auth.AuthRequired)
+		e.Get(define.RegularPages.Home.Path, auth.AuthRequired, pageHome)
+		e.Get(define.RegularPages.Help.Path, auth.AuthRequired, renderHelp)
+		e.Post(define.RegularPages.Home.Path, auth.AuthRequired, pageSearch)
+		e.Get(define.RegularPages.Applications.Path, auth.AuthRequired, pageApplication)
+		e.Get(define.RegularPages.Bookmarks.Path, auth.AuthRequired, pageBookmark)
 	}
 }
 
-func pageHome(c *echo.Context) error {
+func pageHome(c fiber.Ctx) error {
 	return render(c, "")
 }
 
-func renderHelp(c *echo.Context) error {
+func renderHelp(c fiber.Ctx) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "config error")
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	configWeatherShow := true
 	var weatherData model.Weather
@@ -151,11 +153,11 @@ func renderHelp(c *echo.Context) error {
 	return renderClockPage(c, m, options, false)
 }
 
-func pageSearch(c *echo.Context) error {
+func pageSearch(c fiber.Ctx) error {
 	var body struct {
 		Search string `form:"search"`
 	}
-	if err := c.Bind(&body); err != nil {
+	if err := c.Bind().Body(&body); err != nil {
 		return render(c, "")
 	}
 	search := strings.TrimSpace(body.Search)
@@ -192,16 +194,16 @@ func updateWeatherData(location string) {
 	}
 }
 
-func pageBookmark(c *echo.Context) error {
+func pageBookmark(c fiber.Ctx) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "config error")
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	locale := options.Locale
 	if locale == "" {
 		locale = "zh"
 	}
-	fn.ParseRequestURL(c.Request())
+	parseRequestURL(c)
 	m := pool.GetTemplateMap()
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
@@ -220,19 +222,19 @@ func pageBookmark(c *echo.Context) error {
 	m["OptionShowBookmarks"] = options.ShowBookmarks
 	m["OptionHideSettingsButton"] = options.HideSettingsButton
 	m["OptionHideHelpButton"] = options.HideHelpButton
-	return c.Render(http.StatusOK, "home.html", m)
+	return c.Status(http.StatusOK).Render("home.html", m)
 }
 
-func pageApplication(c *echo.Context) error {
+func pageApplication(c fiber.Ctx) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "config error")
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	locale := options.Locale
 	if locale == "" {
 		locale = "zh"
 	}
-	fn.ParseRequestURL(c.Request())
+	parseRequestURL(c)
 	m := pool.GetTemplateMap()
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
@@ -250,15 +252,15 @@ func pageApplication(c *echo.Context) error {
 	m["OptionShowApps"] = options.ShowApps
 	m["OptionHideSettingsButton"] = options.HideSettingsButton
 	m["OptionHideHelpButton"] = options.HideHelpButton
-	return c.Render(http.StatusOK, "home.html", m)
+	return c.Status(http.StatusOK).Render("home.html", m)
 }
 
-func render(c *echo.Context, filter string) error {
+func render(c fiber.Ctx, filter string) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "config error")
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
-	fn.ParseRequestURL(c.Request())
+	parseRequestURL(c)
 	locale := options.Locale
 	if locale == "" {
 		locale = "zh"
@@ -305,9 +307,9 @@ func render(c *echo.Context, filter string) error {
 	m["HasKeyword"] = hasKeyword
 	m["ShowSearchComponent"] = options.ShowSearchComponent
 	// Keep the script-free homepage while avoiding an unsolicited mobile keyboard.
-	ua := strings.ToLower(c.Request().UserAgent())
+	ua := strings.ToLower(c.Get("User-Agent"))
 	mobile := strings.Contains(ua, "mobile") || strings.Contains(ua, "android") || strings.Contains(ua, "ipad") || strings.Contains(ua, "iphone")
-	c.Response().Header().Add("Vary", "User-Agent")
+	c.Response().Header.Add("Vary", "User-Agent")
 	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus || mobile
 	m["OptionTitle"] = options.Title
 	m["OptionFooter"] = template.HTML(options.Footer)
@@ -323,13 +325,23 @@ func render(c *echo.Context, filter string) error {
 	return renderClockPage(c, m, options, true)
 }
 
-func renderClockPage(c *echo.Context, m map[string]any, options model.Application, greeting bool) error {
+func renderClockPage(c fiber.Ctx, m map[string]any, options model.Application, greeting bool) error {
 	if options.Locale == "" {
 		options.Locale = "zh"
 	}
 	resolved := clock.Populate(m, options, time.Now(), greeting)
 	if resolved.Enhance && !define.AppFlags.DisableCSP {
-		c.Response().Header().Set("Content-Security-Policy", clock.Policy())
+		c.Set("Content-Security-Policy", clock.Policy())
 	}
-	return c.Render(http.StatusOK, "home.html", m)
+	return c.Status(http.StatusOK).Render("home.html", m)
+}
+
+// parseRequestURL preserves the dynamic bookmark URL metadata without adapting the handler.
+func parseRequestURL(c fiber.Ctx) {
+	path := url.URL{Path: c.Path()}
+	r := http.Request{Host: string(c.Request().Host()), URL: &path, RequestURI: c.OriginalURL()}
+	if c.RequestCtx().IsTLS() {
+		r.TLS = &tls.ConnectionState{}
+	}
+	fn.ParseRequestURL(&r)
 }

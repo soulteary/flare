@@ -7,7 +7,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/clock"
@@ -21,12 +21,12 @@ var bufPool = sync.Pool{
 	New: func() any { return &bytes.Buffer{} },
 }
 
-// Renderer implements echo.Renderer for HTML templates.
+// Renderer implements fiber.Views for HTML templates.
 type Renderer struct {
 	templates *template.Template
 }
 
-func (r *Renderer) Render(c *echo.Context, w io.Writer, templateName string, data any) error {
+func (r *Renderer) Render(w io.Writer, templateName string, data any, _ ...string) error {
 	tmplName := templateName
 	for _, cand := range []string{templateName, "html/" + templateName, "embed/templates/" + templateName} {
 		if r.templates.Lookup(cand) != nil {
@@ -51,7 +51,11 @@ var templateFuncMap = template.FuncMap{
 	"T": i18n.T,
 }
 
-func RegisterRouting(e *echo.Echo) error {
+// Load satisfies fiber.Views. NewRenderer parses templates before app creation.
+func (r *Renderer) Load() error { return nil }
+
+// NewRenderer prepares the view engine for fiber.Config.Views.
+func NewRenderer() (fiber.Views, error) {
 	var t *template.Template
 	var err error
 	if define.AppFlags.DebugMode {
@@ -60,12 +64,11 @@ func RegisterRouting(e *echo.Echo) error {
 		t, err = template.New("").Funcs(templateFuncMap).ParseFS(TPL, "html/*.html")
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 	t, err = t.Parse(clock.Templates())
 	if err != nil {
-		return err
+		return nil, err
 	}
-	e.Renderer = &Renderer{templates: t}
-	return nil
+	return &Renderer{templates: t}, nil
 }

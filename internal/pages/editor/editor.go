@@ -6,7 +6,8 @@ import (
 	"io/fs"
 	"net/http"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/static"
 	memfs "github.com/soulteary/memfs-kit"
 
 	"github.com/soulteary/flare/config/data"
@@ -32,36 +33,36 @@ func Init() error {
 	return nil
 }
 
-func RegisterRouting(e *echo.Echo) {
+func RegisterRouting(e *fiber.App) {
 	registerTransfers(e)
 	if introAssets, err := fs.Sub(editorAssets, "editor-assets"); err == nil {
-		e.StaticFS(_ASSETS_WEB_URI, introAssets)
+		e.Use(_ASSETS_WEB_URI, static.New("", static.Config{FS: introAssets}))
 	}
-	e.GET(define.RegularPages.Editor.Path, render, auth.AuthRequired)
-	e.POST(define.RegularPages.Editor.Path, updateData, auth.AuthRequired)
+	e.Get(define.RegularPages.Editor.Path, auth.AuthRequired, render)
+	e.Post(define.RegularPages.Editor.Path, auth.AuthRequired, updateData)
 }
 
-func updateData(c *echo.Context) error {
+func updateData(c fiber.Ctx) error {
 	var body struct {
 		Categories string `form:"categories"`
 		Bookmarks  string `form:"bookmarks"`
 	}
-	if err := c.Bind(&body); err != nil {
-		return c.JSON(http.StatusForbidden, "提交数据缺失")
+	if err := c.Bind().Body(&body); err != nil {
+		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
 	}
 	if !data.UpdateBookmarksFromEditor(body.Categories, body.Bookmarks) {
-		return c.JSON(http.StatusInternalServerError, map[string]any{"saved": false, "error": "保存失败，请检查数据格式、目录权限和服务端日志。"})
+		return c.Status(http.StatusInternalServerError).JSON(map[string]any{"saved": false, "error": "保存失败，请检查数据格式、目录权限和服务端日志。"})
 	}
-	if c.Request().Header.Get("Accept") == "application/json" {
-		return c.JSON(http.StatusOK, map[string]bool{"saved": true})
+	if c.Get("Accept") == "application/json" {
+		return c.Status(http.StatusOK).JSON(map[string]bool{"saved": true})
 	}
 	return render(c)
 }
 
-func render(c *echo.Context) error {
+func render(c fiber.Ctx) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "config error")
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	dataCategories, dataBookmarks := data.GetBookmarksForEditor()
 	m := pool.GetTemplateMap()
@@ -81,5 +82,5 @@ func render(c *echo.Context) error {
 	m["OptionShowDateTime"] = options.ShowDateTime
 	m["OptionShowApps"] = options.ShowApps
 	m["OptionShowBookmarks"] = options.ShowBookmarks
-	return c.Render(http.StatusOK, "editor.html", m)
+	return c.Status(http.StatusOK).Render("editor.html", m)
 }

@@ -10,7 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/adaptor"
+	"github.com/gofiber/fiber/v3/middleware/static"
 
 	"github.com/soulteary/flare/config/define"
 )
@@ -18,89 +20,53 @@ import (
 //go:embed favicon.ico
 var Favicon embed.FS
 
-func RegisterRouting(e *echo.Echo) {
+func RegisterRouting(e *fiber.App) {
 	e.Use(optimizeResourceCacheTime())
-
-	e.Match([]string{http.MethodGet, http.MethodHead}, "/favicon.ico", func(c *echo.Context) error {
+	handler := func(c fiber.Ctx) error {
 		data, err := fs.ReadFile(Favicon, "favicon.ico")
 		if err != nil {
 			return err
 		}
-		c.Response().Header().Set("ETag", fmt.Sprintf(`"%x"`, sha256.Sum256(data)))
-		c.Response().Header().Set("Content-Type", "image/x-icon")
-		http.ServeContent(c.Response(), c.Request(), "favicon.ico", time.Time{}, bytes.NewReader(data))
-		return nil
-	})
-
+		return ServeContent(c, "favicon.ico", "image/x-icon", data)
+	}
+	e.Get("/favicon.ico", handler)
+	e.Head("/favicon.ico", handler)
 	if define.AppFlags.DebugMode {
-		e.Static("/assets/css", "embed/assets/css")
+		e.Use("/assets/css", static.New("embed/assets/css", static.Config{ByteRange: true}))
 	}
 }
 
-// optimizeResourceCacheTime caches successful asset responses without deciding
-// whether a resource exists. Validators and conditional requests belong to the
-// resource handler; a process-wide ETag can incorrectly turn missing files into 304s.
-func optimizeResourceCacheTime() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			path := c.Request().URL.Path
-			if !strings.HasPrefix(path, "/assets/") && path != "/favicon.ico" {
-				return next(c)
-			}
-			original := c.Response()
-			response := &resourceCacheWriter{ResponseWriter: original}
-			c.SetResponse(response)
-			defer c.SetResponse(original)
-			err := next(c)
-			if err != nil && !response.committed {
-				// Echo writes returned errors after this middleware unwinds.
-				disableResourceCache(response.Header())
-			}
-			return err
+// ServeContent retains net/http's conditional and range semantics for embedded
+// files. Only static assets use this adapter; application routes use Fiber
+// directly, including routing, middleware, and template rendering.
+func ServeContent(c fiber.Ctx, name, contentType string, data []byte) error {
+	return adaptor.HTTPHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("ETag", fmt.Sprintf(`"%x"`, sha256.Sum256(data)))
+		w.Header().Set("Content-Type", contentType)
+		http.ServeContent(w, r, name, time.Time{}, bytes.NewReader(data))
+	})(c)
+}
+
+// optimizeResourceCacheTime applies policy after Fiber has buffered the response,
+// so an absent file or invalid range never inherits a successful asset's ETag.
+func optimizeResourceCacheTime() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		path := c.Path()
+		if !strings.HasPrefix(path, "/assets/") && path != "/favicon.ico" {
+			return c.Next()
 		}
-	}
-}
-
-// resourceCacheWriter selects the cache policy when the final status is known,
-// without buffering or copying response bodies.
-type resourceCacheWriter struct {
-	http.ResponseWriter
-	committed bool
-}
-
-// WriteHeader keeps long-lived caching off errors and preserves a handler's
-// explicit policy for successful responses.
-func (w *resourceCacheWriter) WriteHeader(status int) {
-	if !w.committed && status >= http.StatusOK {
-		w.committed = true
+		err := c.Next()
+		status := c.Response().StatusCode()
 		switch {
-		case status < http.StatusMultipleChoices || status == http.StatusNotModified:
-			if w.Header().Get("Cache-Control") == "" {
-				w.Header().Set("Cache-Control", "public, max-age=31536000")
+		case err != nil || status >= http.StatusBadRequest:
+			c.Set("Cache-Control", "no-store")
+			c.Response().Header.Del("ETag")
+			c.Response().Header.Del("Last-Modified")
+		case status >= http.StatusOK && status < http.StatusMultipleChoices || status == http.StatusNotModified:
+			if len(c.Response().Header.Peek("Cache-Control")) == 0 {
+				c.Set("Cache-Control", "public, max-age=31536000")
 			}
-		case status >= http.StatusBadRequest:
-			disableResourceCache(w.Header())
 		}
+		return err
 	}
-	w.ResponseWriter.WriteHeader(status)
-}
-
-// Write also applies the policy when a handler implicitly sends HTTP 200.
-func (w *resourceCacheWriter) Write(data []byte) (int, error) {
-	if !w.committed {
-		w.WriteHeader(http.StatusOK)
-	}
-	return w.ResponseWriter.Write(data)
-}
-
-// Unwrap preserves Echo status inspection and net/http response-controller access.
-func (w *resourceCacheWriter) Unwrap() http.ResponseWriter {
-	return w.ResponseWriter
-}
-
-// disableResourceCache prevents transient failures from being reused as assets.
-func disableResourceCache(header http.Header) {
-	header.Set("Cache-Control", "no-store")
-	header.Del("ETag")
-	header.Del("Last-Modified")
 }

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
@@ -57,31 +57,31 @@ func GetWeatherInfo(location string) (response model.Weather, desc string, err e
 	return response, "接口正常", nil
 }
 
-func RegisterRouting(e *echo.Echo) {
-	e.GET(define.SettingPages.Weather.Path, pageHome, auth.AuthRequired)
+func RegisterRouting(e *fiber.App) {
+	e.Get(define.SettingPages.Weather.Path, auth.AuthRequired, pageHome)
 	if !define.AppFlags.EnableOfflineMode {
-		e.POST(define.SettingPages.Weather.Path, updateWeatherOptions, auth.AuthRequired)
-		e.POST(define.SettingPagesAPI.WeatherTest.Path, testWeatherFetch, auth.AuthRequired)
+		e.Post(define.SettingPages.Weather.Path, auth.AuthRequired, updateWeatherOptions)
+		e.Post(define.SettingPagesAPI.WeatherTest.Path, auth.AuthRequired, testWeatherFetch)
 	}
 }
 
-func pageHome(c *echo.Context) error {
+func pageHome(c fiber.Ctx) error {
 	return render(c, "")
 }
 
-func updateWeatherOptions(c *echo.Context) error {
+func updateWeatherOptions(c fiber.Ctx) error {
 	var body struct {
 		Location    string `form:"location"`
 		ShowWeather bool   `form:"show"`
 	}
-	if err := c.Bind(&body); err != nil {
-		return c.JSON(http.StatusForbidden, "提交数据缺失")
+	if err := c.Bind().Body(&body); err != nil {
+		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
 	}
 	data.UpdateWeatherAndLocation(body.ShowWeather, body.Location)
 	return render(c, "")
 }
 
-func testWeatherFetch(c *echo.Context) error {
+func testWeatherFetch(c fiber.Ctx) error {
 	location, _ := data.GetLocationAndWeatherShow()
 	_, desc, err := GetWeatherInfo(location)
 	if err != nil {
@@ -90,11 +90,11 @@ func testWeatherFetch(c *echo.Context) error {
 	return render(c, desc)
 }
 
-func render(c *echo.Context, testResult string) error {
+func render(c fiber.Ctx, testResult string) error {
 	location, showWeather := data.GetLocationAndWeatherShow()
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "config error")
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	locale := options.Locale
 	if locale == "" {
@@ -115,5 +115,5 @@ func render(c *echo.Context, testResult string) error {
 	m["SettingPagesAPI"] = define.SettingPagesAPI
 	m["Location"] = location
 	m["TestResult"] = testResult
-	return c.Render(http.StatusOK, "settings.html", m)
+	return c.Status(http.StatusOK).Render("settings.html", m)
 }

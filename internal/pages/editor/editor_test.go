@@ -8,13 +8,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 )
 
 func TestEditorSaveReportsResult(t *testing.T) {
 	t.Chdir(t.TempDir())
-	e := echo.New()
-	e.POST("/editor", updateData)
+	e := fiber.New()
+	e.Post("/editor", updateData)
 	for _, tc := range []struct {
 		name, categories, bookmarks string
 		status                      int
@@ -29,7 +29,7 @@ func TestEditorSaveReportsResult(t *testing.T) {
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			req.Header.Set("Accept", "application/json")
 			rec := httptest.NewRecorder()
-			e.ServeHTTP(rec, req)
+			serveTransferHTTP(t, e, rec, req)
 			if rec.Code != tc.status {
 				t.Fatalf("status %d: %s", rec.Code, rec.Body.String())
 			}
@@ -53,7 +53,7 @@ func TestEditorSaveReportsResult(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.Header.Set("Accept", "application/json")
 		rec := httptest.NewRecorder()
-		e.ServeHTTP(rec, req)
+		serveTransferHTTP(t, e, rec, req)
 		if rec.Code != http.StatusInternalServerError || !strings.Contains(rec.Body.String(), `"saved":false`) {
 			t.Fatalf("write failure reported as success: %d %s", rec.Code, rec.Body.String())
 		}
