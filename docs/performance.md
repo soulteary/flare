@@ -58,3 +58,12 @@ references, canonicalizes icon-cache names, and removes repeated navigation URL
 parsing. Mutable generated SVG validators still derive from actual current bytes.
 See the [microbenchmark report and raw rounds](../metrics-reports/resources-and-url-validation-2026-10-26.md).
 Those allocation/time measurements are not a process CPU or RSS reduction claim.
+
+### Avoidable MIME-registry initialization
+
+The first combined resource measurement exposed additional retained heap after
+favicon access. The embedded metadata loader now uses explicit bundled types and
+content sniffing instead of initializing the host MIME registry. See the
+[diagnostic and unchanged historical context](../metrics-reports/favicon-mime-init-2026-10-26.md).
+The effect depends on installed system MIME mappings; its isolated HeapAlloc
+result is not a universal RSS or CPU claim.
