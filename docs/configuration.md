@@ -36,12 +36,11 @@ Booleans accept the parser's standard true/false and 1/0 forms. Prefer literal
 use the names above. `FLARE_DEBUG=on` enables application DEBUG logs but does not enable development asset mode.
 Check `flare --help` for the executable you actually run.
 
-Development validation after 0.6.4 warns and forces PRIVATE with login enabled
-for invalid visibility values rather than silently publishing the homepage.
-Malformed typed environment values are handled per field, so an injected
-Kubernetes `FLARE_PORT=tcp://...` does not erase unrelated access settings.
-An invalid `.env` port retains the lower-precedence port. Stable 0.6.4 does not
-provide these development safeguards: always configure explicit valid values.
+Do not rely on an invalid configuration to select a safe access mode. Use explicit
+valid values and verify anonymous access after startup. Kubernetes can inject
+`FLARE_PORT=tcp://...`; explicitly set a numeric `FLARE_PORT` or disable Service
+injection with `enableServiceLinks: false`. Inspect startup warnings and the actual
+running version rather than assuming malformed values preserve access controls.
 
 ## Access models
 
