@@ -112,7 +112,7 @@
             contextMenu: ['row_above', 'row_below', '---------', 'undo', 'redo', '---------', 'cut', 'copy'],
             afterCreateRow() { dirty = true; status.textContent = '有未保存的修改'; },
             afterRemoveRow() { dirty = true; status.textContent = '有未保存的修改'; },
-            afterRowMove(rows, finalIndex, dropIndex, possible, moved) { if (moved) { dirty = true; status.textContent = '有未保存的修改'; } }
+            afterRowMove(rows, finalIndex, dropIndex, possible, moved) { if (moved !== false && possible !== false) { dirty = true; status.textContent = '有未保存的修改'; } }
         };
         function categoryNames() {
             return Array.from({length: tableCategories.countRows()}, (_, r) => tableCategories.getDataAtRowProp(r, 'Name')).filter(Boolean);

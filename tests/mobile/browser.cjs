@@ -1,5 +1,5 @@
 // Run against a fresh binary: FLARE_BINARY=/absolute/path node tests/mobile/browser.cjs
-const {chromium} = require('playwright');
+const {chromium} = require(require.resolve('playwright', {paths: [__dirname, `${__dirname}/../clock`]}));
 const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
@@ -40,9 +40,21 @@ const {spawn} = require('node:child_process');
    await page.setViewportSize({width, height: 844});
    await page.goto(base);
    assert.equal(await page.locator('#search[autofocus]').count(), 0);
+   // Offline fixture: exercise the production weather structure without a network dependency.
+   await page.locator('#hero-container').evaluate(el => {
+    const weather = document.createElement('div'); weather.id = 'plugin-weather'; weather.className = 'plugin-container clearfix';
+    const icon = document.createElement('div'); icon.className = 'pull-left'; icon.textContent = '☀';
+    const values = document.createElement('div'); values.className = 'pull-right weather-value-container';
+    for (const text of ['35°C', '100%']) { const p = document.createElement('p'); p.textContent = text; values.appendChild(p); }
+    weather.append(icon, values);
+    el.appendChild(weather);
+    const time = document.getElementById('clock-time'); if (time) time.textContent = '23:59:59';
+   });
    for (const scale of [1, 1.1, 1.25, 2]) {
     await page.evaluate(scale => { document.body.style.fontSize = `${14 * scale}px`; }, scale);
     await fits('#page-home');
+    const hero = await page.locator('#hero-container').evaluate(el => ({dateBottom: el.querySelector('#plugin-datetime').getBoundingClientRect().bottom, weatherTop: el.querySelector('#plugin-weather').getBoundingClientRect().top}));
+    assert.ok(hero.weatherTop >= hero.dateBottom - 1, 'weather overlaps date/greeting');
     assert.equal(await page.locator('.bookmark-group-container').first().evaluate(el => getComputedStyle(el).float), 'none');
    }
    await page.goto(base + '/settings/appearance');

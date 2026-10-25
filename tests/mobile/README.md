@@ -5,6 +5,8 @@ Build the generated templates/styles and binary first:
 ```sh
 go run build/build.go
 go build -o /tmp/flare-mobile .
+npm ci --ignore-scripts --prefix tests/clock
+tests/clock/node_modules/.bin/playwright install chromium
 FLARE_BINARY=/tmp/flare-mobile node tests/mobile/browser.cjs
 ```
 
