@@ -156,10 +156,12 @@ def render_report(data, destination):
                ('server_allocs_per_request', 1, 'allocations/request'),
                ('idle_rss_bytes', 2**20, 'warmed idle RSS MiB'),
                ('sampled_peak_rss_bytes', 2**20, 'sampled load peak RSS MiB'),
-               ('lifetime_peak_rss_bytes', 2**20, 'process lifecycle peak RSS MiB'),
+               ('server_proc_high_water_rss_bytes', 2**20, 'post-exec process high-water RSS MiB'),
                ('server_live_heap_after_gc_bytes', 2**20, 'live runtime heap MiB after forced GC'),
                ('P95', 10**6, 'client-observed P95 ms')]
     for key, scale, title in columns:
+        if any(row.get(key) is None for row in data['isolated']):
+            continue
         lines += ['', f'## {title}', '', '| Scene | Before median | After median | Change |', '| --- | ---: | ---: | ---: |']
         for scenario in comparison.SCENARIOS:
             medians = [statistics.median(row[key] for row in data['isolated'] if row['target'] == label and row['Scenario'] == scenario) / scale for label in ('before', 'after')]
@@ -170,7 +172,7 @@ def render_report(data, destination):
               '- Load CPU, allocation and GC deltas cover the isolated server process only. Client measurements remain in raw rows and must not be confused with server allocation cost.',
               '- P95 is measured by the fixed client over loopback and includes scheduling and network latency. Four rounds do not establish confidence intervals.',
               '- On Linux, RSS is read from a /proc child verified by both parent PID and namespace-local NSpid. This avoids sampling an unrelated host process in mixed PID-namespace environments.',
-              '- Warmed idle RSS is measured after warmup. Sampled peak RSS is sampled every ~50 ms during load; lifecycle peak RSS is retained separately in raw observations.',
+              '- Warmed idle RSS is measured after warmup. Sampled peak RSS is sampled every ~50 ms during load. Linux /proc VmHWM is the post-exec process high-water mark; raw RUSAGE MaxRSS is retained but excluded from comparisons because it can inherit launcher residency before exec.',
               '- Live heap is exact runtime HeapAlloc recorded by Go’s debug=1 heap handler after forced GC and before profile encoding, collected after all load counters. It includes the control request’s small instrumentation overhead and is not RSS. Sampled inuse_space/profile-period estimates remain separately recorded; do not substitute them for exact HeapAlloc.',
               '- Timed load covers HTML/redirect routes only. Icons/favicon are fetched for semantic preflight before warmup; browser cache/request mixes and full-page latency are not measured. Asset Cache-Control differences are retained and can change real-browser revalidation traffic.',
               '- Both binaries use offline mode, disabled login/request logs, and default fixtures. This does not measure production authentication, weather, browser CPU, ARM hardware, or large bookmark datasets.',

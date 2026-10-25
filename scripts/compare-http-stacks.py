@@ -79,6 +79,16 @@ def rss(pid):
     return int(subprocess.check_output(['ps', '-o', 'rss=', '-p', str(pid)], text=True).strip()) * 1024
 
 
+def proc_high_water_rss(pid):
+    """Linux mm high-water RSS resets on exec, unlike inherited RUSAGE MaxRSS."""
+    if not sys.platform.startswith('linux'):
+        return None
+    rss(pid)  # Confirm namespace identity and populate the verified path cache.
+    status = (_PROC_CHILDREN[pid] / 'status').read_text()
+    value = re.search(r'^VmHWM:\s*(\d+)\s+kB', status, re.M)
+    return int(value.group(1)) * 1024 if value else None
+
+
 def ready(process):
     selector = selectors.DefaultSelector()
     selector.register(process.stdout, selectors.EVENT_READ)
@@ -174,6 +184,7 @@ def isolated(binary, client, scenario, args, env, logfile):
                 'idle_rss_bytes': idle_rss,
                 'sampled_peak_rss_bytes': sampled_peak,
                 'lifetime_peak_rss_bytes': after['PeakRSSBytes'],
+                'server_proc_high_water_rss_bytes': proc_high_water_rss(process.pid),
                 'preflight': validation,
                 'read_buffer_bytes': info.get('read_buffer_bytes'),
             })
