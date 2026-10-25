@@ -197,8 +197,8 @@ func TestWeatherWidgetWaitsForSnapshotOnHomeAndHelp(t *testing.T) {
 	})
 	cache := homepageWeather
 	defer func() { close(release); waitWeatherIdle(t, cache) }()
-	if err := mdi.Init(); err != nil {
-		t.Fatal(err)
+	if mdiErr := mdi.Init(); mdiErr != nil {
+		t.Fatal(mdiErr)
 	}
 	views, err := templates.NewRenderer()
 	if err != nil {
@@ -233,7 +233,7 @@ func TestWeatherWidgetWaitsForSnapshotOnHomeAndHelp(t *testing.T) {
 	cache.mu.Unlock()
 	for _, path := range []string{"/", "/help"} {
 		body := request(path)
-		if !(strings.Contains(body, `id=plugin-weather`) || strings.Contains(body, `id="plugin-weather"`)) || !strings.Contains(body, "24°C") || !strings.Contains(body, "48%") {
+		if (!strings.Contains(body, `id=plugin-weather`) && !strings.Contains(body, `id="plugin-weather"`)) || !strings.Contains(body, "24°C") || !strings.Contains(body, "48%") {
 			t.Fatalf("%s omitted valid weather", path)
 		}
 	}
