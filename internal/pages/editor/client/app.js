@@ -2,7 +2,9 @@
 (async function () {
   'use strict';
   const t = window.FlareEditorI18n?.t || ((text,...args)=>text.replace(/\{(\d+)\}/g,(_,i)=>String(args[i]??'')));
+  const stateErrorText=error=>error.code==='entry_not_found'?t('条目不存在'):error.code==='draft_too_large'?t('草稿文件不能超过 64 MiB'):error.message;
   const $ = id => document.getElementById(id);
+  let filterTimer;
   let store, saving=false, editingKey=null, formStart='', lastLocation='', undo=null, migrationID=null, conflict=false, recoveryRequired=false, focusBeforeDialog=null, batch=null;
   const entryDialog=$('entry-dialog'), categoryDialog=$('categories-dialog');
   const fields={Name:'entry-name',URL:'entry-url',Category:'entry-location'};
@@ -19,6 +21,7 @@
 
   function el(tag, text, className) { const node=document.createElement(tag); if(text!==undefined)node.textContent=text;if(className)node.className=className;return node; }
   function button(text, action, className) {const node=el('button',text,className);node.type='button';node.addEventListener('click',action);return node;}
+  function entryButton(text,action,className){const node=el('button',text,className);node.type='button';node.dataset.entryAction=action;return node;}
   function categoryName(id) {
     if(id==='apps')return t('应用区');
     if(id==='category:')return store.working.categories.length ? t('默认分类 · ')+store.working.categories[0].Name : t('未分类书签');
@@ -41,22 +44,37 @@
   }
   function syncStatus() {if(recoveryRequired){setStatus(t('保存恢复未完成，请先导出草稿并检查服务端恢复副本，再重新载入。'),true);return;}setStatus(conflict ? t('服务器数据已变化，请保留修改后重新载入。') : (store.dirty || batch?.dirty)?t('有未保存的更改'):t('所有更改已保存'), conflict);}
   function render() {
+    clearTimeout(filterTimer);
     const filter=$('location-filter').value, query=$('entry-search').value.trim().toLocaleLowerCase();
     locations($('location-filter'),filter,true);
-    const entries=store.entries();
+    const entries=store.viewEntries();
     const shown=entries.filter(({item,location})=>(filter==='all'||filter===location||(location==='category:'&&filter==='category:'+store.working.categories[0]?.ID)) && [item.Name,item.URL,item.Desc].some(value=>String(value||'').toLocaleLowerCase().includes(query)));
     $('total-count').textContent=entries.length+t(' 条');
     $('result-count').textContent=(query||filter!=='all')?t('找到 {0} 条，共 {1} 条',shown.length,entries.length):t('共 {0} 条',entries.length);
-    const list=$('entry-list');list.replaceChildren();
-    if(!shown.length){const empty=el('div',undefined,'empty');empty.append(el('p',entries.length?t('没有找到匹配条目'):t('还没有条目，从新增或导入开始。')));empty.append(button(entries.length?t('清除筛选'):t('新增条目'),()=>{if(entries.length){$('entry-search').value='';$('location-filter').value='all';render();}else openEntry();}));list.append(empty);}
+    const list=$('entry-list'),rowCache=new Map();
+    for(let row=list.firstElementChild;row;row=row.nextElementSibling)if(row.dataset.key)rowCache.set(row.dataset.key,row);
+    const rows=[],categoryLabels=new Map(store.working.categories.map(category=>['category:'+category.ID,category.Name]));categoryLabels.set('apps',t('应用区'));categoryLabels.set('category:',categoryName('category:'));
+    if(!shown.length){const empty=el('div',undefined,'empty');empty.append(el('p',entries.length?t('没有找到匹配条目'):t('还没有条目，从新增或导入开始。')));empty.append(button(entries.length?t('清除筛选'):t('新增条目'),()=>{if(entries.length){$('entry-search').value='';$('location-filter').value='all';render();}else openEntry();}));rows.push(empty);}
     for(const {item,location} of shown){
-      const row=el('article',undefined,'entry');row.setAttribute('role','listitem');row.dataset.key=item._key;
-      const main=el('div',undefined,'entry-main');main.append(button(item.Name,()=>openEntry(item._key),'entry-name'));
-      const address=el('span',item.URL,'entry-address');address.title=item.URL;main.append(address);
-      const place=el('span',categoryName(location),'entry-location');
-      const actions=el('div',undefined,'entry-actions');actions.append(button(t('编辑'),()=>openEntry(item._key)),button(t('删除'),()=>removeEntry(item._key),'danger'));
-      row.append(main,place,actions);list.append(row);
+      let row=rowCache.get(item._key);
+      if(!row){
+        const key=item._key;row=el('article',undefined,'entry');row.setAttribute('role','listitem');row.dataset.key=key;
+        const main=el('div',undefined,'entry-main'),name=entryButton('','edit','entry-name'),address=el('span',undefined,'entry-address');main.append(name,address);
+        const place=el('span',undefined,'entry-location'),actions=el('div',undefined,'entry-actions');actions.append(entryButton(t('编辑'),'edit'),entryButton(t('删除'),'delete','danger'));
+        row.append(main,place,actions);
+      }
+      const {Name,URL}=item,name=row.firstElementChild.firstElementChild,address=name.nextElementSibling,place=row.firstElementChild.nextElementSibling;
+      if(name.textContent!==Name)name.textContent=Name;
+      if(address.textContent!==URL){address.textContent=URL;address.title=URL;}
+      const label=categoryLabels.get(location) || t('分类缺失：')+location;if(place.textContent!==label)place.textContent=label;
+      rows.push(row);
     }
+    // Keep unchanged rows attached (including focus). Bulk replacement handles
+    // filtering without repeatedly mutating a live HTMLCollection.
+    let cursor=list.firstElementChild, unchanged=true;
+    for(const row of rows){if(row!==cursor){unchanged=false;break;}cursor=cursor.nextElementSibling;}
+    if(cursor)unchanged=false;
+    if(!unchanged){const fragment=document.createDocumentFragment();for(const row of rows)fragment.append(row);list.replaceChildren(fragment);}
     $('undo-area').hidden=!undo;syncStatus();
   }
   function open(dialog) {focusBeforeDialog=document.activeElement;dialog.showModal();}
@@ -90,7 +108,7 @@
     if(values.Location!=='apps' && values.Location!=='category:' && !store.working.categories.some(c=>'category:'+c.ID===values.Location))return fieldError('Category',t('请选择有效位置'));
     const existed=editingKey && store.find(editingKey);
     const item={Name:values.Name.trim(),URL:values.URL.trim(),Icon:values.Icon,Desc:values.Desc};
-    editingKey=store.put(item,values.Location,editingKey);lastLocation=values.Location;undo=null;close(entryDialog);render();
+    try{editingKey=store.put(item,values.Location,editingKey);}catch(error){setStatus(stateErrorText(error),true);return;}lastLocation=values.Location;undo=null;close(entryDialog);render();
     focusEntry(editingKey);
     if(existed && $('location-filter').value!=='all' && $('location-filter').value!==values.Location)setStatus(t('条目已移至“')+categoryName(values.Location)+t('”，保存后生效。'));
   });
@@ -130,7 +148,8 @@
   $('category-add-form').onsubmit=event=>{event.preventDefault();const name=$('new-category-name').value.trim();if(!validCategoryName(name)){$('category-error').textContent=t('名称不能为空、重复或使用保留名称');$('new-category-name').focus();return;}store.working.categories.push({ID:store.categoryID(),Name:name});$('new-category-name').value='';$('category-error').textContent='';renderCategories();render();};
   function closeCategories() {if(categoryDialog.querySelector('[aria-invalid="true"]')){categoryDialog.querySelector('[aria-invalid="true"]').focus();return;}if($('new-category-name').value.trim()&&!confirm(t('尚未添加的新分类名称将被放弃，继续？')))return;$('new-category-name').value='';close(categoryDialog);batch?.refresh();}
   $('close-categories').onclick=closeCategories;categoryDialog.addEventListener('cancel',event=>{event.preventDefault();closeCategories();});
-  $('entry-search').oninput=()=>{if(store)render();};$('location-filter').onchange=()=>{if(store)render();};
+  $('entry-list').addEventListener('click',event=>{const button=event.target.closest('[data-entry-action]'),row=button?.closest('[data-key]');if(!row)return;if(button.dataset.entryAction==='delete')removeEntry(row.dataset.key);else openEntry(row.dataset.key);});
+  $('entry-search').oninput=()=>{if(store){clearTimeout(filterTimer);filterTimer=setTimeout(render,100);}};$('location-filter').onchange=()=>{if(store)render();};
   function busy(value) {saving=value;$('workspace').inert=value;$('workspace').setAttribute('aria-busy',String(value));document.querySelectorAll('.save-actions button').forEach(b=>b.disabled=value);if(!value)syncStatus();}
   function validateDocument() {
     const names=new Set(),ids=new Set();
@@ -167,7 +186,7 @@
   }
   $('save-changes').onclick=save;
   $('discard-changes').onclick=()=>{if(!saving&&confirm(t('放弃全部未保存的更改？'))){store.discard();batch?.refresh();undo=null;$('location-filter').value='all';render();if(conflict)setStatus(t('已恢复加载时的数据；服务器已有更新，请重新载入。'),true);}};
-  $('export-draft').onclick=()=>{let blob;try{blob=FlareEditorState.draftBlob(batch?.active ? batch.exportDraft() : store.toJSON());}catch(error){setStatus(t('无法导出草稿：')+t(error.message),true);return;}const url=URL.createObjectURL(blob);const a=el('a');a.href=url;a.download='flare-editor-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+  $('export-draft').onclick=()=>{let blob;try{blob=FlareEditorState.draftBlob(batch?.active ? batch.exportDraft() : store.toJSON());}catch(error){setStatus(t('无法导出草稿：')+stateErrorText(error),true);return;}const url=URL.createObjectURL(blob);const a=el('a');a.href=url;a.download='flare-editor-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   $('reload-data').onclick=()=>{if(!saving&&(!(store.dirty||batch?.dirty)||confirm(t('重新载入会放弃当前修改，请先导出需要保留的内容。继续？'))))location.reload();};
   $('restore-draft').onclick=()=>{if(!saving&&!entryDialog.open&&!categoryDialog.open)$('draft-file').click();};
   $('draft-file').onchange=async event=>{

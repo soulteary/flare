@@ -1,0 +1,389 @@
+{
+  "date": "2026-10-26",
+  "baseline_commit": "b668cfcd926e371ff7a0d10f56218b60978e8b48",
+  "source_hashes": {
+    "internal/pages/editor/client/app.js": "48812685179f40ad2c0d64a5e470ff0e1bd0ef39b540a3480bf378cdabca6b34",
+    "internal/pages/editor/client/state.js": "314b46f0d745bffb56410261da149d00b12685db7305e3d38616a5c27955be1b",
+    "tests/editor/scale.browser.cjs": "db1375128a73b2e3d9c2b118bce260596fc7beb296609a282f0e62378322ea39"
+  },
+  "runs": [
+    {
+      "round": 1,
+      "label": "before",
+      "environment": {
+        "platform": "linux",
+        "arch": "x64",
+        "node": "v24.22.1",
+        "browser": "153.0.8010.0",
+        "cpu": "AMD EPYC 9V74 80-Core Processor"
+      },
+      "viewport": "1440x1080",
+      "dirtyChecksCount": 100,
+      "measurements": [
+        {
+          "reused": false,
+          "repeatMs": 20,
+          "dirtyChecksMs": 86,
+          "count": 1000,
+          "renderMs": 24,
+          "layoutMs": 11,
+          "filterMs": 3,
+          "filtered": 1,
+          "visible": 1000,
+          "stored": 1000,
+          "dirty": false,
+          "heapUsedBytes": 2521764,
+          "domNodes": 13306,
+          "eventListeners": 3066
+        },
+        {
+          "reused": false,
+          "repeatMs": 81,
+          "dirtyChecksMs": 393,
+          "count": 5000,
+          "renderMs": 78,
+          "layoutMs": 48,
+          "filterMs": 15,
+          "filtered": 1,
+          "visible": 5000,
+          "stored": 5000,
+          "dirty": false,
+          "heapUsedBytes": 4696996,
+          "domNodes": 65331,
+          "eventListeners": 15066
+        },
+        {
+          "reused": false,
+          "repeatMs": 144,
+          "dirtyChecksMs": 821,
+          "count": 10000,
+          "renderMs": 189,
+          "layoutMs": 79,
+          "filterMs": 32,
+          "filtered": 11,
+          "visible": 10000,
+          "stored": 10000,
+          "dirty": false,
+          "heapUsedBytes": 6115016,
+          "domNodes": 130308,
+          "eventListeners": 30066
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "label": "after",
+      "environment": {
+        "platform": "linux",
+        "arch": "x64",
+        "node": "v24.22.1",
+        "browser": "153.0.8010.0",
+        "cpu": "AMD EPYC 9V74 80-Core Processor"
+      },
+      "viewport": "1440x1080",
+      "dirtyChecksCount": 100,
+      "measurements": [
+        {
+          "reused": true,
+          "repeatMs": 3,
+          "dirtyChecksMs": 0,
+          "count": 1000,
+          "renderMs": 16,
+          "layoutMs": 9,
+          "filterMs": 2,
+          "filtered": 1,
+          "visible": 1000,
+          "stored": 1000,
+          "dirty": false,
+          "heapUsedBytes": 2381480,
+          "domNodes": 13311,
+          "eventListeners": 67
+        },
+        {
+          "reused": true,
+          "repeatMs": 17,
+          "dirtyChecksMs": 0,
+          "count": 5000,
+          "renderMs": 84,
+          "layoutMs": 46,
+          "filterMs": 20,
+          "filtered": 1,
+          "visible": 5000,
+          "stored": 5000,
+          "dirty": false,
+          "heapUsedBytes": 3709216,
+          "domNodes": 65336,
+          "eventListeners": 67
+        },
+        {
+          "reused": true,
+          "repeatMs": 29,
+          "dirtyChecksMs": 0,
+          "count": 10000,
+          "renderMs": 201,
+          "layoutMs": 91,
+          "filterMs": 27,
+          "filtered": 11,
+          "visible": 10000,
+          "stored": 10000,
+          "dirty": false,
+          "heapUsedBytes": 5958132,
+          "domNodes": 130313,
+          "eventListeners": 67
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "label": "after",
+      "environment": {
+        "platform": "linux",
+        "arch": "x64",
+        "node": "v24.22.1",
+        "browser": "153.0.8010.0",
+        "cpu": "AMD EPYC 9V74 80-Core Processor"
+      },
+      "viewport": "1440x1080",
+      "dirtyChecksCount": 100,
+      "measurements": [
+        {
+          "reused": true,
+          "repeatMs": 4,
+          "dirtyChecksMs": 0,
+          "count": 1000,
+          "renderMs": 16,
+          "layoutMs": 11,
+          "filterMs": 3,
+          "filtered": 1,
+          "visible": 1000,
+          "stored": 1000,
+          "dirty": false,
+          "heapUsedBytes": 2379768,
+          "domNodes": 13311,
+          "eventListeners": 67
+        },
+        {
+          "reused": true,
+          "repeatMs": 19,
+          "dirtyChecksMs": 0,
+          "count": 5000,
+          "renderMs": 81,
+          "layoutMs": 49,
+          "filterMs": 19,
+          "filtered": 1,
+          "visible": 5000,
+          "stored": 5000,
+          "dirty": false,
+          "heapUsedBytes": 3696608,
+          "domNodes": 65336,
+          "eventListeners": 67
+        },
+        {
+          "reused": true,
+          "repeatMs": 31,
+          "dirtyChecksMs": 0,
+          "count": 10000,
+          "renderMs": 179,
+          "layoutMs": 90,
+          "filterMs": 28,
+          "filtered": 11,
+          "visible": 10000,
+          "stored": 10000,
+          "dirty": false,
+          "heapUsedBytes": 5950964,
+          "domNodes": 130313,
+          "eventListeners": 67
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "label": "before",
+      "environment": {
+        "platform": "linux",
+        "arch": "x64",
+        "node": "v24.22.1",
+        "browser": "153.0.8010.0",
+        "cpu": "AMD EPYC 9V74 80-Core Processor"
+      },
+      "viewport": "1440x1080",
+      "dirtyChecksCount": 100,
+      "measurements": [
+        {
+          "reused": false,
+          "repeatMs": 16,
+          "dirtyChecksMs": 88,
+          "count": 1000,
+          "renderMs": 19,
+          "layoutMs": 11,
+          "filterMs": 3,
+          "filtered": 1,
+          "visible": 1000,
+          "stored": 1000,
+          "dirty": false,
+          "heapUsedBytes": 2521804,
+          "domNodes": 13306,
+          "eventListeners": 3066
+        },
+        {
+          "reused": false,
+          "repeatMs": 74,
+          "dirtyChecksMs": 505,
+          "count": 5000,
+          "renderMs": 80,
+          "layoutMs": 55,
+          "filterMs": 18,
+          "filtered": 1,
+          "visible": 5000,
+          "stored": 5000,
+          "dirty": false,
+          "heapUsedBytes": 4135116,
+          "domNodes": 65331,
+          "eventListeners": 15066
+        },
+        {
+          "reused": false,
+          "repeatMs": 161,
+          "dirtyChecksMs": 844,
+          "count": 10000,
+          "renderMs": 178,
+          "layoutMs": 85,
+          "filterMs": 35,
+          "filtered": 11,
+          "visible": 10000,
+          "stored": 10000,
+          "dirty": false,
+          "heapUsedBytes": 6113176,
+          "domNodes": 130308,
+          "eventListeners": 30066
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "label": "before",
+      "environment": {
+        "platform": "linux",
+        "arch": "x64",
+        "node": "v24.22.1",
+        "browser": "153.0.8010.0",
+        "cpu": "AMD EPYC 9V74 80-Core Processor"
+      },
+      "viewport": "1440x1080",
+      "dirtyChecksCount": 100,
+      "measurements": [
+        {
+          "reused": false,
+          "repeatMs": 20,
+          "dirtyChecksMs": 103,
+          "count": 1000,
+          "renderMs": 22,
+          "layoutMs": 15,
+          "filterMs": 3,
+          "filtered": 1,
+          "visible": 1000,
+          "stored": 1000,
+          "dirty": false,
+          "heapUsedBytes": 2521840,
+          "domNodes": 13306,
+          "eventListeners": 3066
+        },
+        {
+          "reused": false,
+          "repeatMs": 76,
+          "dirtyChecksMs": 541,
+          "count": 5000,
+          "renderMs": 95,
+          "layoutMs": 67,
+          "filterMs": 22,
+          "filtered": 1,
+          "visible": 5000,
+          "stored": 5000,
+          "dirty": false,
+          "heapUsedBytes": 4697112,
+          "domNodes": 65331,
+          "eventListeners": 15066
+        },
+        {
+          "reused": false,
+          "repeatMs": 184,
+          "dirtyChecksMs": 1096,
+          "count": 10000,
+          "renderMs": 206,
+          "layoutMs": 100,
+          "filterMs": 36,
+          "filtered": 11,
+          "visible": 10000,
+          "stored": 10000,
+          "dirty": false,
+          "heapUsedBytes": 6115148,
+          "domNodes": 130308,
+          "eventListeners": 30066
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "label": "after",
+      "environment": {
+        "platform": "linux",
+        "arch": "x64",
+        "node": "v24.22.1",
+        "browser": "153.0.8010.0",
+        "cpu": "AMD EPYC 9V74 80-Core Processor"
+      },
+      "viewport": "1440x1080",
+      "dirtyChecksCount": 100,
+      "measurements": [
+        {
+          "reused": true,
+          "repeatMs": 4,
+          "dirtyChecksMs": 0,
+          "count": 1000,
+          "renderMs": 19,
+          "layoutMs": 16,
+          "filterMs": 6,
+          "filtered": 1,
+          "visible": 1000,
+          "stored": 1000,
+          "dirty": false,
+          "heapUsedBytes": 2443288,
+          "domNodes": 13311,
+          "eventListeners": 67
+        },
+        {
+          "reused": true,
+          "repeatMs": 24,
+          "dirtyChecksMs": 0,
+          "count": 5000,
+          "renderMs": 88,
+          "layoutMs": 55,
+          "filterMs": 36,
+          "filtered": 1,
+          "visible": 5000,
+          "stored": 5000,
+          "dirty": false,
+          "heapUsedBytes": 3500904,
+          "domNodes": 65336,
+          "eventListeners": 67
+        },
+        {
+          "reused": true,
+          "repeatMs": 34,
+          "dirtyChecksMs": 0,
+          "count": 10000,
+          "renderMs": 237,
+          "layoutMs": 129,
+          "filterMs": 34,
+          "filtered": 11,
+          "visible": 10000,
+          "stored": 10000,
+          "dirty": false,
+          "heapUsedBytes": 5922676,
+          "domNodes": 130313,
+          "eventListeners": 67
+        }
+      ]
+    }
+  ]
+}

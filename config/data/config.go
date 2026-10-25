@@ -93,6 +93,7 @@ func loadAppConfigFromYaml(name string) (model.Application, error) {
 
 	if !checkExists(filePath) {
 		fmt.Println("找不到配置文件" + name + "，创建默认配置。")
+		invalidateFileCache(name)
 		var createErr error
 		result, createErr = initAppConfig(filePath)
 		if createErr != nil {
@@ -104,7 +105,7 @@ func loadAppConfigFromYaml(name string) (model.Application, error) {
 	if err != nil {
 		return result, fmt.Errorf("读取配置文件 %s: %w", name, err)
 	}
-	parseErr := yaml.Unmarshal(configFile, &result)
+	result, parseErr := parsedApp(configFile)
 	if parseErr != nil {
 		return result, fmt.Errorf("解析配置文件 %s 错误，请检查配置文件内容: %w", name, parseErr)
 	}
