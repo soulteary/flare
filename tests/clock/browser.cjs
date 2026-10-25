@@ -1,0 +1,128 @@
+// Run against a freshly built Flare binary. No credentials or external services.
+const {chromium} = require('playwright');
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const os = require('node:os');
+const path = require('node:path');
+const net = require('node:net');
+const {spawn} = require('node:child_process');
+(async()=>{
+  const binary = process.env.FLARE_BINARY;
+  assert.ok(binary, 'Set FLARE_BINARY to an absolute path to the built Flare binary');
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(),'flare-clock-browser-'));
+  const socket = net.createServer();
+  await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve));
+  const port = socket.address().port;
+  await new Promise(resolve=>socket.close(resolve));
+  const base = `http://127.0.0.1:${port}`;
+  await fs.writeFile(path.join(dir,'config.yml'), 'Title: "Clock test"\nShowTitle: true\nShowDateTime: true\nGreetings: "morning;noon;afternoon;night"\nLocale: "en"\nTheme: "blackboard"\nShowWeather: false\n');
+  const child = spawn(binary,[],{cwd:dir,env:{...process.env,TZ:'Asia/Shanghai',FLARE_PORT:String(port),FLARE_DISABLE_LOGIN:'true',FLARE_OFFLINE:'true',FLARE_BASELINE:'1'}});
+  let log=''; child.stdout.on('data',b=>log+=b);child.stderr.on('data',b=>log+=b);
+  let browser;
+  try {
+    for(let i=0;i<100;i++) {
+      if(child.exitCode!==null) throw new Error('Flare exited: '+log);
+      try {if((await fetch(base+'/ping')).ok) break;} catch(_) {}
+      await new Promise(resolve=>setTimeout(resolve,100));
+    }
+    browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE || undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
+    const context=await browser.newContext({timezoneId:'America/New_York'});
+    const page=await context.newPage();
+    const errors=[],external=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    page.on('request',r=>{if(!r.url().startsWith(base+'/'))external.push(r.url());});
+    await page.clock.install({time:new Date('2026-12-31T15:59:59Z')});
+    await page.clock.pauseAt(new Date('2026-12-31T15:59:59Z'));
+    let response=await page.goto(base+'/');
+    assert.match(response.headers()['content-security-policy'],/script-src 'none'/);
+    assert.equal(await page.locator('script').count(),0);
+    const staticTime=await page.locator('#clock-time').textContent();
+    await page.clock.runFor(2000);
+    assert.equal(await page.locator('#clock-time').textContent(),staticTime);
+    await page.goto(base+'/settings/appearance');
+    await page.selectOption('#clock-dynamic','1');
+    await page.selectOption('#clock-seconds','0');
+    await page.selectOption('#clock-mode','custom');
+    await page.fill('#clock-zone','Asia/Shanghai');
+    assert.ok(await page.locator('#clock-custom').isVisible());
+    assert.ok(await page.locator('#clock-zones option').count()>10);
+    assert.doesNotMatch(await page.locator('#clock-preview').textContent(),/Cannot preview/);
+    await page.selectOption('#settings-show-datetime','0');
+    assert.equal(await page.locator('#clock-settings').isVisible(),false);
+    await page.selectOption('#settings-show-datetime','1');
+    // Authorized clock code must work even while unrelated inline scripts are blocked.
+    await page.fill('#settings-footer','<script>window.__unexpectedScript=true</script>');
+    await Promise.all([page.waitForNavigation(),page.locator('input.btn-submit').click()]);
+    assert.equal(await page.locator('#clock-mode').inputValue(),'custom');
+    assert.equal(await page.locator('#clock-seconds').inputValue(),'0');
+    if(process.env.CLOCK_SCREENSHOT_DIR) {await fs.mkdir(process.env.CLOCK_SCREENSHOT_DIR,{recursive:true});await page.locator('#clock-settings').screenshot({path:path.join(process.env.CLOCK_SCREENSHOT_DIR,'settings.png')});}
+    const saved=await fs.readFile(path.join(dir,'config.yml'),'utf8');
+    const invalid=await page.request.post(base+'/settings/appearance',{form:{'clock-timezone-mode':'custom','clock-timezone':'Local','clock-dynamic':'1','clock-seconds':'1',title:'must not save'}});
+    assert.equal(invalid.status(),400);
+    assert.equal(await fs.readFile(path.join(dir,'config.yml'),'utf8'),saved);
+    await page.clock.setSystemTime(new Date('2026-12-31T15:59:59Z'));
+    response=await page.goto(base+'/');
+    assert.match(response.headers()['content-security-policy'],/script-src 'sha256-/);
+    assert.equal(await page.locator('#clock').getAttribute('data-initialized'),'true');
+    assert.equal(await page.evaluate(()=>window.__unexpectedScript),undefined);
+    assert.equal(await page.locator('#clock-time').textContent(),'23:59');
+    assert.equal(await page.locator('#clock-date').textContent(),'Dec 31, 2026');
+    await page.clock.runFor(1100);
+    assert.equal(await page.locator('#clock-time').textContent(),'00:00');
+    assert.equal(await page.locator('#clock-date').textContent(),'Jan 01, 2027');
+    assert.equal(await page.locator('#clock-day').textContent(),'Friday');
+    assert.equal(await page.locator('#plugin-greetings').textContent(),'night');
+    if(process.env.CLOCK_SCREENSHOT_DIR)await page.locator('#hero-container').screenshot({path:path.join(process.env.CLOCK_SCREENSHOT_DIR,'clock.png')});
+    await page.goto(base+'/help');
+    const help=await page.locator('#plugin-greetings').textContent();
+    await page.clock.runFor(61000);
+    assert.equal(await page.locator('#plugin-greetings').textContent(),help);
+    await page.goto(base+'/settings/appearance');
+    await page.fill('#settings-footer','');
+    await page.selectOption('#clock-seconds','1');
+    await page.selectOption('#clock-mode','browser');
+    await Promise.all([page.waitForNavigation(),page.locator('input.btn-submit').click()]);
+    await page.clock.setSystemTime(new Date('2026-03-08T06:59:59Z'));
+    await page.goto(base+'/');
+    assert.equal(await page.locator('#clock-time').textContent(),'01:59:59');
+    await page.clock.runFor(1100);
+    assert.equal(await page.locator('#clock-time').textContent(),'03:00:00');
+    // Regression: static device-zone initialization must not be skipped in a background tab.
+    await page.goto(base+'/settings/appearance');
+    await page.selectOption('#clock-dynamic','0');
+    await Promise.all([page.waitForNavigation(),page.locator('input.btn-submit').click()]);
+    const hidden=await context.newPage();
+    await hidden.addInitScript(()=>Object.defineProperty(document,'hidden',{get:()=>true,configurable:true}));
+    await hidden.clock.install({time:new Date('2026-10-25T00:00:00Z')});
+    await hidden.clock.pauseAt(new Date('2026-10-25T00:00:00Z'));
+    await hidden.goto(base+'/');
+    assert.equal(await hidden.evaluate(()=>document.hidden),true);
+    assert.equal(await hidden.locator('#clock-time').textContent(),'20:00:00');
+    assert.equal(await hidden.locator('#clock-date').textContent(),'Oct 24, 2026');
+    assert.equal(await hidden.locator('#plugin-greetings').textContent(),'night');
+    await hidden.close();
+    await page.goto(base+'/');
+    await page.setViewportSize({width:390,height:844});
+    assert.equal(await page.locator('#clock-time').isVisible(),true);
+    const box=await page.locator('#clock').boundingBox();assert.ok(box.width<=390);
+    const noJS=await browser.newContext({javaScriptEnabled:false});
+    const fallback=await noJS.newPage();await fallback.goto(base+'/');
+    assert.ok(await fallback.locator('#clock-time').textContent());
+    assert.match(await fallback.locator('noscript').textContent(),/server-rendered time/);
+    await noJS.close();
+    await page.goto(base+'/settings/appearance');
+    await page.selectOption('#settings-show-datetime','0');
+    await Promise.all([page.waitForNavigation(),page.locator('input.btn-submit').click()]);
+    response=await page.goto(base+'/');
+    assert.equal(await page.locator('#clock').count(),0);
+    assert.equal(await page.locator('script').count(),0);
+    assert.match(response.headers()['content-security-policy'],/script-src 'none'/);
+    assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
+    console.log('Browser acceptance passed: legacy defaults, settings persistence, time-zone search/preview, invalid-save rollback, exact CSP authorization, blocked unrelated script, midnight/date/weekday/greeting, minute and second updates, New York DST, hidden-tab static initialization, mobile clock, no-JS fallback and hidden clock.');
+  } finally {
+    if(browser)await browser.close();
+    child.kill('SIGTERM');
+    await new Promise(resolve=>{if(child.exitCode!==null)resolve();else child.once('exit',resolve);});
+    await fs.rm(dir,{recursive:true,force:true});
+  }
+})().catch(e=>{console.error(e);process.exit(1);});

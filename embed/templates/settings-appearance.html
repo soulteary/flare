@@ -137,6 +137,43 @@
             {{ end }}
         </div>
 
+        <div id="clock-settings" {{ if not .OptionShowDateTime }}hidden{{ end }}>
+          <div class="form-group">
+            <label for="clock-dynamic">{{ T .Locale "clock_update" }}</label>
+            <select name="clock-dynamic" id="clock-dynamic">
+              <option value="0" {{ if not .ClockDynamic }}selected{{ end }}>{{ T .Locale "clock_static" }}</option>
+              <option value="1" {{ if .ClockDynamic }}selected{{ end }}>{{ T .Locale "clock_dynamic" }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="clock-seconds">{{ T .Locale "clock_seconds" }}</label>
+            <select name="clock-seconds" id="clock-seconds">
+              <option value="1" {{ if .ClockSeconds }}selected{{ end }}>{{ T .Locale "yes" }}</option>
+              <option value="0" {{ if not .ClockSeconds }}selected{{ end }}>{{ T .Locale "no" }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="clock-mode">{{ T .Locale "clock_timezone" }}</label>
+            <select name="clock-timezone-mode" id="clock-mode">
+              <option value="server" {{ if eq .ClockMode "server" }}selected{{ end }}>{{ T .Locale "clock_server" }}</option>
+              <option value="browser" {{ if eq .ClockMode "browser" }}selected{{ end }}>{{ T .Locale "clock_browser" }}</option>
+              <option value="custom" {{ if eq .ClockMode "custom" }}selected{{ end }}>{{ T .Locale "clock_custom" }}</option>
+            </select>
+            <p class="help-text">{{ T .Locale "clock_server_zone" }}: {{.ClockServerZone}} · {{.ClockServerTime}}</p>
+          </div>
+          <div class="form-group" id="clock-custom">
+            <label for="clock-zone">{{ T .Locale "clock_zone_name" }}</label>
+            <input name="clock-timezone" id="clock-zone" class="option-input" type="text" list="clock-zones" value="{{.ClockTimezone}}" placeholder="Asia/Shanghai" maxlength="100">
+            <datalist id="clock-zones"></datalist>
+          </div>
+          <div class="form-group">
+            <label for="clock-preview">{{ T .Locale "clock_preview" }}</label>
+            <output id="clock-preview" data-locale="{{.Locale}}" data-server-zone="{{.ClockServerZone}}" data-error="{{ T .Locale "clock_preview_error" }}">{{.ClockServerTime}}</output>
+            <p class="help-text">{{ T .Locale "clock_help" }}</p>
+          </div>
+        </div>
+        <script>{{ template "clock-settings-script" }}</script>
+
         <div class="form-group">
             <label for="settings-show-apps">{{ T .Locale "show_apps" }}</label>
             {{ if .OptionShowApps }}

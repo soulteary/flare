@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v5"
 
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/clock"
 	"github.com/soulteary/flare/internal/i18n"
 )
 
@@ -58,6 +59,10 @@ func RegisterRouting(e *echo.Echo) error {
 	} else {
 		t, err = template.New("").Funcs(templateFuncMap).ParseFS(TPL, "html/*.html")
 	}
+	if err != nil {
+		return err
+	}
+	t, err = t.Parse(clock.Templates())
 	if err != nil {
 		return err
 	}

@@ -84,5 +84,19 @@
   "weekday_wed": "Wednesday",
   "weekday_thu": "Thursday",
   "weekday_fri": "Friday",
-  "weekday_sat": "Saturday"
+  "weekday_sat": "Saturday",
+  "clock_update": "Time updates",
+  "clock_static": "On page load",
+  "clock_dynamic": "Live clock",
+  "clock_seconds": "Show seconds",
+  "clock_timezone": "Display time zone",
+  "clock_server": "Follow server",
+  "clock_browser": "Follow visitor device",
+  "clock_custom": "Custom time zone",
+  "clock_server_zone": "Server time zone",
+  "clock_zone_name": "IANA time zone name",
+  "clock_preview": "Current time preview",
+  "clock_preview_error": "Cannot preview: use a valid IANA zone; configure TZ explicitly for an opaque server Local zone.",
+  "clock_help": "Live updates use the visitor device clock, without network time synchronization. Device time zone requires JavaScript; without scripts the server-rendered time remains. Preview refreshes when options change.",
+  "clock_noscript": "Device time zone requires JavaScript; showing server-rendered time."
 }

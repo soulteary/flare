@@ -3,6 +3,8 @@ package data
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v2"
 
@@ -76,7 +78,7 @@ func saveAppConfigToYamlFile(name string, result model.Application) bool {
 	}
 
 	filePath := getConfigPath(name)
-	ok := saveFile(filePath, out)
+	ok := saveConfigAtomically(filePath, out)
 	if !ok {
 		log.Println("保存程序配置文件失败")
 		return false
@@ -107,4 +109,33 @@ func loadAppConfigFromYaml(name string) (model.Application, error) {
 		return result, fmt.Errorf("解析配置文件 %s 错误，请检查配置文件内容: %w", name, parseErr)
 	}
 	return result, nil
+}
+
+// saveConfigAtomically prevents an interrupted settings save from truncating config.yml.
+func saveConfigAtomically(path string, contents []byte) bool {
+	f, err := os.CreateTemp(filepath.Dir(path), ".flare-config-*")
+	if err != nil {
+		return false
+	}
+	name := f.Name()
+	defer func() {
+		if removeErr := os.Remove(name); removeErr != nil && !os.IsNotExist(removeErr) {
+			log.Printf("clean up temporary config: %v", removeErr)
+		}
+	}()
+	mode := os.FileMode(0600)
+	if info, statErr := os.Stat(path); statErr == nil {
+		mode = info.Mode().Perm()
+	}
+	if err = f.Chmod(mode); err == nil {
+		_, err = f.Write(contents)
+	}
+	if err == nil {
+		err = f.Sync()
+	}
+	closeErr := f.Close()
+	if err != nil || closeErr != nil {
+		return false
+	}
+	return os.Rename(name, path) == nil
 }

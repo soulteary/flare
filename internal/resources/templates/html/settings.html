@@ -1,5 +1,5 @@
 <!doctype html><html lang=en><head><meta charset=UTF-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=google content="notranslate"><meta name=viewport content="width=device-width,initial-scale=1"><title>{{.OptionTitle}} - Settings</title>{{ if .DebugMode }}
-<link rel=stylesheet href=/assets/css/base.css><link rel=stylesheet href=/assets/css/settings/sidebar.css><link rel=stylesheet href=/assets/css/settings/layout.css><link rel=stylesheet href=/assets/css/settings/theme.css>{{ else }}<style>{{.PageInlineStyle}}</style>{{ end }}</head><body style={{.PageAppearance}}><div class=pageview id=page-settings><div class=container>{{ template "settings-header.html" . }}<div class="main-container clearfix">{{ template "settings-sidebar.html" . }}
+<link rel=stylesheet href=/assets/css/base.css><link rel=stylesheet href=/assets/css/settings/sidebar.css><link rel=stylesheet href=/assets/css/settings/layout.css><link rel=stylesheet href=/assets/css/settings/theme.css>{{ else }}<style>{{.PageInlineStyle}}</style>{{ end }}</head><body style="{{.PageAppearance}}"><div class=pageview id=page-settings><div class=container>{{ template "settings-header.html" . }}<div class="main-container clearfix">{{ template "settings-sidebar.html" . }}
 {{ if eq .PageName "Theme" }}
 {{ template "settings-theme.html" . }}
 {{ end }}
@@ -14,4 +14,4 @@
 {{ end }}
 {{ if eq .PageName "Others" }}
 {{ template "settings-others.html" . }}
-{{ end }}</div><div class=footer-container>{{.OptionFooter}}</div></div></div><script>document.addEventListener('keydown',function(e){if(e.key==='Escape')history.back();});</script></body></html>
+{{ end }}</div><div class=footer-container>{{.OptionFooter}}</div></div></div>{{ if ne .PageName "Appearance" }}<script>document.addEventListener('keydown',function(e){if(e.key==='Escape')history.back();});</script>{{ end }}</body></html>

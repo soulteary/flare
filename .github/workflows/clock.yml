@@ -1,0 +1,54 @@
+name: Clock acceptance
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  clock:
+    name: Clock unit and browser acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tests/clock/package-lock.json
+      - name: Build production assets and binary
+        run: |
+          go run build/build.go
+          CGO_ENABLED=0 go build -o "$RUNNER_TEMP/flare-clock" .
+      - name: Install browser test dependencies
+        working-directory: tests/clock
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Clock logic and lifecycle regressions
+        run: node --test tests/clock/clock.test.cjs
+      - name: Production HTTP and browser acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/clock/browser.cjs
+      - name: Minimal scratch-container timezone acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          context="$RUNNER_TEMP/flare-clock-image"
+          mkdir -p "$context"
+          cp "$RUNNER_TEMP/flare-clock" "$context/flare"
+          cp tests/clock/container.yml "$context/config.yml"
+          docker build -f tests/clock/Dockerfile -t flare-clock-test "$context"
+          docker run --detach --name flare-clock-test -p 127.0.0.1::5005 flare-clock-test
+          trap 'docker logs flare-clock-test; docker rm --force flare-clock-test' EXIT
+          port="$(docker port flare-clock-test 5005/tcp | sed 's/.*://')"
+          FLARE_CONTAINER_URL="http://127.0.0.1:$port" python3 tests/clock/container-smoke.py

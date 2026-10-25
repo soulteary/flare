@@ -2,8 +2,8 @@
   position: relative;
 }
 
-#plugin-datetime {
-}
+#clock { font-variant-numeric: tabular-nums; }
+#clock-time { display: inline-block; min-width: 5ch; }
 
 #plugin-weather{
   position: absolute;

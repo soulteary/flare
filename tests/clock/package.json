@@ -1,0 +1,9 @@
+{
+  "name": "flare-clock-tests",
+  "private": true,
+  "scripts": {
+    "test": "node --test clock.test.cjs",
+    "browser": "node browser.cjs"
+  },
+  "devDependencies": { "playwright": "1.62.1" }
+}

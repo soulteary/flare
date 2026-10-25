@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v5"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/clock"
 	"github.com/soulteary/flare/internal/pool"
 )
 
@@ -43,6 +45,19 @@ func updateAppearanceOptions(c *echo.Context) error {
 		return c.JSON(http.StatusForbidden, "提交数据缺失")
 	}
 	var update model.Application
+	// Missing fields from older forms must not erase existing clock preferences.
+	if c.FormValue("clock-timezone-mode") != "" {
+		dynamic, seconds := c.FormValue("clock-dynamic"), c.FormValue("clock-seconds")
+		if (dynamic != "0" && dynamic != "1") || (seconds != "0" && seconds != "1") {
+			return c.String(http.StatusBadRequest, "invalid clock options")
+		}
+		showSeconds := seconds == "1"
+		update.Clock = &model.ClockOptions{Dynamic: dynamic == "1", Seconds: &showSeconds, TimezoneMode: c.FormValue("clock-timezone-mode"), Timezone: strings.TrimSpace(c.FormValue("clock-timezone"))}
+		if err := clock.Validate(*update.Clock); err != nil {
+			return c.String(http.StatusBadRequest, err.Error())
+		}
+	}
+
 	update.Title = body.OptionTitle
 	update.Footer = body.OptionFooter
 	update.OpenAppNewTab = body.OptionOpenAppNewTab
@@ -65,7 +80,9 @@ func updateAppearanceOptions(c *echo.Context) error {
 	if body.Locale != "" {
 		update.Locale = body.Locale
 	}
-	data.UpdateAppearance(update)
+	if !data.UpdateAppearance(update) {
+		return c.String(http.StatusInternalServerError, "unable to save appearance settings")
+	}
 	return pageAppearance(c)
 }
 
@@ -99,6 +116,16 @@ func pageAppearance(c *echo.Context) error {
 	m["OptionKeepLetterCase"] = options.KeepLetterCase
 	m["OptionIconModeDefault"] = IconModeDefault
 	m["OptionIconModeFilling"] = IconModeFilling
+	resolved := clock.Resolve(options.Clock, options.ShowDateTime)
+	m["ClockDynamic"] = resolved.Options.Dynamic
+	m["ClockSeconds"] = resolved.Options.ShowSeconds()
+	m["ClockMode"] = resolved.Options.TimezoneMode
+	m["ClockTimezone"] = resolved.Options.Timezone
+	m["ClockServerZone"] = time.Local.String()
+	m["ClockServerTime"] = time.Now().Format("2006-01-02 15:04:05 MST")
+	if !define.AppFlags.DisableCSP {
+		c.Response().Header().Set("Content-Security-Policy", clock.SettingsPolicy())
+	}
 	m["OptionLocale"] = options.Locale
 	m["Locale"] = options.Locale
 	return c.Render(http.StatusOK, "settings.html", m)

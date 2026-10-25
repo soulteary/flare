@@ -2,7 +2,9 @@
 <input type=hidden name=bookmarks id=field-bookmarks></form></div><h2>应用编辑</h2><div id=search-container style=text-align:right><span style=float:left;margin:2px><span>高亮筛选:</span>
 <input id=search>
 </span><input style="margin:0 10px" type=submit value=保存数据 class=update-data>
-<input type=submit value=返回首页 id=back-home></div><div id=container-bookmarks></div><script type=text/html id=data-categories>{{.DataCategories}}</script><script type=text/html id=data-bookmarks>{{.DataBookmarks}}</script><script>
+<input type=submit value=返回首页 id=back-home></div><div id=container-bookmarks></div><script type=text/html id=data-categories>{{.DataCategories}}</script>
+<script type=text/html id=data-bookmarks>{{.DataBookmarks}}</script>
+<script>
         let categories = JSON.parse(document.getElementById("data-categories").innerHTML) || [];
         const dataBookmarks = JSON.parse(document.getElementById("data-bookmarks").innerHTML) || [];
 

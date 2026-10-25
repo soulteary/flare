@@ -43,9 +43,10 @@
       <div class="module-container" id="hero-container">
         <div id="plugin-datetime">
           {{ if .OptionShowDateTime }}
-          <p>
-            <span>{{.HeroDate}}</span> <span>{{.HeroDay}}</span> <span>{{.HeroTime}}</span>
+          <p id="clock" data-dynamic="{{.ClockDynamic}}" data-seconds="{{.ClockSeconds}}" data-locale="{{.Locale}}" data-mode="{{.ClockMode}}" data-zone="{{.ClockZone}}" {{ if .ClockGreetings }}data-greetings="{{.ClockGreetings}}" data-greeting-fallback="{{.ClockGreetingFallback}}"{{ end }}>
+            <span id="clock-date">{{.HeroDate}}</span> <span id="clock-day">{{.HeroDay}}</span> <span id="clock-time">{{.HeroTime}}</span>
           </p>
+          {{ if eq .ClockMode "browser" }}<noscript><p>{{ T .Locale "clock_noscript" }}</p></noscript>{{ end }}
           {{ end }}
           {{ if .OptionShowTitle }}
           <h1 class="plugin-container" id="plugin-greetings">{{.Greetings}}</h1>
@@ -128,6 +129,6 @@
     </div>
   </div>
 
-  <script>document.addEventListener('keydown',function(e){if(e.key==='Escape')history.back();});</script>
+  {{ if .ClockEnhance }}<script>{{ template "clock-script" }}</script>{{ end }}
 </body>
 </html>
