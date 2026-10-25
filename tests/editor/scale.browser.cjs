@@ -28,7 +28,24 @@ const assert=require('node:assert/strict'), fs=require('node:fs/promises'), path
     search.value='';search.dispatchEvent(new Event('input'));
     return {count,renderMs:Math.round(renderMs),layoutMs:Math.round(layoutMs),filterMs:Math.round(filterMs),filtered,visible:document.querySelectorAll('.entry').length,stored:ui.store.toJSON().bookmarks.length,dirty:ui.store.dirty};
    },count);
-   assert.equal(result.visible,count);assert.equal(result.stored,count);assert.equal(result.dirty,false);assert.ok(result.filtered>0);measurements.push(result);
+   assert.equal(result.visible,count);assert.equal(result.stored,count);assert.equal(result.dirty,false);assert.ok(result.filtered>0);
+   // Programmatic focus enters the same native focus path as keyboard navigation.
+   // Content visibility must reveal and scroll to an initially offscreen row.
+   const lastName=page.locator('.entry').last().locator('.entry-name');
+   await lastName.focus();
+   assert.equal(await lastName.evaluate(el=>document.activeElement===el),true);
+   const focused=await lastName.boundingBox();
+   assert.ok(focused.y>=0 && focused.y+focused.height<=1080,JSON.stringify({count,focused}));
+   await page.keyboard.press('Tab');
+   assert.equal(await page.locator('.entry').last().getByRole('button',{name:'编辑',exact:true}).evaluate(el=>document.activeElement===el),true);
+   await page.locator('#entry-search').fill('Entry '+(count-1));
+   assert.equal(await page.locator('.entry').count(),1);
+   assert.equal(await page.locator('.entry-name').textContent(),'Entry '+(count-1));
+   await page.locator('#entry-search').fill('');
+   assert.equal(await page.locator('.entry').count(),count);
+   const preserved=await page.evaluate(()=>({stored:window.FlareEditorUI.store.toJSON().bookmarks.length,dirty:window.FlareEditorUI.store.dirty}));
+   assert.deepEqual(preserved,{stored:count,dirty:false});
+   measurements.push(result);
   }
   console.log(JSON.stringify({viewport:'1440x1080',measurements},null,2));
  }finally{await browser.close();}
