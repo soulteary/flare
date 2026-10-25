@@ -4,6 +4,7 @@ import "fmt"
 
 // HomepageOptions controls presentation without changing stored bookmark order.
 type HomepageOptions struct {
+	CategoryNavigation   string `yaml:"CategoryNavigation,omitempty"`
 	MobileBookmarkLayout string `yaml:"MobileBookmarkLayout,omitempty"`
 	NavigationTextSize   string `yaml:"NavigationTextSize,omitempty"`
 	TitleSize            string `yaml:"TitleSize,omitempty"`
@@ -12,6 +13,11 @@ type HomepageOptions struct {
 
 // Validate rejects unsupported choices instead of accepting arbitrary CSS values.
 func (o HomepageOptions) Validate() error {
+	switch o.CategoryNavigation {
+	case "", "all", "tabs", "collapse":
+	default:
+		return fmt.Errorf("invalid category navigation: %q", o.CategoryNavigation)
+	}
 	switch o.MobileBookmarkLayout {
 	case "", "single", "compact":
 	default:

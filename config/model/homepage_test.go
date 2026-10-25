@@ -45,3 +45,14 @@ func TestHomepageReadabilityChoices(t *testing.T) {
 		t.Fatal("arbitrary classes accepted")
 	}
 }
+
+func TestCategoryNavigationModes(t *testing.T) {
+	for _, mode := range []string{"", "all", "tabs", "collapse"} {
+		if err := (HomepageOptions{CategoryNavigation: mode}).Validate(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if (HomepageOptions{CategoryNavigation: "<invalid>"}).Validate() == nil {
+		t.Fatal("invalid mode accepted")
+	}
+}

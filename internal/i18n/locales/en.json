@@ -113,5 +113,10 @@
   "app_descriptions": "Application descriptions",
   "show": "Show",
   "hide": "Hide",
-  "readability_help": "These preferences affect the homepage only. Device text scaling still applies."
+  "readability_help": "These preferences affect the homepage only. Device text scaling still applies.",
+  "category_navigation": "Bookmark category navigation",
+  "category_navigation_all": "All groups",
+  "category_navigation_tabs": "Category links",
+  "category_navigation_collapse": "Collapsible groups",
+  "category_navigation_help": "Search expands matching groups. Category selection changes presentation only."
 }

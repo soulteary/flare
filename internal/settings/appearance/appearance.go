@@ -78,6 +78,25 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		update.Homepage = &homepage
 	}
 
+	if mode := formvalue.Get(c, "category-navigation"); mode != "" {
+		existing, err := data.GetAllSettingsOptions()
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).SendString("config error")
+		}
+		homepage := model.HomepageOptions{}
+		if existing.Homepage != nil {
+			homepage = *existing.Homepage
+		}
+		if update.Homepage != nil {
+			homepage = *update.Homepage
+		}
+		homepage.CategoryNavigation = mode
+		if err := homepage.Validate(); err != nil {
+			return c.Status(http.StatusBadRequest).SendString(err.Error())
+		}
+		update.Homepage = &homepage
+	}
+
 	// Missing fields from older forms must not erase existing clock preferences.
 	if formvalue.Get(c, "clock-timezone-mode") != "" {
 		dynamic, seconds := formvalue.Get(c, "clock-dynamic"), formvalue.Get(c, "clock-seconds")
@@ -176,6 +195,10 @@ func pageAppearance(c fiber.Ctx) error {
 		c.Set("Content-Security-Policy", clock.SettingsPolicy())
 	}
 	m["OptionLocale"] = options.Locale
+	m["CategoryNavigation"] = "all"
+	if options.Homepage != nil && options.Homepage.CategoryNavigation != "" {
+		m["CategoryNavigation"] = options.Homepage.CategoryNavigation
+	}
 	m["Locale"] = options.Locale
 	return c.Status(http.StatusOK).Render("settings.html", m)
 }
