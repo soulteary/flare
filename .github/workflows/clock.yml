@@ -45,6 +45,10 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/mobile/browser.cjs
+      - name: Navigation list and form acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/editor/browser.cjs
       - name: Minimal scratch-container timezone acceptance
         shell: bash
         run: |
