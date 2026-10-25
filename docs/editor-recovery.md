@@ -1,6 +1,6 @@
 # Editor save failures and recovery
 
-> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
 
 The editor reads the exact bytes of `apps.yml` and `bookmarks.yml` into one
 revision. Saving a stale revision returns HTTP 409 before either file is

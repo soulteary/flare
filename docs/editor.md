@@ -1,6 +1,6 @@
 # Navigation editor
 
-> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
 
 ## State and persistence
 
@@ -115,5 +115,5 @@ and a draft larger than the historical 4 MiB restore limit.
 
 ## Screenshots
 
-See the [English and Chinese development screenshots](screenshots/README.md) for
+See the [English and Chinese editor screenshots](screenshots/README.md) for
 the list, entry form and batch views. Stable 0.6.4 screenshots show the older UI.

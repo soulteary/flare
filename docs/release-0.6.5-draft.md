@@ -1,5 +1,9 @@
 # Flare 0.6.5 — draft release notes
 
+> Archived preparation record. Flare 0.6.5 has since been published; see the
+> [final release notes](https://github.com/soulteary/flare/releases/tag/0.6.5).
+> The original candidate-time statements below are retained as historical evidence.
+
 Unpublished draft. Candidate scope is changes since 0.6.4; version and final
 commit must be confirmed by the release process.
 

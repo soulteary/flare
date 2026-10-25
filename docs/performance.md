@@ -50,7 +50,7 @@
 具体命令和采样范围见 [基线方法](baseline-metrics.md)。
 
 
-## Development observations after 0.6.4
+## Optimizations shipped in 0.6.5
 
 The following reports measure separate optimizations; their percentages must not
 be added together or presented as a whole-service RSS guarantee:
@@ -72,7 +72,7 @@ work; fewer allocated bytes per request do not alone prove a smaller idle proces
 
 ## Immutable resource metadata and navigation parsing
 
-The main-branch resource follow-up prepares strong content validators once per
+The resource follow-up shipped in 0.6.5 prepares strong content validators once per
 immutable embedded file and avoids file opens/reads for warmed conditional and
 HEAD responses. It retains conditional/range semantics, versions favicon/MDI
 references, canonicalizes icon-cache names, and removes repeated navigation URL

@@ -1,6 +1,6 @@
 # Hybrid homepage search
 
-> Availability: development branch after 0.6.4; not included in the published 0.6.4 image.
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
 
 Hybrid search is an optional enhancement to the ordinary search form. Configure a
 valid external default target and `Search.Mode: hybrid` in search settings. The

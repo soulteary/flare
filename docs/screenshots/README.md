@@ -1,8 +1,9 @@
-# Development editor screenshots
+# Editor screenshots
 
 These are real production-build Chromium captures from the editor acceptance
-suite after 0.6.4, using disposable test data. They do not depict the published
-0.6.4 editor and do not certify physical Safari/Via behavior.
+suite during development of 0.6.5, using disposable test data. They show the
+editor now shipped in 0.6.5, not the older 0.6.4 UI. They do not certify physical
+Safari/Via behavior.
 
 | View | English | 中文 |
 | --- | --- | --- |
@@ -10,7 +11,7 @@ suite after 0.6.4, using disposable test data. They do not depict the published
 | Entry form | [English form](editor-en-form.png) | [中文表单](editor-zh-form.png) |
 | Shared batch editor | [English batch](editor-en-batch.png) | [中文批量编辑](editor-zh-batch.png) |
 
-![Development English editor list](editor-en-list.png)
+![English editor list](editor-en-list.png)
 
 Regenerate with the production binary and the editor browser/reliability suites;
 keep the exact tested SHA and viewport in the acceptance evidence. Stored private
