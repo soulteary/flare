@@ -28,8 +28,8 @@ func updateSearchOptions(c fiber.Ctx) error {
 	options.ShowSearchComponent = c.FormValue("show-search-component") == "1"
 	options.DisabledSearchAutoFocus = c.FormValue("disabled-search-auto-focus") == "1"
 	if c.FormValue("engine-count") == "" {
-		if err := data.UpdateSearchOptions(options.ShowSearchComponent, options.DisabledSearchAutoFocus, options.Search); err != nil {
-			return renderSettings(c, options, "Unable to save search settings: "+err.Error(), false)
+		if saveErr := data.UpdateSearchOptions(options.ShowSearchComponent, options.DisabledSearchAutoFocus, options.Search); saveErr != nil {
+			return renderSettings(c, options, "Unable to save search settings: "+saveErr.Error(), false)
 		}
 		return renderSettings(c, options, "", true)
 	}
@@ -115,7 +115,7 @@ func parseSearchForm(c fiber.Ctx) (model.SearchOptions, error) {
 	opts := model.SearchOptions{Mode: c.FormValue("search-mode", "select"), DefaultTarget: c.FormValue("default-target", "local"), OpenNewTab: c.FormValue("open-new-tab") == "1", EnableKeywords: c.FormValue("enable-keywords") == "1"}
 	count, err := strconv.Atoi(c.FormValue("engine-count", "0"))
 	if err != nil || count < 0 || count > 32 {
-		return opts, fmt.Errorf("Search supports at most 32 engines")
+		return opts, fmt.Errorf("search supports at most 32 engines")
 	}
 	for i := 0; i < count; i++ {
 		key := "engine-" + strconv.Itoa(i) + "-"

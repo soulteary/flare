@@ -167,7 +167,7 @@ func pageSearch(c fiber.Ctx) error {
 	}
 	opts := searchcore.Normalize(options.Search)
 	configMessage := ""
-	if err := searchcore.Validate(opts); err != nil {
+	if validationErr := searchcore.Validate(opts); validationErr != nil {
 		opts = searchcore.Normalize(nil)
 		configMessage = "External search configuration is invalid; local search remains available."
 		if target != "local" {
@@ -325,11 +325,11 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
-	m["Applications"] = GenerateApplicationsTemplate(filter, &options)
-	m["Bookmarks"] = GenerateBookmarkTemplate(filter, &options)
+	apps := GenerateApplicationsTemplate(filter, &options)
+	bookmarks := GenerateBookmarkTemplate(filter, &options)
+	m["Applications"] = apps
+	m["Bookmarks"] = bookmarks
 	if filter != "" {
-		apps, _ := m["Applications"].(template.HTML)
-		bookmarks, _ := m["Bookmarks"].(template.HTML)
 		m["SearchNoResults"] = (!options.ShowApps || !strings.Contains(string(apps), `href="`)) && (!options.ShowBookmarks || !strings.Contains(string(bookmarks), `href="`))
 	}
 	m["SearchKeyword"] = searchKeyword

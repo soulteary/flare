@@ -38,7 +38,7 @@ func TestSearchSettingsPreserveOtherSettingsAndRejectInvalidChanges(t *testing.T
 		t.Fatal(err)
 	}
 	options.DefaultTarget = "missing"
-	if err := UpdateSearchOptions(true, true, &options); err == nil {
+	if updateErr := UpdateSearchOptions(true, true, &options); updateErr == nil {
 		t.Fatal("invalid change saved")
 	}
 	after, err := os.ReadFile("config.yml")
@@ -49,11 +49,11 @@ func TestSearchSettingsPreserveOtherSettingsAndRejectInvalidChanges(t *testing.T
 		t.Fatal("invalid change modified file")
 	}
 	// A malformed backing file must not be overwritten by an apparently successful save.
-	if err := os.WriteFile("config.yml", []byte("Search: ["), 0600); err != nil {
-		t.Fatal(err)
+	if writeErr := os.WriteFile("config.yml", []byte("Search: ["), 0600); writeErr != nil {
+		t.Fatal(writeErr)
 	}
 	invalidateFileCache("config")
-	if err := UpdateSearchOptions(true, true, nil); err == nil {
+	if updateErr := UpdateSearchOptions(true, true, nil); updateErr == nil {
 		t.Fatal("failed read was not reported")
 	}
 }
