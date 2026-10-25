@@ -1,11 +1,11 @@
 # Go Report Card
 
-**Grade: A+** (99.3%)
+**Grade: A+** (99.2%)
 
 | Metric | Value |
 | ------ | ----- |
-| Files | 89 |
-| Issues | 12 |
+| Files | 98 |
+| Issues | 14 |
 
 ## Checks
 
@@ -14,7 +14,7 @@
 | go_vet | 100% |
 | gofmt | 100% |
 | ineffassign | 100% |
-| gocyclo | 94% |
+| gocyclo | 92% |
 | license | 100% |
 | misspell | 92% |
 
@@ -28,19 +28,22 @@
   - Line 77: cyclomatic complexity 22 for function TestIconRoute_ServesSVGAndHTTPRequests
 - `internal/pages/home/application.go`
   - Line 18: cyclomatic complexity 21 for function GenerateApplicationsTemplate
+- `internal/pages/editor/transfer_test.go`
+  - Line 21: cyclomatic complexity 21 for function TestTransferHTTP
 - `internal/logger/echo_handler.go`
   - Line 36: cyclomatic complexity 20 for function NewEchoWithConfig
 - `tools/baseline/main.go`
   - Line 266: cyclomatic complexity 19 for function main
+- `internal/bookmarks/transfer.go`
+  - Line 175: cyclomatic complexity 40 for function Build
+  - Line 62: cyclomatic complexity 29 for function parseHTML
+  - Line 146: cyclomatic complexity 22 for function URLKey
+  - Line 19: cyclomatic complexity 16 for function Parse
 
 ### misspell
 
-- `internal/resources/mdi/mdi-cheat-sheets/css/materialdesignicons.min.css`
-  - Line 1: "stange" is a misspelling of "strange"
 - `internal/resources/mdi/mdi-cheat-sheets/index.html`
   - Line 476: "stange" is a misspelling of "strange"
-- `embed/assets/css/base.css`
-  - Line 91: "bookmakrs" is a misspelling of "bookmarks"
 - `embed/assets/css/home/bookmarks.css`
   - Line 1: "bookmakrs" is a misspelling of "bookmarks"
   - Line 5: "bookmakrs" is a misspelling of "bookmarks"
@@ -55,6 +58,8 @@
   - Line 58: "bookmakrs" is a misspelling of "bookmarks"
   - Line 62: "bookmakrs" is a misspelling of "bookmarks"
   - Line 67: "bookmakrs" is a misspelling of "bookmarks"
+- `embed/assets/css/base.css`
+  - Line 91: "bookmakrs" is a misspelling of "bookmarks"
 - `config/define/style.go`
   - Line 3: "bookmakrs" is a misspelling of "bookmarks"
   - Line 3: "bookmakrs" is a misspelling of "bookmarks"
@@ -74,6 +79,8 @@
   - Line 88: "bookmakrs" is a misspelling of "bookmarks"
 - `internal/resources/templates/html/home.html`
   - Line 16: "bookmakrs" is a misspelling of "bookmarks"
+- `internal/resources/mdi/mdi-cheat-sheets/css/materialdesignicons.min.css`
+  - Line 1: "stange" is a misspelling of "strange"
 
 ---
 

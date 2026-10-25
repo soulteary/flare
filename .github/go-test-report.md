@@ -4,11 +4,11 @@
 
 | Metric | Value |
 | --- | --- |
-| Total | 97 |
-| Passed | 97 |
+| Total | 109 |
+| Passed | 109 |
 | Failed | 0 |
 | Skipped | 0 |
-| Coverage | 37.40% |
+| Coverage | 45.70% |
 | Threshold | 0.00% |
 
 ### Packages
@@ -18,25 +18,26 @@
 | . | no\_tests | 0 | 0 | 0.00% |
 | build | no\_tests | 0 | 0 | 0.00% |
 | build/builder | no\_tests | 0 | 0 | 0.00% |
-| cmd | pass | 23 | 0 | 92.06% |
-| config/data | pass | 19 | 0 | 78.35% |
+| cmd | pass | 24 | 0 | 92.23% |
+| config/data | pass | 21 | 0 | 81.78% |
 | config/define | no\_tests | 0 | 0 | 0.00% |
 | config/model | no\_tests | 0 | 0 | N/A |
-| internal/auth | pass | 29 | 0 | 78.31% |
+| internal/auth | pass | 30 | 0 | 78.82% |
+| internal/bookmarks | pass | 5 | 0 | 89.81% |
 | internal/fn | pass | 8 | 0 | 71.43% |
 | internal/i18n | no\_tests | 0 | 0 | 0.00% |
 | internal/logger | pass | 1 | 0 | 68.42% |
 | internal/misc/deprecated | no\_tests | 0 | 0 | 0.00% |
 | internal/misc/health | pass | 1 | 0 | 100.00% |
 | internal/misc/redir | no\_tests | 0 | 0 | 0.00% |
-| internal/pages/editor | no\_tests | 0 | 0 | 0.00% |
+| internal/pages/editor | pass | 2 | 0 | 55.95% |
 | internal/pages/guide | no\_tests | 0 | 0 | 0.00% |
 | internal/pages/home | pass | 2 | 0 | 0.48% |
 | internal/pool | no\_tests | 0 | 0 | 0.00% |
 | internal/resources/assets | pass | 3 | 0 | 92.11% |
 | internal/resources/mdi | pass | 6 | 0 | 91.67% |
 | internal/resources/templates | no\_tests | 0 | 0 | 0.00% |
-| internal/server | pass | 5 | 0 | 48.33% |
+| internal/server | pass | 6 | 0 | 48.33% |
 | internal/settings | no\_tests | 0 | 0 | 0.00% |
 | internal/settings/appearance | no\_tests | 0 | 0 | 0.00% |
 | internal/settings/others | no\_tests | 0 | 0 | 0.00% |

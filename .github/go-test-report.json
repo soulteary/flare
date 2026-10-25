@@ -1,15 +1,15 @@
 {
   "schema_version": "1.0",
   "tests": {
-    "total": 97,
-    "passed": 97,
+    "total": 109,
+    "passed": 109,
     "failed": 0,
     "skipped": 0
   },
   "coverage": {
-    "covered_statements": 794,
-    "total_statements": 2123,
-    "percentage": 37.4,
+    "covered_statements": 1174,
+    "total_statements": 2569,
+    "percentage": 45.7,
     "threshold": 0
   },
   "packages": [
@@ -37,16 +37,16 @@
     {
       "name": "cmd",
       "status": "pass",
-      "tests": 23,
+      "tests": 24,
       "failed": 0,
-      "coverage": 92.06
+      "coverage": 92.23
     },
     {
       "name": "config/data",
       "status": "pass",
-      "tests": 19,
+      "tests": 21,
       "failed": 0,
-      "coverage": 78.35
+      "coverage": 81.78
     },
     {
       "name": "config/define",
@@ -65,9 +65,16 @@
     {
       "name": "internal/auth",
       "status": "pass",
-      "tests": 29,
+      "tests": 30,
       "failed": 0,
-      "coverage": 78.31
+      "coverage": 78.82
+    },
+    {
+      "name": "internal/bookmarks",
+      "status": "pass",
+      "tests": 5,
+      "failed": 0,
+      "coverage": 89.81
     },
     {
       "name": "internal/fn",
@@ -113,10 +120,10 @@
     },
     {
       "name": "internal/pages/editor",
-      "status": "no_tests",
-      "tests": 0,
+      "status": "pass",
+      "tests": 2,
       "failed": 0,
-      "coverage": 0
+      "coverage": 55.95
     },
     {
       "name": "internal/pages/guide",
@@ -163,7 +170,7 @@
     {
       "name": "internal/server",
       "status": "pass",
-      "tests": 5,
+      "tests": 6,
       "failed": 0,
       "coverage": 48.33
     },
