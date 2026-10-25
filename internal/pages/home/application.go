@@ -1,6 +1,7 @@
 package home
 
 import (
+	"html"
 	"html/template"
 	"strings"
 	"sync"
@@ -8,7 +9,6 @@ import (
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/fn"
-	"github.com/soulteary/flare/internal/resources/mdi"
 )
 
 var builderPool = sync.Pool{
@@ -62,45 +62,35 @@ func GenerateApplicationsTemplate(filter string, options *model.Application, req
 		if desc == "" {
 			desc = app.URL
 		}
-		templateURL := app.URL
-		if strings.HasPrefix(app.URL, "chrome-extension://") || options.EnableEncryptedLink {
-			templateURL = fn.EncodedNavigationURL(app.URL, firstRequestInfo(requestInfo))
-		}
-		templateIcon := mdi.GetIconByName(app.Icon)
-		if strings.HasPrefix(app.Icon, "http://") || strings.HasPrefix(app.Icon, "https://") {
-			templateIcon = `<img src="` + app.Icon + `"/>`
-		} else if app.Icon != "" {
-			templateIcon = mdi.GetIconByName(app.Icon)
-		} else if options.IconMode == "FILLING" {
-			templateIcon = fn.GetYandexFavicon(app.URL, mdi.GetIconByName(app.Icon))
-		}
+		templateURL := navigationHref(app.URL, options.EnableEncryptedLink, firstRequestInfo(requestInfo))
+		templateIcon := navigationIcon(app.Icon, app.URL, options.IconMode)
 		if options.OpenAppNewTab {
 			b.WriteString(`<div class="app-container" data-id="`)
-			b.WriteString(app.Icon)
+			b.WriteString(html.EscapeString(app.Icon))
 			b.WriteString(`"><a target="_blank" rel="noopener" href="`)
-			b.WriteString(templateURL)
+			b.WriteString(html.EscapeString(templateURL))
 			b.WriteString(`" class="app-item" title="`)
-			b.WriteString(app.Name)
+			b.WriteString(html.EscapeString(app.Name))
 			b.WriteString(`"><div class="app-icon">`)
 			b.WriteString(templateIcon)
 			b.WriteString(`</div><div class="app-text"><p class="app-title">`)
-			b.WriteString(app.Name)
+			b.WriteString(html.EscapeString(app.Name))
 			b.WriteString(`</p><p class="app-desc">`)
-			b.WriteString(desc)
+			b.WriteString(html.EscapeString(desc))
 			b.WriteString(`</p></div></a></div>`)
 		} else {
 			b.WriteString(`<div class="app-container" data-id="`)
-			b.WriteString(app.Icon)
+			b.WriteString(html.EscapeString(app.Icon))
 			b.WriteString(`"><a rel="noopener" href="`)
-			b.WriteString(templateURL)
+			b.WriteString(html.EscapeString(templateURL))
 			b.WriteString(`" class="app-item" title="`)
-			b.WriteString(app.Name)
+			b.WriteString(html.EscapeString(app.Name))
 			b.WriteString(`"><div class="app-icon">`)
 			b.WriteString(templateIcon)
 			b.WriteString(`</div><div class="app-text"><p class="app-title">`)
-			b.WriteString(app.Name)
+			b.WriteString(html.EscapeString(app.Name))
 			b.WriteString(`</p><p class="app-desc">`)
-			b.WriteString(desc)
+			b.WriteString(html.EscapeString(desc))
 			b.WriteString(`</p></div></a></div>`)
 		}
 	}
