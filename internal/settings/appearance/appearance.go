@@ -46,6 +46,66 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
 	}
 	var update model.Application
+	// Copy existing options so older forms cannot erase newer preferences.
+	layout, textSize, titleSize, hideDesc := formvalue.Get(c, "mobile-bookmark-layout"), formvalue.Get(c, "navigation-text-size"), formvalue.Get(c, "title-size"), formvalue.Get(c, "hide-app-descriptions")
+	if layout != "" || textSize != "" || titleSize != "" || hideDesc != "" {
+		existing, err := data.GetAllSettingsOptions()
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).SendString("config error")
+		}
+		homepage := model.HomepageOptions{}
+		if existing.Homepage != nil {
+			homepage = *existing.Homepage
+		}
+		if layout != "" {
+			homepage.MobileBookmarkLayout = layout
+		}
+		if textSize != "" {
+			homepage.NavigationTextSize = textSize
+		}
+		if titleSize != "" {
+			homepage.TitleSize = titleSize
+		}
+		if hideDesc != "" {
+			if hideDesc != "0" && hideDesc != "1" {
+				return c.Status(http.StatusBadRequest).SendString("invalid description visibility")
+			}
+			homepage.HideAppDescriptions = hideDesc == "1"
+		}
+		if err := homepage.Validate(); err != nil {
+			return c.Status(http.StatusBadRequest).SendString(err.Error())
+		}
+		update.Homepage = &homepage
+	}
+
+	if mode, columns := formvalue.Get(c, "category-navigation"), formvalue.Get(c, "desktop-columns"); mode != "" || columns != "" {
+		existing, err := data.GetAllSettingsOptions()
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).SendString("config error")
+		}
+		homepage := model.HomepageOptions{}
+		if existing.Homepage != nil {
+			homepage = *existing.Homepage
+		}
+		if update.Homepage != nil {
+			homepage = *update.Homepage
+		}
+		if mode != "" {
+			homepage.CategoryNavigation = mode
+		}
+		if columns != "" {
+			if columns == "legacy" {
+				homepage.DesktopColumns = ""
+			} else {
+				homepage.DesktopColumns = columns
+			}
+		}
+		if err := homepage.Validate(); err != nil {
+			return c.Status(http.StatusBadRequest).SendString(err.Error())
+		}
+		update.Homepage = &homepage
+	}
+
 	// Missing fields from older forms must not erase existing clock preferences.
 	if formvalue.Get(c, "clock-timezone-mode") != "" {
 		dynamic, seconds := formvalue.Get(c, "clock-dynamic"), formvalue.Get(c, "clock-seconds")
@@ -102,6 +162,22 @@ func pageAppearance(c fiber.Ctx) error {
 	m["PageAppearance"] = define.GetAppBodyStyle()
 	m["SettingPages"] = define.SettingPages
 	m["SettingsURI"] = define.RegularPages.Settings.Path
+	m["OptionNavigationTextSize"] = "standard"
+	m["OptionTitleSize"] = "standard"
+	m["OptionHideAppDescriptions"] = false
+	if options.Homepage != nil {
+		if options.Homepage.NavigationTextSize == "larger" || options.Homepage.NavigationTextSize == "large" {
+			m["OptionNavigationTextSize"] = options.Homepage.NavigationTextSize
+		}
+		if options.Homepage.TitleSize == "compact" || options.Homepage.TitleSize == "prominent" {
+			m["OptionTitleSize"] = options.Homepage.TitleSize
+		}
+		m["OptionHideAppDescriptions"] = options.Homepage.HideAppDescriptions
+	}
+	m["OptionMobileBookmarkLayout"] = "single"
+	if options.Homepage != nil && options.Homepage.MobileBookmarkLayout == "compact" {
+		m["OptionMobileBookmarkLayout"] = "compact"
+	}
 	m["OptionTitle"] = options.Title
 	m["OptionFooter"] = template.HTML(options.Footer)
 	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
@@ -128,6 +204,15 @@ func pageAppearance(c fiber.Ctx) error {
 		c.Set("Content-Security-Policy", clock.SettingsPolicy())
 	}
 	m["OptionLocale"] = options.Locale
+	m["DesktopColumnChoices"] = []string{"4", "5", "6", "8"}
+	m["DesktopColumns"] = ""
+	if options.Homepage != nil {
+		m["DesktopColumns"] = options.Homepage.DesktopColumns
+	}
+	m["CategoryNavigation"] = "all"
+	if options.Homepage != nil && options.Homepage.CategoryNavigation != "" {
+		m["CategoryNavigation"] = options.Homepage.CategoryNavigation
+	}
 	m["Locale"] = options.Locale
 	return c.Status(http.StatusOK).Render("settings.html", m)
 }
