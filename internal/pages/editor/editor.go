@@ -49,7 +49,12 @@ func updateData(c *echo.Context) error {
 	if err := c.Bind(&body); err != nil {
 		return c.JSON(http.StatusForbidden, "提交数据缺失")
 	}
-	data.UpdateBookmarksFromEditor(body.Categories, body.Bookmarks)
+	if !data.UpdateBookmarksFromEditor(body.Categories, body.Bookmarks) {
+		return c.JSON(http.StatusInternalServerError, map[string]any{"saved": false, "error": "保存失败，请检查数据格式、目录权限和服务端日志。"})
+	}
+	if c.Request().Header.Get("Accept") == "application/json" {
+		return c.JSON(http.StatusOK, map[string]bool{"saved": true})
+	}
 	return render(c)
 }
 

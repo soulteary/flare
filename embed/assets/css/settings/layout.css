@@ -142,3 +142,14 @@
 #page-settings .form-about hr {
   margin: 10px 0;
 }
+
+@media (max-width: 768px) {
+  #page-settings.pageview .container { min-width: 0; width: 100%; padding: 20px 16px calc(24px + env(safe-area-inset-bottom)); }
+  #page-settings .main-container .setting-group-container { margin-left: 0; min-width: 0; }
+  #page-settings h1 { font-size: 1.8rem; overflow-wrap: anywhere; }
+  #page-settings .form-group select,
+  #page-settings .form-group input.option-input,
+  #page-settings .form-group textarea { min-height: 44px; font-size: 16px; }
+  #page-settings .form-group input.btn-submit { min-height: 44px; }
+  #page-settings .help-text, #page-settings .form-about { overflow-wrap: anywhere; }
+}
