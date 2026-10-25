@@ -2,7 +2,15 @@ package home
 
 import (
 	"errors"
+	"github.com/gofiber/fiber/v3"
+	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/resources/mdi"
+	"github.com/soulteary/flare/internal/resources/templates"
+	"io"
+	"net/http/httptest"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -159,5 +167,86 @@ func TestWeatherSuccessfulRefreshClearsFailureBackoff(t *testing.T) {
 	defer cache.mu.Unlock()
 	if cache.failures != 0 || !cache.retryAt.IsZero() {
 		t.Fatal("success did not clear retry state")
+	}
+}
+
+func TestWeatherWidgetWaitsForSnapshotOnHomeAndHelp(t *testing.T) {
+	t.Chdir(t.TempDir())
+	originalFlags := define.AppFlags
+	originalCache := homepageWeather
+	defer func() { define.AppFlags = originalFlags; homepageWeather = originalCache }()
+	define.AppFlags.EnableOfflineMode = false
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		t.Fatal(err)
+	}
+	options.ShowTitle = true
+	options.ShowWeather = true
+	options.Location = "Beijing"
+	if !data.UpdateAppearance(options) || !data.UpdateWeatherAndLocation(true, "Beijing") {
+		t.Fatal("prepare settings")
+	}
+	if !data.SaveFavoriteBookmarks(model.Bookmarks{}) || !data.SaveNormalBookmarks(model.Bookmarks{}) {
+		t.Fatal("prepare bookmarks")
+	}
+	clock := testWeatherClock()
+	release := make(chan struct{})
+	homepageWeather = newWeatherCache(clock.now, func(string) (model.Weather, error) {
+		<-release
+		return model.Weather{Degree: 24, Humidity: 48, Expires: clock.now().Add(time.Minute).Unix()}, nil
+	})
+	cache := homepageWeather
+	defer func() { close(release); waitWeatherIdle(t, cache) }()
+	if err := mdi.Init(); err != nil {
+		t.Fatal(err)
+	}
+	views, err := templates.NewRenderer()
+	if err != nil {
+		t.Fatal(err)
+	}
+	app := fiber.New(fiber.Config{Views: views})
+	app.Get("/", pageHome)
+	app.Get("/help", renderHelp)
+	request := func(path string) string {
+		response, requestErr := app.Test(httptest.NewRequest("GET", path, nil))
+		if requestErr != nil {
+			t.Fatal(requestErr)
+		}
+		defer response.Body.Close()
+		body, readErr := io.ReadAll(response.Body)
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+		if response.StatusCode != 200 {
+			t.Fatalf("%s returned %d: %s", path, response.StatusCode, body)
+		}
+		return string(body)
+	}
+	for _, path := range []string{"/", "/help"} {
+		if body := request(path); strings.Contains(body, `id=plugin-weather`) || strings.Contains(body, `id="plugin-weather"`) {
+			t.Fatalf("%s rendered fabricated cold weather", path)
+		}
+	}
+	// Publish a complete same-city snapshot; both pages should render real values.
+	cache.mu.Lock()
+	cache.snapshot = model.Weather{Location: "Beijing", Degree: 24, Humidity: 48, Expires: clock.now().Add(time.Minute).Unix()}
+	cache.mu.Unlock()
+	for _, path := range []string{"/", "/help"} {
+		body := request(path)
+		if !(strings.Contains(body, `id=plugin-weather`) || strings.Contains(body, `id="plugin-weather"`)) || !strings.Contains(body, "24°C") || !strings.Contains(body, "48%") {
+			t.Fatalf("%s omitted valid weather", path)
+		}
+	}
+	cache.mu.Lock()
+	cache.location = "Shanghai"
+	cache.snapshot = model.Weather{}
+	cache.mu.Unlock()
+	if !data.UpdateWeatherAndLocation(true, "Shanghai") {
+		t.Fatal("change city")
+	}
+	for _, path := range []string{"/", "/help"} {
+		if body := request(path); strings.Contains(body, `id=plugin-weather`) || strings.Contains(body, `id="plugin-weather"`) {
+			t.Fatalf("%s rendered fabricated changed-city weather", path)
+		}
 	}
 }

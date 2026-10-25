@@ -128,7 +128,7 @@ func renderHelp(c fiber.Ctx) error {
 	m["SettingPages"] = define.SettingPages
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
-	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && configWeatherShow
+	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && configWeatherShow && weatherData.Location != ""
 	m["Location"] = options.Location
 	m["WeatherData"] = weatherData
 	m["WeatherIcon"] = weatherip.GetSVGCodeByName(weatherData.ConditionCode)
@@ -290,7 +290,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["SettingPages"] = define.SettingPages
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
-	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && configWeatherShow
+	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && configWeatherShow && weatherData.Location != ""
 	m["Location"] = options.Location
 	m["WeatherData"] = weatherData
 	m["WeatherIcon"] = weatherip.GetSVGCodeByName(weatherData.ConditionCode)
