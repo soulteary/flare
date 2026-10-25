@@ -178,7 +178,7 @@ func TestEditorDocumentPreservesImplicitDefaultCategory(t *testing.T) {
 
 // Unrelated edits must not destroy comments or rewrite the other collection.
 func TestEditorDocumentPreservesUnchangedYAML(t *testing.T) {
-	doc := editorFixture(t)
+	_ = editorFixture(t)
 	require.NoError(t, os.WriteFile("bookmarks.yml", []byte("# Preserve this comment\ncategories:\n- id: stable-category\n  title: Original\nlinks:\n- name: Bookmark\n  link: custom://server/a?x=1&y=2#f\n  category: stable-category\n"), 0600))
 	doc, err := EditorSnapshot()
 	require.NoError(t, err)
