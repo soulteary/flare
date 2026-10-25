@@ -4,7 +4,8 @@ Appearance settings offer a sequential single-column layout (the default) and
 opt-in compact columns on 360–768 CSS-pixel viewports. Compact columns read down
 the first column and then down the second; a bookmark group is kept together.
 Below 360px the layout falls back to a single column. Neither option changes the
-saved category order. Desktop layout is unchanged.
+saved category order. Mobile layout choices do not change desktop layout; desktop
+column limits are configured separately.
 
 Long greetings and weather now use natural wrapping at all viewport widths,
 including tablet widths and desktop zoom. Physical Safari/Via font scaling and
@@ -26,8 +27,9 @@ choices without writing and preserve saved choices when an older form omits them
 
 Appearance settings can enlarge navigation text (`standard`, `larger`, `large`),
 choose a greeting title size (`compact`, `standard`, `prominent`) and hide app
-descriptions. Defaults retain the existing presentation. These settings only
-apply to the homepage, use rem-based sizes, and do not disable device text
+descriptions. Defaults retain the existing presentation. Navigation text and
+application descriptions apply to the homepage, bookmarks and applications pages;
+greeting size affects the homepage. Rem-based sizes do not disable device text
 scaling. Enlarged app cards grow vertically rather than clipping their text.
 
 An omitted Homepage block or omitted fields in older appearance forms preserve

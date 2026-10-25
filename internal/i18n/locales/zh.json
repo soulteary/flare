@@ -113,7 +113,7 @@
   "app_descriptions": "应用描述",
   "show": "显示",
   "hide": "隐藏",
-  "readability_help": "仅影响首页，设备字体缩放仍然生效。",
+  "readability_help": "导航文字和应用描述设置适用于首页、书签页与应用页；问候语大小适用于首页。设备字体缩放仍然生效。",
   "category_navigation": "书签分类导航",
   "category_navigation_all": "全部分组",
   "category_navigation_tabs": "分类切换",
