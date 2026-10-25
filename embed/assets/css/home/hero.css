@@ -1,3 +1,4 @@
+#plugin-datetime { min-width: 0; flex: 1 1 28rem; overflow-wrap: anywhere; }
 #page-home #hero-container {
   display: flex;
   flex-wrap: wrap;
@@ -38,5 +39,3 @@
   #page-home #hero-container p { height: auto; overflow-wrap: anywhere; }
   #plugin-weather { position: static; flex: 0 0 auto; }
 }
-
-#plugin-datetime { min-width: 0; flex: 1 1 28rem; overflow-wrap: anywhere; }
