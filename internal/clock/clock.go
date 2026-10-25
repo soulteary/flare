@@ -23,17 +23,34 @@ var script string
 //go:embed scripts/settings.js
 var settingsScript string
 
+// html/template strips JavaScript comments from literal template content. Normalize
+// each embedded script once so both the named template and CSP use those final bytes.
+var literalClock = literalSource(script)
+var literalSettings = literalSource(settingsScript)
+
+func literalSource(source string) string {
+	t := template.Must(template.New("embedded-script").Parse("<script>" + source + "</script>"))
+	var out strings.Builder
+	if err := t.Execute(&out, nil); err != nil {
+		panic(err)
+	}
+	return strings.TrimSuffix(strings.TrimPrefix(out.String(), "<script>"), "</script>")
+}
+
 // Scripts are immutable embedded sources. The exact same bytes are hashed and
 // rendered after HTML minification, so formatting cannot invalidate the CSP hash.
-func Script() template.JS         { return template.JS(script) }
-func SettingsScript() template.JS { return template.JS(settingsScript) }
+// Templates returns only embedded build-time source, never configuration or request data.
+// Register these as literal named templates instead of bypassing auto-escaping.
+func Templates() string {
+	return `{{define "clock-script"}}` + literalClock + `{{end}}{{define "clock-settings-script"}}` + literalSettings + `{{end}}`
+}
 func scriptPolicy(source string) string {
 	sum := sha256.Sum256([]byte(source))
 	return "script-src 'sha256-" + base64.StdEncoding.EncodeToString(sum[:]) + "'; script-src-attr 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script';"
 }
 
-var policy = scriptPolicy(script)
-var settingsPolicy = scriptPolicy(settingsScript)
+var policy = scriptPolicy(literalClock)
+var settingsPolicy = scriptPolicy(literalSettings)
 
 func Policy() string         { return policy }
 func SettingsPolicy() string { return settingsPolicy }
@@ -148,7 +165,6 @@ func Populate(m map[string]any, opts model.Application, now time.Time, updateGre
 	m["ClockSeconds"] = r.Options.ShowSeconds()
 	m["ClockMode"] = r.Options.TimezoneMode
 	m["ClockZone"] = r.Zone
-	m["ClockScript"] = Script()
 	if updateGreeting {
 		m["Greetings"] = Greeting(opts.Greetings, opts.Locale, now.Hour())
 		if opts.ShowTitle {

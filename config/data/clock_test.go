@@ -44,8 +44,8 @@ func TestClockSettingsPersistenceAndValidation(t *testing.T) {
 	if got.Clock == nil || got.Clock.ShowSeconds() || !got.Clock.Dynamic || got.Clock.Timezone != "America/New_York" || got.Location != "London" {
 		t.Fatalf("settings lost: %+v", got)
 	}
-	if err := os.Mkdir("blocked", 0700); err != nil {
-		t.Fatal(err)
+	if mkdirErr := os.Mkdir("blocked", 0700); mkdirErr != nil {
+		t.Fatal(mkdirErr)
 	}
 	if saveConfigAtomically("blocked", []byte("x")) {
 		t.Fatal("overwrote directory")

@@ -129,6 +129,6 @@
     </div>
   </div>
 
-  {{ if .ClockEnhance }}<script>{{.ClockScript}}</script>{{ end }}
+  {{ if .ClockEnhance }}<script>{{ template "clock-script" }}</script>{{ end }}
 </body>
 </html>

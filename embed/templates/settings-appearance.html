@@ -172,7 +172,7 @@
             <p class="help-text">{{ T .Locale "clock_help" }}</p>
           </div>
         </div>
-        <script>{{.ClockSettingsScript}}</script>
+        <script>{{ template "clock-settings-script" }}</script>
 
         <div class="form-group">
             <label for="settings-show-apps">{{ T .Locale "show_apps" }}</label>

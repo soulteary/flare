@@ -25,7 +25,8 @@
   function stop() { clearTimeout(timer); timer = undefined; }
   function update() {
     stop();
-    if (document.hidden) return;
+    // Static device time must initialize even in a background tab.
+    if (dynamic && document.hidden) return;
     try {
       var now = new Date();
       var parts = {};

@@ -57,7 +57,8 @@ never modify `TZ`, `time.Local`, the host clock, or the weather location.
 
 - Static server/custom display uses the server's system clock. Live display uses
   the **visitor device's system clock** in the selected display zone. Device-zone
-  static mode initializes once from that device's clock, with no recurring timer.
+  static mode initializes once from that device's clock (including when initially
+  opened in a background tab), with no recurring timer.
 - This is a start-page display, not NTP or a network synchronization service.
   An incorrectly set device clock produces an incorrectly timed live display.
 - Date, weekday, time and segmented greetings use the same display zone. Fixed
@@ -88,7 +89,8 @@ never modify `TZ`, `time.Local`, the host clock, or the weather location.
 
 ## Security and performance / 安全与性能
 
-Both enhancement scripts are immutable embedded resources. CSP hashes authorize
+Both enhancement scripts are immutable embedded resources, registered as literal
+named templates without `template.JS` auto-escaping bypasses. CSP hashes authorize
 only their exact bytes; configuration is HTML-escaped in data attributes, never
 interpolated into JavaScript. No `unsafe-inline`, `eval`, CDN, date library or
 framework is needed. The default static home retains `script-src 'none'` and no

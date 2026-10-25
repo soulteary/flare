@@ -4,12 +4,12 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname,'../../internal/clock/scripts/clock.js'),'utf8');
-function clock(instant, overrides = {}, intl = Intl) {
+function clock(instant, overrides = {}, intl = Intl, hidden = false) {
   let now = Date.parse(instant), next = 0, tasks = new Map();
   const events = {}, windowEvents = {};
   const root = {dataset:{dynamic:'true',seconds:'true',locale:'zh',mode:'custom',zone:'Asia/Shanghai',greetings:'morning;noon;afternoon;night',greetingFallback:'fallback',...overrides},hasAttribute(name){return name === 'data-greetings' && this.dataset.greetings !== undefined;}};
   const nodes = {'clock':root,'clock-date':{textContent:''},'clock-day':{textContent:''},'clock-time':{textContent:''},'plugin-greetings':{textContent:'fixed help title'}};
-  const document = {hidden:false,getElementById:id=>nodes[id],addEventListener:(name,fn)=>events[name]=fn};
+  const document = {hidden,getElementById:id=>nodes[id],addEventListener:(name,fn)=>events[name]=fn};
   class FakeDate extends Date {constructor(...args){super(...(args.length?args:[now]));}static now(){return now;}}
   const context = vm.createContext({document,window:{addEventListener:(name,fn)=>windowEvents[name]=fn},Date:FakeDate,Intl:intl,setTimeout:(fn,delay)=>{tasks.set(++next,{fn,delay});return next;},clearTimeout:id=>tasks.delete(id)});
   const run = ()=>vm.runInContext(source,context);
@@ -35,3 +35,19 @@ test('English format matches Go and midnight uses 00',()=>{const c=clock('2026-1
 test('unsupported zone or Intl leaves fallback untouched',()=>{for(const [o,intl] of [[{zone:'Local'},Intl],[{},{}]]){const c=clock('2026-10-25T00:00:00Z',o,intl);assert.equal(c.tasks.size,0);assert.equal(c.nodes['plugin-greetings'].textContent,'fixed help title');assert.equal(c.root.dataset.initialized,undefined);}});
 test('fixed help title has no greeting data and stays unchanged',()=>{const c=clock('2026-10-25T00:00:00Z',{greetings:undefined});assert.equal(c.nodes['plugin-greetings'].textContent,'fixed help title');});
 test('fixed and incomplete greetings do not break clock',()=>{for(const [g,want] of [['fixed','fixed'],['morning;noon','fallback']]){const c=clock('2026-10-25T07:00:00Z',{greetings:g});assert.equal(c.nodes['plugin-greetings'].textContent,want);assert.equal(c.tasks.size,1);}});
+
+test('static device clock initializes in an initially hidden tab without recurring work',()=>{
+ const instant='2026-10-25T00:00:00Z';
+ const c=clock(instant,{dynamic:'false',mode:'browser',locale:'en'},Intl,true);
+ const expected=new Intl.DateTimeFormat('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date(instant));
+ assert.equal(c.text('time'),expected);
+ assert.ok(c.text('date'));
+ assert.notEqual(c.nodes['plugin-greetings'].textContent,'fixed help title');
+ assert.equal(c.tasks.size,0);
+});
+test('dynamic clock opened hidden waits for visibility and starts exactly one timer',()=>{
+ const c=clock('2026-10-25T00:00:00Z',{},Intl,true);
+ assert.equal(c.text('time'),'');assert.equal(c.tasks.size,0);
+ c.setTime('2026-10-25T01:00:00Z');c.document.hidden=false;c.emit('visibilitychange');
+ assert.equal(c.text('time'),'09:00:00');assert.equal(c.tasks.size,1);
+});

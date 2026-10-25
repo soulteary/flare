@@ -123,7 +123,6 @@ func pageAppearance(c *echo.Context) error {
 	m["ClockTimezone"] = resolved.Options.Timezone
 	m["ClockServerZone"] = time.Local.String()
 	m["ClockServerTime"] = time.Now().Format("2006-01-02 15:04:05 MST")
-	m["ClockSettingsScript"] = clock.SettingsScript()
 	if !define.AppFlags.DisableCSP {
 		c.Response().Header().Set("Content-Security-Policy", clock.SettingsPolicy())
 	}
