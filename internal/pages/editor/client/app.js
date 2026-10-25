@@ -7,13 +7,18 @@
   const fields={Name:'entry-name',URL:'entry-url',Category:'entry-location'};
   function el(tag, text, className) { const node=document.createElement(tag); if(text!==undefined)node.textContent=text;if(className)node.className=className;return node; }
   function button(text, action, className) {const node=el('button',text,className);node.type='button';node.addEventListener('click',action);return node;}
-  function categoryName(id) {return id==='apps' ? '应用区' : (store.working.categories.find(c=>c.ID===id)?.Name || '分类缺失：'+id);}
+  function categoryName(id) {
+    if(id==='apps')return '应用区';
+    if(id==='category:')return store.working.categories.length ? '默认分类 · '+store.working.categories[0].Name : '未分类书签';
+    return store.working.categories.find(c=>'category:'+c.ID===id)?.Name || '分类缺失：'+id;
+  }
+
   function locations(select, value, includeAll=false, exclude=null) {
     select.replaceChildren();
     function option(v,t){const o=el('option',t);o.value=v;select.append(o);}
     if(includeAll)option('all','全部位置');else option('','请选择位置');
-    option('apps','应用区');
-    for(const c of store.working.categories)if(c.ID!==exclude)option(c.ID,c.Name);
+    option('apps','应用区');if(exclude===null)option('category:',categoryName('category:'));
+    for(const c of store.working.categories)if(c.ID!==exclude)option('category:'+c.ID,c.Name);
     if(value && ![...select.options].some(o=>o.value===value))option(value,'分类缺失：'+value);
     select.value=value || (includeAll?'all':'');
   }
@@ -27,7 +32,7 @@
     const filter=$('location-filter').value, query=$('entry-search').value.trim().toLocaleLowerCase();
     locations($('location-filter'),filter,true);
     const entries=store.entries();
-    const shown=entries.filter(({item,location})=>(filter==='all'||filter===location) && [item.Name,item.URL,item.Desc].some(value=>String(value||'').toLocaleLowerCase().includes(query)));
+    const shown=entries.filter(({item,location})=>(filter==='all'||filter===location||(location==='category:'&&filter==='category:'+store.working.categories[0]?.ID)) && [item.Name,item.URL,item.Desc].some(value=>String(value||'').toLocaleLowerCase().includes(query)));
     $('total-count').textContent=entries.length+' 条';
     $('result-count').textContent=(query||filter!=='all')?`找到 ${shown.length} 条，共 ${entries.length} 条`:`共 ${entries.length} 条`;
     const list=$('entry-list');list.replaceChildren();
@@ -69,7 +74,7 @@
   $('entry-form').addEventListener('submit',event=>{
     event.preventDefault();clearErrors();const values=Object.fromEntries(new FormData(event.target));
     if(!values.Name.trim())return fieldError('Name','请填写名称');if(!values.URL.trim())return fieldError('URL','请填写地址');
-    if(values.Location!=='apps' && !store.working.categories.some(c=>c.ID===values.Location))return fieldError('Category','请选择有效位置');
+    if(values.Location!=='apps' && values.Location!=='category:' && !store.working.categories.some(c=>'category:'+c.ID===values.Location))return fieldError('Category','请选择有效位置');
     const existed=editingKey && store.find(editingKey);
     const item={Name:values.Name.trim(),URL:values.URL.trim(),Icon:values.Icon,Desc:values.Desc};
     store.put(item,values.Location,editingKey);lastLocation=values.Location;undo=null;close(entryDialog);render();
@@ -88,9 +93,9 @@
     const moved=store.working.bookmarks.filter(item=>item.Category===id);
     store.working.bookmarks=store.working.bookmarks.filter(item=>item.Category!==id);
     if(destination==='apps')store.working.apps.push(...moved.map(item=>({...item,Category:''})));
-    else store.working.bookmarks.push(...moved.map(item=>({...item,Category:destination})));
+    else store.working.bookmarks.push(...moved.map(item=>({...item,Category:destination.slice('category:'.length)})));
     store.working.categories=store.working.categories.filter(c=>c.ID!==id);migrationID=null;undo=null;
-    if($('location-filter').value===id)$('location-filter').value='all';renderCategories();render();
+    if($('location-filter').value==='category:'+id)$('location-filter').value='all';renderCategories();render();
   }
   function renderCategories() {
     const list=$('category-list');list.replaceChildren();
@@ -118,7 +123,7 @@
   function validateDocument() {
     const names=new Set(),ids=new Set();
     for(let i=0;i<store.working.categories.length;i++){const c=store.working.categories[i];if(!c.ID||ids.has(c.ID)||!c.Name.trim()||names.has(c.Name.trim())||c.Name.trim()==='[Flare 应用]')return {field:'categories.'+i+'.Name',error:'分类名称或 ID 无效'};names.add(c.Name.trim());ids.add(c.ID);}
-    for(const collection of ['apps','bookmarks'])for(let i=0;i<store.working[collection].length;i++){const item=store.working[collection][i];for(const name of ['Name','URL'])if(!String(item[name]||'').trim())return{field:collection+'.'+i+'.'+name,error:name==='Name'?'请填写名称':'请填写地址'};if(collection==='bookmarks'&&!ids.has(item.Category))return{field:collection+'.'+i+'.Category',error:'请选择有效位置'};}
+    for(const collection of ['apps','bookmarks'])for(let i=0;i<store.working[collection].length;i++){const item=store.working[collection][i];for(const name of ['Name','URL'])if(!String(item[name]||'').trim())return{field:collection+'.'+i+'.'+name,error:name==='Name'?'请填写名称':'请填写地址'};if(collection==='bookmarks'&&item.Category&&!ids.has(item.Category))return{field:collection+'.'+i+'.Category',error:'请选择有效位置'};}
   }
   function locateError(result) {
     const [collection,index,field]=result.field.split('.');

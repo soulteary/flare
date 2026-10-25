@@ -49,6 +49,10 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/editor/browser.cjs
+      - name: Legacy bookmark compatibility
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/editor/legacy.browser.cjs
       - name: Minimal scratch-container timezone acceptance
         shell: bash
         run: |

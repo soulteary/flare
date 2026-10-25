@@ -2,6 +2,7 @@ package data
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -132,4 +133,36 @@ func TestEditorDocumentReportsIncompleteRecovery(t *testing.T) {
 	raw, readErr := os.ReadFile(copies[0])
 	require.NoError(t, readErr)
 	require.Contains(t, string(raw), "name: App")
+}
+
+func TestEditorDocumentPreservesImplicitDefaultCategory(t *testing.T) {
+	for _, withCategory := range []bool{false, true} {
+		t.Run(fmt.Sprint(withCategory), func(t *testing.T) {
+			_ = editorFixture(t)
+			raw := "links:\n- name: Implicit\n  link: http://nas:8080/default?q=1#f\n  private: true\n"
+			if withCategory {
+				raw = "categories:\n- id: first\n  title: First\n" + raw
+			}
+			require.NoError(t, os.WriteFile("bookmarks.yml", []byte(raw), 0600))
+			doc, err := EditorSnapshot()
+			require.NoError(t, err)
+			doc.Apps[0].Name = "Changed app only"
+			saved, err := CommitEditorDocument(doc)
+			require.NoError(t, err)
+			require.Len(t, saved.Bookmarks, 1)
+			require.Empty(t, saved.Bookmarks[0].Category)
+			require.True(t, saved.Bookmarks[0].Private)
+			saved.Bookmarks[0].Name = "Edited without reclassification"
+			_, err = CommitEditorDocument(saved)
+			require.NoError(t, err)
+			read, err := EditorSnapshot()
+			require.NoError(t, err)
+			require.Len(t, read.Apps, 1)
+			require.Len(t, read.Bookmarks, 1)
+			require.Empty(t, read.Bookmarks[0].Category)
+			written, err := os.ReadFile("bookmarks.yml")
+			require.NoError(t, err)
+			require.NotContains(t, string(written), "category:")
+		})
+	}
 }

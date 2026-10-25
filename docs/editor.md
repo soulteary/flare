@@ -54,3 +54,16 @@ that navigation with an integrated adapter.
 `node tests/editor/browser.cjs` runs the list/form acceptance suite with the same
 FLARE_BINARY and CHROMIUM_EXECUTABLE variables as the mobile tests. Optional
 EDITOR_SCREENSHOT_DIR captures mobile list/form and desktop list screenshots.
+
+
+## Legacy placement compatibility
+
+Application placement is separate from category IDs: a historical category with
+ID `apps` remains a bookmark group. An omitted/empty bookmark category remains in
+`bookmarks.yml`, following the homepage's first named group (or the ungrouped
+bookmark list if no groups exist). The editor labels this default placement
+explicitly and does not force users to reclassify it before unrelated saves.
+Filtering the first named category includes default-placement links; the default
+placement filter can also show just those links. Unknown nonempty category IDs
+remain validation errors. `tests/editor/legacy.browser.cjs` covers both legacy
+layouts, app-only saves, add/edit preservation and the special-ID collision.
