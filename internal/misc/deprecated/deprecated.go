@@ -1,11 +1,9 @@
-//go:build !fiber
-
 package deprecated
 
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/define"
 )
@@ -28,12 +26,12 @@ func makeLandingPage(originURL string, currentURL string, delay string) []byte {
 	return []byte(tpl)
 }
 
-func RegisterRouting(e *echo.Echo) {
+func RegisterRouting(e *fiber.App) {
 	const urlMDI = "/resources/mdi-cheat-sheets/"
-	e.GET(urlMDI, func(c *echo.Context) error {
+	e.Get(urlMDI, func(c fiber.Ctx) error {
 		if define.AppFlags.EnableDeprecatedNotice {
-			return c.HTMLBlob(http.StatusOK, makeLandingPage(urlMDI, define.RegularPages.Icons.Path, "5"))
+			return c.Status(http.StatusOK).Type("html", "utf-8").Send(makeLandingPage(urlMDI, define.RegularPages.Icons.Path, "5"))
 		}
-		return c.Redirect(http.StatusFound, define.RegularPages.Icons.Path)
+		return c.Redirect().Status(http.StatusFound).To(define.RegularPages.Icons.Path)
 	})
 }

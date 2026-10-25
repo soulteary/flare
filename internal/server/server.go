@@ -1,11 +1,9 @@
-//go:build !fiber
-
 package server
 
 import (
 	"context"
 	"log/slog"
-	"net/http"
+	"net"
 	"os"
 	"os/signal"
 	"strconv"
@@ -27,17 +25,15 @@ func StartDaemon(AppFlags *model.Flags) {
 		os.Exit(1)
 	}
 
-	srv := &http.Server{
-		Addr:              ":" + strconv.Itoa(AppFlags.Port),
-		Handler:           router,
-		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       5 * time.Second,
-		WriteTimeout:      10 * time.Second,
-		IdleTimeout:       60 * time.Second,
+	srv := router.(*fiberRouter)
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(AppFlags.Port))
+	if err != nil {
+		log.Error("程序启动出错：", slog.Any("error", err))
+		os.Exit(1)
 	}
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := srv.Serve(listener); err != nil {
 			log.Error("程序启动出错：", slog.Any("error", err))
 			os.Exit(1)
 		}

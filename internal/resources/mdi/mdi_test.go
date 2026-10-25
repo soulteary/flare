@@ -1,11 +1,10 @@
-//go:build !fiber
-
 package mdi
 
 import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -14,14 +13,14 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/define"
 )
 
 // newIconTestRouter isolates the package's startup state and registers the real routes.
 // These tests intentionally do not run in parallel because the application flags are global.
-func newIconTestRouter(t *testing.T, minimumRequest bool) *echo.Echo {
+func newIconTestRouter(t *testing.T, minimumRequest bool) *fiber.App {
 	t.Helper()
 	originalFlags := define.AppFlags
 	originalTheme := define.ThemeCurrent
@@ -37,7 +36,7 @@ func newIconTestRouter(t *testing.T, minimumRequest bool) *echo.Echo {
 	if err := Init(); err != nil {
 		t.Fatalf("initialize MDI resources: %v", err)
 	}
-	e := echo.New()
+	e := fiber.New(fiber.Config{CaseSensitive: true, StrictRouting: true})
 	RegisterRouting(e)
 	return e
 }
@@ -66,13 +65,24 @@ func generatedIconURL(t *testing.T) string {
 }
 
 // requestIcon exercises routing and error handling with an optional request header.
-func requestIcon(e *echo.Echo, method, url, header, value string) *httptest.ResponseRecorder {
+func requestIcon(e *fiber.App, method, url, header, value string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(method, url, nil)
 	if header != "" {
 		req.Header.Set(header, value)
 	}
 	rec := httptest.NewRecorder()
-	e.ServeHTTP(rec, req)
+	response, err := e.Test(req)
+	if err != nil {
+		panic(err)
+	}
+	defer response.Body.Close()
+	for key, values := range response.Header {
+		rec.Header()[key] = values
+	}
+	rec.WriteHeader(response.StatusCode)
+	if _, err := io.Copy(rec.Body, response.Body); err != nil {
+		panic(err)
+	}
 	return rec
 }
 
@@ -205,14 +215,12 @@ func (f failingIconFS) Open(name string) (fs.File, error) {
 
 func TestIconFileHandler_PreservesUnexpectedReadErrors(t *testing.T) {
 	cause := errors.New("icon cache unavailable")
-	e := echo.New()
 	var reported error
-	defaultErrorHandler := echo.DefaultHTTPErrorHandler(false)
-	e.HTTPErrorHandler = func(c *echo.Context, err error) {
+	e := fiber.New(fiber.Config{CaseSensitive: true, StrictRouting: true, ErrorHandler: func(c fiber.Ctx, err error) error {
 		reported = err
-		defaultErrorHandler(c, err)
-	}
-	e.GET(_ASSETS_WEB_URI+"/:name", iconFileHandler(failingIconFS{err: cause}))
+		return fiber.DefaultErrorHandler(c, err)
+	}})
+	e.Get(_ASSETS_WEB_URI+"/:name", iconFileHandler(failingIconFS{err: cause}))
 	rec := requestIcon(e, http.MethodGet, "/assets/mdi/pumpkin-serverNetwork.svg", "", "")
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("unexpected read failure must remain a 500, got %d: %q", rec.Code, rec.Body.String())

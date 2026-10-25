@@ -1,5 +1,7 @@
 # Flare Baseline Metrics (Echo V5)
 
+> Historical Echo v5 measurements. The current production stack uses Fiber; see the [performance index](../docs/performance.md).
+
 - generated_at: 2026-02-16T08:05:30Z
 - requests: 2000
 - concurrency: 8

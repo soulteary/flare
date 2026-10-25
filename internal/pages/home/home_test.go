@@ -1,5 +1,3 @@
-//go:build !fiber
-
 package home
 
 import (
@@ -7,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/stretchr/testify/assert"
@@ -23,14 +21,15 @@ func TestSetCSPHeader_WhenDisableCSPFalse_SetsHeader(t *testing.T) {
 	defer restoreAppFlags(orig)
 	define.AppFlags.DisableCSP = false
 
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	e := fiber.New()
+	e.Get("/", func(c fiber.Ctx) error { setCSPHeader(c); return c.SendStatus(http.StatusOK) })
+	rec, err := e.Test(httptest.NewRequest(http.MethodGet, "/", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rec.Body.Close()
 
-	setCSPHeader(c)
-
-	assert.Equal(t, _cspValue, rec.Header().Get("Content-Security-Policy"), "应设置 CSP 头")
+	assert.Equal(t, _cspValue, rec.Header.Get("Content-Security-Policy"), "应设置 CSP 头")
 }
 
 func TestSetCSPHeader_WhenDisableCSPTrue_NoHeader(t *testing.T) {
@@ -38,12 +37,13 @@ func TestSetCSPHeader_WhenDisableCSPTrue_NoHeader(t *testing.T) {
 	defer restoreAppFlags(orig)
 	define.AppFlags.DisableCSP = true
 
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	e := fiber.New()
+	e.Get("/", func(c fiber.Ctx) error { setCSPHeader(c); return c.SendStatus(http.StatusOK) })
+	rec, err := e.Test(httptest.NewRequest(http.MethodGet, "/", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rec.Body.Close()
 
-	setCSPHeader(c)
-
-	assert.Empty(t, rec.Header().Get("Content-Security-Policy"), "禁用 CSP 时不应设置头")
+	assert.Empty(t, rec.Header.Get("Content-Security-Policy"), "禁用 CSP 时不应设置头")
 }

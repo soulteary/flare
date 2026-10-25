@@ -1,20 +1,18 @@
-//go:build !fiber
-
 package settings
 
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/define"
 )
 
-func RegisterRouting(e *echo.Echo) {
-	e.GET(define.RegularPages.Settings.Path, pageHome)
-	e.GET(define.RegularPages.Settings.Path+"/", pageHome)
+func RegisterRouting(e *fiber.App) {
+	e.Get(define.RegularPages.Settings.Path, pageHome)
+	e.Get(define.RegularPages.Settings.Path+"/", pageHome)
 }
 
-func pageHome(c *echo.Context) error {
-	return c.Redirect(http.StatusFound, define.SettingPages.Theme.Path)
+func pageHome(c fiber.Ctx) error {
+	return c.Redirect().Status(http.StatusFound).To(define.SettingPages.Theme.Path)
 }

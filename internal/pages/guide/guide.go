@@ -1,5 +1,3 @@
-//go:build !fiber
-
 package guide
 
 import (
@@ -9,7 +7,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/static"
 	memfs "github.com/soulteary/memfs-kit"
 
 	"github.com/soulteary/flare/config/define"
@@ -33,15 +32,15 @@ func Init() error {
 	return nil
 }
 
-func RegisterRouting(e *echo.Echo) {
+func RegisterRouting(e *fiber.App) {
 	if introAssets, err := fs.Sub(IntroAssets, "guide-assets"); err == nil {
-		e.StaticFS(_ASSETS_WEB_URI, introAssets)
+		e.Use(_ASSETS_WEB_URI, static.New("", static.Config{FS: introAssets}))
 	}
-	e.GET(define.RegularPages.Guide.Path, render)
+	e.Get(define.RegularPages.Guide.Path, render)
 }
 
-func render(c *echo.Context) error {
-	return c.HTMLBlob(http.StatusOK, []byte(getUserHomePage()))
+func render(c fiber.Ctx) error {
+	return c.Status(http.StatusOK).Type("html", "utf-8").Send([]byte(getUserHomePage()))
 }
 
 func getUserHomePage() string {

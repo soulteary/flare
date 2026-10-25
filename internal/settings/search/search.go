@@ -1,11 +1,9 @@
-//go:build !fiber
-
 package search
 
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
@@ -13,27 +11,27 @@ import (
 	"github.com/soulteary/flare/internal/pool"
 )
 
-func RegisterRouting(e *echo.Echo) {
-	e.GET(define.SettingPages.Search.Path, pageSearch, auth.AuthRequired)
-	e.POST(define.SettingPages.Search.Path, updateSearchOptions, auth.AuthRequired)
+func RegisterRouting(e *fiber.App) {
+	e.Get(define.SettingPages.Search.Path, auth.AuthRequired, pageSearch)
+	e.Post(define.SettingPages.Search.Path, auth.AuthRequired, updateSearchOptions)
 }
 
-func updateSearchOptions(c *echo.Context) error {
+func updateSearchOptions(c fiber.Ctx) error {
 	var body struct {
 		ShowSearchComponent     bool `form:"show-search-component"`
 		DisabledSearchAutoFocus bool `form:"disabled-search-auto-focus"`
 	}
-	if err := c.Bind(&body); err != nil {
-		return c.JSON(http.StatusForbidden, "提交数据缺失")
+	if err := c.Bind().Body(&body); err != nil {
+		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
 	}
 	data.UpdateSearch(body.ShowSearchComponent, body.DisabledSearchAutoFocus)
 	return pageSearch(c)
 }
 
-func pageSearch(c *echo.Context) error {
+func pageSearch(c fiber.Ctx) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "config error")
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	locale := options.Locale
 	if locale == "" {
@@ -51,5 +49,5 @@ func pageSearch(c *echo.Context) error {
 	m["ShowSearchComponent"] = options.ShowSearchComponent
 	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus
 	m["OptionTitle"] = options.Title
-	return c.Render(http.StatusOK, "settings.html", m)
+	return c.Status(http.StatusOK).Render("settings.html", m)
 }

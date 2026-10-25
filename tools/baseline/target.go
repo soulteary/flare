@@ -15,7 +15,7 @@ import (
 )
 
 // Native targets bypass the HTTP compatibility adapter used by integration
-// tests. Echo handlers run directly on net/http; Fiber runs on fasthttp.
+// tests. Production Fiber runs on fasthttp; generic test targets use net/http.
 type nativeTarget interface {
 	Serve(net.Listener) error
 	Shutdown(context.Context) error

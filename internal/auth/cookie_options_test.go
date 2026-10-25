@@ -1,5 +1,3 @@
-//go:build !fiber
-
 package auth
 
 import (
@@ -10,7 +8,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/labstack/echo/v5"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 )
@@ -29,8 +26,8 @@ func TestSessionCookieOptionsAreRequestScoped(t *testing.T) {
 		User:         "testuser",
 		Pass:         "testpass",
 	}
-	e := echo.New()
-	if err := RequestHandle(e); err != nil {
+	e := newAuthTestApp()
+	if err := RequestHandle(e.App); err != nil {
 		t.Fatal(err)
 	}
 

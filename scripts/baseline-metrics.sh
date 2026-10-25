@@ -10,14 +10,13 @@ fi
 REQUESTS="${REQUESTS:-2000}"
 CONCURRENCY="${CONCURRENCY:-8}"
 WARMUP="${WARMUP:-100}"
-HTTP_STACK="${HTTP_STACK:-echo}"
+HTTP_STACK="${HTTP_STACK:-fiber}"
 
 GO_RUN=(go run)
 case "${HTTP_STACK}" in
-  echo) ;;
-  fiber) GO_RUN+=(-tags fiber) ;;
+  fiber) ;;
   *)
-    echo "HTTP_STACK must be echo or fiber (got: ${HTTP_STACK})" >&2
+    echo "HTTP_STACK must be fiber (Echo is available in the historical comparison snapshot) (got: ${HTTP_STACK})" >&2
     exit 2
     ;;
 esac
@@ -38,7 +37,8 @@ cat > "${REPORT_FILE}" <<EOF
 - client_idle_connections_per_host: 2 (original net/http default)
 
 Allocation and profile data include both the load generator and server.
-Use scripts/compare-http-stacks.py for isolated server resource measurements.
+Use scripts/analyze-redirect.py for current isolated redirect resources.
+Use scripts/compare-http-stacks.py only to replay the frozen Echo/Fiber experiment.
 
 | scenario | endpoint | QPS | P50 | P95 | P99 | allocs/op | B/op |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |

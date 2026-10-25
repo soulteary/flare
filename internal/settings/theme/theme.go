@@ -1,11 +1,10 @@
-//go:build !fiber
-
 package theme
 
 import (
 	"net/http"
+	"strings"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
@@ -13,30 +12,33 @@ import (
 	"github.com/soulteary/flare/internal/pool"
 )
 
-func RegisterRouting(e *echo.Echo) {
-	e.GET(define.SettingPages.Theme.Path, pageTheme, auth.AuthRequired)
-	e.POST(define.SettingPages.Theme.Path, updateThemes, auth.AuthRequired)
+func RegisterRouting(e *fiber.App) {
+	e.Get(define.SettingPages.Theme.Path, auth.AuthRequired, pageTheme)
+	e.Post(define.SettingPages.Theme.Path, auth.AuthRequired, updateThemes)
 }
 
-func updateThemes(c *echo.Context) error {
+func updateThemes(c fiber.Ctx) error {
 	var body struct {
 		Theme string `form:"theme"`
 	}
-	if err := c.Bind(&body); err != nil {
-		return c.JSON(http.StatusForbidden, "提交数据缺失")
+	if err := c.Bind().Body(&body); err != nil {
+		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
 	}
-	data.UpdateThemeName(body.Theme)
+	// The form binder borrows PostArgs storage even when Fiber Immutable is enabled.
+	// ThemeCurrent survives the request, so retain an owned copy.
+	theme := strings.Clone(body.Theme)
+	data.UpdateThemeName(theme)
 	define.UpdatePagePalettes()
-	define.ThemeCurrent = body.Theme
-	define.ThemePrimaryColor = define.GetThemePrimaryColor(body.Theme)
+	define.ThemeCurrent = theme
+	define.ThemePrimaryColor = define.GetThemePrimaryColor(theme)
 	return pageTheme(c)
 }
 
-func pageTheme(c *echo.Context) error {
+func pageTheme(c fiber.Ctx) error {
 	themes := define.ThemePalettes
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "config error")
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	locale := options.Locale
 	if locale == "" {
@@ -53,5 +55,5 @@ func pageTheme(c *echo.Context) error {
 	m["SettingPages"] = define.SettingPages
 	m["Themes"] = themes
 	m["OptionTitle"] = options.Title
-	return c.Render(http.StatusOK, "settings.html", m)
+	return c.Status(http.StatusOK).Render("settings.html", m)
 }

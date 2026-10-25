@@ -1,10 +1,9 @@
-//go:build !fiber
-
 package editor
 
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/auth"
@@ -25,7 +24,7 @@ func TestTransferHTTP(t *testing.T) {
 	before := define.AppFlags
 	defer func() { define.AppFlags = before }()
 	define.AppFlags.DisableLoginMode = true
-	e := echo.New()
+	e := fiber.New(fiber.Config{BodyLimit: 32 << 20})
 	registerTransfers(e)
 	preview := func(header bool) *httptest.ResponseRecorder {
 		var buf bytes.Buffer
@@ -52,7 +51,7 @@ func TestTransferHTTP(t *testing.T) {
 			req.Header.Set("X-Flare-Transfer", "1")
 		}
 		rec := httptest.NewRecorder()
-		e.ServeHTTP(rec, req)
+		serveTransferHTTP(t, e, rec, req)
 		return rec
 	}
 	if rec := preview(false); rec.Code != http.StatusForbidden {
@@ -78,7 +77,7 @@ func TestTransferHTTP(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("X-Flare-Transfer", "1")
 		rec := httptest.NewRecorder()
-		e.ServeHTTP(rec, req)
+		serveTransferHTTP(t, e, rec, req)
 		return rec
 	}
 	if bad := commit(response.Token + "bad"); bad.Code != 400 {
@@ -101,7 +100,7 @@ func TestTransferHTTP(t *testing.T) {
 	for _, format := range []string{"html", "yaml"} {
 		req := httptest.NewRequest(http.MethodGet, transferPath+"/export?collection=bookmarks&format="+format, nil)
 		rec := httptest.NewRecorder()
-		e.ServeHTTP(rec, req)
+		serveTransferHTTP(t, e, rec, req)
 		if rec.Code != 200 || !strings.Contains(rec.Header().Get("Content-Disposition"), "attachment") {
 			t.Fatalf("export %s: %d", format, rec.Code)
 		}
@@ -117,7 +116,7 @@ func TestTransferAuthAndTicketExpiry(t *testing.T) {
 	defer func() { define.AppFlags = before }()
 	define.AppFlags.DisableLoginMode = false
 	define.AppFlags.CookieSecret = strings.Repeat("s", 32)
-	e := echo.New()
+	e := fiber.New(fiber.Config{BodyLimit: 32 << 20})
 	if err := auth.RequestHandle(e); err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +124,7 @@ func TestTransferAuthAndTicketExpiry(t *testing.T) {
 	for _, path := range []string{"", "/export?collection=apps&format=yaml", "/backup?collection=apps"} {
 		req := httptest.NewRequest("GET", transferPath+path, nil)
 		rec := httptest.NewRecorder()
-		e.ServeHTTP(rec, req)
+		serveTransferHTTP(t, e, rec, req)
 		if rec.Code != 302 {
 			t.Fatalf("unauthenticated route %s: %d", path, rec.Code)
 		}
@@ -134,7 +133,7 @@ func TestTransferAuthAndTicketExpiry(t *testing.T) {
 		req := httptest.NewRequest("POST", transferPath+"/"+path, nil)
 		req.Header.Set("X-Flare-Transfer", "1")
 		rec := httptest.NewRecorder()
-		e.ServeHTTP(rec, req)
+		serveTransferHTTP(t, e, rec, req)
 		if rec.Code != 302 {
 			t.Fatalf("unauthenticated write %s: %d", path, rec.Code)
 		}
@@ -152,5 +151,21 @@ func TestTransferAuthAndTicketExpiry(t *testing.T) {
 	}
 	if _, err = readTicket(token, ""); err == nil {
 		t.Fatal("expired ticket accepted")
+	}
+}
+
+func serveTransferHTTP(t *testing.T, app *fiber.App, rec *httptest.ResponseRecorder, req *http.Request) {
+	t.Helper()
+	res, err := app.Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	for key, values := range res.Header {
+		rec.Header()[key] = values
+	}
+	rec.WriteHeader(res.StatusCode)
+	if _, err := io.Copy(rec, res.Body); err != nil {
+		t.Fatal(err)
 	}
 }

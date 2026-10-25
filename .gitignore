@@ -37,3 +37,6 @@ config.yml
 .flare-cookie-secret-*
 
 RELEASE_*
+
+# Browser acceptance dependencies
+tests/clock/node_modules/

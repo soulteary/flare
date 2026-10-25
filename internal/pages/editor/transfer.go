@@ -1,8 +1,7 @@
-//go:build !fiber
-
 package editor
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
@@ -19,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/bookmarks"
@@ -42,22 +41,20 @@ type transferTicket struct {
 	Expires    int64             `json:"expires"`
 }
 
-func registerTransfers(e *echo.Echo) {
-	e.GET(transferPath, func(c *echo.Context) error { return c.Render(http.StatusOK, "transfer.html", nil) }, auth.AuthRequired)
-	e.POST(transferPath+"/preview", previewTransfer, auth.AuthRequired, transferRequest)
-	e.POST(transferPath+"/commit", commitTransfer, auth.AuthRequired, transferRequest)
-	e.GET(transferPath+"/export", exportTransfer, auth.AuthRequired)
-	e.GET(transferPath+"/backup", backupTransfer, auth.AuthRequired)
+func registerTransfers(e *fiber.App) {
+	e.Get(transferPath, auth.AuthRequired, func(c fiber.Ctx) error { return c.Status(http.StatusOK).Render("transfer.html", nil) })
+	e.Post(transferPath+"/preview", auth.AuthRequired, transferRequest, previewTransfer)
+	e.Post(transferPath+"/commit", auth.AuthRequired, transferRequest, commitTransfer)
+	e.Get(transferPath+"/export", auth.AuthRequired, exportTransfer)
+	e.Get(transferPath+"/backup", auth.AuthRequired, backupTransfer)
 }
 
 // A custom header cannot be sent by cross-origin forms. No CORS access is granted.
-func transferRequest(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c *echo.Context) error {
-		if c.Request().Header.Get("X-Flare-Transfer") != "1" || c.Request().Header.Get("Sec-Fetch-Site") == "cross-site" {
-			return c.String(http.StatusForbidden, "请从 Flare 管理页面操作")
-		}
-		return next(c)
+func transferRequest(c fiber.Ctx) error {
+	if c.Get("X-Flare-Transfer") != "1" || c.Get("Sec-Fetch-Site") == "cross-site" {
+		return c.Status(http.StatusForbidden).SendString("请从 Flare 管理页面操作")
 	}
+	return c.Next()
 }
 
 func signTicket(ticket transferTicket) (string, error) {
@@ -107,13 +104,20 @@ func readTicket(token, user string) (transferTicket, error) {
 	return ticket, nil
 }
 
-func transferError(c *echo.Context, status int, err error) error {
-	return c.JSON(status, map[string]string{"error": err.Error()})
+func transferError(c fiber.Ctx, status int, err error) error {
+	return c.Status(status).JSON(map[string]string{"error": err.Error()})
 }
 
-func previewTransfer(c *echo.Context) error {
-	r := c.Request()
-	r.Body = http.MaxBytesReader(c.Response(), r.Body, bookmarks.MaxBytes+(64<<10))
+func previewTransfer(c fiber.Ctx) error {
+	// Keep the existing multipart parser and exact limits; the Fiber handler itself stays native.
+	rawBody := c.BodyRaw()
+	r := &http.Request{
+		Method:        c.Method(),
+		Header:        http.Header{"Content-Type": []string{c.Get("Content-Type")}},
+		Body:          io.NopCloser(bytes.NewReader(rawBody)),
+		ContentLength: int64(len(rawBody)),
+	}
+	r.Body = http.MaxBytesReader(nil, r.Body, bookmarks.MaxBytes+(64<<10))
 	if err := r.ParseMultipartForm(bookmarks.MaxBytes + (64 << 10)); err != nil {
 		return transferError(c, http.StatusBadRequest, fmt.Errorf("无法读取文件（最大 8 MiB）: %w", err))
 	}
@@ -153,16 +157,16 @@ func previewTransfer(c *echo.Context) error {
 	if err != nil {
 		return transferError(c, http.StatusInternalServerError, err)
 	}
-	c.Response().Header().Set("Cache-Control", "no-store")
-	return c.JSON(http.StatusOK, map[string]any{"plan": plan, "token": token})
+	c.Set("Cache-Control", "no-store")
+	return c.Status(http.StatusOK).JSON(map[string]any{"plan": plan, "token": token})
 }
 
-func commitTransfer(c *echo.Context) error {
-	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, 16<<20)
+func commitTransfer(c fiber.Ctx) error {
+	bodyReader := http.MaxBytesReader(nil, io.NopCloser(bytes.NewReader(c.BodyRaw())), 16<<20)
 	var body struct {
 		Token string `json:"token"`
 	}
-	if err := json.NewDecoder(c.Request().Body).Decode(&body); err != nil {
+	if err := json.NewDecoder(bodyReader).Decode(&body); err != nil {
 		return transferError(c, http.StatusBadRequest, err)
 	}
 	ticket, err := readTicket(body.Token, auth.GetUserName(c))
@@ -193,24 +197,25 @@ func commitTransfer(c *echo.Context) error {
 			return transferError(c, status, err)
 		}
 	}
-	c.Response().Header().Set("Cache-Control", "no-store")
-	return c.JSON(http.StatusOK, plan)
+	c.Set("Cache-Control", "no-store")
+	return c.Status(http.StatusOK).JSON(plan)
 }
 
-func transferDownload(c *echo.Context, name, mime string, raw []byte) error {
-	c.Response().Header().Set("Content-Disposition", `attachment; filename="`+name+`"`)
-	c.Response().Header().Set("Cache-Control", "no-store")
-	c.Response().Header().Set("X-Content-Type-Options", "nosniff")
-	return c.Blob(http.StatusOK, mime, raw)
+func transferDownload(c fiber.Ctx, name, mime string, raw []byte) error {
+	c.Set("Content-Disposition", `attachment; filename="`+name+`"`)
+	c.Set("Cache-Control", "no-store")
+	c.Set("X-Content-Type-Options", "nosniff")
+	c.Set("Content-Type", mime)
+	return c.Status(http.StatusOK).Send(raw)
 }
 
-func exportTransfer(c *echo.Context) error {
-	collection := c.QueryParam("collection")
+func exportTransfer(c fiber.Ctx) error {
+	collection := c.Query("collection")
 	current, _, err := data.BookmarkSnapshot(collection)
 	if err != nil {
 		return transferError(c, http.StatusBadRequest, err)
 	}
-	switch c.QueryParam("format") {
+	switch c.Query("format") {
 	case "yaml":
 		raw, err := yaml.Marshal(current)
 		if err != nil {
@@ -228,8 +233,8 @@ func exportTransfer(c *echo.Context) error {
 	}
 }
 
-func backupTransfer(c *echo.Context) error {
-	collection := c.QueryParam("collection")
+func backupTransfer(c fiber.Ctx) error {
+	collection := c.Query("collection")
 	raw, when, err := data.LatestBookmarkBackup(collection)
 	if err != nil {
 		status := http.StatusInternalServerError

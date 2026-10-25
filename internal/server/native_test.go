@@ -1,5 +1,3 @@
-//go:build fiber
-
 package server
 
 import (

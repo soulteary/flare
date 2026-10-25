@@ -1,6 +1,6 @@
 # Flare Baseline Metrics (Gin)
 
-**Historical data**: This report is the baseline result based on Gin before migrating to Echo and is only retained for comparison. The current stack has been switched to Echo.
+**Historical data**: This report is the baseline result based on Gin before migrating to Echo and is only retained for comparison. The current stack uses Fiber; the numbers below remain historical Gin measurements.
 
 - generated_at: 2026-02-16T06:22:08Z
 - requests: 2000

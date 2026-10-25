@@ -1,5 +1,3 @@
-//go:build fiber
-
 package logger
 
 import (

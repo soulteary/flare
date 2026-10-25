@@ -11,6 +11,10 @@ import re
 import selectors
 import statistics
 import subprocess
+import shutil
+import sys
+import tarfile
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -161,9 +165,10 @@ def median(rows, key):
 def report(data, output):
     meta = data['metadata']
     read_buffer = meta.get('read_buffer_bytes', {}).get('fiber')
+    scope = "frozen historical experiment" if meta.get("historical_reference") else "plus the experimental changes in this workspace"
     lines = ['# Flare Echo / Fiber performance comparison', '',
              f"- Generated: {meta['generated_at']} (Asia/Shanghai)",
-             f"- Source: `{meta['revision']}` plus the experimental changes in this workspace",
+             f"- Source: `{meta['revision']}` ({scope})",
              f"- Host: {meta['host']} · {meta['go_version']} · GOMAXPROCS={meta['gomaxprocs']}",
              f"- CPU: {meta['cpu']} · logical CPUs: {meta['logical_cpus']}",
              f"- Client idle connections per host: {meta.get('keepalive_connections',0) or 2} ({'explicit pool' if meta.get('keepalive_connections',0) else 'original Go default'})",
@@ -265,109 +270,82 @@ def report(data, output):
     output.write_text('\n'.join(lines))
 
 
+# This frozen experiment contains the two implementations, dependencies and
+# original harness. Production no longer keeps an Echo implementation or tag.
+REFERENCE_REVISION = '92a9c47771b1083ec5c46e1ea6104ea061c14d42'
+
+
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, default=ROOT / '.benchmark/http-comparison')
-    for name, default in [('requests',2000), ('warmup',100), ('rounds',5), ('concurrency',8),
-                          ('resource-requests',20000), ('resource-warmup',1000), ('resource-rounds',3), ('gomaxprocs',4)]:
-        parser.add_argument('--'+name, type=int, default=default)
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--reference-revision', default=REFERENCE_REVISION)
     parser.add_argument('--skip-build', action='store_true')
-    parser.add_argument('--compare-read-buffers', action='store_true', help='also build same-source 8 KiB and 1 MiB Fiber references with Go overlays')
-    parser.add_argument('--keepalive-connections', type=int, default=0, help='0 preserves the original default transport; set to concurrency for a stable idle pool')
-    args = parser.parse_args()
-    if args.keepalive_connections < 0:
-        parser.error('--keepalive-connections must be non-negative')
-    if min(args.requests, args.warmup, args.rounds, args.concurrency, args.resource_requests,
-           args.resource_warmup, args.resource_rounds, args.gomaxprocs) < 1:
-        parser.error('all workload parameters must be positive')
-    output = args.output.resolve()
-    output.mkdir(parents=True, exist_ok=True)
-    env = dict(os.environ, GOMAXPROCS=str(args.gomaxprocs))
-    binaries = {stack: output / (stack+'-baseline') for stack in ('echo','fiber')}
-    if not args.skip_build:
-        for stack in binaries:
-            tags = ['-tags','fiber'] if stack == 'fiber' else []
-            subprocess.run(['go','build',*tags,'-o',str(binaries[stack]),'./tools/baseline'], cwd=ROOT, env=env, check=True)
-            subprocess.run(['go','build',*tags,'-o',str(output/(stack+'-app')),'.'], cwd=ROOT, env=env, check=True)
-    reference_sources = {}
-    expected_buffers = {}
-    if args.compare_read_buffers:
-        source = ROOT / 'internal/server/router_fiber.go'
-        original_source = source.read_text()
-        field = re.compile(r'(?m)^(\s*ReadBufferSize:\s*)[^,\n]+,')
-        if len(field.findall(original_source)) > 1:
-            raise RuntimeError('Expected at most one ReadBufferSize override')
-        for stack, size in [('fiber_8kib', 8192), ('fiber_1mib', 1 << 20)]:
-            if field.search(original_source):
-                replacement_source = field.sub(lambda match: match.group(1)+str(size)+',', original_source, count=1)
-            else:
-                replacement_source = original_source.replace('fiber.New(fiber.Config{', f'fiber.New(fiber.Config{{\n ReadBufferSize: {size},', 1)
-            if replacement_source == original_source:
-                raise RuntimeError('Reference did not alter ReadBufferSize; choose a different candidate')
-            reference_sources[stack] = replacement_source
-            expected_buffers[stack] = size
-            replacement = output / (stack + '_router.go')
-            replacement.write_text(replacement_source)
-            overlay = output / (stack + '_overlay.json')
-            overlay.write_text(json.dumps({'Replace':{str(source):str(replacement)}})+'\n')
-            binaries[stack] = output / (stack+'-baseline')
-            if not args.skip_build:
-                subprocess.run(['go','build','-overlay',str(overlay),'-tags','fiber','-o',str(binaries[stack]),'./tools/baseline'],cwd=ROOT,env=env,check=True)
-    cpu = run(['sysctl','-n','machdep.cpu.brand_string'], env).strip() if platform.system() == 'Darwin' else platform.processor()
-    metadata = {k:v for k,v in vars(args).items() if k not in ('output','skip_build')}
-    metadata.update({'generated_at':datetime.now(ZoneInfo('Asia/Shanghai')).isoformat(timespec='seconds'),
-                     'host':platform.platform(), 'cpu':cpu, 'logical_cpus':os.cpu_count(),
-                     'go_version':run(['go','version'],env).strip(),
-                     'revision':run(['git','rev-parse','HEAD'],env).strip(),
-                     'runtime_env':{k:env.get(k,'(unset)') for k in ('GOGC','GOMEMLIMIT','GODEBUG','TZ')},
-                     'baseline_sha256':{s:hashlib.sha256(binaries[s].read_bytes()).hexdigest() for s in binaries},
-                     'application_sha256':{s:hashlib.sha256((output/(s+'-app')).read_bytes()).hexdigest() for s in ('echo','fiber')},
-                     'binary_bytes':{s:(output/(s+'-app')).stat().st_size for s in ('echo','fiber')},
-                     'read_buffer_bytes':{},
-                     'baseline_orders':[], 'isolated_orders':[],
-                     'buffer_reference_source_sha256':{s:hashlib.sha256(src.encode()).hexdigest() for s,src in reference_sources.items()},
-                     'buffer_candidate_source_sha256':hashlib.sha256((ROOT/'internal/server/router_fiber.go').read_bytes()).hexdigest()})
-    data = {'metadata':metadata,'baseline':[],'isolated':[]}
-    destination = output / 'comparison.json'
-    def save():
-        destination.write_text(json.dumps(data, indent=2)+'\n')
-    for round_number in range(args.rounds):
-        order = list(binaries)
-        order = order[round_number % len(order):] + order[:round_number % len(order)]
-        data['metadata']['baseline_orders'].append(order.copy())
-        for stack in order:
-            print(f'baseline round {round_number+1}/{args.rounds}: {stack}', flush=True)
-            rows = metrics(run([binaries[stack],'-requests',args.requests,'-warmup',args.warmup,
-                                '-concurrency',args.concurrency,'-keepalive-connections',args.keepalive_connections,'-json'],env))
-            for row in rows:
-                row.update(stack=stack, round=round_number+1)
-                data['baseline'].append(row)
-            save()
-    for round_number in range(args.resource_rounds):
-        order = list(reversed(binaries))
-        order = order[round_number % len(order):] + order[:round_number % len(order)]
-        data['metadata']['isolated_orders'].append(order.copy())
-        for scenario in SCENARIOS:
-            for stack in order:
-                print(f'isolated round {round_number+1}/{args.resource_rounds}: {scenario} {stack}', flush=True)
-                row = isolated(binaries[stack],binaries['echo'],scenario,args,env,
-                               output/f'{stack}-{scenario}-{round_number+1}.stderr.log')
-                row.update(stack=stack, round=round_number+1)
-                data['metadata']['read_buffer_bytes'][stack] = row['read_buffer_bytes']
-                if stack in expected_buffers and row['read_buffer_bytes'] != expected_buffers[stack]:
-                    raise RuntimeError(f'Reference {stack} reported an unexpected buffer size')
-                data['isolated'].append(row)
-                save()
-    validation = {scenario:{stack:{json.dumps({k:v for k,v in r['preflight'].items() if k != 'raw_sha256'},sort_keys=True) for r in data['isolated']
-                                      if r['stack']==stack and r['Scenario']==scenario}
-                            for stack in binaries} for scenario in SCENARIOS}
-    mismatches = [s for s, results in validation.items() if any(values != results['echo'] for values in results.values())]
-    data['metadata']['preflight_mismatches'] = mismatches
-    save()
-    if mismatches:
-        raise RuntimeError('Cross-stack response validation differs; inspect before interpreting: '+', '.join(mismatches))
-    report(data,output/'comparison.md')
-    print(f'Results: {output / "comparison.md"}',flush=True)
+    args, forwarded = parser.parse_known_args()
+    if args.skip_build:
+        raise SystemExit("Historical replay always rebuilds binaries; --skip-build cannot verify their source.")
+    revision = subprocess.check_output(
+        ['git', 'rev-parse', '--verify', args.reference_revision + '^{commit}'],
+        cwd=ROOT, text=True).strip()
+    # Resolve outputs in the caller's project, before entering the snapshot.
+    if '--output' in forwarded:
+        index = forwarded.index('--output') + 1
+        if index == len(forwarded):
+            raise SystemExit('--output requires a directory')
+        forwarded[index] = str(Path(forwarded[index]).resolve())
+    elif any(value.startswith('--output=') for value in forwarded):
+        forwarded = ['--output=' + str(Path(value.split('=', 1)[1]).resolve())
+                     if value.startswith('--output=') else value for value in forwarded]
+    else:
+        forwarded += ['--output', str(ROOT / '.benchmark/http-comparison-historical')]
+    scratch = ROOT / '.benchmark'
+    scratch.mkdir(exist_ok=True)
+    print(f'Replaying the frozen Echo/Fiber experiment at {revision}. '
+          'The current production build uses Fiber only.', flush=True)
+    with tempfile.TemporaryDirectory(prefix='http-reference-', dir=scratch) as directory:
+        snapshot = Path(directory)
+        archive = snapshot / 'source.tar'
+        subprocess.run(['git', 'archive', '--format=tar', '--output', str(archive), revision],
+                       cwd=ROOT, check=True)
+        # Extract ordinary source files only, without trusting archive paths or links.
+        with tarfile.open(archive) as source:
+            for member in source:
+                target = snapshot / member.name
+                if not target.resolve().is_relative_to(snapshot.resolve()):
+                    raise RuntimeError('Reference archive contains an unsafe path')
+                if member.isdir():
+                    target.mkdir(parents=True, exist_ok=True)
+                elif member.isfile():
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    with source.extractfile(member) as stream, target.open('wb') as output:
+                        shutil.copyfileobj(stream, output)
+                    target.chmod(member.mode & 0o777)
+                else:
+                    raise RuntimeError('Reference archive contains an unsupported entry')
+        archive.unlink()
+        router = snapshot / 'internal/server/router.go'
+        fiber_router = snapshot / 'internal/server/router_fiber.go'
+        runner = snapshot / 'scripts/compare-http-stacks.py'
+        marker = "'revision':run(['git','rev-parse','HEAD'],env).strip(),"
+        if (not fiber_router.is_file() or not router.is_file() or not runner.is_file()
+                or 'github.com/labstack/echo/v5' not in router.read_text()
+                or 'github.com/labstack/echo/v5' not in (snapshot / 'go.mod').read_text()
+                or 'REFERENCE_REVISION =' in runner.read_text()
+                or runner.read_text().count(marker) != 1):
+            raise SystemExit('The reference must contain the original dual-stack experiment, not the replay wrapper.')
+        # Stamp provenance before the first partial result is saved, including
+        # when a later workload fails. Only Python metadata is changed, not Go.
+        runner.write_text(runner.read_text().replace(marker,
+            f"'revision':{revision!r}, 'historical_reference':True,"))
+        subprocess.run([sys.executable, str(runner), *forwarded], cwd=snapshot, check=True)
+        output_index = forwarded.index('--output') + 1 if '--output' in forwarded else None
+        output_path = Path(forwarded[output_index]) if output_index else Path(next(
+            value.split('=', 1)[1] for value in forwarded if value.startswith('--output=')))
+        result = output_path / 'comparison.json'
+        if result.exists() and not any(value in ('-h', '--help') for value in forwarded):
+            data = json.loads(result.read_text())
+            data['metadata']['revision'] = revision
+            data['metadata']['historical_reference'] = True
+            result.write_text(json.dumps(data, indent=2) + '\n')
+            report(data, output_path / 'comparison.md')
 
 
 if __name__ == '__main__':

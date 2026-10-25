@@ -1,39 +1,47 @@
-//go:build !fiber
-
 package auth
 
 import (
 	"crypto/subtle"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/gofiber/fiber/v3"
 	"github.com/gorilla/sessions"
-	session "github.com/labstack/echo-contrib/v5/session"
-	"github.com/labstack/echo/v5"
-
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/formvalue"
 )
 
 const (
-	SESSION_KEY_USER_NAME  = "USER_NAME"
-	SESSION_KEY_LOGIN_DATE = "LOGIN_TIME"
-
-	// minimumCookieSecretLength follows securecookie's minimum recommended HMAC key size.
+	SESSION_KEY_USER_NAME     = "USER_NAME"
+	SESSION_KEY_LOGIN_DATE    = "LOGIN_TIME"
 	minimumCookieSecretLength = 32
 )
 
-// sessionName is set by RequestHandle and used by session.Get. Prefer passing name via RequestHandleSessionName.
 var sessionName string
 
-// RequestHandleSessionName returns the session name for the given cookie name and port (for testing or explicit wiring).
+type sessionStoreKey struct{}
+type sessionStateKey struct{}
+
+type cookieStore struct {
+	store *sessions.CookieStore
+	name  string
+}
+
+type sessionState struct {
+	request *http.Request
+	session *sessions.Session
+	err     error
+}
+
+// RequestHandleSessionName preserves the cookie names used by the Echo version.
 func RequestHandleSessionName(cookieName string, port int) string {
 	return fmt.Sprintf("%s_%d", cookieName, port)
 }
 
-// RequestHandle initializes the signing key before configuring login routes and sessions.
-func RequestHandle(e *echo.Echo) error {
+func RequestHandle(app *fiber.App) error {
 	if !define.AppFlags.DisableLoginMode {
 		secret, err := initializeCookieSecret(define.AppFlags.CookieSecret)
 		if err != nil {
@@ -44,21 +52,38 @@ func RequestHandle(e *echo.Echo) error {
 	sessionName = RequestHandleSessionName(define.AppFlags.CookieName, define.AppFlags.Port)
 	if !define.AppFlags.DisableLoginMode {
 		store := sessions.NewCookieStore([]byte(define.AppFlags.CookieSecret))
-		// Define Flare's policy explicitly: gorilla/sessions defaults to
-		// SameSite=None and Secure, which prevents ordinary HTTP logins.
 		store.Options = &sessions.Options{
-			Path:     "/",
-			MaxAge:   30 * 24 * 60 * 60,
-			HttpOnly: true,
-			SameSite: http.SameSiteLaxMode,
-			Secure:   define.AppFlags.CookieSecure,
+			Path: "/", MaxAge: 30 * 24 * 60 * 60, HttpOnly: true,
+			SameSite: http.SameSiteLaxMode, Secure: define.AppFlags.CookieSecure,
 		}
 		store.MaxAge(store.Options.MaxAge)
-		e.Use(session.Middleware(store))
-		e.POST(define.MiscPages.Login.Path, login)
-		e.POST(define.MiscPages.Logout.Path, logout)
+		configured := cookieStore{store: store, name: sessionName}
+		app.Use(func(c fiber.Ctx) error {
+			c.Locals(sessionStoreKey{}, &configured)
+			return c.Next()
+		})
+		app.Post(define.MiscPages.Login.Path, login)
+		app.Post(define.MiscPages.Logout.Path, logout)
 	}
 	return nil
+}
+
+// getSession adapts only the Cookie header when a handler actually needs a
+// session. The cached state replaces Gorilla's net/http request registry without
+// adapting the entire request or changing the signed cookie format.
+func getSession(c fiber.Ctx) (*sessionState, error) {
+	if state, ok := c.Locals(sessionStateKey{}).(*sessionState); ok {
+		return state, state.err
+	}
+	configured, ok := c.Locals(sessionStoreKey{}).(*cookieStore)
+	if !ok {
+		return nil, errors.New("session store is not configured")
+	}
+	request := &http.Request{Header: http.Header{"Cookie": {c.Get(fiber.HeaderCookie)}}}
+	session, err := configured.store.New(request, configured.name)
+	state := &sessionState{request: request, session: session, err: err}
+	c.Locals(sessionStateKey{}, state)
+	return state, err
 }
 
 var commonText = `<a href="` + define.SettingPages.Others.Path + `">返回重试</a></p><p>或前往 <a href="https://github.com/soulteary/docker-flare/issues/" target="_blank">https://github.com/soulteary/docker-flare/issues/</a> 反馈使用中的问题，谢谢！`
@@ -66,115 +91,110 @@ var internalErrorInput = []byte(`<html><p>请填写正确的用户名和密码 `
 var internalErrorEmpty = []byte(`<html><p>用户名或密码不能为空 ` + commonText + `</html>`)
 var internalErrorSave = []byte(`<html><p>程序内部错误，保存登陆状态失败 ` + commonText + `</html>`)
 
-func AuthRequired(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c *echo.Context) error {
-		if !define.AppFlags.DisableLoginMode {
-			sess, err := session.Get(sessionName, c)
-			if err != nil {
-				return c.Redirect(http.StatusFound, define.SettingPages.Others.Path)
-			}
-			user := sess.Values[SESSION_KEY_USER_NAME]
-			if user == nil {
-				return c.Redirect(http.StatusFound, define.SettingPages.Others.Path)
-			}
+func AuthRequired(c fiber.Ctx) error {
+	if !define.AppFlags.DisableLoginMode {
+		state, err := getSession(c)
+		if err != nil || state.session.Values[SESSION_KEY_USER_NAME] == nil {
+			return c.Redirect().Status(http.StatusFound).To(define.SettingPages.Others.Path)
 		}
-		return next(c)
 	}
+	return c.Next()
 }
 
-func CheckUserIsLogin(c *echo.Context) bool {
-	if !define.AppFlags.DisableLoginMode {
-		sess, err := session.Get(sessionName, c)
-		if err != nil {
-			return false
-		}
-		user := sess.Values[SESSION_KEY_USER_NAME]
-		return user != nil
+func CheckUserIsLogin(c fiber.Ctx) bool {
+	if define.AppFlags.DisableLoginMode {
+		return true
 	}
-	return true
+	state, err := getSession(c)
+	return err == nil && state.session.Values[SESSION_KEY_USER_NAME] != nil
 }
 
-func GetUserName(c *echo.Context) string {
+func GetUserName(c fiber.Ctx) string {
 	if !define.AppFlags.DisableLoginMode {
-		sess, err := session.Get(sessionName, c)
-		if err != nil {
-			return ""
-		}
-		if v, ok := sess.Values[SESSION_KEY_USER_NAME].(string); ok {
-			return v
+		if state, err := getSession(c); err == nil {
+			value, _ := state.session.Values[SESSION_KEY_USER_NAME].(string)
+			return value
 		}
 	}
 	return ""
 }
 
-func GetUserLoginDate(c *echo.Context) string {
+func GetUserLoginDate(c fiber.Ctx) string {
 	if !define.AppFlags.DisableLoginMode {
-		sess, err := session.Get(sessionName, c)
-		if err != nil {
-			return ""
-		}
-		if v, ok := sess.Values[SESSION_KEY_LOGIN_DATE].(string); ok {
-			return v
+		if state, err := getSession(c); err == nil {
+			value, _ := state.session.Values[SESSION_KEY_LOGIN_DATE].(string)
+			return value
 		}
 	}
 	return ""
 }
 
-func login(c *echo.Context) error {
-	sess, err := session.Get(sessionName, c)
-	if sess == nil {
-		return c.HTMLBlob(http.StatusBadRequest, internalErrorSave)
+func authError(c fiber.Ctx, body []byte) error {
+	c.Set(fiber.HeaderContentType, fiber.MIMETextHTMLCharsetUTF8)
+	return c.Status(http.StatusBadRequest).Send(body)
+}
+
+func login(c fiber.Ctx) error {
+	state, err := getSession(c)
+	if state == nil || state.session == nil {
+		return authError(c, internalErrorSave)
 	}
+	sess := state.session
 	if err != nil {
-		// CookieStore returns a new session when an old cookie cannot be decoded.
-		// Discard its contents so key rotation allows a fresh login after credential checks.
 		sess.Values = make(map[interface{}]interface{})
 		sess.IsNew = true
 	}
-	username := c.FormValue("username")
-	password := c.FormValue("password")
-
+	username, password := formvalue.Get(c, "username"), formvalue.Get(c, "password")
 	if strings.Trim(username, " ") == "" || strings.Trim(password, " ") == "" {
-		return c.HTMLBlob(http.StatusBadRequest, internalErrorEmpty)
+		return authError(c, internalErrorEmpty)
 	}
-
 	if subtle.ConstantTimeCompare([]byte(username), []byte(define.AppFlags.User)) != 1 ||
 		subtle.ConstantTimeCompare([]byte(password), []byte(define.AppFlags.Pass)) != 1 {
-		return c.HTMLBlob(http.StatusBadRequest, internalErrorInput)
+		return authError(c, internalErrorInput)
 	}
-
 	sess.Values[SESSION_KEY_USER_NAME] = username
 	sess.Values[SESSION_KEY_LOGIN_DATE] = time.Now().Format("2006年01月02日 15:04:05 CST")
-
 	if err := saveSession(c, sess); err != nil {
-		return c.HTMLBlob(http.StatusBadRequest, internalErrorSave)
+		return authError(c, internalErrorSave)
 	}
-
-	return c.Redirect(http.StatusFound, define.SettingPages.Others.Path)
+	return c.Redirect().Status(http.StatusFound).To(define.SettingPages.Others.Path)
 }
 
-func logout(c *echo.Context) error {
-	sess, err := session.Get(sessionName, c)
-	if err != nil {
-		return c.Redirect(http.StatusFound, define.SettingPages.Others.Path)
+func logout(c fiber.Ctx) error {
+	state, err := getSession(c)
+	if err != nil || state.session.Values[SESSION_KEY_USER_NAME] == nil {
+		return c.Redirect().Status(http.StatusFound).To(define.SettingPages.Others.Path)
 	}
-	if sess.Values[SESSION_KEY_USER_NAME] == nil {
-		return c.Redirect(http.StatusFound, define.SettingPages.Others.Path)
+	delete(state.session.Values, SESSION_KEY_USER_NAME)
+	delete(state.session.Values, SESSION_KEY_LOGIN_DATE)
+	if err := saveSession(c, state.session); err != nil {
+		return authError(c, internalErrorSave)
 	}
-	delete(sess.Values, SESSION_KEY_USER_NAME)
-	delete(sess.Values, SESSION_KEY_LOGIN_DATE)
-
-	if err := saveSession(c, sess); err != nil {
-		return c.HTMLBlob(http.StatusBadRequest, internalErrorSave)
-	}
-	return c.Redirect(http.StatusFound, define.SettingPages.Others.Path)
+	return c.Redirect().Status(http.StatusFound).To(define.SettingPages.Others.Path)
 }
 
-// saveSession preserves a forced Secure policy and automatically protects direct
-// TLS requests. CookieStore gives each session its own Options copy, so mixed
-// HTTP/TLS requests cannot change the shared store. Forwarding headers are not
-// trusted; HTTPS termination proxies can force Secure through configuration.
-func saveSession(c *echo.Context, sess *sessions.Session) error {
-	sess.Options.Secure = sess.Options.Secure || c.Request().TLS != nil
-	return sess.Save(c.Request(), c.Response())
+// cookieResponseWriter lets Gorilla construct exactly the same Set-Cookie
+// header as before. It is used only when a login or logout saves the session.
+type cookieResponseWriter struct{ header http.Header }
+
+func (w cookieResponseWriter) Header() http.Header       { return w.header }
+func (cookieResponseWriter) Write(p []byte) (int, error) { return len(p), nil }
+func (cookieResponseWriter) WriteHeader(int)             {}
+
+func saveSession(c fiber.Ctx, sess *sessions.Session) error {
+	state, err := getSession(c)
+	if state == nil {
+		return err
+	}
+	// Options is a per-session copy. Direct TLS never mutates the shared store,
+	// and forwarding headers cannot enable or disable the Secure cookie policy.
+	sess.Options.Secure = sess.Options.Secure || c.RequestCtx().IsTLS()
+	writer := cookieResponseWriter{header: make(http.Header)}
+	if err := sess.Save(state.request, writer); err != nil {
+		return err
+	}
+	for _, cookie := range writer.header.Values(fiber.HeaderSetCookie) {
+		c.Response().Header.Add(fiber.HeaderSetCookie, cookie)
+	}
+	return nil
 }

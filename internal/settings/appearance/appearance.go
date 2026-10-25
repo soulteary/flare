@@ -1,5 +1,3 @@
-//go:build !fiber
-
 package appearance
 
 import (
@@ -8,22 +6,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo/v5"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/clock"
+	"github.com/soulteary/flare/internal/formvalue"
 	"github.com/soulteary/flare/internal/pool"
 )
 
-func RegisterRouting(e *echo.Echo) {
-	e.GET(define.SettingPages.Appearance.Path, pageAppearance, auth.AuthRequired)
-	e.POST(define.SettingPages.Appearance.Path, updateAppearanceOptions, auth.AuthRequired)
+func RegisterRouting(e *fiber.App) {
+	e.Get(define.SettingPages.Appearance.Path, auth.AuthRequired, pageAppearance)
+	e.Post(define.SettingPages.Appearance.Path, auth.AuthRequired, updateAppearanceOptions)
 }
 
-func updateAppearanceOptions(c *echo.Context) error {
+func updateAppearanceOptions(c fiber.Ctx) error {
 	var body struct {
 		OptionTitle              string `form:"title"`
 		OptionFooter             string `form:"footer"`
@@ -43,20 +42,20 @@ func updateAppearanceOptions(c *echo.Context) error {
 		OptionCustomDay          string `form:"custom-day"`
 		OptionCustomMonth        string `form:"custom-month"`
 	}
-	if err := c.Bind(&body); err != nil {
-		return c.JSON(http.StatusForbidden, "提交数据缺失")
+	if err := c.Bind().Body(&body); err != nil {
+		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
 	}
 	var update model.Application
 	// Missing fields from older forms must not erase existing clock preferences.
-	if c.FormValue("clock-timezone-mode") != "" {
-		dynamic, seconds := c.FormValue("clock-dynamic"), c.FormValue("clock-seconds")
+	if formvalue.Get(c, "clock-timezone-mode") != "" {
+		dynamic, seconds := formvalue.Get(c, "clock-dynamic"), formvalue.Get(c, "clock-seconds")
 		if (dynamic != "0" && dynamic != "1") || (seconds != "0" && seconds != "1") {
-			return c.String(http.StatusBadRequest, "invalid clock options")
+			return c.Status(http.StatusBadRequest).SendString("invalid clock options")
 		}
 		showSeconds := seconds == "1"
-		update.Clock = &model.ClockOptions{Dynamic: dynamic == "1", Seconds: &showSeconds, TimezoneMode: c.FormValue("clock-timezone-mode"), Timezone: strings.TrimSpace(c.FormValue("clock-timezone"))}
+		update.Clock = &model.ClockOptions{Dynamic: dynamic == "1", Seconds: &showSeconds, TimezoneMode: formvalue.Get(c, "clock-timezone-mode"), Timezone: strings.TrimSpace(formvalue.Get(c, "clock-timezone"))}
 		if err := clock.Validate(*update.Clock); err != nil {
-			return c.String(http.StatusBadRequest, err.Error())
+			return c.Status(http.StatusBadRequest).SendString(err.Error())
 		}
 	}
 
@@ -83,15 +82,15 @@ func updateAppearanceOptions(c *echo.Context) error {
 		update.Locale = body.Locale
 	}
 	if !data.UpdateAppearance(update) {
-		return c.String(http.StatusInternalServerError, "unable to save appearance settings")
+		return c.Status(http.StatusInternalServerError).SendString("unable to save appearance settings")
 	}
 	return pageAppearance(c)
 }
 
-func pageAppearance(c *echo.Context) error {
+func pageAppearance(c fiber.Ctx) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "config error")
+		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	IconModeDefault := options.IconMode == "DEFAULT"
 	IconModeFilling := options.IconMode == "FILLING"
@@ -126,9 +125,9 @@ func pageAppearance(c *echo.Context) error {
 	m["ClockServerZone"] = time.Local.String()
 	m["ClockServerTime"] = time.Now().Format("2006-01-02 15:04:05 MST")
 	if !define.AppFlags.DisableCSP {
-		c.Response().Header().Set("Content-Security-Policy", clock.SettingsPolicy())
+		c.Set("Content-Security-Policy", clock.SettingsPolicy())
 	}
 	m["OptionLocale"] = options.Locale
 	m["Locale"] = options.Locale
-	return c.Render(http.StatusOK, "settings.html", m)
+	return c.Status(http.StatusOK).Render("settings.html", m)
 }

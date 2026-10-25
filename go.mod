@@ -8,8 +8,6 @@ require (
 	github.com/gofiber/fiber/v3 v3.6.1
 	github.com/gorilla/sessions v1.4.0
 	github.com/jszwec/csvutil v1.10.0
-	github.com/labstack/echo-contrib/v5 v5.0.1
-	github.com/labstack/echo/v5 v5.4.1
 	github.com/soulteary/cli-kit v1.9.2
 	github.com/soulteary/funny-china-weather v0.1.1
 	github.com/soulteary/memfs-kit v1.1.0
@@ -41,5 +39,4 @@ require (
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
-	golang.org/x/time v0.16.0 // indirect
 )
