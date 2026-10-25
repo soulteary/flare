@@ -70,8 +70,8 @@ Echo is no longer part of the production dependency graph. See
 Published stable versions are available from both registries:
 
 ```sh
-docker pull soulteary/flare:0.6.3
-docker pull ghcr.io/soulteary/flare:0.6.3
+docker pull soulteary/flare:0.6.4
+docker pull ghcr.io/soulteary/flare:0.6.4
 ```
 
 Both images support `linux/amd64`, `linux/arm64`, `linux/arm/v7`, and
