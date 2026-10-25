@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"reflect"
+	"strconv"
 	"strings"
 
 	env "github.com/caarlos0/env/v6"
@@ -41,9 +43,37 @@ func ParseEnvVars() (stor model.Flags) {
 	defaults := define.DefaultEnvVars
 
 	// 2. overwrite with user input
-	if err := env.Parse(&defaults); err != nil {
-		log.Error(fmt.Sprintf("%+v\n", err))
-		return
+	// Validate typed fields independently: Kubernetes may inject FLARE_PORT=tcp://...
+	// and one malformed variable must never discard authentication or other options.
+	environment := map[string]string{}
+	for _, entry := range os.Environ() {
+		key, value, _ := strings.Cut(entry, "=")
+		environment[key] = value
+	}
+	schema := reflect.TypeFor[model.Envs]()
+	for i := 0; i < schema.NumField(); i++ {
+		field := schema.Field(i)
+		key := strings.Split(field.Tag.Get("env"), ",")[0]
+		value, exists := environment[key]
+		if !exists || value == "" {
+			continue
+		}
+		valid := true
+		switch field.Type.Kind() {
+		case reflect.Bool:
+			_, err := strconv.ParseBool(value)
+			valid = err == nil
+		case reflect.Int:
+			n, err := strconv.Atoi(value)
+			valid = err == nil && n > 0 && n <= 65535
+		}
+		if !valid {
+			delete(environment, key)
+			log.Warn(fmt.Sprintf("%s is invalid; retaining this field's default without discarding other settings", key))
+		}
+	}
+	if err := env.Parse(&defaults, env.Options{Environment: environment}); err != nil {
+		log.Error("Could not parse environment settings; retaining independently parsed values")
 	}
 
 	// 3. update username and password
