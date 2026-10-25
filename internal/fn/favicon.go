@@ -1,17 +1,15 @@
 package fn
 
 import (
-	"fmt"
+	"html"
 	"net/url"
 )
 
 func GetYandexFavicon(bookmarkLink string, fallback string) string {
 	u, err := url.Parse(bookmarkLink)
-	if err != nil {
-		fmt.Println(err)
+	if err != nil || !IsSafeImageURL(bookmarkLink) {
 		return fallback
 	}
-	fmt.Println(`<img src="https://favicon.yandex.net/favicon/` + u.Hostname() + `/"/>`)
 
-	return `<img src="https://favicon.yandex.net/favicon/` + u.Hostname() + `/"/>`
+	return `<img src="https://favicon.yandex.net/favicon/` + html.EscapeString(u.Hostname()) + `/"/>`
 }
