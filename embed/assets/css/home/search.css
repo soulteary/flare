@@ -27,3 +27,37 @@
   opacity: 1;
   transition: all 0.2s;
 }
+
+#search-container .search-actions, #search-container .search-new-tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+#search-container select, #search-container button {
+  max-width: 100%;
+  min-height: 44px;
+  color: var(--color-primary);
+  background: var(--color-background);
+  border: 1px solid var(--color-accent);
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+#search-container select { flex: 1; min-width: 0; }
+#search-container input:focus, #search-container select:focus-visible, #search-container button:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+#search-container .search-error { overflow-wrap: anywhere; }
+#search-container .search-accessible-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+@media (max-width: 360px) {
+  #search-container .search-actions label { width: 100%; }
+}
