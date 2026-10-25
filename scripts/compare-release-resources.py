@@ -3,6 +3,7 @@
 import argparse
 from datetime import datetime
 import hashlib
+from html.parser import HTMLParser
 import importlib.util
 import json
 import os
@@ -11,6 +12,7 @@ import platform
 import statistics
 import sys
 from zoneinfo import ZoneInfo
+from urllib.parse import urljoin
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,19 +27,108 @@ def binary_metadata(path, revision, env):
             'go_build_info': comparison.run(['go', 'version', '-m', path], env).strip()}
 
 
+class PageSemantics(HTMLParser):
+    """Retain visible text, navigation order, controls and ordered image contents."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.stack = []
+        self.text = []
+        self.links = []
+        self.forms = []
+        self.controls = []
+        self.assets = []
+        self.security = []
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag not in ('area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'):
+            self.stack.append((tag, attributes.get('id')))
+        if tag == 'a':
+            self.links.append({'href': attributes.get('href'), 'target': attributes.get('target'), 'text': []})
+            self.security.append(sorted((attributes.get('rel') or '').split()))
+        elif tag == 'form':
+            self.forms.append({key: attributes.get(key) for key in ('action', 'method', 'target')})
+        elif tag in ('input', 'select', 'button', 'textarea', 'option'):
+            self.controls.append({'tag': tag, **{key: attributes.get(key) for key in ('name', 'type', 'value')},
+                                  **{key: key in attributes for key in ('selected', 'checked', 'disabled')}})
+        if tag == 'img' and attributes.get('src', '').startswith('/assets/mdi/'):
+            self.assets.append(('mdi', attributes['src']))
+        if tag == 'link' and 'icon' in (attributes.get('rel') or '').split():
+            self.assets.append(('favicon', attributes.get('href', '')))
+
+    def handle_endtag(self, tag):
+        for index in range(len(self.stack) - 1, -1, -1):
+            if self.stack[index][0] == tag:
+                del self.stack[index:]
+                break
+
+    def handle_data(self, text):
+        if any(tag in ('script', 'style') for tag, _ in self.stack):
+            return
+        text = 'CLOCK' if any(identity == 'clock-time' for _, identity in self.stack) else ' '.join(text.split())
+        if text:
+            self.text.append(text)
+            if self.links and any(tag == 'a' for tag, _ in self.stack):
+                self.links[-1]['text'].append(text)
+
+
+def semantic_preflight(info, body_path):
+    page = PageSemantics()
+    page.feed(body_path.read_text())
+    assets = []
+    fetched = {}
+    for kind, path in page.assets:
+        resolved = urljoin(info['url'] + '/', path)
+        if not resolved.startswith(info['url'] + '/'):
+            raise RuntimeError('Unexpected non-local baseline icon reference: ' + path)
+        if path not in fetched:
+            try:
+                response = comparison.OPENER.open(resolved, timeout=10)
+            except comparison.urllib.error.HTTPError as error:
+                response = error
+            with response:
+                content = response.read()
+                fetched[path] = {'path': path, 'status': response.status, 'bytes': len(content),
+                    'sha256': hashlib.sha256(content).hexdigest(),
+                    'content_type': (response.headers.get('Content-Type') or '').lower(),
+                    'cache_control': response.headers.get('Cache-Control')}
+                if response.status != 200:
+                    raise RuntimeError(f'Baseline icon {path} returned {response.status}')
+        assets.append({'kind': kind, **fetched[path]})
+    projection = {'visible_text': page.text, 'navigation': page.links, 'forms': page.forms,
+                  'controls': page.controls, 'ordered_assets': [
+                      {key: value for key, value in asset.items() if key not in ('path', 'cache_control')}
+                      for asset in assets]}
+    return projection, page.security, assets
+
+
 def describe_semantics(rows):
-    """Strictly retain every normalized mismatch; never relabel it as equality."""
+    """Keep literal mismatches distinct from verified semantic equivalence."""
     result = {}
     for scenario in comparison.SCENARIOS:
-        variants = {}
+        variants, projections, securities = {}, {}, {}
         for label in ('before', 'after'):
-            values = [{key: value for key, value in row['preflight'].items() if key != 'raw_sha256'}
-                      for row in rows if row['target'] == label and row['Scenario'] == scenario]
+            selected = [row['preflight'] for row in rows if row['target'] == label and row['Scenario'] == scenario]
+            values = [{key: value[key] for key in ('status', 'bytes', 'sha256', 'content_type', 'csp', 'location')} for value in selected]
             variants[label] = list({json.dumps(value, sort_keys=True): value for value in values}.values())
-        equal = len(variants['before']) == len(variants['after']) == 1 and variants['before'] == variants['after']
-        result[scenario] = {'equal': equal, 'responses': variants,
-                            'interpretation': 'Equivalent normalized response' if equal else
-                            'Response differs: inspect recorded bodies before interpreting a speedup'}
+            values = [{key: value[key] for key in ('status', 'content_type', 'csp', 'location', 'semantic_projection')} for value in selected]
+            projections[label] = list({json.dumps(value, sort_keys=True): value for value in values}.values())
+            securities[label] = list({json.dumps(value['link_rel']): value['link_rel'] for value in selected}.values())
+        literal_equal = len(variants['before']) == len(variants['after']) == 1 and variants['before'] == variants['after']
+        content_equal = len(projections['before']) == len(projections['after']) == 1 and projections['before'] == projections['after']
+        security_equal = securities['before'] == securities['after']
+        safe_security_delta = False
+        if len(securities['before']) == len(securities['after']) == 1:
+            before, after = securities['before'][0], securities['after'][0]
+            safe_security_delta = len(before) == len(after) and all(
+                set(old).issubset(new) and set(new).difference(old).issubset({'noopener', 'noreferrer'})
+                for old, new in zip(before, after))
+        equal = content_equal and safe_security_delta
+        result[scenario] = {'equal': equal, 'literal_equal': literal_equal, 'content_equal': content_equal,
+                            'link_rel_equal': security_equal, 'only_safe_rel_additions': safe_security_delta,
+                            'responses': variants, 'link_rel_observations': securities,
+                            'interpretation': 'HTTP, visible text, navigation, forms and ordered asset bytes match' if equal else
+                            'Meaningful response differs: inspect recorded bodies/assets before interpreting a speedup'}
     return result
 
 
@@ -53,11 +144,13 @@ def render_report(data, destination):
              f"{meta['parameters']['resource_warmup']} warmup; concurrency {meta['parameters']['concurrency']}; "
              f"pool {meta['parameters']['keepalive_connections']}; {meta['parameters']['rounds']} alternating rounds.", '',
              '## Response validation', '',
-             '| Scene | Normalized response equality | Before / after bytes |',
-             '| --- | --- | --- |']
+             '| Scene | Literal normalized response | DOM / asset content / HTTP behavior | Before / after bytes |',
+             '| --- | --- | --- | --- |']
     for scenario, value in data['semantics'].items():
         sizes = ['/'.join(str(row['bytes']) for row in value['responses'][label]) for label in ('before', 'after')]
-        lines.append(f"| {scenario} | {'equal' if value['equal'] else '**DIFFERENT — inspect raw bodies**'} | {' / '.join(sizes)} |")
+        literal = 'equal' if value['literal_equal'] else '**DIFFERENT — retained**'
+        semantic = 'verified equivalent' if value['equal'] else '**DIFFERENT — inspect raw bodies/assets**'
+        lines.append(f"| {scenario} | {literal} | {semantic} | {' / '.join(sizes)} |")
     columns = [('server_cpu_ns_per_request', 1000, 'CPU µs/request'),
                ('server_bytes_per_request', 1, 'allocated B/request'),
                ('server_allocs_per_request', 1, 'allocations/request'),
@@ -80,7 +173,8 @@ def render_report(data, destination):
               '- Warmed idle RSS is measured after warmup. Sampled peak RSS is sampled every ~50 ms during load; lifecycle peak RSS is retained separately in raw observations.',
               '- Live heap is a sampled `inuse_space` estimate from the server heap profile after forced GC, collected after load counters. It is not exact MemStats HeapAlloc and is not RSS. Default Go heap profiling sampling can make small live-heap differences noisy.',
               '- Both binaries use offline mode, disabled login/request logs, and default fixtures. This does not measure production authentication, weather, browser CPU, ARM hardware, or large bookmark datasets.',
-              '- Raw response bodies, normalized fingerprints, binary hashes, build metadata, heap profiles, all per-round observations and execution orders are retained. Only clock-time text is normalized by the existing preflight helper.',
+              '- Raw response bodies, literal fingerprints, parsed semantic projections, icon response statuses/content hashes, binary hashes, build metadata, heap profiles and per-round observations/orders are retained. Only clock-time text is normalized.',
+              '- Semantic equivalence requires matching HTTP status/type/CSP/Location, visible text, navigation destinations/targets/order, form controls, and ordered icon/favicon content hashes. Icon URL/cache-key changes remain recorded. Rel-token changes permit only additions of noopener/noreferrer; removals or other changes fail validation.',
               '- A response mismatch remains a mismatch. Explain it before interpreting resource differences; do not claim a like-for-like improvement if functionality was removed.', '']
     destination.write_text('\n'.join(lines))
 
@@ -125,6 +219,13 @@ def main():
             'parameters': parameters, 'runtime_env': {key: env.get(key, '(unset)') for key in ('GOGC', 'GOMEMLIMIT', 'GODEBUG', 'TZ')},
             'binaries': {label: binary_metadata(binary, getattr(args, label + '_revision'), env) for label, binary in targets.items()},
             'client': binary_metadata(args.client, args.before_revision, env), 'orders': []}, 'isolated': []}
+    original_preflight = comparison.preflight
+    def validating_preflight(info, scenario):
+        validation = original_preflight(info, scenario)
+        projection, security, assets = semantic_preflight(info, Path(info['_capture_response_path']))
+        validation.update(semantic_projection=projection, link_rel=security, observed_assets=assets)
+        return validation
+    comparison.preflight = validating_preflight
     for round_number in range(args.rounds):
         order = ['before', 'after'] if round_number % 2 == 0 else ['after', 'before']
         data['metadata']['orders'].append({'round': round_number + 1, 'targets': order})
