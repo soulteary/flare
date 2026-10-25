@@ -79,3 +79,14 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 
 Search settings are not included in bookmark exports. Multiple processes sharing
 YAML do not share in-process locks. Use one writer and normal filesystem backups.
+
+
+## Navigation URL and icon policy (development)
+
+After 0.6.4, rendered navigation text/attributes are escaped. Supported schemes
+are HTTP(S), relative links, ftp, ftps, mailto, tel, ssh, smb, rdp, vnc, magnet,
+steam, obsidian and chrome-extension. Executable/document schemes and unsupported
+protocols remain editable in stored data but render as `#`; do not assume an
+arbitrary custom scheme is clickable. Icons accept bundled identifiers or
+absolute HTTP(S) image URLs. The administrator-controlled Footer intentionally
+supports HTML and must be treated as trusted site content.

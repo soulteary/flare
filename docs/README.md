@@ -23,6 +23,7 @@ feature does not publish an image or move `latest`.
 ## Operations and development
 
 - [Configuration reference and precedence](configuration.md)
+- [Weather refresh, stale data and retry behavior](weather.md) (development)
 - [Backups and restore](backup-restore.md), [editor save recovery](editor-recovery.md)
 - [Reverse proxies and deployment boundaries](reverse-proxy.md)
 - [Troubleshooting and evidence collection](troubleshooting.md)
