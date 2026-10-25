@@ -11,7 +11,7 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-const requestAttrsCap = 12
+const requestAttrsCap = 13
 
 var requestAttrsPool = sync.Pool{
 	New: func() any {
@@ -22,7 +22,8 @@ var requestAttrsPool = sync.Pool{
 
 // LoggerConfig configures the request logging middleware.
 type LoggerConfig struct {
-	// Skipper returns true to skip logging for the request (e.g. health check, favicon).
+	// Skipper selects requests whose successful responses do not need logging
+	// (e.g. health checks and static assets). Errors and HTTP 4xx/5xx are always logged.
 	Skipper func(c *echo.Context) bool
 }
 
@@ -39,22 +40,23 @@ func NewEchoWithConfig(logger *slog.Logger, config LoggerConfig) echo.Middleware
 	}
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
-			if skipper(c) {
-				return next(c)
-			}
+			skip := skipper(c)
 			start := time.Now()
 			path := c.Request().URL.Path
 			query := c.Request().URL.RawQuery
 
 			err := next(c)
 
-			status := 0
-			if rw, unwrapErr := echo.UnwrapResponse(c.Response()); unwrapErr == nil && rw != nil {
-				status = rw.Status
+			// Echo handles returned errors after this middleware unwinds. Resolve
+			// their status without writing a response or invoking the error handler.
+			// An already committed response keeps the status sent to the client.
+			_, status := echo.ResolveResponseStatus(c.Response(), err)
+			if skip && err == nil && status < http.StatusBadRequest {
+				return nil
 			}
-			// Only build path params for error responses to keep 2xx hot path allocation-free.
+			// Only build path params for failures to avoid allocations on success.
 			var params map[string]string
-			if status >= http.StatusBadRequest {
+			if err != nil || status >= http.StatusBadRequest {
 				if pv := c.PathValues(); len(pv) > 0 {
 					params = make(map[string]string, len(pv))
 					for _, v := range pv {
@@ -99,18 +101,17 @@ func NewEchoWithConfig(logger *slog.Logger, config LoggerConfig) echo.Middleware
 			msg := "REQUEST"
 			if status >= http.StatusBadRequest && status < http.StatusInternalServerError {
 				level = slog.LevelWarn
-				if err != nil {
-					msg = err.Error()
-				}
-			} else if status >= http.StatusInternalServerError {
+			} else if status >= http.StatusInternalServerError || err != nil {
 				level = slog.LevelError
-				if err != nil {
-					msg = err.Error()
-				}
+			}
+			if err != nil {
+				msg = err.Error()
+				*requestAttributes = append(*requestAttributes, slog.Any("error", err))
 			}
 
-			// Async log for 2xx to shorten critical path and improve throughput.
-			if status >= 200 && status < 300 {
+			// Async log for successful 2xx to shorten the critical path. A handler
+			// can fail after committing a 2xx response; keep those errors synchronous.
+			if err == nil && status >= 200 && status < 300 {
 				go func(attrs *[]slog.Attr) {
 					logger.LogAttrs(context.Background(), level, msg, (*attrs)...)
 					*attrs = (*attrs)[:0]
@@ -126,7 +127,8 @@ func NewEchoWithConfig(logger *slog.Logger, config LoggerConfig) echo.Middleware
 	}
 }
 
-// DefaultRequestLogSkipper skips logging for health check, favicon, redirects, and static assets to reduce allocs in hot paths.
+// DefaultRequestLogSkipper selects health checks, favicon, redirects, and static
+// assets for skipping successful request logs. NewEchoWithConfig still logs failures.
 func DefaultRequestLogSkipper(c *echo.Context) bool {
 	path := c.Request().URL.Path
 	return path == "/ping" || path == "/favicon.ico" || strings.HasPrefix(path, "/assets/") || strings.HasPrefix(path, "/redir/")
