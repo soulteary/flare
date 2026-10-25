@@ -16,6 +16,12 @@ Challenge all bookmarking apps and websites directories, Aim to Be a best perfor
 - Single executable, no dependencies required, good docker support.
 - You can choose whether to enable various functions according to your needs: offline mode, weather, editor, account, and so on.
 
+### Bookmark import and export
+
+The editor includes browser HTML and native Flare YAML import/export, with
+preview, duplicate handling, conflict detection, and automatic pre-import backups.
+See [Bookmark transfer](docs/bookmark-transfer.md) for usage and limits.
+
 ## ScreenShot
 
 TBD

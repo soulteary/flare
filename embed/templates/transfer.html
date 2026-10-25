@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flare · 导入与导出</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#161719;color:#eee}body{max-width:1120px;margin:36px auto;padding:0 20px}a{color:#acd5ff}h1{font-size:28px}section{background:#222428;border:1px solid #393c42;border-radius:12px;padding:22px;margin:20px 0}label{display:inline-block;margin:8px 18px 8px 0}input,select,button{font:inherit;padding:9px;border-radius:6px;border:1px solid #666;background:#292d33;color:#fff}input[type=checkbox]{accent-color:#acd5ff}button{cursor:pointer}button:disabled{opacity:.45;cursor:default}.primary{background:#acd5ff;color:#111;border-color:#acd5ff}.hint{color:#b4bbc5;font-size:14px;line-height:1.7}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:10px;border-bottom:1px solid #444;overflow-wrap:anywhere;min-width:90px;max-width:320px}th{color:#acd5ff}#status{white-space:pre-wrap;padding:12px 0;line-height:1.6}#status[data-error=true]{color:#ffb3ad}#summary{font-size:18px;line-height:1.7}.pager{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0}[hidden]{display:none!important}@media(max-width:600px){body{margin:18px auto;padding:0 12px}section{padding:16px}label{display:block}input[type=text],select{max-width:100%;box-sizing:border-box}}
+</style>
+</head>
+<body>
+<nav><a href="/editor">← 返回编辑器</a> · <a href="/">首页</a></nav>
+<h1>导入与导出</h1>
+<p class="hint">在浏览器的书签管理器中导出 HTML 文件，再导入 Flare。文件仅在本机 Flare 服务中处理，不访问书签网站。</p>
+<section>
+<h2>选择数据</h2>
+<label>数据类型 <select id="collection"><option value="bookmarks">分类书签 · bookmarks.yml</option><option value="apps">首页应用 · apps.yml</option></select></label>
+<p class="hint">两类数据分别导入和导出。完整迁移请分别导出两份 YAML；这些文件不包含账号、密码和系统设置。</p>
+<div class="actions"><button type="button" id="export-html">导出浏览器 HTML</button><button type="button" id="export-yaml">导出 Flare YAML</button><button type="button" id="backup">下载最近一次导入前备份</button></div>
+<p class="hint">HTML 仅包含名称、链接和分类，不保留图标、描述、私有标记及展示设置。不安全的旧链接不会导出到 HTML。YAML 保留全部书签字段。</p>
+</section>
+<section>
+<h2>导入书签</h2>
+<form id="import-form">
+<label>文件 <input type="file" id="file" accept=".html,.htm,.yaml,.yml" required></label>
+<label>格式 <select id="format"><option value="html">浏览器 HTML</option><option value="yaml">Flare YAML</option></select></label><br>
+<label>重复项 <select id="strategy"><option value="skip">跳过重复（默认）</option><option value="update">更新名称及非空字段</option><option value="keep">保留全部</option></select></label>
+<label>默认 / 指定分类 <input type="text" id="folder" value="导入书签" maxlength="256"></label><br>
+<label><input type="checkbox" id="flatten">全部放入指定分类</label>
+<label><input type="checkbox" id="stripRoot">忽略最外层文件夹（如书签栏）</label>
+<label><input type="checkbox" id="allowOther">允许相对地址及其他受支持协议</label>
+<p class="hint">默认保留目录路径，用「 / 」连接多层目录；首页应用不使用分类。同一目标分类内按 URL 判断重复。更新时保留源文件未提供的图标、描述和已有私有标记。支持 UTF-8 文件，最大 8 MiB、20,000 条、32 层目录。</p>
+<button class="primary" id="preview-button" type="submit">解析并预览</button>
+</form>
+</section>
+<div id="status" role="status" aria-live="polite"></div>
+<section id="preview" hidden>
+<h2>确认导入内容</h2><p id="summary"></p>
+<p class="hint">预览有效期为 15 分钟。确认前不会修改现有数据；导入前自动备份所选数据文件。若已有书签发生变化，需重新预览。</p>
+<div class="pager"><label>筛选 <select id="filter"><option value="all">全部</option><option value="add">新增</option><option value="update">更新</option><option value="skip">重复跳过</option><option value="invalid">无效 / 未允许</option></select></label><button id="prev" type="button">上一页</button><span id="page"></span><button id="next" type="button">下一页</button></div>
+<div class="table-wrap"><table><thead><tr><th>原目录</th><th>目标分类</th><th>名称</th><th>URL</th><th>处理结果</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="actions"><button class="primary" id="commit" type="button"></button><button id="report" type="button">下载明细 JSON</button></div>
+</section>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const labels={add:'新增',update:'更新',skip:'跳过',invalid:'无效 / 未允许'};
+let token='',plan=null,page=0,busy=false;
+const inputs=['collection','file','format','strategy','folder','flatten','stripRoot','allowOther'];
+function status(text,error=false){$('status').textContent=text;$('status').dataset.error=String(error);}
+function invalidate(){token='';plan=null;$('preview').hidden=true;status('选项已变化，请重新预览。');}
+function setBusy(value){busy=value;for(const id of inputs)$(id).disabled=value;$('preview-button').disabled=value;$('commit').disabled=value||!token;}
+for(const id of inputs)$(id).addEventListener('change',()=>{if(id==='file'){const f=$('file').files[0];if(f)$('format').value=/\.ya?ml$/i.test(f.name)?'yaml':'html';}invalidate();});
+$('folder').addEventListener('input',invalidate);
+async function request(path,options){const res=await fetch('/editor/transfer/'+path,{...options,headers:{'X-Flare-Transfer':'1',...options.headers},redirect:'error'});const body=await res.json();if(!res.ok)throw Error(body.error||'操作失败');return body;}
+function showRows(){
+ const rows=plan.rows.filter(r=>$('filter').value==='all'||r.action===$('filter').value);
+ const pages=Math.max(1,Math.ceil(rows.length/50));page=Math.min(page,pages-1);
+ $('rows').replaceChildren();
+ for(const row of rows.slice(page*50,(page+1)*50)){
+  const tr=document.createElement('tr');
+  for(const value of [row.source||'—',row.target,row.name,row.url,labels[row.action]+(row.reason?'：'+row.reason:'')]){const td=document.createElement('td');td.textContent=value;tr.append(td);}
+  $('rows').append(tr);
+ }
+ $('page').textContent=`${page+1} / ${pages} 页 · ${rows.length} 条`;$('prev').disabled=page===0;$('next').disabled=page>=pages-1;
+}
+function showPlan(){page=0;$('preview').hidden=false;$('summary').textContent=`新增 ${plan.added} 条 · 更新 ${plan.updated} 条 · 跳过 ${plan.skipped} 条 · 无效 / 未允许 ${plan.invalid} 条 · 新分类 ${plan.categories} 个`;$('commit').textContent=`确认导入 ${plan.added+plan.updated} 条书签`;showRows();}
+$('filter').onchange=()=>{page=0;showRows();};$('prev').onclick=()=>{page--;showRows();};$('next').onclick=()=>{page++;showRows();};
+$('import-form').onsubmit=async event=>{
+ event.preventDefault();if(busy)return;
+ const file=$('file').files[0];if(!file){status('请选择文件。',true);return;}if(file.size>8*1024*1024){status('文件不能超过 8 MiB。',true);return;}
+ token='';$('preview').hidden=true;
+ const form=new FormData();form.append('file',file);for(const id of inputs.filter(id=>id!=='file'))form.append(id,$(id).type==='checkbox'?($(id).checked?'1':'0'):$(id).value);
+ setBusy(true);status('正在解析并生成预览…');
+ try{const result=await request('preview',{method:'POST',body:form});plan=result.plan;token=result.token;showPlan();status('请检查预览，确认后导入。');}catch(error){status(error.message,true);}finally{setBusy(false);if(plan)$('commit').disabled=!token||plan.added+plan.updated===0;}
+};
+$('commit').onclick=async()=>{
+ if(busy||!token)return;setBusy(true);status('正在备份并保存…');
+ try{const result=await request('commit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});plan=result;token='';showPlan();status(`导入完成：新增 ${plan.added} 条，更新 ${plan.updated} 条。导入前备份已保存，可在上方下载。返回编辑器后请刷新页面。`);}catch(error){token='';status(error.message+' 请重新预览后再试。',true);}finally{setBusy(false);}
+};
+function download(raw,name,type){const url=URL.createObjectURL(new Blob([raw],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+async function downloadServer(path){try{const res=await fetch('/editor/transfer/'+path,{redirect:'error'});if(!res.ok){const body=await res.json();throw Error(body.error||'下载失败');}const blob=await res.blob();const match=(res.headers.get('Content-Disposition')||'').match(/filename="([^"]+)"/);download(blob,match?match[1]:'flare-bookmarks.yml',blob.type);}catch(error){status(error.message,true);}}
+$('export-html').onclick=()=>downloadServer('export?collection='+$('collection').value+'&format=html');
+$('export-yaml').onclick=()=>downloadServer('export?collection='+$('collection').value+'&format=yaml');
+$('backup').onclick=()=>downloadServer('backup?collection='+$('collection').value);
+$('report').onclick=()=>{if(plan)download(JSON.stringify(plan,null,2),'flare-import-result.json','application/json');};
+</script>
+</body>
+</html>

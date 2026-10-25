@@ -33,6 +33,7 @@ func Init() error {
 }
 
 func RegisterRouting(e *echo.Echo) {
+	registerTransfers(e)
 	if introAssets, err := fs.Sub(editorAssets, "editor-assets"); err == nil {
 		e.StaticFS(_ASSETS_WEB_URI, introAssets)
 	}
