@@ -44,6 +44,7 @@ Search:
 `);
  await fs.writeFile(path.join(dir,'apps.yml'),'links:\n- name: Needle application\n  link: "'+base+'/chosen"\n  desc: Find me\n');
  await fs.writeFile(path.join(dir,'bookmarks.yml'),'links:\n- name: "Needle bookmark"\n  link: "https://bookmark.example/"\n');
+ const originalConfig=await fs.readFile(path.join(dir,'config.yml'));
  const child = spawn(process.env.FLARE_BINARY, [], {cwd:dir,env:{...process.env,FLARE_PORT:String(port),FLARE_DISABLE_LOGIN:'true',FLARE_OFFLINE:'true',FLARE_BASELINE:'1'}});
  let logs=''; child.stdout.on('data',b=>logs+=b); child.stderr.on('data',b=>logs+=b);
  let browser;
@@ -54,6 +55,7 @@ Search:
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',message=>{if(message.type()==='error' && /Content Security Policy|Refused to execute|Refused to connect/i.test(message.text())) errors.push(message.text());});
   await page.goto(base);
+  assert.deepEqual(await fs.readFile(path.join(dir,'config.yml')),originalConfig,'read-only startup must preserve legacy config');
   const clockBefore=await page.locator('#clock-time').textContent();
   await page.waitForFunction(previous=>document.querySelector('#clock-time').textContent!==previous,clockBefore,{timeout:3000});
   await page.locator('#search').fill('Needle');
@@ -95,7 +97,7 @@ Search:
   await page.waitForFunction(()=>document.querySelector('#search-suggestions a')?.textContent==='!unknown');
   await page.locator('#search').fill('old');
   await page.waitForTimeout(210);
-  await page.locator('#search-target').focus();
+  await page.locator('#search-target input:checked').focus();
   await page.waitForTimeout(500);
   assert.equal(await page.locator('#search-suggestions').isVisible(),false,'blurred requests must not reopen suggestions');
   await page.unroute('**/search/suggest');
@@ -108,7 +110,7 @@ Search:
    assert.equal(await page.locator('#search-suggestions').isVisible(),false);
   }
   async function externalSubmit(query, selected, expectedPath) {
-   await page.locator('#search-target').selectOption(selected);
+   await page.locator('#search-target label').filter({has: page.locator('input[value="' + selected + '"]')}).click();
    await knownCommandDoesNotSuggest(query);
    const requestPromise=page.context().waitForEvent('request',request=>request.url().startsWith('https://search.example/'));
    const popupPromise=page.waitForEvent('popup');
@@ -121,9 +123,9 @@ Search:
    assert.equal(page.url(),base+'/');
   }
   // A shortcut must override a contradictory selection, including names containing s.
-  await externalSubmit('!ex external','local','/search');
-  await externalSubmit('!s external','local','/secondary');
-  await page.locator('#search-target').selectOption('example');
+  await externalSubmit('!ex external','secondary','/search');
+  await externalSubmit('!s external','example','/secondary');
+  await page.locator('#search-target label').filter({has: page.locator('input[value="example"]')}).click();
   await knownCommandDoesNotSuggest('!local Needle');
   const pagesBefore=page.context().pages().length;
   const localResponse=page.waitForResponse(response=>response.url()===base+'/' && response.request().method()==='POST');
@@ -131,13 +133,13 @@ Search:
   await localResponse;
   await page.waitForLoadState();
   assert.equal(page.context().pages().length,pagesBefore,'!local from external default must stay in current tab');
-  assert.equal(await page.locator('#search-target').inputValue(),'local');
+  assert.equal(await page.locator('#search-target input:checked').inputValue(),'example');
   // Changing the engine invalidates the previously keyboard-selected local match.
   await page.goto(base);
   await page.locator('#search').fill('Needle');
   await page.waitForFunction(()=>document.querySelectorAll('#search-suggestions a').length===2);
   await page.locator('#search').press('ArrowDown');
-  await page.locator('#search-target').selectOption('secondary');
+  await page.locator('#search-target label').filter({has: page.locator('input[value="secondary"]')}).click();
   assert.equal(await page.locator('#search').getAttribute('aria-activedescendant'),null);
   assert.equal(await page.locator('#search-suggestions').isVisible(),false);
   await page.locator('#search').focus();
@@ -173,6 +175,65 @@ Search:
   await (await testPopup).close();
   assert.equal(page.url(),base+'/settings/search');
   assert.deepEqual(errors,[]);
-  console.log('Hybrid browser acceptance passed');
+  // Switch modes through the actual settings form and verify saved behavior.
+  await page.goto(base+'/settings/search');
+  await page.locator('input[name="search-mode"][value="local-first"]').check();
+  await page.locator('button.btn-submit').click();
+  await page.goto(base);
+  assert.equal(await page.locator('#search-target').count(),0);
+  await page.locator('#search').fill('Needle');
+  await page.waitForFunction(()=>document.querySelectorAll('#search-suggestions a').length===2);
+  await page.locator('#search').press('Enter');
+  await page.waitForLoadState();
+  assert.equal(new URL(page.url()).origin,base);
+  await page.locator('.search-external-actions').waitFor();
+  const manualRequest=page.context().waitForEvent('request',request=>request.url().startsWith('https://search.example/search'));
+  const manualPopup=page.waitForEvent('popup');
+  await page.locator('.search-external-actions button[value="example"]').click();
+  const webPage=await manualPopup;
+  assert.equal(new URL((await manualRequest).url()).searchParams.get('q'),'Needle');
+  assert.equal(new URL(page.url()).origin,base);
+  await webPage.close();
+  await page.goto(base+'/settings/search');
+  await page.locator('input[name="search-mode"][value="select"]').check();
+  await page.locator('button.btn-submit').click();
+  await page.goto(base);
+  await page.locator('#search-target label').filter({has:page.locator('input[value="local"]')}).click();
+  await page.locator('#search').fill('Needle');
+  await page.locator('#search').press('Enter');
+  await page.waitForLoadState();
+  assert.equal(await page.locator('#search-target input:checked').inputValue(),'local');
+  assert.equal(await page.locator('#search').getAttribute('role'),null);
+  assert.deepEqual(errors,[]);
+  // Reproduce the old hybrid + local combination using an actual disk edit.
+  const legacyConfig=(await fs.readFile(path.join(dir,'config.yml'),'utf8'))
+   .replace(/Mode: select/,'Mode: hybrid').replace(/DefaultTarget: [^\n]+/,'DefaultTarget: local').replace(/^AppVersion:.*\n/m,'');
+  await fs.writeFile(path.join(dir,'config.yml'),legacyConfig);
+  await page.goto(base);
+  assert.equal(await page.locator('#search-target').count(),0,'legacy conflicting mode must run locally');
+  assert.deepEqual(await fs.readFile(path.join(dir,'config.yml')),Buffer.from(legacyConfig),'compatibility must not persist on read');
+  await page.goto(base+'/settings/search');
+  assert.equal(await page.locator('input[name="search-mode"][value="local-first"]').isChecked(),true);
+  await page.locator('input[name="search-mode"][value="hybrid"]').check();
+  await page.locator('button[value="preset:baidu"]').click();
+  assert.equal(await page.locator('input[name="search-mode"][value="hybrid"]').isChecked(),true,'adding a preset must preserve the working mode');
+  assert.deepEqual(await fs.readFile(path.join(dir,'config.yml')),Buffer.from(legacyConfig),'editing action must not save');
+  await page.locator('button.btn-submit').click();
+  assert.equal(await page.locator('[role="alert"]').count(),0);
+  assert.equal(await page.locator('#default-target').inputValue(),'example');
+  const backupDir=path.join(dir,'.flare-search-backups');
+  const manifest=JSON.parse(await fs.readFile(path.join(backupDir,'manifest.json'),'utf8'));
+  assert.ok(manifest.upgrade_file.includes(manifest.upgrade_version));
+  assert.deepEqual(await fs.readFile(path.join(backupDir,manifest.upgrade_file)),originalConfig,'permanent backup must remain the first original');
+  assert.deepEqual(await fs.readFile(path.join(backupDir,'latest.bak')),Buffer.from(legacyConfig));
+  assert.equal((await fs.readdir(backupDir)).filter(name=>name.endsWith('.bak')).length,2);
+  const beforeConfig=await fs.readFile(path.join(dir,'config.yml'));
+  const beforeManifest=await fs.readFile(path.join(backupDir,'manifest.json'));
+  const beforeLatest=await fs.stat(path.join(backupDir,'latest.bak'));
+  await page.locator('button.btn-submit').click();
+  assert.deepEqual(await fs.readFile(path.join(dir,'config.yml')),beforeConfig);
+  assert.deepEqual(await fs.readFile(path.join(backupDir,'manifest.json')),beforeManifest);
+  assert.equal((await fs.stat(path.join(backupDir,'latest.bak'))).ino,beforeLatest.ino,'unchanged save must not rotate backup');
+  console.log('PASS: three modes, legacy upgrade, permanent/latest backups, unchanged save and settings switching');
  } finally { if(browser)await browser.close(); child.kill('SIGTERM'); await fs.rm(dir,{recursive:true,force:true}); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -74,7 +74,8 @@ func parsedApp(raw []byte) (model.Application, error) {
 		return cloneApplication(snapshot.value), snapshot.err
 	}
 	next := &parsedApplication{raw: raw}
-	next.err = yaml.Unmarshal(raw, &next.value)
+	_, next.value, next.err = readConfigDocument(raw)
+	next.value.ConfigRevision = backupDigest(raw)
 	fileCacheMu.Lock()
 	if sameCachedBytes(cachedConfig, raw) && cachedConfig != nil {
 		cachedApplication = next

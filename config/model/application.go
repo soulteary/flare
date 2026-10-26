@@ -2,6 +2,9 @@ package model
 
 // Application Data Model
 type Application struct {
+	ConfigRevision          string           `yaml:"-"`
+	AppVersion              string           `yaml:"AppVersion,omitempty"`
+	ConfigVersionState      string           `yaml:"-"`
 	Search                  *SearchOptions   `yaml:"Search,omitempty"`
 	Homepage                *HomepageOptions `yaml:"Homepage,omitempty"`
 	Clock                   *ClockOptions    `yaml:"Clock,omitempty"`

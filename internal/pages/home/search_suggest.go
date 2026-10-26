@@ -22,8 +22,8 @@ func hybridEnabled(options model.Application) bool {
 	if !options.ShowSearchComponent || options.Search == nil {
 		return false
 	}
-	opts := searchcore.Normalize(options.Search)
-	return opts.Mode == "hybrid" && opts.DefaultTarget != "local" && searchcore.Validate(opts) == nil
+	opts, _ := searchcore.Upgrade(options.Search)
+	return (opts.Mode == "local-first" || (opts.Mode == "hybrid" && opts.DefaultTarget != "local")) && searchcore.Validate(opts) == nil
 }
 
 func populateHybridSearch(m map[string]any, options model.Application) {
@@ -33,7 +33,7 @@ func populateHybridSearch(m map[string]any, options model.Application) {
 		return
 	}
 	keywords := map[string]string{}
-	opts := searchcore.Normalize(options.Search)
+	opts, _ := searchcore.Upgrade(options.Search)
 	if opts.EnableKeywords {
 		keywords["local"] = "local"
 		for _, engine := range opts.Engines {

@@ -36,13 +36,13 @@ func TestWeatherSaveFailurePreservesInputAndReportsError(t *testing.T) {
 	if _, err := data.GetAllSettingsOptions(); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Remove("config.yml"); err != nil {
+	if err := os.Rename("config.yml", "config-original.yml"); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Mkdir("config.yml", 0700); err != nil {
 		t.Fatal(err)
 	}
-	// Warm settings stay readable, but atomic replacement cannot replace a directory.
+	// Disk errors must not be hidden by stale cached configuration; preserve the submitted form.
 	view := &capturedWeatherView{}
 	app := fiber.New(fiber.Config{Views: view})
 	app.Post("/weather", updateWeatherOptions)
@@ -59,11 +59,20 @@ func TestWeatherSaveFailurePreservesInputAndReportsError(t *testing.T) {
 	if view.values["SaveFailed"] != true || view.values["Location"] != "Pending city" || view.values["ShowWeather"] != true {
 		t.Fatalf("submitted input lost: %+v", view.values)
 	}
+	if _, readErr := data.GetAllSettingsOptions(); readErr == nil {
+		t.Fatal("directory error was hidden by cached configuration")
+	}
+	if removeErr := os.Remove("config.yml"); removeErr != nil {
+		t.Fatal(removeErr)
+	}
+	if renameErr := os.Rename("config-original.yml", "config.yml"); renameErr != nil {
+		t.Fatal(renameErr)
+	}
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
 		t.Fatal(err)
 	}
 	if options.Location != "Saved city" {
-		t.Fatal("failed save replaced cached configuration")
+		t.Fatal("failed save changed original configuration")
 	}
 }

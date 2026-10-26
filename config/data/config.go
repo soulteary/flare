@@ -1,11 +1,14 @@
 package data
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 
+	yaml3 "go.yaml.in/yaml/v3"
 	"gopkg.in/yaml.v2"
 
 	"github.com/soulteary/flare/config/model"
@@ -56,10 +59,18 @@ KeepLetterCase: false
 Locale: "zh"
 `)
 
-	ok := saveFile(filePath, out)
-	if !ok {
-		log.Println("初始化默认程序配置文件出错。")
-		return result, fmt.Errorf("初始化默认配置文件失败: %s", filePath)
+	out = append(out, []byte(fmt.Sprintf("\n# Application version that last saved this configuration\nAppVersion: %q\n", applicationVersion()))...)
+	f, createErr := os.OpenFile(filepath.Clean(filePath), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if createErr != nil {
+		return result, createErr
+	}
+	_, writeErr := f.Write(out)
+	if writeErr == nil {
+		writeErr = f.Sync()
+	}
+	closeErr := f.Close()
+	if writeErr != nil || closeErr != nil {
+		return result, fmt.Errorf("initial configuration could not be written")
 	}
 
 	parseErr := yaml.Unmarshal(out, &result)
@@ -67,20 +78,79 @@ Locale: "zh"
 		return result, fmt.Errorf("初始化程序配置失败: %w", parseErr)
 	}
 
+	result.ConfigRevision = backupDigest(out)
 	return result, nil
 }
 
 func saveAppConfigToYamlFile(name string, result model.Application) bool {
-	out, err := yaml.Marshal(result)
+	path := getConfigPath(name)
+	raw, err := readFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		// Creation is exclusive; never overwrite a file that appeared concurrently.
+		result.AppVersion = applicationVersion()
+		out, e := yaml.Marshal(result)
+		if e != nil {
+			return false
+		}
+		f, e := os.OpenFile(filepath.Clean(path), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+		if e != nil {
+			return false
+		}
+		_, e = f.Write(out)
+		if e == nil {
+			e = f.Sync()
+		}
+		closed := f.Close()
+		invalidateFileCache(name)
+		return e == nil && closed == nil
+	}
 	if err != nil {
-		log.Println("转换程序配置的数据格式失败")
 		return false
 	}
-
-	filePath := getConfigPath(name)
-	ok := saveConfigAtomically(filePath, out)
-	if !ok {
-		log.Println("保存程序配置文件失败")
+	doc, original, err := readConfigDocument(raw)
+	if err != nil {
+		return false
+	}
+	// Runtime-only state and version-only differences do not create writes.
+	compare := result
+	compare.AppVersion = original.AppVersion
+	compare.ConfigVersionState = ""
+	compare.ConfigRevision = ""
+	original.ConfigVersionState = ""
+	if result.ConfigRevision != "" && result.ConfigRevision != backupDigest(raw) {
+		return false
+	}
+	if reflect.DeepEqual(original, compare) {
+		return true
+	}
+	writer, err := versionForSave(original)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	if err = rejectSharedConfigNodes(doc); err != nil {
+		log.Println(err)
+		return false
+	}
+	result.AppVersion = writer
+	var patch yaml3.Node
+	if err = patch.Encode(result); err != nil {
+		return false
+	}
+	if err = rejectAmbiguousEngineReplacement(doc.Content[0], &patch); err != nil {
+		return false
+	}
+	mergeSearchNodes(doc.Content[0], &patch)
+	out, err := yaml3.Marshal(doc)
+	if err != nil {
+		return false
+	}
+	if _, _, err = readConfigDocument(out); err != nil {
+		return false
+	}
+	state := ConfigurationVersionState(original.AppVersion)
+	if err = commitConfigDocument(path, raw, out, state == "upgrade" || state == "legacy"); err != nil {
+		log.Println(err)
 		return false
 	}
 	invalidateFileCache(name)
@@ -91,7 +161,7 @@ func loadAppConfigFromYaml(name string) (model.Application, error) {
 	var result model.Application
 	filePath := getConfigPath(name)
 
-	if !checkExists(filePath) {
+	if _, statErr := os.Lstat(filePath); os.IsNotExist(statErr) {
 		fmt.Println("找不到配置文件" + name + "，创建默认配置。")
 		invalidateFileCache(name)
 		var createErr error
@@ -101,7 +171,8 @@ func loadAppConfigFromYaml(name string) (model.Application, error) {
 		}
 		return result, nil
 	}
-	configFile, err := readFileCached(name, func() ([]byte, error) { return readFile(filePath) })
+	// Configuration/version checks must observe external edits, especially downgrades.
+	configFile, err := readFreshAppConfig(filePath)
 	if err != nil {
 		return result, fmt.Errorf("读取配置文件 %s: %w", name, err)
 	}
@@ -109,6 +180,7 @@ func loadAppConfigFromYaml(name string) (model.Application, error) {
 	if parseErr != nil {
 		return result, fmt.Errorf("解析配置文件 %s 错误，请检查配置文件内容: %w", name, parseErr)
 	}
+	result.ConfigRevision = backupDigest(configFile)
 	return result, nil
 }
 
@@ -138,5 +210,16 @@ func saveConfigAtomically(path string, contents []byte) bool {
 	if err != nil || closeErr != nil {
 		return false
 	}
-	return os.Rename(name, path) == nil
+	if err = os.Rename(name, path); err != nil {
+		return false
+	}
+	// Sync the rename as well as the contents; backup and manifest ordering relies
+	// on directory entries surviving a process/machine interruption.
+	dir, err := os.Open(filepath.Dir(path))
+	if err != nil {
+		return false
+	}
+	syncErr := dir.Sync()
+	closeErr = dir.Close()
+	return syncErr == nil && closeErr == nil
 }

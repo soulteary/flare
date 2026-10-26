@@ -10,6 +10,7 @@ import (
 )
 
 func TestAppConfig(t *testing.T) {
+	t.Chdir(t.TempDir())
 
 	filePath := getConfigPath("config")
 	os.Remove(filePath)

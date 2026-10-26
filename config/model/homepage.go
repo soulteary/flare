@@ -3,13 +3,14 @@ package model
 import "fmt"
 
 // HomepageOptions controls presentation without changing stored bookmark order.
+// Encode zero values explicitly so a settings merge can reset previous choices.
 type HomepageOptions struct {
-	DesktopColumns       string `yaml:"DesktopColumns,omitempty"`
-	CategoryNavigation   string `yaml:"CategoryNavigation,omitempty"`
-	MobileBookmarkLayout string `yaml:"MobileBookmarkLayout,omitempty"`
-	NavigationTextSize   string `yaml:"NavigationTextSize,omitempty"`
-	TitleSize            string `yaml:"TitleSize,omitempty"`
-	HideAppDescriptions  bool   `yaml:"HideAppDescriptions,omitempty"`
+	DesktopColumns       string `yaml:"DesktopColumns"`
+	CategoryNavigation   string `yaml:"CategoryNavigation"`
+	MobileBookmarkLayout string `yaml:"MobileBookmarkLayout"`
+	NavigationTextSize   string `yaml:"NavigationTextSize"`
+	TitleSize            string `yaml:"TitleSize"`
+	HideAppDescriptions  bool   `yaml:"HideAppDescriptions"`
 }
 
 // Validate rejects unsupported choices instead of accepting arbitrary CSS values.

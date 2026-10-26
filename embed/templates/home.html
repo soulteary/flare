@@ -32,21 +32,25 @@
           <input type="text" name="search" id="search" value="{{.SearchQuery}}" autocomplete="off" placeholder="{{.SearchKeyword}}" {{ if not .DisabledSearchAutoFocus }}autofocus{{ end }}/>
           {{ if .SearchConfigured }}
           <div class="search-actions">
-            <label for="search-target">{{ T .Locale "search_target" }}</label>
-            <select id="search-target" name="target">
-              <option value="local" {{ if eq .SearchTarget "local" }}selected{{ end }}>{{ T .Locale "search_local" }}</option>
-              {{ range .SearchEngines }}<option value="{{.ID}}" {{ if eq $.SearchTarget .ID }}selected{{ end }}>{{.Name}}</option>{{ end }}
-            </select>
-            <button type="submit" id="search-submit">{{ T .Locale "search_submit" }}</button>
+            {{ if not .SearchLocalFirst }}<fieldset id="search-target" class="search-targets">
+              <legend class="search-accessible-label">{{ T .Locale "search_target" }}</legend>
+              {{ if not .SearchExternalFirst }}<label class="search-target-option"><input type="radio" name="target" value="local" {{ if eq .SearchTarget "local" }}checked{{ end }}><span>{{ T .Locale "search_local" }}</span></label>{{ end }}
+              {{ range .SearchEngines }}<label class="search-target-option"><input type="radio" name="target" value="{{.ID}}" {{ if eq $.SearchTarget .ID }}checked{{ end }}><span>{{.Name}}</span></label>{{ end }}
+            </fieldset>{{ end }}
+            <button type="submit" id="search-submit" {{ if .SearchLocalFirst }}name="target" value="local"{{ end }}>{{ T .Locale "search_submit" }}</button>
           </div>
           {{ if .SearchOptions.OpenNewTab }}
-          <div class="search-new-tabs"><button type="submit" formtarget="_blank">{{ T .Locale "search_new_tab_action" }} ↗</button></div>
+          <div class="search-new-tabs"><button type="submit" formtarget="_blank" {{ if .SearchLocalFirst }}name="target" value="local"{{ end }}>{{ T .Locale "search_new_tab_action" }} ↗</button></div>
           {{ end }}
           {{ end }}
+          {{ if and .SearchLocalFirst .HasKeyword .SearchHasEngines }}
+          <div class="search-external-actions"><span>{{ T .Locale "search_web_continue" }}</span>{{ range .SearchEngines }}<button type="submit" name="target" value="{{.ID}}">{{.Name}} ↗</button>{{ end }}</div>
+          {{ end }}
+          {{ if .SearchExternalFirst }}<p class="search-behavior-hint">{{ T .Locale "search_hybrid_hint" }}</p>{{ end }}
           <ul id="search-suggestions" role="listbox" hidden></ul><p id="search-status" role="status" aria-live="polite"></p>
           {{ if .SearchError }}<p role="alert" class="search-error">{{.SearchError}}</p>{{ end }}
-          {{ if .SearchNoResults }}<p role="status">{{ T .Locale "search_no_results" }}</p>{{ end }}
-          {{ if .HasKeyword }}<a href="/">{{ T .Locale "search_clear" }}</a>{{ end }}
+          {{ if .SearchNoResults }}<p role="status" class="search-empty">{{ if .SearchHasEngines }}{{ T .Locale "search_no_results" }}{{ else }}{{ T .Locale "search_no_results_local" }}{{ end }}</p>{{ end }}
+          {{ if .HasKeyword }}<a class="search-clear" href="/">{{ T .Locale "search_clear" }}</a>{{ end }}
           <p id="search-label">{{ T .Locale "search_label" }}</p>
         </form>
       </div>
