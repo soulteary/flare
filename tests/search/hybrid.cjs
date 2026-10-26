@@ -215,6 +215,9 @@ Search:
   await page.goto(base+'/settings/search');
   assert.equal(await page.locator('input[name="search-mode"][value="local-first"]').isChecked(),true);
   await page.locator('input[name="search-mode"][value="hybrid"]').check();
+  await page.locator('button[value="preset:baidu"]').click();
+  assert.equal(await page.locator('input[name="search-mode"][value="hybrid"]').isChecked(),true,'adding a preset must preserve the working mode');
+  assert.deepEqual(await fs.readFile(path.join(dir,'config.yml')),Buffer.from(legacyConfig),'editing action must not save');
   await page.locator('button.btn-submit').click();
   assert.equal(await page.locator('[role="alert"]').count(),0);
   assert.equal(await page.locator('#default-target').inputValue(),'example');

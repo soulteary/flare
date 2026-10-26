@@ -2,7 +2,6 @@ package data
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 
 	"github.com/soulteary/flare/config/model"
@@ -14,7 +13,7 @@ import (
 // unknown fields and engine extensions, and retain an exact private backup first.
 func saveSearchConfigPreservingData(options model.Application) error {
 	path := getConfigPath("config")
-	raw, err := os.ReadFile(path)
+	raw, err := readFile(path)
 	if err != nil {
 		return err
 	}

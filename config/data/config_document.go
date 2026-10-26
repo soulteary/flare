@@ -63,7 +63,7 @@ func commitConfigDocumentWithBackup(path string, raw, out []byte, upgrading bool
 	if err := requireRegularConfig(path); err != nil {
 		return err
 	}
-	current, err := os.ReadFile(path)
+	current, err := readFile(path)
 	if err != nil || !bytes.Equal(raw, current) {
 		return fmt.Errorf("configuration changed during save; reload and retry")
 	}
@@ -73,7 +73,7 @@ func commitConfigDocumentWithBackup(path string, raw, out []byte, upgrading bool
 	if err = requireRegularConfig(path); err != nil {
 		return err
 	}
-	current, err = os.ReadFile(path)
+	current, err = readFile(path)
 	if err != nil || !bytes.Equal(raw, current) {
 		return fmt.Errorf("configuration changed during save; reload and retry")
 	}

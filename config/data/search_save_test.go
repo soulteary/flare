@@ -67,8 +67,8 @@ Search:
 	require.Equal(t, "retain-engine", engine["UnknownEngine"])
 	require.Equal(t, "https://custom.example/?q={query}", engine["URLTemplate"])
 	for _, name := range []string{"apps.yml", "bookmarks.yml"} {
-		got, err := os.ReadFile(name)
-		require.NoError(t, err)
+		got, readErr := os.ReadFile(name)
+		require.NoError(t, readErr)
 		require.Equal(t, "# untouched user data\n", string(got))
 	}
 	info, err = os.Stat("config.yml")
@@ -111,14 +111,14 @@ func TestSearchBackupRetentionAndNoOp(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, raw, first)
 	for _, show := range []bool{true, false, true} {
-		before, err := os.ReadFile("config.yml")
-		require.NoError(t, err)
+		before, readErr := os.ReadFile("config.yml")
+		require.NoError(t, readErr)
 		require.NoError(t, UpdateSearchOptions(show, false, &opts))
-		latest, err := os.ReadFile(filepath.Join(searchBackupDir, "latest.bak"))
-		require.NoError(t, err)
+		latest, readErr := os.ReadFile(filepath.Join(searchBackupDir, "latest.bak"))
+		require.NoError(t, readErr)
 		require.Equal(t, before, latest)
-		permanent, err := os.ReadFile(filepath.Join(searchBackupDir, "first-upgrade-to-dev.bak"))
-		require.NoError(t, err)
+		permanent, readErr := os.ReadFile(filepath.Join(searchBackupDir, "first-upgrade-to-dev.bak"))
+		require.NoError(t, readErr)
 		require.Equal(t, raw, permanent)
 	}
 	before, err := os.ReadFile("config.yml")
@@ -144,8 +144,8 @@ func TestSearchBackupRetentionAndNoOp(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, files, 2)
 	for _, name := range userFiles {
-		data, err := os.ReadFile(name)
-		require.NoError(t, err)
+		data, readErr := os.ReadFile(name)
+		require.NoError(t, readErr)
 		require.Equal(t, "user-owned", string(data))
 	}
 	// A file changed by the user ceases to be replaceable by rotation.

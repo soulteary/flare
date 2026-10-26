@@ -69,7 +69,7 @@ func retainSearchBackupWithWriter(raw []byte, upgrading bool, write func(string,
 		if e = regularBackupFile(manifestPath); e != nil {
 			return fmt.Errorf("unrecognized backup directory: %w", e)
 		}
-		data, e := os.ReadFile(manifestPath)
+		data, e := readFile(manifestPath)
 		if e != nil {
 			return e
 		}
@@ -87,9 +87,15 @@ func retainSearchBackupWithWriter(raw []byte, upgrading bool, write func(string,
 		}
 	} else {
 		// Claim the newly created directory before adding any backup.
-		data, _ := json.Marshal(state)
+		data, marshalErr := json.Marshal(state)
+		if marshalErr != nil {
+			return marshalErr
+		}
 		if !write(manifestPath, data) {
-			os.Remove(dir) // only removes our newly created directory if still empty
+			// Only remove our newly created directory if still empty.
+			if cleanupErr := os.Remove(dir); cleanupErr != nil && !os.IsNotExist(cleanupErr) {
+				return fmt.Errorf("cannot initialize backup manifest (cleanup: %w)", cleanupErr)
+			}
 			return fmt.Errorf("cannot initialize backup manifest")
 		}
 	}
@@ -111,9 +117,9 @@ func retainSearchBackupWithWriter(raw []byte, upgrading bool, write func(string,
 			if !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
 				return fmt.Errorf("unsafe pending backup")
 			}
-			contents, e := os.ReadFile(p)
-			if e != nil {
-				return e
+			contents, readErr := readFile(p)
+			if readErr != nil {
+				return readErr
 			}
 			digest := backupDigest(contents)
 			if digest == pending.Hash {
@@ -151,7 +157,7 @@ func retainSearchBackupWithWriter(raw []byte, upgrading bool, write func(string,
 		if e := regularBackupFile(path); e != nil {
 			return e
 		}
-		data, e := os.ReadFile(path)
+		data, e := readFile(path)
 		if e != nil {
 			return e
 		}

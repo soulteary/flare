@@ -59,14 +59,14 @@ func TestWeatherSaveFailurePreservesInputAndReportsError(t *testing.T) {
 	if view.values["SaveFailed"] != true || view.values["Location"] != "Pending city" || view.values["ShowWeather"] != true {
 		t.Fatalf("submitted input lost: %+v", view.values)
 	}
-	if _, err := data.GetAllSettingsOptions(); err == nil {
+	if _, readErr := data.GetAllSettingsOptions(); readErr == nil {
 		t.Fatal("directory error was hidden by cached configuration")
 	}
-	if err := os.Remove("config.yml"); err != nil {
-		t.Fatal(err)
+	if removeErr := os.Remove("config.yml"); removeErr != nil {
+		t.Fatal(removeErr)
 	}
-	if err := os.Rename("config-original.yml", "config.yml"); err != nil {
-		t.Fatal(err)
+	if renameErr := os.Rename("config-original.yml", "config.yml"); renameErr != nil {
+		t.Fatal(renameErr)
 	}
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {

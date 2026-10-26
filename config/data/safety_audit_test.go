@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/soulteary/flare/config/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -223,4 +224,32 @@ func TestStaleSettingsCannotReplaceExternalEdits(t *testing.T) {
 	require.Equal(t, external, after)
 	_, err = os.Stat(searchBackupDir)
 	require.True(t, os.IsNotExist(err))
+}
+
+func TestAppearanceResetsPersistWithoutDroppingExtensions(t *testing.T) {
+	t.Chdir(t.TempDir())
+	raw := []byte("Title: original\nHomepage:\n  DesktopColumns: '8'\n  CategoryNavigation: tabs\n  MobileBookmarkLayout: compact\n  NavigationTextSize: large\n  TitleSize: prominent\n  HideAppDescriptions: true\n  CustomAppearance: retain\nClock:\n  Dynamic: true\n  Seconds: false\n  TimezoneMode: server\n  CustomClock: retain\n")
+	require.NoError(t, os.WriteFile("config.yml", raw, 0600))
+	options, err := GetAllSettingsOptions()
+	require.NoError(t, err)
+	options.Homepage = &model.HomepageOptions{}
+	options.Clock.Seconds = nil
+	require.True(t, UpdateAppearance(options))
+	saved, err := GetAllSettingsOptions()
+	require.NoError(t, err)
+	require.Equal(t, &model.HomepageOptions{}, saved.Homepage)
+	require.True(t, saved.Clock.ShowSeconds())
+	contents, err := os.ReadFile("config.yml")
+	require.NoError(t, err)
+	doc, _, err := readConfigDocument(contents)
+	require.NoError(t, err)
+	require.Equal(t, "retain", mappingValue(mappingValue(doc.Content[0], "Homepage"), "CustomAppearance").Value)
+	require.Equal(t, "retain", mappingValue(mappingValue(doc.Content[0], "Clock"), "CustomClock").Value)
+	// The reset itself must be stable: saving it again is a no-op.
+	info, err := os.Stat("config.yml")
+	require.NoError(t, err)
+	require.True(t, UpdateAppearance(saved))
+	after, err := os.Stat("config.yml")
+	require.NoError(t, err)
+	require.True(t, os.SameFile(info, after))
 }

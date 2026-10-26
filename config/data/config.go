@@ -1,6 +1,7 @@
 package data
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -59,7 +60,7 @@ Locale: "zh"
 `)
 
 	out = append(out, []byte(fmt.Sprintf("\n# Application version that last saved this configuration\nAppVersion: %q\n", applicationVersion()))...)
-	f, createErr := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	f, createErr := os.OpenFile(filepath.Clean(filePath), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 	if createErr != nil {
 		return result, createErr
 	}
@@ -83,15 +84,15 @@ Locale: "zh"
 
 func saveAppConfigToYamlFile(name string, result model.Application) bool {
 	path := getConfigPath(name)
-	raw, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
+	raw, err := readFile(path)
+	if errors.Is(err, os.ErrNotExist) {
 		// Creation is exclusive; never overwrite a file that appeared concurrently.
 		result.AppVersion = applicationVersion()
 		out, e := yaml.Marshal(result)
 		if e != nil {
 			return false
 		}
-		f, e := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+		f, e := os.OpenFile(filepath.Clean(path), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 		if e != nil {
 			return false
 		}

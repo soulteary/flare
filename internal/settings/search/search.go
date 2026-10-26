@@ -31,8 +31,11 @@ func updateSearchOptions(c fiber.Ctx) error {
 			options.DisabledSearchAutoFocus = c.FormValue("search-auto-focus") != "1"
 		}
 		if c.FormValue("engine-count") != "" {
-			pending, _ := parseSearchForm(c)
+			pending, parseErr := parseSearchForm(c)
 			options.Search = &pending
+			if parseErr != nil {
+				err = fmt.Errorf("%w; invalid submitted form: %v", err, parseErr)
+			}
 		}
 		return renderSettings(c, options, "Unable to save search settings: "+err.Error(), false)
 	}
@@ -189,11 +192,13 @@ func renderSettings(c fiber.Ctx, options model.Application, message string, save
 	m["ShowSearchComponent"] = options.ShowSearchComponent
 	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus
 	m["OptionTitle"] = options.Title
-	opts, upgraded := searchcore.Upgrade(options.Search)
-	if message != "" {
-		opts = searchcore.Normalize(options.Search)
+	opts := searchcore.Normalize(options.Search)
+	upgraded := false
+	// Submitted forms are working state, not legacy persisted configuration.
+	if c.Method() == http.MethodGet {
+		opts, upgraded = searchcore.Upgrade(options.Search)
 	}
-	m["SearchCompatibility"] = (upgraded || options.Search == nil) && !saved
+	m["SearchCompatibility"] = (upgraded || options.Search == nil) && !saved && c.Method() == http.MethodGet
 	m["SearchVersionDowngrade"] = options.ConfigVersionState == "downgrade"
 	m["SearchConfigVersion"] = options.AppVersion
 	m["SearchOptions"] = opts
