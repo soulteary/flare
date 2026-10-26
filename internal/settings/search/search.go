@@ -143,14 +143,14 @@ func updateSearchOptions(c fiber.Ctx) error {
 }
 
 func parseSearchForm(c fiber.Ctx) (model.SearchOptions, error) {
-	opts := model.SearchOptions{Mode: c.FormValue("search-mode", "select"), DefaultTarget: c.FormValue("default-target", "local"), OpenNewTab: c.FormValue("open-new-tab") == "1", EnableKeywords: c.FormValue("enable-keywords") == "1"}
+	opts := model.SearchOptions{Mode: c.FormValue("search-mode", "select"), DefaultTarget: c.FormValue("default-target", "local"), OpenNewTab: c.FormValue("open-new-tab") == "1"}
 	count, err := strconv.Atoi(c.FormValue("engine-count", "0"))
 	if err != nil || count < 0 || count > 32 {
 		return opts, fmt.Errorf("search supports at most 32 engines")
 	}
 	for i := 0; i < count; i++ {
 		key := "engine-" + strconv.Itoa(i) + "-"
-		opts.Engines = append(opts.Engines, model.SearchEngine{ID: c.FormValue(key + "id"), Name: c.FormValue(key + "name"), URLTemplate: c.FormValue(key + "url"), Keyword: c.FormValue(key + "keyword"), Enabled: c.FormValue(key+"enabled") == "1"})
+		opts.Engines = append(opts.Engines, model.SearchEngine{ID: c.FormValue(key + "id"), Name: c.FormValue(key + "name"), URLTemplate: c.FormValue(key + "url"), Enabled: c.FormValue(key+"enabled") == "1"})
 	}
 	return opts, nil
 }

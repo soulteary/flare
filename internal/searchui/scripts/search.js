@@ -6,8 +6,6 @@
   var status = document.getElementById('search-status');
   if (!form || !input || !list || !status) return;
   var target = document.getElementById('search-target');
-  var keywords = {};
-  try { keywords = JSON.parse(form.dataset.keywords || '{}'); } catch (_) {}
   var timer, controller, generation = 0, active = -1, links = [], composing = false, pointingAtSuggestion = false;
   input.setAttribute('role', 'combobox');
   input.setAttribute('aria-autocomplete', 'list');
@@ -32,8 +30,6 @@
   function refresh() {
     cancel(); clear(); status.textContent = '';
     if (composing || !input.value.trim()) return;
-    var command = /^!([^\s]+)/.exec(input.value.trim());
-    if (command && Object.prototype.hasOwnProperty.call(keywords, command[1].toLowerCase())) return;
     var query = input.value.trim(), version = generation;
     timer = setTimeout(function () {
       controller = new AbortController();
@@ -99,8 +95,6 @@
     var checkedTarget = target && target.querySelector('input[name="target"]:checked');
     var selectedTarget = checkedTarget ? checkedTarget.value : 'local';
     if (event.submitter && event.submitter.name === 'target') selectedTarget = event.submitter.value;
-    var command = /^!([^\s]+)/.exec(input.value.trim());
-    if (command && Object.prototype.hasOwnProperty.call(keywords, command[1].toLowerCase())) selectedTarget = keywords[command[1].toLowerCase()];
     var explicitTarget = event.submitter && event.submitter.getAttribute('formtarget');
     form.target = explicitTarget || (form.dataset.openNewTab === 'true' && selectedTarget !== 'local' ? '_blank' : '_self');
     cancel(); clear();
