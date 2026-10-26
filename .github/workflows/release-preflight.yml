@@ -26,6 +26,23 @@ jobs:
           git diff --exit-code
       - name: Build and inspect local candidate archives
         run: python3 scripts/release-preflight.py --version 0.6.6 --output "$RUNNER_TEMP/preflight-archives"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tests/clock/package-lock.json
+      - name: Install archive browser acceptance dependencies
+        working-directory: tests/clock
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Verify generated editor assets in the archived binary
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/preflight-archives/linux_amd64/flare
+          NODE_PATH: ${{ github.workspace }}/tests/clock/node_modules
+        run: |
+          node tests/editor/browser.cjs
+          node tests/editor/legacy.browser.cjs
       - uses: actions/upload-artifact@v6
         with:
           name: candidate-archives-${{ github.sha }}

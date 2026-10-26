@@ -50,6 +50,13 @@ def main():
     source_tree = tempfile.TemporaryDirectory(prefix='flare-release-source-')
     with tarfile.open(fileobj=io.BytesIO(subprocess.check_output(['git', 'archive', commit], cwd=ROOT))) as tar:
         tar.extractall(source_tree.name, filter='data')
+    # Some embedded editor/guide assets are generated and intentionally ignored
+    # by Git. Generate them inside the snapshot, not only in the working tree.
+    generation_env = dict(os.environ)
+    for key in ('GOOS', 'GOARCH', 'GOARM'):
+        generation_env.pop(key, None)
+    subprocess.run(['go', 'run', 'build/build.go'], cwd=source_tree.name, env=generation_env, check=True)
+    evidence['production_assets_generated_in_snapshot'] = True
     for goos, arch, arm in TARGETS:
         name = f'{goos}_{arch}' + (f'v{arm}' if arm else '')
         directory = output / name
