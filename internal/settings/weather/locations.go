@@ -35,7 +35,10 @@ var errInvalidKeyword = errors.New("invalid keyword")
 var errDirectoryBusy = errors.New("directory busy or rate limited")
 
 func message(c fiber.Ctx, key string) string {
-	options, _ := data.GetAllSettingsOptions()
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return i18n.T("zh", key)
+	}
 	locale := options.Locale
 	if locale == "" {
 		locale = "zh"
