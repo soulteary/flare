@@ -2,6 +2,7 @@ package weather
 
 import (
 	"errors"
+	"html/template"
 	"net/http"
 	"time"
 
@@ -36,6 +37,17 @@ type RemoteWeatherResponse struct {
 
 type WeatherQueryParams struct {
 	Location string `form:"location"`
+}
+
+// IconHTML renders only exact keys from the dependency's embedded SVG assets.
+// Missing keys stay empty, including the homepage's not-yet-loaded snapshot.
+func IconHTML(key string) template.HTML {
+	svg, ok := weather.GetIconSVG(key)
+	if !ok {
+		return ""
+	}
+	// #nosec G203 -- GetIconSVG emits packaged SVGs, never caller-provided markup.
+	return template.HTML(svg)
 }
 
 func GetWeatherInfo(location string) (response model.Weather, desc string, err error) {

@@ -26,3 +26,18 @@ the submitted fields and show a retryable error instead of implying success.
 Deterministic tests use an injected clock and fetch function, including concurrent
 cold reads, stale results, bounded retries, changed-city responses and failed
 settings writes. They do not contact a live weather provider.
+
+## Weather dependency compatibility
+
+Flare uses `funny-china-weather` v0.3.0. This release renames embedded icon keys;
+Flare obtains those keys from the library's weather-code selector and passes them
+to `GetIconSVG` through an embedded-asset-only template adapter, so no
+application configuration migration is needed.
+Unknown codes now display the library's neutral `unknown` artwork. Weather
+snapshots are in memory only and are cleared when the upgraded process starts.
+
+The consumer compatibility test mocks the provider response and checks 38 codes,
+day/night resource selection, parsed measurements and trusted inline SVG output.
+It does not contact the external weather service or assert browser animation
+behavior. The upstream naming changes are documented in the
+[v0.3.0 release notes](https://github.com/soulteary/funny-china-weather/releases/tag/v0.3.0).
