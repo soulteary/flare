@@ -146,7 +146,7 @@ func applySearchAction(c fiber.Ctx, options model.Application, opts model.Search
 	switch {
 	case action == "add":
 		if len(opts.Engines) >= 32 {
-			return renderSettings(c, options, "At most 32 search engines are allowed", false)
+			return renderSettings(c, options, "at most 32 search engines are allowed", false)
 		}
 		opts.Engines = append(opts.Engines, model.SearchEngine{Enabled: true})
 	case strings.HasPrefix(action, "preset:"):
@@ -160,7 +160,7 @@ func applySearchAction(c fiber.Ctx, options model.Application, opts model.Search
 	case strings.HasPrefix(action, "test:"):
 		index, e := strconv.Atoi(strings.TrimPrefix(action, "test:"))
 		if e != nil || index < 0 || index >= len(opts.Engines) {
-			return renderSettings(c, options, "Invalid engine row", false)
+			return renderSettings(c, options, "invalid engine row", false)
 		}
 		target, e := searchcore.BuildURL(opts.Engines[index], "Flare search test")
 		if e != nil {
@@ -190,7 +190,7 @@ func addSearchPreset(opts *model.SearchOptions, id string) error {
 			}
 			if !exists {
 				if len(opts.Engines) >= 32 {
-					return fmt.Errorf("At most 32 search engines are allowed")
+					return fmt.Errorf("at most 32 search engines are allowed")
 				}
 				opts.Engines = append(opts.Engines, preset)
 			}
@@ -203,7 +203,7 @@ func editSearchRow(opts *model.SearchOptions, action string) error {
 	parts := strings.SplitN(action, ":", 2)
 	index, e := strconv.Atoi(parts[1])
 	if e != nil || index < 0 || index >= len(opts.Engines) {
-		return fmt.Errorf("Invalid engine row")
+		return fmt.Errorf("invalid engine row")
 	}
 	switch parts[0] {
 	case "delete":

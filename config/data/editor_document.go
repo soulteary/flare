@@ -161,7 +161,7 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	}
 	defer cleanupEditorStages(files)
 	for _, file := range files {
-		if err := stageEditorFile(file); err != nil {
+		if err = stageEditorFile(file); err != nil {
 			return EditorDocument{}, err
 		}
 	}
@@ -178,7 +178,7 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	if err != nil {
 		return EditorDocument{}, err
 	}
-	if err := replaceEditorFiles(files, recovery, rename); err != nil {
+	if err = replaceEditorFiles(files, recovery, rename); err != nil {
 		return EditorDocument{}, err
 	}
 	invalidateFileCache("apps")
