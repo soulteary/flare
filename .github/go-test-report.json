@@ -1,15 +1,15 @@
 {
   "schema_version": "1.0",
   "tests": {
-    "total": 309,
-    "passed": 308,
+    "total": 332,
+    "passed": 331,
     "failed": 0,
     "skipped": 1
   },
   "coverage": {
-    "covered_statements": 3440,
-    "total_statements": 4694,
-    "percentage": 73.29,
+    "covered_statements": 3653,
+    "total_statements": 4848,
+    "percentage": 75.35,
     "threshold": 0
   },
   "packages": [
@@ -32,7 +32,7 @@
       "status": "pass",
       "tests": 8,
       "failed": 0,
-      "coverage": 80.44
+      "coverage": 80.51
     },
     {
       "name": "cmd",
@@ -44,9 +44,9 @@
     {
       "name": "config/data",
       "status": "pass",
-      "tests": 77,
+      "tests": 78,
       "failed": 0,
-      "coverage": 89.88
+      "coverage": 89.91
     },
     {
       "name": "config/define",
@@ -58,23 +58,23 @@
     {
       "name": "config/model",
       "status": "pass",
-      "tests": 4,
+      "tests": 5,
       "failed": 0,
-      "coverage": 80
+      "coverage": 82.35
     },
     {
       "name": "internal/auth",
       "status": "pass",
-      "tests": 30,
+      "tests": 31,
       "failed": 0,
-      "coverage": 87.36
+      "coverage": 87.63
     },
     {
       "name": "internal/bookmarks",
       "status": "pass",
       "tests": 5,
       "failed": 0,
-      "coverage": 89.81
+      "coverage": 89.86
     },
     {
       "name": "internal/clock",
@@ -95,21 +95,21 @@
       "status": "pass",
       "tests": 1,
       "failed": 0,
-      "coverage": 100
+      "coverage": 95
     },
     {
       "name": "internal/i18n",
-      "status": "no_tests",
-      "tests": 0,
+      "status": "pass",
+      "tests": 5,
       "failed": 0,
-      "coverage": 0
+      "coverage": 94.74
     },
     {
       "name": "internal/logger",
       "status": "pass",
       "tests": 6,
       "failed": 0,
-      "coverage": 72.16
+      "coverage": 73.79
     },
     {
       "name": "internal/misc/deprecated",
@@ -135,9 +135,9 @@
     {
       "name": "internal/pages/editor",
       "status": "pass",
-      "tests": 9,
+      "tests": 14,
       "failed": 0,
-      "coverage": 63.82
+      "coverage": 66.16
     },
     {
       "name": "internal/pages/guide",
@@ -149,9 +149,9 @@
     {
       "name": "internal/pages/home",
       "status": "pass",
-      "tests": 16,
+      "tests": 19,
       "failed": 0,
-      "coverage": 58.39
+      "coverage": 69.36
     },
     {
       "name": "internal/pool",
@@ -170,9 +170,9 @@
     {
       "name": "internal/resources/mdi",
       "status": "pass",
-      "tests": 11,
+      "tests": 14,
       "failed": 0,
-      "coverage": 91.75
+      "coverage": 91.09
     },
     {
       "name": "internal/resources/templates",
@@ -186,7 +186,7 @@
       "status": "pass",
       "tests": 9,
       "failed": 0,
-      "coverage": 94.17
+      "coverage": 94.49
     },
     {
       "name": "internal/searchui",
@@ -198,9 +198,9 @@
     {
       "name": "internal/server",
       "status": "pass",
-      "tests": 41,
+      "tests": 43,
       "failed": 0,
-      "coverage": 66.97
+      "coverage": 67.86
     },
     {
       "name": "internal/settings",
@@ -228,7 +228,7 @@
       "status": "pass",
       "tests": 2,
       "failed": 0,
-      "coverage": 33.33
+      "coverage": 32.74
     },
     {
       "name": "internal/settings/theme",
@@ -242,7 +242,7 @@
       "status": "pass",
       "tests": 16,
       "failed": 0,
-      "coverage": 83.96
+      "coverage": 84.04
     },
     {
       "name": "internal/yamlutil",
@@ -254,9 +254,9 @@
     {
       "name": "tools/baseline",
       "status": "pass",
-      "tests": 10,
+      "tests": 12,
       "failed": 0,
-      "coverage": 70.26
+      "coverage": 71.43
     }
   ],
   "failures": null
