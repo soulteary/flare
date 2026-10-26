@@ -110,7 +110,7 @@ const _EMPTY_ICON = ""
 // GetIconSVGByName renders a standalone preview without relying on generated
 // asset files or minimum-request mode's inline CSS variables.
 func GetIconSVGByName(name string) string {
-	icon := iconMap[strings.ToLower(name)]
+	icon := iconPath(strings.ToLower(name))
 	if icon == "" {
 		return _EMPTY_ICON
 	}
@@ -123,7 +123,7 @@ func GetIconByName(name string) string {
 	if name == "" {
 		return _EMPTY_ICON
 	}
-	icon := iconMap[name]
+	icon := iconPath(name)
 	if icon == "" {
 		return _EMPTY_ICON
 	}

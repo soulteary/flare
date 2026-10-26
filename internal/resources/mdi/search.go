@@ -17,6 +17,11 @@ func SearchIconNames(query string, offset, limit int) ([]string, int) {
 		for name := range iconMap {
 			sortedIconNames = append(sortedIconNames, name)
 		}
+		for name := range legacyIconMap {
+			if _, present := iconMap[name]; !present {
+				sortedIconNames = append(sortedIconNames, name)
+			}
+		}
 		sort.Strings(sortedIconNames)
 	})
 	query = strings.ToLower(strings.TrimSpace(query))
