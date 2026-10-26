@@ -50,8 +50,9 @@ func (r *Renderer) Render(w io.Writer, templateName string, data any, _ ...strin
 }
 
 var templateFuncMap = template.FuncMap{
-	"T":          i18n.T,
-	"FaviconURL": assets.FaviconURL,
+	"T":               i18n.T,
+	"FaviconURL":      assets.FaviconURL,
+	"ThemeFaviconURL": assets.ThemeFaviconURL,
 }
 
 // Load satisfies fiber.Views. NewRenderer parses templates before app creation.
