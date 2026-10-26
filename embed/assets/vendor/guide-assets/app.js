@@ -36,12 +36,12 @@
           intro: "如果你觉得页面内容太多，只想看到界面中的应用，可以点击“应用”标题，切换界面展示内容。",
         },
         {
-          element: document.querySelector("#container-bookmakrs"),
+          element: document.querySelector("#container-bookmarks"),
           title: "Flare 书签组件",
           intro: "“书签”类型的标签相比“应用”而言，多了“分类”的功能。<br/><br/>当然，和应用一样，如果你不喜欢它，可以在设置中将其隐藏。",
         },
         {
-          element: document.querySelector("#container-bookmakrs h2"),
+          element: document.querySelector("#container-bookmarks h2"),
           title: "Flare 书签标题",
           intro: "和应用标题一样，我们可以通过点击书签标题，来切换到只浏览书签内容的界面。",
         },

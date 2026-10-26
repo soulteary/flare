@@ -39,14 +39,24 @@ func protectWriteSource(c fiber.Ctx) error {
 		if len(values) != 1 {
 			return reject()
 		}
-		raw := string(values[0])
-		parsed, err := url.Parse(raw)
-		if err != nil || parsed == nil || raw == "" || strings.TrimSpace(raw) != raw || parsed.Host == "" || parsed.User != nil || parsed.Opaque != "" || parsed.Fragment != "" || (parsed.Scheme != "http" && parsed.Scheme != "https") || !strings.EqualFold(parsed.Host, string(c.Request().Host())) {
-			return reject()
-		}
-		if header == "Origin" && (parsed.Path != "" || parsed.RawQuery != "" || parsed.ForceQuery) {
+		if !validWriteSource(string(values[0]), header, string(c.Request().Host())) {
 			return reject()
 		}
 	}
 	return c.Next()
+}
+
+func validWriteSource(raw, header, host string) bool {
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed == nil || raw == "" || strings.TrimSpace(raw) != raw || parsed.Host == "" || parsed.User != nil || parsed.Opaque != "" || parsed.Fragment != "" || (parsed.Scheme != "http" && parsed.Scheme != "https") || !strings.EqualFold(parsed.Host, host) {
+		return false
+	}
+	if header == "Origin" && hasOriginPath(parsed) {
+		return false
+	}
+	return true
+}
+
+func hasOriginPath(parsed *url.URL) bool {
+	return parsed.Path != "" || parsed.RawQuery != "" || parsed.ForceQuery
 }

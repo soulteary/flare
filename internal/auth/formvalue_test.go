@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/require"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -26,17 +27,11 @@ func TestLoginFormValuePrecedence(t *testing.T) {
 		t.Helper()
 		var body bytes.Buffer
 		writer := multipart.NewWriter(&body)
-		if err := writer.SetBoundary("MiXeD_Login_Boundary"); err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, writer.SetBoundary("MiXeD_Login_Boundary"))
 		for _, field := range [][2]string{{"username", username}, {"password", password}} {
-			if err := writer.WriteField(field[0], field[1]); err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, writer.WriteField(field[0], field[1]))
 		}
-		if err := writer.Close(); err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, writer.Close())
 		return body.String(), writer.FormDataContentType()
 	}
 	validMultipart, multipartType := multipartBody("testuser", "testpass")
@@ -64,21 +59,15 @@ func TestLoginFormValuePrecedence(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			app := fiber.New(fiber.Config{Immutable: true, DisablePreParseMultipartForm: true})
-			if err := RequestHandle(app); err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, RequestHandle(app))
 			app.Get("/protected", AuthRequired, func(c fiber.Ctx) error { return c.SendString(GetUserName(c)) })
 			req := httptest.NewRequest(http.MethodPost, define.MiscPages.Login.Path+"?"+tc.query, strings.NewReader(tc.body))
 			req.Header.Set("Content-Type", tc.contentType)
 			response, err := app.Test(req)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 			body, err := io.ReadAll(response.Body)
 			response.Body.Close()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 			if response.StatusCode != tc.status {
 				t.Fatalf("login returned %d %s, want %d", response.StatusCode, body, tc.status)
 			}
@@ -95,14 +84,10 @@ func TestLoginFormValuePrecedence(t *testing.T) {
 			protected := httptest.NewRequest(http.MethodGet, "/protected", nil)
 			protected.AddCookie(cookies[0])
 			verified, err := app.Test(protected)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 			defer verified.Body.Close()
 			username, err := io.ReadAll(verified.Body)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 			if verified.StatusCode != http.StatusOK || string(username) != "testuser" {
 				t.Fatalf("session verification returned %d %q", verified.StatusCode, username)
 			}

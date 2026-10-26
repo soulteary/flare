@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -115,9 +117,7 @@ func TestNewFiberWithConfig_OffPreservesApplicationLogs(t *testing.T) {
 	select {
 	case raw := <-records:
 		var record map[string]any
-		if err := json.Unmarshal(raw, &record); err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, json.Unmarshal(raw, &record))
 		if record["msg"] != "application event" || record["level"] != "INFO" {
 			t.Fatalf("application log changed: %s", raw)
 		}
@@ -134,16 +134,7 @@ func TestNewFiberWithConfig_OffPreservesApplicationLogs(t *testing.T) {
 func TestNewFiberWithConfig_RequestOutcomes(t *testing.T) {
 	internalErr := errors.New("file does not implement io.ReadSeeker")
 	wrappedNotFound := fmt.Errorf("lookup failed: %w", fiber.NewError(http.StatusNotFound, "Not Found"))
-	tests := []struct {
-		name       string
-		path       string
-		route      string
-		handler    fiber.Handler
-		status     int
-		body       string
-		level      string
-		errMessage string
-	}{
+	tests := []requestOutcome{
 		{
 			name: "successful asset is skipped", path: "/assets/mdi/icon.svg",
 			handler: func(c fiber.Ctx) error { return c.Status(http.StatusOK).SendString("svg") },
@@ -259,18 +250,10 @@ func TestNewFiberWithConfig_RequestOutcomes(t *testing.T) {
 				rec := httptest.NewRecorder()
 				adaptor.FiberApp(e).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tt.path, nil))
 
-				if rec.Code != tt.status {
-					t.Fatalf("status = %d, want %d", rec.Code, tt.status)
-				}
-				if handlerCalls != 1 {
-					t.Errorf("handler called %d times, want 1", handlerCalls)
-				}
-				if returnedErr != handlerErr {
-					t.Errorf("returned error = %v, want original error %v", returnedErr, handlerErr)
-				}
-				if got := strings.TrimSpace(rec.Body.String()); got != tt.body {
-					t.Errorf("body = %q, want %q", got, tt.body)
-				}
+				require.Equal(t, tt.status, rec.Code)
+				assert.Equal(t, 1, handlerCalls)
+				assert.True(t, returnedErr == handlerErr, "middleware must return the original error")
+				assert.Equal(t, tt.body, strings.TrimSpace(rec.Body.String()))
 				if tt.status == http.StatusFound && rec.Header().Get("Location") != "/" {
 					t.Errorf("redirect location = %q, want /", rec.Header().Get("Location"))
 				}
@@ -278,9 +261,7 @@ func TestNewFiberWithConfig_RequestOutcomes(t *testing.T) {
 				if tt.errMessage != "" {
 					wantErrorHandlerCalls = 1
 				}
-				if errorHandlerCalls != wantErrorHandlerCalls {
-					t.Errorf("error handler called %d times, want %d", errorHandlerCalls, wantErrorHandlerCalls)
-				}
+				assert.Equal(t, wantErrorHandlerCalls, errorHandlerCalls)
 				if wantLevel == "" {
 					select {
 					case record := <-records:
@@ -290,44 +271,56 @@ func TestNewFiberWithConfig_RequestOutcomes(t *testing.T) {
 					return
 				}
 
-				var data []byte
-				select {
-				case data = <-records:
-				case <-time.After(time.Second):
-					t.Fatal("request log was not written")
-				}
-				var record map[string]any
-				if err := json.Unmarshal(data, &record); err != nil {
-					t.Fatal(err)
-				}
-				if record["status"] != float64(tt.status) {
-					t.Errorf("logged status = %v, want %d", record["status"], tt.status)
-				}
-				if record["level"] != wantLevel {
-					t.Errorf("logged level = %v, want %s", record["level"], wantLevel)
-				}
-				if record["path"] != tt.path || record["route"] != route {
-					t.Errorf("logged path/route = %v/%v, want %s/%s", record["path"], record["route"], tt.path, route)
-				}
-				if tt.errMessage != "" {
-					if record["error"] != tt.errMessage || record["msg"] != tt.errMessage {
-						t.Errorf("logged error/message = %v/%v, want %s", record["error"], record["msg"], tt.errMessage)
-					}
-				} else if record["error"] != nil || record["msg"] != "REQUEST" {
-					t.Errorf("unexpected error/message: %v/%v", record["error"], record["msg"])
-				}
-				if tt.route != "" {
-					params, ok := record["params"].(map[string]any)
-					if !ok || params["name"] != "missing.svg" {
-						t.Errorf("logged route params = %v", record["params"])
-					}
-				}
-				select {
-				case duplicate := <-records:
-					t.Errorf("duplicate request log: %s", duplicate)
-				default:
-				}
+				assertRequestLog(t, records, tt, wantLevel, route)
 			})
 		}
+	}
+}
+
+type requestOutcome struct {
+	name       string
+	path       string
+	route      string
+	handler    fiber.Handler
+	status     int
+	body       string
+	level      string
+	errMessage string
+}
+
+func assertRequestLog(t *testing.T, records <-chan []byte, tt requestOutcome, wantLevel, route string) {
+	t.Helper()
+	var data []byte
+	select {
+	case data = <-records:
+	case <-time.After(time.Second):
+		t.Fatal("request log was not written")
+	}
+	var record map[string]any
+	require.NoError(t, json.Unmarshal(data, &record))
+	assert.Equal(t, float64(tt.status), record["status"])
+	if record["level"] != wantLevel {
+		t.Errorf("logged level = %v, want %s", record["level"], wantLevel)
+	}
+	if record["path"] != tt.path || record["route"] != route {
+		t.Errorf("logged path/route = %v/%v, want %s/%s", record["path"], record["route"], tt.path, route)
+	}
+	if tt.errMessage != "" {
+		if record["error"] != tt.errMessage || record["msg"] != tt.errMessage {
+			t.Errorf("logged error/message = %v/%v, want %s", record["error"], record["msg"], tt.errMessage)
+		}
+	} else if record["error"] != nil || record["msg"] != "REQUEST" {
+		t.Errorf("unexpected error/message: %v/%v", record["error"], record["msg"])
+	}
+	if tt.route != "" {
+		params, ok := record["params"].(map[string]any)
+		if !ok || params["name"] != "missing.svg" {
+			t.Errorf("logged route params = %v", record["params"])
+		}
+	}
+	select {
+	case duplicate := <-records:
+		t.Errorf("duplicate request log: %s", duplicate)
+	default:
 	}
 }

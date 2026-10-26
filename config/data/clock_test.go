@@ -1,9 +1,11 @@
 package data
 
 import (
-	"github.com/soulteary/flare/config/model"
 	"os"
 	"testing"
+
+	"github.com/soulteary/flare/config/model"
+	"github.com/stretchr/testify/require"
 )
 
 func TestClockSettingsPersistenceAndValidation(t *testing.T) {
@@ -19,18 +21,14 @@ func TestClockSettingsPersistenceAndValidation(t *testing.T) {
 		t.Fatal("weather save failed")
 	}
 	before, err := os.ReadFile("config.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	update.Title = "should not save"
 	update.Clock.Timezone = "bad"
 	if UpdateAppearance(update) {
 		t.Fatal("invalid zone saved")
 	}
 	after, err := os.ReadFile("config.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if string(before) != string(after) {
 		t.Fatal("validation failure modified file")
 	}
@@ -38,22 +36,18 @@ func TestClockSettingsPersistenceAndValidation(t *testing.T) {
 		t.Fatal("legacy save failed")
 	}
 	got, err := GetAllSettingsOptions()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got.Clock == nil || got.Clock.ShowSeconds() || !got.Clock.Dynamic || got.Clock.Timezone != "America/New_York" || got.Location != "London" {
-		t.Fatalf("settings lost: %+v", got)
-	}
-	if mkdirErr := os.Mkdir("blocked", 0700); mkdirErr != nil {
-		t.Fatal(mkdirErr)
-	}
+	require.NoError(t, err)
+	require.NotNil(t, got.Clock)
+	require.False(t, got.Clock.ShowSeconds())
+	require.True(t, got.Clock.Dynamic)
+	require.Equal(t, "America/New_York", got.Clock.Timezone)
+	require.Equal(t, "London", got.Location)
+	require.NoError(t, os.Mkdir("blocked", 0700))
 	if saveConfigAtomically("blocked", []byte("x")) {
 		t.Fatal("overwrote directory")
 	}
 	files, err := os.ReadDir(".")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	for _, f := range files {
 		if f.Name() != "config.yml" && f.Name() != "blocked" && f.Name() != searchBackupDir {
 			t.Fatalf("temporary file leaked: %s", f.Name())

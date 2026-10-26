@@ -85,23 +85,7 @@ func saveAppConfigToYamlFile(name string, result model.Application) bool {
 	path := getConfigPath(name)
 	raw, err := readFile(path)
 	if errors.Is(err, os.ErrNotExist) {
-		// Creation is exclusive; never overwrite a file that appeared concurrently.
-		result.AppVersion = applicationVersion()
-		out, e := yaml.Marshal(result)
-		if e != nil {
-			return false
-		}
-		f, e := os.OpenFile(filepath.Clean(path), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-		if e != nil {
-			return false
-		}
-		_, e = f.Write(out)
-		if e == nil {
-			e = f.Sync()
-		}
-		closed := f.Close()
-		invalidateFileCache(name)
-		return e == nil && closed == nil
+		return createAppConfig(name, path, result)
 	}
 	if err != nil {
 		return false
@@ -110,16 +94,10 @@ func saveAppConfigToYamlFile(name string, result model.Application) bool {
 	if err != nil {
 		return false
 	}
-	// Runtime-only state and version-only differences do not create writes.
-	compare := result
-	compare.AppVersion = original.AppVersion
-	compare.ConfigVersionState = ""
-	compare.ConfigRevision = ""
-	original.ConfigVersionState = ""
 	if result.ConfigRevision != "" && result.ConfigRevision != backupDigest(raw) {
 		return false
 	}
-	if reflect.DeepEqual(original, compare) {
+	if sameAppSettings(original, result) {
 		return true
 	}
 	writer, err := versionForSave(original)
@@ -131,24 +109,8 @@ func saveAppConfigToYamlFile(name string, result model.Application) bool {
 		log.Println(err)
 		return false
 	}
-	result.AppVersion = writer
-	var patch yaml.Node
-	if err = patch.Encode(result); err != nil {
-		return false
-	}
-	if err = rejectAmbiguousEngineReplacement(doc.Content[0], &patch); err != nil {
-		return false
-	}
-	// Explicitly clear a previous structured location when a legacy API replaces it.
-	if original.WeatherLocation != nil && result.WeatherLocation == nil {
-		patch.Content = append(patch.Content, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: "WeatherLocation"}, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!null", Value: "null"})
-	}
-	mergeSearchNodes(doc.Content[0], &patch)
-	out, err := yaml.Marshal(doc)
+	out, err := encodeAppConfig(doc, original, result, writer)
 	if err != nil {
-		return false
-	}
-	if _, _, err = readConfigDocument(out); err != nil {
 		return false
 	}
 	state := ConfigurationVersionState(original.AppVersion)
@@ -225,4 +187,58 @@ func saveConfigAtomically(path string, contents []byte) bool {
 	syncErr := dir.Sync()
 	closeErr = dir.Close()
 	return syncErr == nil && closeErr == nil
+}
+
+func createAppConfig(name, path string, result model.Application) bool {
+	// Creation is exclusive; never overwrite a file that appeared concurrently.
+	result.AppVersion = applicationVersion()
+	out, e := yaml.Marshal(result)
+	if e != nil {
+		return false
+	}
+	f, e := os.OpenFile(filepath.Clean(path), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if e != nil {
+		return false
+	}
+	_, e = f.Write(out)
+	if e == nil {
+		e = f.Sync()
+	}
+	closed := f.Close()
+	invalidateFileCache(name)
+	return e == nil && closed == nil
+}
+
+func sameAppSettings(original, result model.Application) bool {
+	// Runtime-only state and version-only differences do not create writes.
+	compare := result
+	compare.AppVersion = original.AppVersion
+	compare.ConfigVersionState = ""
+	compare.ConfigRevision = ""
+	original.ConfigVersionState = ""
+	return reflect.DeepEqual(original, compare)
+}
+
+func encodeAppConfig(doc *yaml.Node, original, result model.Application, writer string) ([]byte, error) {
+	result.AppVersion = writer
+	var patch yaml.Node
+	if err := patch.Encode(result); err != nil {
+		return nil, err
+	}
+	if err := rejectAmbiguousEngineReplacement(doc.Content[0], &patch); err != nil {
+		return nil, err
+	}
+	// Explicitly clear a previous structured location when a legacy API replaces it.
+	if original.WeatherLocation != nil && result.WeatherLocation == nil {
+		patch.Content = append(patch.Content, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: "WeatherLocation"}, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!null", Value: "null"})
+	}
+	mergeSearchNodes(doc.Content[0], &patch)
+	out, err := yaml.Marshal(doc)
+	if err != nil {
+		return nil, err
+	}
+	if _, _, err = readConfigDocument(out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }

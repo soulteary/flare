@@ -7,6 +7,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/resources/mdi"
 	"github.com/soulteary/flare/internal/resources/templates"
+	"github.com/stretchr/testify/require"
 	"io"
 	"net/http/httptest"
 	"runtime"
@@ -177,9 +178,7 @@ func TestWeatherWidgetWaitsForSnapshotOnHomeAndHelp(t *testing.T) {
 	defer func() { define.AppFlags = originalFlags; homepageWeather = originalCache }()
 	define.AppFlags.EnableOfflineMode = false
 	options, err := data.GetAllSettingsOptions()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	options.ShowTitle = true
 	options.ShowWeather = true
 	options.Location = "Beijing"
@@ -197,26 +196,18 @@ func TestWeatherWidgetWaitsForSnapshotOnHomeAndHelp(t *testing.T) {
 	})
 	cache := homepageWeather
 	defer func() { close(release); waitWeatherIdle(t, cache) }()
-	if mdiErr := mdi.Init(); mdiErr != nil {
-		t.Fatal(mdiErr)
-	}
+	require.NoError(t, mdi.Init())
 	views, err := templates.NewRenderer()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	app := fiber.New(fiber.Config{Views: views})
 	app.Get("/", pageHome)
 	app.Get("/help", renderHelp)
 	request := func(path string) string {
 		response, requestErr := app.Test(httptest.NewRequest("GET", path, nil))
-		if requestErr != nil {
-			t.Fatal(requestErr)
-		}
+		require.NoError(t, requestErr)
 		defer response.Body.Close()
 		body, readErr := io.ReadAll(response.Body)
-		if readErr != nil {
-			t.Fatal(readErr)
-		}
+		require.NoError(t, readErr)
 		if response.StatusCode != 200 {
 			t.Fatalf("%s returned %d: %s", path, response.StatusCode, body)
 		}
@@ -233,9 +224,9 @@ func TestWeatherWidgetWaitsForSnapshotOnHomeAndHelp(t *testing.T) {
 	cache.mu.Unlock()
 	for _, path := range []string{"/", "/help"} {
 		body := request(path)
-		if (!strings.Contains(body, `id=plugin-weather`) && !strings.Contains(body, `id="plugin-weather"`)) || !strings.Contains(body, "24°C") || !strings.Contains(body, "48%") {
-			t.Fatalf("%s omitted valid weather", path)
-		}
+		require.True(t, strings.Contains(body, `id=plugin-weather`) || strings.Contains(body, `id="plugin-weather"`), "%s omitted weather widget", path)
+		require.Contains(t, body, "24°C", path)
+		require.Contains(t, body, "48%", path)
 	}
 	cache.mu.Lock()
 	cache.location = "Shanghai"

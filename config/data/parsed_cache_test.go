@@ -1,6 +1,7 @@
 package data
 
 import (
+	"github.com/stretchr/testify/require"
 	"os"
 	"strings"
 	"sync"
@@ -18,18 +19,14 @@ func TestParsedSnapshotsDoNotAliasReturnedModels(t *testing.T) {
 		t.Fatal("save config")
 	}
 	first, err := GetAllSettingsOptions()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	first.Clock.Timezone = "Europe/Paris"
 	*first.Clock.Seconds = false
 	first.Homepage.DesktopColumns = "8"
 	first.Search.Engines[0].Name = "Mutated"
 	first.Search.Engines = append(first.Search.Engines, model.SearchEngine{ID: "extra"})
 	second, err := GetAllSettingsOptions()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if second.Title != "original" || second.Clock.Timezone != "UTC" || second.Clock.Seconds == nil || !*second.Clock.Seconds || second.Homepage.DesktopColumns != "4" || len(second.Search.Engines) != 1 || second.Search.Engines[0].Name != "Original" {
 		t.Fatalf("returned config aliased cache: %+v", second)
 	}
@@ -38,16 +35,12 @@ func TestParsedSnapshotsDoNotAliasReturnedModels(t *testing.T) {
 		t.Fatal("save bookmarks")
 	}
 	loaded, err := LoadNormalBookmarks()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	loaded.Items[0].Name = "Mutated"
 	loaded.Categories[0].Name = "Mutated"
 	loaded.Items = append(loaded.Items, model.Bookmark{Name: "Extra"})
 	again, err := LoadNormalBookmarks()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if len(again.Items) != 1 || again.Items[0].Name != "Original" || again.Categories[0].Name != "Original" {
 		t.Fatal("returned collection aliased cache")
 	}
@@ -87,14 +80,10 @@ func TestParsedSnapshotDeletionRemainsRegeneratedOnLaterReads(t *testing.T) {
 	if _, err := LoadFavoriteBookmarks(); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Remove("apps.yml"); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, os.Remove("apps.yml"))
 	for i := 0; i < 3; i++ {
 		value, err := LoadFavoriteBookmarks()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		if len(value.Items) != 8 || value.Items[0].Name == "Old" {
 			t.Fatal("deleted cached file returned old entries")
 		}
@@ -138,12 +127,11 @@ func TestIndexedSearchScopeOrderAndInvalidation(t *testing.T) {
 	}
 	accept := func(link string) bool { return !strings.HasPrefix(link, "javascript:") }
 	matches, err := SearchNavigationMatches("NEEDLE", true, true, 8, nil, accept)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(matches) != 2 || !matches[0].IsApp || matches[1].IsApp || matches[1].Bookmark.URL != "https://book.example" {
-		t.Fatalf("scope/order mismatch: %+v", matches)
-	}
+	require.NoError(t, err)
+	require.Len(t, matches, 2)
+	require.True(t, matches[0].IsApp)
+	require.False(t, matches[1].IsApp)
+	require.Equal(t, "https://book.example", matches[1].Bookmark.URL)
 	resolve := func(link string) string { return strings.ReplaceAll(link, "{origin}", "https://request.example") }
 	matches, err = SearchNavigationMatches("request.example", true, false, 8, resolve, accept)
 	if err != nil || len(matches) != 1 || matches[0].URL != "https://request.example/panel" {
@@ -185,18 +173,14 @@ func TestNavigationIndexesFollowEditorImportAndDeletion(t *testing.T) {
 	}
 	assertTarget("https://old.example", "https://editor.example")
 	document, err := EditorSnapshot()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	document.Bookmarks = []model.Bookmark{{Name: "Editor", URL: "https://editor.example"}}
 	if _, err = CommitEditorDocument(document); err != nil {
 		t.Fatal(err)
 	}
 	assertTarget("https://editor.example", "https://old.example")
 	_, version, err := BookmarkSnapshot("bookmarks")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if err = CommitBookmarkImport("bookmarks", version, model.Bookmarks{Items: []model.Bookmark{{Name: "Import", URL: "https://import.example"}}}); err != nil {
 		t.Fatal(err)
 	}
@@ -219,21 +203,15 @@ func TestNavigationIndexesDoNotInitializeMissingFilesDuringRecovery(t *testing.T
 			if !MatchNavigationTarget("https://original.example", nil) {
 				t.Fatal("warm index")
 			}
-			if err := os.MkdirAll(".flare-editor-recovery/save-test", 0700); err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, os.MkdirAll(".flare-editor-recovery/save-test", 0700))
 			for _, name := range []string{"apps", "bookmarks"} {
 				raw, err := os.ReadFile(name + ".yml")
-				if err != nil {
-					t.Fatal(err)
-				}
+				require.NoError(t, err)
 				if err = os.WriteFile(".flare-editor-recovery/save-test/"+name+".yml", raw, 0600); err != nil {
 					t.Fatal(err)
 				}
 			}
-			if err := os.Remove("apps.yml"); err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, os.Remove("apps.yml"))
 			if operation == "target" {
 				if MatchNavigationTarget("https://original.example", nil) {
 					t.Fatal("missing live file reused stale target")

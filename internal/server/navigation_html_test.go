@@ -47,43 +47,7 @@ func TestNavigationFieldsAreTextAndEscapedAttributes(t *testing.T) {
 					require.Equal(t, 200, recorder.Code)
 					doc, err := htmlparse.Parse(strings.NewReader(recorder.Body.String()))
 					require.NoError(t, err)
-					count := 0
-					var visit func(*htmlparse.Node)
-					visit = func(node *htmlparse.Node) {
-						if node.Type == htmlparse.ElementNode {
-							attrs := map[string]string{}
-							for _, a := range node.Attr {
-								attrs[a.Key] = a.Val
-								require.NotEqual(t, "injected", a.Val, "name markup became a DOM element")
-								require.False(t, strings.HasPrefix(strings.ToLower(a.Key), "on"), "injected event attribute")
-							}
-							require.NotEqual(t, "b", node.Data, "name/description markup became an element")
-							if node.Data == "a" && (attrs["class"] == "app-item" || attrs["class"] == "bookmark") {
-								count++
-								if strings.Contains(textContent(node), "Unsafe") {
-									require.Equal(t, "#", attrs["href"])
-								} else {
-									require.Contains(t, textContent(node), name)
-									if encoded {
-										require.True(t, strings.HasPrefix(attrs["href"], "/redir/url?go="))
-									} else {
-										require.Equal(t, address, attrs["href"])
-									}
-									if attrs["class"] == "app-item" {
-										require.Equal(t, name, attrs["title"])
-										require.Contains(t, textContent(node), desc)
-									}
-								}
-							}
-							if node.Data == "img" {
-								require.Equal(t, icon, attrs["src"], "untrusted icon generated extra markup")
-							}
-						}
-						for child := node.FirstChild; child != nil; child = child.NextSibling {
-							visit(child)
-						}
-					}
-					visit(doc)
+					count := assertNavigationDOM(t, doc, encoded, name, desc, address, icon)
 					require.GreaterOrEqual(t, count, 2)
 				}
 			}
@@ -104,4 +68,46 @@ func textContent(node *htmlparse.Node) string {
 	}
 	visit(node)
 	return out.String()
+}
+
+func assertNavigationDOM(t *testing.T, doc *htmlparse.Node, encoded bool, name, desc, address, icon string) int {
+	t.Helper()
+	count := 0
+	var visit func(*htmlparse.Node)
+	visit = func(node *htmlparse.Node) {
+		if node.Type == htmlparse.ElementNode {
+			attrs := map[string]string{}
+			for _, a := range node.Attr {
+				attrs[a.Key] = a.Val
+				require.NotEqual(t, "injected", a.Val, "name markup became a DOM element")
+				require.False(t, strings.HasPrefix(strings.ToLower(a.Key), "on"), "injected event attribute")
+			}
+			require.NotEqual(t, "b", node.Data, "name/description markup became an element")
+			if node.Data == "a" && (attrs["class"] == "app-item" || attrs["class"] == "bookmark") {
+				count++
+				if strings.Contains(textContent(node), "Unsafe") {
+					require.Equal(t, "#", attrs["href"])
+				} else {
+					require.Contains(t, textContent(node), name)
+					if encoded {
+						require.True(t, strings.HasPrefix(attrs["href"], "/redir/url?go="))
+					} else {
+						require.Equal(t, address, attrs["href"])
+					}
+					if attrs["class"] == "app-item" {
+						require.Equal(t, name, attrs["title"])
+						require.Contains(t, textContent(node), desc)
+					}
+				}
+			}
+			if node.Data == "img" {
+				require.Equal(t, icon, attrs["src"], "untrusted icon generated extra markup")
+			}
+		}
+		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			visit(child)
+		}
+	}
+	visit(doc)
+	return count
 }

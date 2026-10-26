@@ -83,7 +83,7 @@ func validRequestSource(c fiber.Ctx, name string, referer bool) bool {
 		return false
 	}
 	source, err := url.Parse(raw)
-	if err != nil || source == nil || (source.Scheme != "http" && source.Scheme != "https") || source.User != nil || source.Host == "" || source.Opaque != "" || source.Fragment != "" {
+	if err != nil || !validSourceURL(source) {
 		return false
 	}
 	if !referer && (source.Path != "" || source.RawQuery != "" || source.ForceQuery) {
@@ -91,11 +91,7 @@ func validRequestSource(c fiber.Ctx, name string, referer bool) bool {
 	}
 	// Compare an explicit effective port as well as the host. The request scheme
 	// is intentionally not inferred from untrusted Forwarded/X-Forwarded-* headers.
-	request, err := url.Parse(source.Scheme + "://" + string(c.Request().Host()))
-	if err != nil || request.Host == "" || request.User != nil || request.Path != "" || request.RawQuery != "" {
-		return false
-	}
-	return strings.EqualFold(source.Hostname(), request.Hostname()) && effectivePort(source) == effectivePort(request)
+	return sameRequestAuthority(source, string(c.Request().Host()))
 }
 
 func effectivePort(u *url.URL) string {
@@ -161,4 +157,16 @@ func (s *searchSecurity) formToken(c fiber.Ctx) string {
 	c.Cookie(&fiber.Cookie{Name: s.cookieName, Value: token, Path: define.SettingPages.Search.Path, HTTPOnly: true, Secure: c.RequestCtx().IsTLS() || define.AppFlags.CookieSecure, SameSite: "Strict", MaxAge: int(searchTokenLifetime.Seconds())})
 	c.Set("Cache-Control", "no-store")
 	return token
+}
+
+func validSourceURL(source *url.URL) bool {
+	return source != nil && (source.Scheme == "http" || source.Scheme == "https") && source.User == nil && source.Host != "" && source.Opaque == "" && source.Fragment == ""
+}
+
+func sameRequestAuthority(source *url.URL, host string) bool {
+	request, err := url.Parse(source.Scheme + "://" + host)
+	if err != nil || request.Host == "" || request.User != nil || request.Path != "" || request.RawQuery != "" {
+		return false
+	}
+	return strings.EqualFold(source.Hostname(), request.Hostname()) && effectivePort(source) == effectivePort(request)
 }

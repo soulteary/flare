@@ -36,11 +36,16 @@ func Get(c fiber.Ctx, key string) string {
 		return string(args.Peek(key))
 	}
 	if err == nil && mediaType == fiber.MIMEMultipartForm {
-		form, parseErr := request.MultipartFormWithLimit(c.App().Config().BodyLimit)
-		if parseErr == nil {
-			if values := form.Value[key]; len(values) > 0 {
-				return values[0]
-			}
+		return multipartValue(c, key)
+	}
+	return ""
+}
+
+func multipartValue(c fiber.Ctx, key string) string {
+	form, err := c.Request().MultipartFormWithLimit(c.App().Config().BodyLimit)
+	if err == nil {
+		if values := form.Value[key]; len(values) > 0 {
+			return values[0]
 		}
 	}
 	return ""

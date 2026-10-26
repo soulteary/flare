@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"sync"
 	"testing"
 
@@ -58,12 +59,17 @@ func TestConcurrentSettingsUpdatesPreserveIndependentFields(t *testing.T) {
 			t.Errorf("round %d: %s save failed", round, name)
 		}
 		got, err := GetAllSettingsOptions()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got.Title != want || got.Theme != want || got.Location != want || got.Footer != "retained footer" || got.Locale != "en" || !got.ShowSearchComponent || !got.DisabledSearchAutoFocus || got.Search == nil || got.Search.DefaultTarget != "bing" {
-			t.Fatalf("round %d lost an independently saved field: %+v", round, got)
-		}
+		require.NoError(t, err)
+		require.Equal(t, want, got.Title)
+		require.Equal(t, want, got.Theme)
+		require.Equal(t, want, got.Location)
+		require.Equal(t, "retained footer", got.Footer)
+		require.Equal(t, "en", got.Locale)
+		require.True(t, got.ShowSearchComponent)
+		require.True(t, got.DisabledSearchAutoFocus)
+		require.NotNil(t, got.Search)
+		require.Equal(t, "bing", got.Search.DefaultTarget)
+
 		if round%2 == 0 && !got.ShowWeather {
 			t.Fatalf("round %d lost weather toggle", round)
 		}

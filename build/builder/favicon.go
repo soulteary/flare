@@ -114,61 +114,24 @@ func colorFavicon(raw []byte, background string) ([]byte, error) {
 		}
 		length := int(binary.LittleEndian.Uint32(raw[offset+8 : offset+12]))
 		start := int(binary.LittleEndian.Uint32(raw[offset+12 : offset+16]))
-		if start < 0 || length < 0 || start > len(raw) || length > len(raw)-start {
+		if !validIconBounds(start, length, len(raw)) {
 			return nil, fmt.Errorf("invalid ICO image bounds")
 		}
 		mask, err := png.Decode(bytes.NewReader(raw[start : start+length]))
 		if err != nil {
 			return nil, err
 		}
-		img := image.NewNRGBA(mask.Bounds())
-		for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
-			for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
-				pixel := color.AlphaModel.Convert(mask.At(x, y))
-				alpha, ok := pixel.(color.Alpha)
-				if !ok {
-					return nil, fmt.Errorf("cannot convert icon alpha")
-				}
-				a := alpha.A
-				// Preserve the original transparency, including the squirrel cutout.
-				if a == 0 {
-					continue
-				}
-				img.SetNRGBA(x, y, color.NRGBA{R: bg.R, G: bg.G, B: bg.B, A: a})
-			}
-		}
-		var data bytes.Buffer
-		if err = png.Encode(&data, img); err != nil {
+		data, err := tintFaviconImage(mask, bg)
+		if err != nil {
 			return nil, err
 		}
-		images = append(images, data.Bytes())
+		images = append(images, data)
 		sizes = append(sizes, raw[offset])
 	}
 	if len(images) != 3 {
 		return nil, fmt.Errorf("source ICO must contain 16, 32 and 48 pixel PNG images")
 	}
-	result := make([]byte, 6+16*len(images))
-	binary.LittleEndian.PutUint16(result[2:4], 1)
-	binary.LittleEndian.PutUint16(result[4:6], 3)
-	for i, data := range images {
-		entry := result[6+i*16 : 6+(i+1)*16]
-		entry[0] = sizes[i]
-		entry[1] = sizes[i]
-		binary.LittleEndian.PutUint16(entry[4:6], 1)
-		binary.LittleEndian.PutUint16(entry[6:8], 32)
-		length, err := icoUint32(uint64(len(data)))
-		if err != nil {
-			return nil, err
-		}
-		offset, err := icoUint32(uint64(len(result)))
-		if err != nil {
-			return nil, err
-		}
-		binary.LittleEndian.PutUint32(entry[8:12], length)
-		binary.LittleEndian.PutUint32(entry[12:16], offset)
-		result = append(result, data...)
-	}
-	return result, nil
+	return encodeFaviconImages(images, sizes)
 }
 
 // darkestPaletteColor compares linear sRGB luminance rather than RGB sums.
@@ -202,4 +165,57 @@ func icoUint32(value uint64) (uint32, error) {
 		return 0, fmt.Errorf("ICO image exceeds 32-bit directory limits")
 	}
 	return uint32(value), nil
+}
+
+func tintFaviconImage(mask image.Image, bg color.NRGBA) ([]byte, error) {
+	img := image.NewNRGBA(mask.Bounds())
+	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
+		for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
+			pixel := color.AlphaModel.Convert(mask.At(x, y))
+			alpha, ok := pixel.(color.Alpha)
+			if !ok {
+				return nil, fmt.Errorf("cannot convert icon alpha")
+			}
+			a := alpha.A
+			// Preserve the original transparency, including the squirrel cutout.
+			if a == 0 {
+				continue
+			}
+			img.SetNRGBA(x, y, color.NRGBA{R: bg.R, G: bg.G, B: bg.B, A: a})
+		}
+	}
+	var data bytes.Buffer
+	if err := png.Encode(&data, img); err != nil {
+		return nil, err
+	}
+	return data.Bytes(), nil
+}
+
+func encodeFaviconImages(images [][]byte, sizes []byte) ([]byte, error) {
+	result := make([]byte, 6+16*len(images))
+	binary.LittleEndian.PutUint16(result[2:4], 1)
+	binary.LittleEndian.PutUint16(result[4:6], 3)
+	for i, data := range images {
+		entry := result[6+i*16 : 6+(i+1)*16]
+		entry[0] = sizes[i]
+		entry[1] = sizes[i]
+		binary.LittleEndian.PutUint16(entry[4:6], 1)
+		binary.LittleEndian.PutUint16(entry[6:8], 32)
+		length, err := icoUint32(uint64(len(data)))
+		if err != nil {
+			return nil, err
+		}
+		offset, err := icoUint32(uint64(len(result)))
+		if err != nil {
+			return nil, err
+		}
+		binary.LittleEndian.PutUint32(entry[8:12], length)
+		binary.LittleEndian.PutUint32(entry[12:16], offset)
+		result = append(result, data...)
+	}
+	return result, nil
+}
+
+func validIconBounds(start, length, size int) bool {
+	return start >= 0 && length >= 0 && start <= size && length <= size-start
 }

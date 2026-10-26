@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"io"
 	"io/fs"
 	"net/http"
@@ -58,9 +59,7 @@ func iconURL(markup string) (string, error) {
 func generatedIconURL(t *testing.T) string {
 	t.Helper()
 	url, err := iconURL(GetIconByName("serverNetwork"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	return url
 }
 
@@ -112,58 +111,7 @@ func TestIconRoute_ServesSVGAndHTTPRequests(t *testing.T) {
 		t.Fatal("successful icon response must have a content ETag")
 	}
 
-	t.Run("repeated GET", func(t *testing.T) {
-		repeated := requestIcon(e, http.MethodGet, url, "", "")
-		if repeated.Code != http.StatusOK || repeated.Body.String() != body {
-			t.Fatalf("repeated GET lost icon contents: status %d, body %q", repeated.Code, repeated.Body.String())
-		}
-		if got := repeated.Header().Get("ETag"); got != etag {
-			t.Fatalf("unchanged icon ETag changed: %q != %q", got, etag)
-		}
-	})
-
-	t.Run("HEAD", func(t *testing.T) {
-		head := requestIcon(e, http.MethodHead, url, "", "")
-		if head.Code != http.StatusOK || head.Body.Len() != 0 {
-			t.Fatalf("HEAD must return headers without an SVG body: status %d, bytes %d", head.Code, head.Body.Len())
-		}
-		if got := head.Header().Get("Content-Length"); got != strconv.Itoa(len(body)) {
-			t.Fatalf("HEAD content length: %q, want %d", got, len(body))
-		}
-		if got := head.Header().Get("Content-Type"); got != "image/svg+xml" {
-			t.Fatalf("HEAD content type: %q", got)
-		}
-		if got := head.Header().Get("ETag"); got != etag {
-			t.Fatalf("HEAD ETag: %q, want %q", got, etag)
-		}
-	})
-
-	t.Run("Range", func(t *testing.T) {
-		partial := requestIcon(e, http.MethodGet, url, "Range", "bytes=0-31")
-		if partial.Code != http.StatusPartialContent || partial.Body.String() != body[:32] {
-			t.Fatalf("Range did not return requested bytes: status %d, body %q", partial.Code, partial.Body.String())
-		}
-		if got, want := partial.Header().Get("Content-Range"), fmt.Sprintf("bytes 0-31/%d", len(body)); got != want {
-			t.Fatalf("Content-Range: %q, want %q", got, want)
-		}
-	})
-
-	t.Run("unsatisfiable Range", func(t *testing.T) {
-		partial := requestIcon(e, http.MethodGet, url, "Range", fmt.Sprintf("bytes=%d-", len(body)+1))
-		if partial.Code != http.StatusRequestedRangeNotSatisfiable {
-			t.Fatalf("unsatisfiable range: status %d, body %q", partial.Code, partial.Body.String())
-		}
-	})
-
-	t.Run("conditional GET", func(t *testing.T) {
-		cached := requestIcon(e, http.MethodGet, url, "If-None-Match", etag)
-		if cached.Code != http.StatusNotModified || cached.Body.Len() != 0 {
-			t.Fatalf("conditional GET: status %d, bytes %d", cached.Code, cached.Body.Len())
-		}
-		if got := cached.Header().Get("ETag"); got != etag {
-			t.Fatalf("304 ETag: %q, want %q", got, etag)
-		}
-	})
+	assertIconHTTPRequests(t, e, url, body, etag)
 }
 
 func TestIconRoute_MissingAndInvalidPaths(t *testing.T) {
@@ -373,4 +321,58 @@ func TestMixedCaseLegacyResourceURLUsesCanonicalIcon(t *testing.T) {
 	if cached.Code != http.StatusNotModified {
 		t.Fatalf("legacy mixed-case asset failed: status=%d", cached.Code)
 	}
+}
+
+func assertIconHTTPRequests(t *testing.T, e *fiber.App, url, body, etag string) {
+	t.Helper()
+	t.Run("repeated GET", func(t *testing.T) {
+		repeated := requestIcon(e, http.MethodGet, url, "", "")
+		if repeated.Code != http.StatusOK || repeated.Body.String() != body {
+			t.Fatalf("repeated GET lost icon contents: status %d, body %q", repeated.Code, repeated.Body.String())
+		}
+		if got := repeated.Header().Get("ETag"); got != etag {
+			t.Fatalf("unchanged icon ETag changed: %q != %q", got, etag)
+		}
+	})
+
+	t.Run("HEAD", func(t *testing.T) {
+		head := requestIcon(e, http.MethodHead, url, "", "")
+		if head.Code != http.StatusOK || head.Body.Len() != 0 {
+			t.Fatalf("HEAD must return headers without an SVG body: status %d, bytes %d", head.Code, head.Body.Len())
+		}
+		if got := head.Header().Get("Content-Length"); got != strconv.Itoa(len(body)) {
+			t.Fatalf("HEAD content length: %q, want %d", got, len(body))
+		}
+		require.Equal(t, "image/svg+xml", head.Header().Get("Content-Type"))
+		if got := head.Header().Get("ETag"); got != etag {
+			t.Fatalf("HEAD ETag: %q, want %q", got, etag)
+		}
+	})
+
+	t.Run("Range", func(t *testing.T) {
+		partial := requestIcon(e, http.MethodGet, url, "Range", "bytes=0-31")
+		if partial.Code != http.StatusPartialContent || partial.Body.String() != body[:32] {
+			t.Fatalf("Range did not return requested bytes: status %d, body %q", partial.Code, partial.Body.String())
+		}
+		if got, want := partial.Header().Get("Content-Range"), fmt.Sprintf("bytes 0-31/%d", len(body)); got != want {
+			t.Fatalf("Content-Range: %q, want %q", got, want)
+		}
+	})
+
+	t.Run("unsatisfiable Range", func(t *testing.T) {
+		partial := requestIcon(e, http.MethodGet, url, "Range", fmt.Sprintf("bytes=%d-", len(body)+1))
+		if partial.Code != http.StatusRequestedRangeNotSatisfiable {
+			t.Fatalf("unsatisfiable range: status %d, body %q", partial.Code, partial.Body.String())
+		}
+	})
+
+	t.Run("conditional GET", func(t *testing.T) {
+		cached := requestIcon(e, http.MethodGet, url, "If-None-Match", etag)
+		if cached.Code != http.StatusNotModified || cached.Body.Len() != 0 {
+			t.Fatalf("conditional GET: status %d, bytes %d", cached.Code, cached.Body.Len())
+		}
+		if got := cached.Header().Get("ETag"); got != etag {
+			t.Fatalf("304 ETag: %q, want %q", got, etag)
+		}
+	})
 }

@@ -44,6 +44,13 @@ commit. The README displays a live CI status badge and a Go report navigation
 badge linking to this source-verification guide, without displaying undated
 report scores.
 
+The bundled Material Design Icons cheat sheet uses the upstream identifier
+`glass-stange`. The spelling checker flags its CSS class and HTML icon list,
+but these are vendor identifiers, not prose typos. Preserve the matching name
+in the source and generated resources; do not rename it to `glass-strange`
+solely to improve the report score. Code fixes are reflected by the next
+workflow-generated report, rather than by manually editing snapshot scores.
+
 The historical 0.6.5 report snapshot was committed by
 [`c3106b0`](https://github.com/soulteary/flare/commit/c3106b0fbe2fa18fc54fae1c0cb1bc94efb5087c)
 for source [`a2ed02e`](https://github.com/soulteary/flare/commit/a2ed02e0085df283fd1a6a685b97fad3b6377b78)

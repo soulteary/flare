@@ -93,9 +93,9 @@
 
 /* Rem-based sizes respect device font preferences without scaling settings/editor UI. */
 .navigation-text-larger #container-apps .app-title,
-.navigation-text-larger #container-bookmakrs .bookmark { font-size: 1.125rem; }
+.navigation-text-larger #container-bookmarks .bookmark { font-size: 1.125rem; }
 .navigation-text-large #container-apps .app-title,
-.navigation-text-large #container-bookmakrs .bookmark { font-size: 1.25rem; }
+.navigation-text-large #container-bookmarks .bookmark { font-size: 1.25rem; }
 .navigation-text-larger #container-apps .app-desc { font-size: .95rem; }
 .navigation-text-large #container-apps .app-desc { font-size: 1rem; }
 .navigation-text-larger #container-apps .app-item,
