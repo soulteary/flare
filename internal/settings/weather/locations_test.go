@@ -17,9 +17,28 @@ import (
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/i18n"
 	provider "github.com/soulteary/funny-china-weather"
 	"github.com/stretchr/testify/require"
 )
+
+func TestMessageLocale(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		config string
+		locale string
+	}{
+		{"configured", "Locale: en\n", "en"},
+		{"default", "Locale: ''\n", "zh"},
+		{"invalid config", "Locale: [\n", "zh"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			require.NoError(t, os.WriteFile("config.yml", []byte(tc.config), 0600))
+			require.Equal(t, i18n.T(tc.locale, "weather_search_failed"), message(nil, "weather_search_failed"))
+		})
+	}
+}
 
 func fakeLocations(t *testing.T, values []provider.Location, err error) {
 	t.Helper()
