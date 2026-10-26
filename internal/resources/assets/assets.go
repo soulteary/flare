@@ -39,6 +39,7 @@ func FaviconURL() string {
 
 func RegisterRouting(e *fiber.App) {
 	e.Use(optimizeResourceCacheTime())
+	registerThemeFavicons(e)
 	handler := StaticFS(Favicon, "/")
 	e.Get("/favicon.ico", handler)
 	e.Head("/favicon.ico", handler)
