@@ -16,7 +16,7 @@ import (
 
 func TestSearchTargetsAndEscapedInput(t *testing.T) {
 	app := newNativeFiberApp(t, false)
-	opts := &model.SearchOptions{Mode: "select", DefaultTarget: "bing", OpenNewTab: true, EnableKeywords: true, Engines: searchcore.Presets()}
+	opts := &model.SearchOptions{Mode: "select", DefaultTarget: "bing", OpenNewTab: true, Engines: searchcore.Presets()}
 	require.NoError(t, data.UpdateSearchOptions(true, true, opts))
 	request := func(values url.Values) *http.Response {
 		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(values.Encode()))
@@ -45,8 +45,8 @@ func TestSearchTargetsAndEscapedInput(t *testing.T) {
 	require.Contains(t, body, "&lt;script&gt;")
 	require.Contains(t, response.Header.Get("Content-Security-Policy"), "script-src 'none'")
 	response = request(url.Values{"search": {"!g Flare"}, "target": {"local"}})
-	require.Equal(t, http.StatusSeeOther, response.StatusCode)
-	require.Contains(t, response.Header.Get("Location"), "https://www.google.com/search?")
+	require.Equal(t, http.StatusOK, response.StatusCode)
+	require.Empty(t, response.Header.Get("Location"))
 	response.Body.Close()
 }
 
@@ -73,6 +73,8 @@ func TestSearchSettingsActionsAndLegacyPreservation(t *testing.T) {
 	values := url.Values{"show-search-component": {"1"}, "engine-count": {"0"}, "search-mode": {"select"}, "default-target": {"local"}, "action": {"preset:bing"}}
 	body := submit(values)
 	require.Contains(t, body, "https://www.bing.com/search?q={query}")
+	require.NotContains(t, body, "enable-keywords")
+	require.NotContains(t, body, "engine-0-keyword")
 	saved, err = data.GetAllSettingsOptions()
 	require.NoError(t, err)
 	require.Len(t, saved.Search.Engines, 4, "working form actions must not save")

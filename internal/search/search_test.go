@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+
+	yaml "go.yaml.in/yaml/v3"
 )
 
 func TestLegacyDefaultsAndCopy(t *testing.T) {
@@ -62,10 +64,11 @@ func TestTemplateValidation(t *testing.T) {
 }
 
 func TestResolve(t *testing.T) {
-	options := model.SearchOptions{DefaultTarget: "bing", EnableKeywords: true, Engines: Presets()}
+	options := model.SearchOptions{DefaultTarget: "bing", Engines: Presets()}
 	for _, tc := range []struct{ query, target, wantTarget, wantQuery string }{
 		{"hello", "", "bing", "hello"}, {"hello", "local", "local", "hello"},
-		{"!G 机器人", "local", "google", "机器人"}, {"!LOCAL NAS", "bing", "local", "NAS"},
+		{"!G 机器人", "local", "local", "!G 机器人"}, {"!LOCAL NAS", "bing", "bing", "!LOCAL NAS"},
+		{"!g", "local", "local", "!g"},
 		{"!unknown test", "local", "local", "!unknown test"},
 	} {
 		result, err := Resolve(options, tc.query, tc.target)
@@ -75,9 +78,6 @@ func TestResolve(t *testing.T) {
 		if result.Target != tc.wantTarget || result.Query != tc.wantQuery {
 			t.Fatal(result)
 		}
-	}
-	if _, err := Resolve(options, "!g", "local"); err == nil {
-		t.Fatal("accepted shortcut without query")
 	}
 	if _, err := Resolve(options, "test", "https://evil.example/"); err == nil {
 		t.Fatal("accepted arbitrary target")
@@ -95,8 +95,6 @@ func TestValidateOptions(t *testing.T) {
 		func(o *model.SearchOptions) { o.DefaultTarget = "missing" },
 		func(o *model.SearchOptions) { o.Engines[0].ID = "local" },
 		func(o *model.SearchOptions) { o.Engines[1].ID = o.Engines[0].ID },
-		func(o *model.SearchOptions) { o.Engines[1].Keyword = "B" },
-		func(o *model.SearchOptions) { o.Engines[0].Keyword = "LOCAL" },
 		func(o *model.SearchOptions) { o.Engines[0].Name = " " },
 	} {
 		options := Normalize(&model.SearchOptions{Engines: Presets()})
@@ -127,5 +125,29 @@ func TestLocalFirstDoesNotUseExternalDefaultImplicitly(t *testing.T) {
 	result, err = Resolve(options, "hello", "bing")
 	if err != nil || result.Target != "bing" || result.URL == "" {
 		t.Fatalf("explicit web search: %+v, %v", result, err)
+	}
+}
+
+// Retired settings must not revive shortcut parsing in existing installations.
+func TestRetiredKeywordsAreIgnored(t *testing.T) {
+	var options model.SearchOptions
+	err := yaml.Unmarshal([]byte(`DefaultTarget: bing
+EnableKeywords: true
+Engines:
+  - ID: bing
+    Name: Bing
+    URLTemplate: https://www.bing.com/search?q={query}
+    Keyword: local
+    Enabled: true
+`), &options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := Resolve(options, "!local NAS", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Target != "bing" || result.Query != "!local NAS" {
+		t.Fatal(result)
 	}
 }

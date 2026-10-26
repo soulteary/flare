@@ -22,8 +22,6 @@ The default target must be local search or an enabled engine. Disable or remove 
 engine only after choosing a replacement default. Engine names may change without
 changing their stable IDs. Search settings remain separate from bookmark exports.
 
-When keywords are enabled, `!g query` selects an engine whose keyword is `g`;
-`!local query` forces local search. Unknown keywords are ordinary search text.
 Searches accept up to 512 Unicode characters. Empty and invalid searches retain
 input and display a message instead of navigating away.
 
@@ -69,17 +67,14 @@ Search:
   Mode: select
   DefaultTarget: local
   OpenNewTab: true
-  EnableKeywords: true
   Engines:
     - ID: bing
       Name: Bing
       URLTemplate: "https://www.bing.com/search?q={query}"
-      Keyword: b
       Enabled: true
     - ID: internal-docs
       Name: Internal documentation
       URLTemplate: "https://docs.example.com/search?q={query}"
-      Keyword: docs
       Enabled: true
 ```
 
