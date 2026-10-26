@@ -299,6 +299,20 @@
   #page-settings .search-settings input[role="switch"]::before { transition: none; }
 }
 
+/* Shared palette for editable settings controls on every settings page. */
+#page-settings input:not([type]),
+#page-settings input:is([type="text"], [type="password"], [type="email"], [type="url"], [type="search"], [type="number"], [type="tel"]),
+#page-settings select,
+#page-settings textarea {
+  background-color: var(--color-primary);
+  color: var(--color-background);
+}
+#page-settings input::placeholder,
+#page-settings textarea::placeholder {
+  color: var(--color-background);
+  opacity: .65;
+}
+
 /* Weather settings: one readable column, with controls scoped to this page. */
 #page-settings .weather-settings { max-width: 720px; padding-bottom: 24px; }
 #page-settings .weather-heading { margin-bottom: 24px; }
@@ -350,18 +364,4 @@
   #page-settings .weather-test-heading { align-items: flex-start; flex-direction: column; }
   #page-settings .weather-observation { gap: 14px; }
   #page-settings .weather-temperature { font-size: 32px; }
-}
-
-/* Shared palette for editable settings controls on every settings page. */
-#page-settings input:not([type]),
-#page-settings input:is([type="text"], [type="password"], [type="email"], [type="url"], [type="search"], [type="number"], [type="tel"]),
-#page-settings select,
-#page-settings textarea {
-  background-color: var(--color-primary);
-  color: var(--color-background);
-}
-#page-settings input::placeholder,
-#page-settings textarea::placeholder {
-  color: var(--color-background);
-  opacity: .65;
 }
