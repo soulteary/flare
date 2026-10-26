@@ -7,7 +7,7 @@
 
 A lightweight self-hosted bookmark dashboard and start page, written in Go.
 
-The latest stable release is [**0.6.5**](https://github.com/soulteary/flare/releases/tag/0.6.5),
+The latest stable release is [**0.6.6**](https://github.com/soulteary/flare/releases/tag/0.6.6),
 including the search, navigation editor and layout controls described in the
 [documentation index](docs/README.md).
 
@@ -78,8 +78,8 @@ Echo is no longer part of the production dependency graph. See
 Published stable versions are available from both registries:
 
 ```sh
-docker pull soulteary/flare:0.6.5
-docker pull ghcr.io/soulteary/flare:0.6.5
+docker pull soulteary/flare:0.6.6
+docker pull ghcr.io/soulteary/flare:0.6.6
 ```
 
 Both images support `linux/amd64`, `linux/arm64`, `linux/arm/v7`, and

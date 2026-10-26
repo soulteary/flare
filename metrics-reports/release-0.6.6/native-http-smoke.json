@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "binary": "/tmp/flare-0.6.6-published-assets/darwin_arm64-flare",
+  "legacy_icons_verified": 19,
+  "themed_favicon": true,
+  "checks": [
+    "all legacy preview paths match 0.6.5 SVG",
+    "favicon GET/HEAD/304/206",
+    "theme switch uses new content URL"
+  ]
+}

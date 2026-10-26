@@ -1,8 +1,7 @@
 # Weather refresh and failure behavior
 
 > Availability: the homepage snapshot and retry behavior shipped in 0.6.5.
-> The location picker, dependency 0.4.0 and migration behavior below belong to the
-> unpublished 0.6.6 candidate.
+> The location picker, dependency 0.4.0 and migration behavior below shipped in 0.6.6.
 
 The homepage keeps one in-memory weather snapshot. A missing or expired snapshot
 starts a background fetch; page rendering never waits for that network request.
@@ -31,7 +30,7 @@ Deterministic tests use an injected clock and fetch function, including concurre
 cold reads, stale results, bounded retries, changed-city responses and failed
 settings writes. They do not contact a live weather provider.
 
-## 0.6.6 candidate: location selection and compatibility
+## 0.6.6: location selection and compatibility
 
 Flare uses `funny-china-weather` v0.4.0 (Go 1.27.3 or later). Settings now
 searches Tencent's location directory and requires selection of a specific city,

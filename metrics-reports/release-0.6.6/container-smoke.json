@@ -1,0 +1,38 @@
+[
+  {
+    "image": "soulteary/flare:0.6.6",
+    "id": "sha256:4f6b54d752d7df2bc174845982f379b571eb15a387f0a53a136d8bd77aaa2e3d",
+    "platform": "linux/arm64",
+    "anonymous_pull": true,
+    "labels": {
+      "org.opencontainers.image.created": "2026-10-26T07:46:26Z",
+      "org.opencontainers.image.description": "flare",
+      "org.opencontainers.image.licenses": "AGPL-v3",
+      "org.opencontainers.image.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8",
+      "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+      "org.opencontainers.image.title": "flare",
+      "org.opencontainers.image.url": "https://github.com/soulteary/flare",
+      "org.opencontainers.image.version": "0.6.6"
+    },
+    "legacy_icons_verified": 19,
+    "http_timezone_restart": "PASS"
+  },
+  {
+    "image": "ghcr.io/soulteary/flare:0.6.6",
+    "id": "sha256:4f6b54d752d7df2bc174845982f379b571eb15a387f0a53a136d8bd77aaa2e3d",
+    "platform": "linux/arm64",
+    "anonymous_pull": true,
+    "labels": {
+      "org.opencontainers.image.created": "2026-10-26T07:46:26Z",
+      "org.opencontainers.image.description": "flare",
+      "org.opencontainers.image.licenses": "AGPL-v3",
+      "org.opencontainers.image.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8",
+      "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+      "org.opencontainers.image.title": "flare",
+      "org.opencontainers.image.url": "https://github.com/soulteary/flare",
+      "org.opencontainers.image.version": "0.6.6"
+    },
+    "legacy_icons_verified": 19,
+    "http_timezone_restart": "PASS"
+  }
+]

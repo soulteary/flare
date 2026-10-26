@@ -1,7 +1,9 @@
-# Flare 0.6.6 — unpublished release draft
+# Flare 0.6.6
 
-This is preparation material. No 0.6.6 tag, release or registry image is implied.
-Current published stable remains 0.6.5.
+Published on 2026-10-26 (Asia/Shanghai) from
+`26596ab40ba9960bdcc8803719e211b45e2c26c8`.
+See [the GitHub release](https://github.com/soulteary/flare/releases/tag/0.6.6) and
+[published artifact verification](release-0.6.6-verification.md).
 
 ## Changes since 0.6.5
 
@@ -52,8 +54,7 @@ limitation. Safari/Via/Android/iPad remain NOT TESTED; follow-up owner is reposi
 maintainer soulteary. Chromium emulation and QEMU execution are not physical-device
 certification. No device result or completion date is implied by this exception.
 
-See [the 0.6.6 preflight record](release-0.6.6-preflight.md) for the exact candidate,
-automated checks, packaging evidence and unresolved publication gates. Physical
+See [final acceptance](release-0.6.6-final-preflight.md) and
+[published verification](release-0.6.6-verification.md) for source, checks and artifact evidence. Physical
 Safari/Via/Android/iPad and ARM-device execution must not be inferred from desktop
-Chromium emulation or cross-compilation. Published-artifact verification remains
-a separate post-publication step.
+Chromium emulation or cross-compilation. Public archive and registry checks are recorded separately from preflight.

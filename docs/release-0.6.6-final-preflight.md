@@ -2,7 +2,20 @@
 
 Recorded 2026-10-26 (Asia/Shanghai). The release owner authorized fixing the
 remaining icon compatibility and documentation issues, then publishing 0.6.6.
-Publication and artifact checks are recorded separately after they actually run.
+Publication and artifact checks are recorded in
+[published verification](release-0.6.6-verification.md).
+
+## Final result
+
+Published stable 0.6.6 from `26596ab40ba9960bdcc8803719e211b45e2c26c8` through
+[the successful tag workflow](https://github.com/soulteary/flare/actions/runs/40287730564).
+All candidate and exact merged-main checks passed before tagging; regenerated
+production assets left tracked source unchanged. Public seven-archive checks,
+dual-registry four-platform metadata/anonymous pulls, actual published ARM64
+containers, native icon/favicon HTTP and published-0.6.5 upgrade/rollback passed.
+All-package race coverage is 86.4%. The physical-device exception below remains
+explicitly disclosed. The list below records the acceptance requirements that
+were applied; verification details distinguish execution from inspection.
 
 ## Changes since the previous preflight
 
