@@ -13,3 +13,8 @@
 dialog{max-height:calc(var(--editor-viewport-height,100dvh) - 32px);scroll-padding-bottom:80px;overflow-wrap:anywhere}
 .dialog-actions{flex-wrap:wrap}.dialog-actions button{min-width:0;overflow-wrap:anywhere}
 @media(max-width:640px){.shell{padding-bottom:calc(var(--savebar-height,210px) + 24px)}dialog{max-height:calc(var(--editor-viewport-height,100dvh) - 20px)}.save-actions button{min-width:0;overflow-wrap:anywhere}}
+
+/* Alpha masks ignore homepage SVG fill colors and use the editor text color. */
+.editor-builtin-icon{visibility:hidden;display:inline-block;flex-shrink:0;width:28px;height:28px;background-color:var(--text);-webkit-mask-image:var(--editor-icon-url);mask-image:var(--editor-icon-url);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;mask-mode:alpha}
+#icon-preview .editor-builtin-icon{width:32px;height:32px}
+.editor-builtin-icon[data-loaded=true]{visibility:visible}
