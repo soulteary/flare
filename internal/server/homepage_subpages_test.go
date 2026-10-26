@@ -19,7 +19,7 @@ func TestNavigationSubpagesShareAppearanceClasses(t *testing.T) {
 	require.NoError(t, err)
 	options, err := data.GetAllSettingsOptions()
 	require.NoError(t, err)
-	options.Homepage = &model.HomepageOptions{MobileBookmarkLayout: "compact", NavigationTextSize: "large", DesktopColumns: "6", HideAppDescriptions: true}
+	options.Homepage = &model.HomepageOptions{BookmarkLayout: "sections", MobileBookmarkLayout: "compact", NavigationTextSize: "large", DesktopColumns: "6", HideAppDescriptions: true}
 	for _, keepCase := range []bool{false, true} {
 		options.KeepLetterCase = keepCase
 		require.True(t, data.UpdateAppearance(options))
@@ -27,7 +27,7 @@ func TestNavigationSubpagesShareAppearanceClasses(t *testing.T) {
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 			require.Equal(t, 200, rec.Code)
-			for _, class := range []string{"mobile-bookmarks-compact", "navigation-text-large", "desktop-columns-6", "hide-app-descriptions"} {
+			for _, class := range []string{"bookmark-layout-sections", "mobile-bookmarks-compact", "navigation-text-large", "desktop-columns-6", "hide-app-descriptions"} {
 				require.Regexp(t, `<body[^>]*class=[^>]*`+class, rec.Body.String())
 			}
 			if keepCase {

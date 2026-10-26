@@ -70,3 +70,23 @@ func TestDesktopColumnChoices(t *testing.T) {
 		}
 	}
 }
+
+func TestBookmarkLayoutChoices(t *testing.T) {
+	for _, layout := range []string{"", "groups", "sections"} {
+		options := HomepageOptions{BookmarkLayout: layout}
+		if err := options.Validate(); err != nil {
+			t.Fatal(err)
+		}
+		want := ""
+		if layout == "sections" {
+			want = "bookmark-layout-sections "
+		}
+		if options.Classes() != want {
+			t.Fatal(options.Classes())
+		}
+	}
+	options := HomepageOptions{BookmarkLayout: "injected class"}
+	if options.Validate() == nil || options.Classes() != "" {
+		t.Fatal("invalid layout accepted")
+	}
+}

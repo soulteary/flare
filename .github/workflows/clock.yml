@@ -43,6 +43,10 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/mobile/category-navigation.browser.cjs
+      - name: Bookmark sections acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/mobile/bookmark-sections.browser.cjs
       - name: Homepage readability acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
