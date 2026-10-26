@@ -63,14 +63,11 @@
   width: 24px;
 }
 
-@media (max-width: 767px) {
-  #container-bookmakrs .bookmark-group-container {
-    width: 30%;
-    float: none;
-  }
+/* Phones retain sequential groups; tablets use the available content width. */
+@media (max-width: 599px) {
+  #container-bookmakrs .bookmark-group-container { display: block; float: none; width: 100%; margin-bottom: 20px; }
 }
 @media (max-width: 768px) {
-  #container-bookmakrs .bookmark-group-container { display: block; float: none; width: 100%; margin-bottom: 20px; }
   #container-bookmakrs .bookmark-group-container h3,
   #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark { white-space: normal; overflow-wrap: anywhere; }
   #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark { min-height: 44px; padding: 8px 0; line-height: 1.6; }
@@ -78,9 +75,15 @@
 }
 
 /* Opt-in newspaper flow preserves DOM order and keeps each group together. */
-@media (min-width: 360px) and (max-width: 768px) {
+@media (min-width: 360px) and (max-width: 599px) {
  .mobile-bookmarks-compact #container-bookmakrs .bookmark-groups { column-count: 2; column-gap: 16px; }
  .mobile-bookmarks-compact #container-bookmakrs .bookmark-group-container { break-inside: avoid; page-break-inside: avoid; }
+}
+/* Four is the default upper bound, rather than a fixed count on narrow tablets. */
+@media (min-width: 600px) {
+ #container-bookmakrs .bookmark-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, max(11.25rem, calc((100% - 48px) / 4))), 1fr)); gap: 16px; align-items: start; }
+ #container-bookmakrs .bookmark-group-container { width: auto; min-width: 0; float: none; }
+ .bookmark-category-nav { grid-column: 1 / -1; }
 }
 /* Category navigation remains usable without JavaScript. */
 .bookmark-category-nav { display:flex; gap:8px; overflow-x:auto; max-width:100%; padding:8px 0 16px; }

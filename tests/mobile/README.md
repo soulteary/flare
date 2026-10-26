@@ -8,6 +8,7 @@ go run build/build.go
 go build -o /tmp/flare-mobile .
 npm ci --ignore-scripts --prefix tests/clock
 tests/clock/node_modules/.bin/playwright install chromium
+node tests/mobile/bookmark-columns.browser.cjs
 FLARE_BINARY=/tmp/flare-mobile node tests/mobile/browser.cjs
 FLARE_BINARY=/tmp/flare-mobile node tests/editor/browser.cjs
 ```
@@ -17,7 +18,10 @@ covers home/settings/default-editor widths at
 320/360/375/390/430/767/768/769/820/1024 CSS pixels,
 long titles, unequal groups, enlarged home body text (110/125/200%), weather/date
 reflow through 768px and search autofocus. The 767/768/769 boundary is checked
-explicitly; tablet checks exercise overflow and the settings navigation transition.
+explicitly; the bookmark column suite also checks actual multi-column tablet
+positions, phone layout options, narrow parent containers and category navigation
+across the 599/600 boundary. Tablet checks exercise overflow and the settings
+navigation transition.
 Forms are opened at every width and must fit horizontally with reachable actions.
 A dropped save connection must retain the complete pending document, leave disk
 data unchanged, and allow a successful retry. Desktop checks cover
