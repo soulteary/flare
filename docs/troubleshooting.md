@@ -15,6 +15,7 @@ passwords, signing keys, session cookies or complete private bookmark exports.
 | Weather unavailable | Check configured location, offline mode, upstream coverage and logs; browser device location/time zone does not choose weather city |
 | Old editor remains after upgrade | Confirm running version and digest, recreate container, refresh cached assets and old forms; keep unsaved data before reloading |
 | Editor reports 409 | Preserve/export draft, reload current server document, review and explicitly retry; no automatic merge |
+| Settings/editor saves return 403 even with login disabled | Check `write_source_rejected` and preserve the original Host including the public port at the proxy; see [write-source troubleshooting](reverse-proxy.md#write-requests-rejected-even-with-login-disabled). In 0.6.6 this can appear as an expired login |
 | Editor reports incomplete recovery | Stop writers and follow the exact recovery path in the response; preserve both current files and recovery copies |
 | ARM container repeatedly exits | Record architecture/image platform/digest, exit code, startup logs and memory limit; cross-compilation is not Raspberry Pi validation |
 

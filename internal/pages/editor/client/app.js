@@ -170,8 +170,10 @@
     busy(true);setStatus(t('正在保存…'));let message=t('所有更改已保存'),error=false, responseParsed=false, serverInvalid=null;
     try {
       const response=await fetch('/editor/document',{method:'POST',headers:{'Content-Type':'application/json','X-Flare-Editor':'1'},body:JSON.stringify(store.toJSON()),signal:AbortSignal.timeout(30000)});
-      if(response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('登录可能已过期，请在新窗口登录后重试。'));
+      if(response.redirected)throw Error(t('登录可能已过期，请在新窗口登录后重试。'));
+      if(!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('保存响应格式异常（HTTP {0}），请检查服务端或反向代理配置。',response.status));
       const result=await response.json();responseParsed=true;
+      if(!response.ok&&result.code==='write_source_rejected')throw Error(t('保存请求未通过来源校验。请从当前 Flare 页面重试；使用反向代理时，请保留原始 Host 请求头及外部端口。关闭登录不会关闭来源校验。'));
       if(!response.ok){if(result.recoveryRequired){recoveryRequired=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(response.status===409){conflict=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(result.field)serverInvalid=result;throw Error(result.error||t('保存失败，请重试。'));}
       if(!result.saved||!result.document)throw Error(t('保存响应不完整，请检查数据后重试。'));
       store.accept(result.document);batch?.refresh();undo=null;conflict=false;$('export-draft').hidden=true;$('reload-data').hidden=true;render();

@@ -34,6 +34,30 @@ do not configure a custom `/flare/` location. See the deployment repository's
 [Traefik example](https://github.com/soulteary/docker-flare/blob/main/example/traefik/docker-compose.yml)
 and adapt its public hostname, TLS resolver and network to your installation.
 
+## Write requests rejected even with login disabled
+
+Login and write-source protection are independent. Disabling login does not allow
+cross-origin writes. If settings or editor saves return HTTP 403 with code
+`write_source_rejected`, compare the browser's `Origin`/`Referer` host and port
+with the `Host` received by Flare. The proxy must preserve the public host and
+port, rather than replace them with an upstream name such as `flare:5005`.
+Sending only `X-Forwarded-Host` does not fix this: Flare does not trust it.
+For Nginx, use `proxy_set_header Host $http_host;` as above; `$host` can drop a
+nondefault public port. Direct Docker port publishing alone preserves Host.
+
+In 0.6.6, the editor can mislabel this plain-text 403 as an expired login.
+Changing credentials or enabling/disabling login does not resolve a Host mismatch.
+Preserve/export pending edits before reloading, correct the proxy configuration,
+then retry. Set the environment variable using Compose's mapping syntax:
+
+```yaml
+environment:
+  FLARE_DISABLE_LOGIN: "true"
+```
+
+The list item `- FLARE_DISABLE_LOGIN="true"` includes literal quotes in the
+environment value and triggers an invalid-boolean warning.
+
 ## Verify
 
 1. In a fresh browser confirm private routes redirect to login when configured.

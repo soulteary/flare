@@ -331,5 +331,7 @@
   "weather_connection": "Weather connection",
   "weather_test_description": "Query live weather for the saved location",
   "weather_test_button": "Test connection",
-  "weather_humidity": "Humidity"
+  "weather_humidity": "Humidity",
+  "editor.write_source_rejected": "The save request was rejected by origin protection. Retry from this Flare page. If using a reverse proxy, preserve the original Host header including the public port. Disabling login does not disable origin protection.",
+  "editor.unexpected_save_response": "Unexpected save response (HTTP {0}). Check the server or reverse proxy configuration."
 }

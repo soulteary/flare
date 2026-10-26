@@ -331,5 +331,7 @@
   "weather_connection": "天气连接",
   "weather_test_description": "查询已保存地点的实时天气",
   "weather_test_button": "测试连接",
-  "weather_humidity": "湿度"
+  "weather_humidity": "湿度",
+  "editor.write_source_rejected": "保存请求未通过来源校验。请从当前 Flare 页面重试；使用反向代理时，请保留原始 Host 请求头及外部端口。关闭登录不会关闭来源校验。",
+  "editor.unexpected_save_response": "保存响应格式异常（HTTP {0}），请检查服务端或反向代理配置。"
 }
