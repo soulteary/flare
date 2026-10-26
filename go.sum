@@ -39,6 +39,8 @@ github.com/soulteary/cli-kit v1.9.2 h1:lciNt542e/YwV8aTSOLABtA6GTOv6i7iaTV+4w9SA
 github.com/soulteary/cli-kit v1.9.2/go.mod h1:/u1MG5w4C04y2UvjQ2hUgkmFIWX36F26IUzRsBR5qP8=
 github.com/soulteary/funny-china-weather v0.3.0 h1:8RdYNoTNtG0qJy8Sb9PRh5fyJIne87nFvmXUeAsOu0Q=
 github.com/soulteary/funny-china-weather v0.3.0/go.mod h1:qq15zks/FMHe0wGCNrxGn4imtkIF90S0Jqd2IW5BgFs=
+github.com/soulteary/funny-china-weather v0.4.0 h1:/k88YaXLXLs37qA1ifiQSFZuzXpEhobEABzYIykMtH8=
+github.com/soulteary/funny-china-weather v0.4.0/go.mod h1:qq15zks/FMHe0wGCNrxGn4imtkIF90S0Jqd2IW5BgFs=
 github.com/soulteary/memfs-kit v1.1.1 h1:5uBniqmR3dY81vF0NPhTK97yGzzgcHtp3vRP3rTOou8=
 github.com/soulteary/memfs-kit v1.1.1/go.mod h1:qEn9S3SYXlEHhnGbJmbPXDb4NI/LG1VKimVWUCBWHU4=
 github.com/soulteary/version-kit/v4 v4.0.2 h1:IUByGmmT8y5wlq/JEAUXRHs+wN9RdZhwA8GzEIMQ3Ho=

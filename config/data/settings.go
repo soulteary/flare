@@ -38,6 +38,9 @@ func GetLocationAndWeatherShow() (string, bool) {
 	if err != nil {
 		return "", false
 	}
+	if options.WeatherLocation != nil {
+		return options.WeatherLocation.String(), options.ShowWeather
+	}
 	return options.Location, options.ShowWeather
 }
 
@@ -50,6 +53,7 @@ func UpdateWeatherAndLocation(enable bool, location string) bool {
 	}
 	options.ShowWeather = enable
 	options.Location = location
+	options.WeatherLocation = nil
 	return saveAppConfigToYamlFile("config", options)
 }
 
@@ -61,6 +65,7 @@ func UpdateLocation(location string) bool {
 		return false
 	}
 	options.Location = location
+	options.WeatherLocation = nil
 	return saveAppConfigToYamlFile("config", options)
 }
 
@@ -152,5 +157,34 @@ func UpdateAppearance(update model.Application) bool {
 	options.KeepLetterCase = update.KeepLetterCase
 	options.Locale = update.Locale
 
+	return saveAppConfigToYamlFile("config", options)
+}
+
+// UpdateSelectedWeather atomically saves the display address and provider fields.
+func UpdateSelectedWeather(enable bool, location *model.WeatherLocation) bool {
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		return false
+	}
+	options.ShowWeather = enable
+	options.WeatherLocation = location
+	if location != nil {
+		options.Location = location.String()
+	}
+	return saveAppConfigToYamlFile("config", options)
+}
+
+// MigrateWeatherLocation never overwrites a concurrent manual selection.
+func MigrateWeatherLocation(previous string, selected *model.WeatherLocation) bool {
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
+	options, err := GetAllSettingsOptions()
+	if err != nil || selected == nil || options.WeatherLocation != nil || options.Location != previous {
+		return false
+	}
+	options.Location = selected.String()
+	options.WeatherLocation = selected
 	return saveAppConfigToYamlFile("config", options)
 }

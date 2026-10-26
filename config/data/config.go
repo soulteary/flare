@@ -140,6 +140,10 @@ func saveAppConfigToYamlFile(name string, result model.Application) bool {
 	if err = rejectAmbiguousEngineReplacement(doc.Content[0], &patch); err != nil {
 		return false
 	}
+	// Explicitly clear a previous structured location when a legacy API replaces it.
+	if original.WeatherLocation != nil && result.WeatherLocation == nil {
+		patch.Content = append(patch.Content, &yaml3.Node{Kind: yaml3.ScalarNode, Tag: "!!str", Value: "WeatherLocation"}, &yaml3.Node{Kind: yaml3.ScalarNode, Tag: "!!null", Value: "null"})
+	}
 	mergeSearchNodes(doc.Content[0], &patch)
 	out, err := yaml3.Marshal(doc)
 	if err != nil {

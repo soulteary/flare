@@ -312,3 +312,56 @@
   color: var(--color-background);
   opacity: .65;
 }
+
+/* Weather settings: one readable column, with controls scoped to this page. */
+#page-settings .weather-settings { max-width: 720px; padding-bottom: 24px; }
+#page-settings .weather-heading { margin-bottom: 24px; }
+#page-settings .weather-heading h2 { margin: 0 0 8px; }
+#page-settings .weather-heading p,
+#page-settings .weather-muted { font-size: 13px; line-height: 1.7; opacity: .65; margin: 0; }
+#page-settings .weather-fields { min-width: 0; border: 0; padding: 0; margin: 0; }
+#page-settings .weather-card { border: 1px solid color-mix(in srgb, var(--color-primary) 16%, transparent); border-radius: 12px; padding: 22px 24px; margin: 0 0 16px; min-width: 0; }
+#page-settings .weather-card h3 { font-size: 16px; font-weight: 600; margin: 0 0 18px; }
+#page-settings .weather-settings .form-group label { margin: 0 0 8px; font-size: 13px; font-weight: 500; }
+#page-settings .weather-enable { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+#page-settings .weather-enable label { font-size: 15px !important; margin-bottom: 4px !important; }
+#page-settings .weather-settings .form-group select,
+#page-settings .weather-settings .form-group input.option-input { box-sizing: border-box; background: var(--color-primary); color: var(--color-background); border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent); border-radius: 8px; min-width: 0; min-height: 44px; padding: 10px 12px; margin: 0; font: inherit; font-size: 14px; line-height: 1.5; }
+#page-settings .weather-enable select { width: 88px; flex-shrink: 0; }
+#page-settings .weather-search-row { display: flex; align-items: stretch; gap: 10px; }
+#page-settings .weather-search-row input { flex: 1; }
+#page-settings .weather-settings button,
+#page-settings .weather-settings input.btn-submit { box-sizing: border-box; border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent); border-radius: 8px; background: var(--color-background); color: var(--color-primary); padding: 10px 18px; min-height: 44px; font: inherit; font-size: 14px; line-height: 1.5; cursor: pointer; margin: 0; max-width: 100%; }
+#page-settings .weather-settings button:hover,
+#page-settings .weather-settings input.btn-submit:hover { background: color-mix(in srgb, var(--color-primary) 7%, var(--color-background)); }
+#page-settings .weather-settings :is(button,input,select):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+#page-settings .weather-settings :disabled { opacity: .5; cursor: not-allowed; }
+#page-settings .weather-detect-row { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; margin-top: 8px; }
+#page-settings .weather-settings button.weather-text-button { border: 0; padding: 8px 0; font-size: 13px; text-decoration: underline; text-underline-offset: 4px; }
+#page-settings .weather-settings button.weather-text-button:hover { background: transparent; opacity: .7; }
+#page-settings .weather-search-status { margin: 12px 0 8px; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+#page-settings .weather-search-status:empty { display: none; }
+#page-settings .weather-results { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; padding: 3px; margin: 0 -3px; }
+#page-settings .weather-results:empty { display: none; }
+#page-settings .weather-settings button.weather-candidate { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left; padding: 12px 14px; border-color: color-mix(in srgb, var(--color-primary) 14%, transparent); }
+#page-settings .weather-candidate::after { content: ''; width: 6px; height: 6px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: rotate(45deg); opacity: .5; flex-shrink: 0; margin-right: 4px; }
+#page-settings .weather-selection { margin-top: 20px; padding-top: 18px; border-top: 1px solid color-mix(in srgb, var(--color-primary) 12%, transparent); }
+#page-settings .weather-settings .weather-selection input.option-input { font-weight: 500; }
+#page-settings .weather-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 20px 0 28px; }
+#page-settings .weather-settings input.weather-primary { background: var(--color-primary); color: var(--color-background); border-color: var(--color-primary); }
+#page-settings .weather-settings input.weather-primary:hover { background: var(--color-primary); opacity: .85; }
+#page-settings .weather-test-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+#page-settings .weather-test-heading h3 { margin-bottom: 4px; }
+#page-settings .weather-notice { font-size: 13px; line-height: 1.8; margin: 0 0 16px; padding: 12px 14px; border-radius: 8px; background: color-mix(in srgb, var(--color-primary) 6%, var(--color-background)); overflow-wrap: anywhere; }
+#page-settings .weather-observation { display: flex; align-items: center; gap: 22px; margin-top: 20px; padding-top: 18px; border-top: 1px solid color-mix(in srgb, var(--color-primary) 12%, transparent); }
+#page-settings .weather-temperature { font-size: 38px; line-height: 1.2; font-weight: 600; white-space: nowrap; }
+#page-settings .weather-temperature > span { font-size: 18px; font-weight: 400; padding-left: 3px; }
+#page-settings .weather-observation-details { display: grid; gap: 4px; font-size: 13px; line-height: 1.6; min-width: 0; overflow-wrap: anywhere; }
+#page-settings .weather-observation-details small { font-size: 12px; opacity: .65; }
+@media (max-width: 600px) {
+  #page-settings .weather-card { padding: 18px 16px; }
+  #page-settings .weather-search-row input.option-input { font-size: 16px; }
+  #page-settings .weather-test-heading { align-items: flex-start; flex-direction: column; }
+  #page-settings .weather-observation { gap: 14px; }
+  #page-settings .weather-temperature { font-size: 32px; }
+}

@@ -3,7 +3,6 @@ package home
 import (
 	"crypto/tls"
 	"html/template"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,10 +20,7 @@ import (
 	"github.com/soulteary/flare/internal/pool"
 	searchcore "github.com/soulteary/flare/internal/search"
 	weatherui "github.com/soulteary/flare/internal/settings/weather"
-	weatherip "github.com/soulteary/funny-china-weather"
 )
-
-const _weatherLocationDetectTimeout = 5 * time.Second
 
 const _cspValue = "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';"
 
@@ -34,50 +30,17 @@ func setCSPHeader(c fiber.Ctx) {
 	}
 }
 
-// InitWeatherIfNeeded loads settings and updates weather/location (e.g. auto-detect location). Call from server startup instead of relying on init().
-// GetMyIPLocation is called with a timeout to avoid blocking startup when the network is slow.
+// InitWeatherIfNeeded migrates a uniquely resolvable existing location.
+// Empty locations are selected explicitly in Settings, including IP suggestions.
 func InitWeatherIfNeeded() {
 	if define.AppFlags.EnableOfflineMode {
 		return
 	}
 	opts, err := data.GetAllSettingsOptions()
-	if err != nil {
+	if err != nil || opts.WeatherLocation != nil || !opts.ShowWeather || opts.Location == "" {
 		return
 	}
-	if opts.Location == "" && opts.ShowWeather {
-		log.Println("天气模块启用，当前应用尚未配置区域，尝试自动获取区域名称。")
-		location := getMyIPLocationWithTimeout(_weatherLocationDetectTimeout)
-		if location != "" {
-			data.UpdateWeatherAndLocation(opts.ShowWeather, location)
-		} else {
-			data.UpdateWeatherAndLocation(opts.ShowWeather, opts.Location)
-		}
-	} else {
-		data.UpdateWeatherAndLocation(opts.ShowWeather, opts.Location)
-	}
-}
-
-// getMyIPLocationWithTimeout runs GetMyIPLocation in a goroutine and returns the result or empty string on timeout/error.
-func getMyIPLocationWithTimeout(timeout time.Duration) string {
-	type result struct {
-		location string
-		err      error
-	}
-	done := make(chan result, 1)
-	go func() {
-		location, err := weatherip.GetMyIPLocation()
-		done <- result{location: location, err: err}
-	}()
-	select {
-	case r := <-done:
-		if r.err == nil && r.location != "" {
-			return r.location
-		}
-		return ""
-	case <-time.After(timeout):
-		log.Println("自动获取区域名称超时，将使用默认配置。")
-		return ""
-	}
+	weatherui.MigrateLegacyLocation(opts.Location)
 }
 
 func RegisterRouting(e *fiber.App) {
