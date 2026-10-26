@@ -115,7 +115,8 @@ func rejectAmbiguousEngineReplacement(root, patch *yaml.Node) error {
 	if !added {
 		return nil
 	}
-	known := map[string]bool{"ID": true, "Name": true, "URLTemplate": true, "Enabled": true}
+	// Keyword is retired, but remains a known field for legacy engine edits.
+	known := map[string]bool{"ID": true, "Name": true, "URLTemplate": true, "Keyword": true, "Enabled": true}
 	for _, row := range oldRows.Content {
 		id := mappingValue(row, "ID")
 		if id == nil || newIDs[id.Value] {
