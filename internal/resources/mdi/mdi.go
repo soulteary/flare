@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -66,6 +67,13 @@ func RegisterRouting(e *fiber.App) {
 		e.Head(_ASSETS_WEB_URI+"/:name", handler)
 	}
 	if mdiExample, err := fs.Sub(MdiExampleAssets, "mdi-cheat-sheets"); err == nil {
+		// The index uses relative CSS URLs, which require a directory URL.
+		e.Get(define.RegularPages.Icons.Path, func(c fiber.Ctx) error {
+			if strings.HasSuffix(c.Path(), "/") {
+				return c.Next()
+			}
+			return c.Redirect().Status(http.StatusFound).To(define.RegularPages.Icons.Path + "/")
+		})
 		e.Use(define.RegularPages.Icons.Path, static.New("", static.Config{FS: mdiExample, ByteRange: true}))
 	}
 }

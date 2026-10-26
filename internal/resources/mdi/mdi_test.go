@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,6 +19,70 @@ import (
 
 	"github.com/soulteary/flare/config/define"
 )
+
+func TestCheatSheetRelativeAssets(t *testing.T) {
+	e := newIconTestRouter(t, false)
+	page := define.RegularPages.Icons.Path
+	redirect := requestIcon(e, http.MethodGet, page, "", "")
+	if redirect.Code != http.StatusFound || redirect.Header().Get("Location") != page+"/" {
+		t.Fatalf("expected directory redirect, got %d %q", redirect.Code, redirect.Header().Get("Location"))
+	}
+	index := requestIcon(e, http.MethodGet, page+"/", "", "")
+	if index.Code != http.StatusOK {
+		t.Fatalf("index status: %d", index.Code)
+	}
+	if !strings.Contains(index.Body.String(), `href="css/materialdesignicons.min.css"`) {
+		t.Fatal("missing relative stylesheet link")
+	}
+	base, err := url.Parse("http://example.test" + redirect.Header().Get("Location"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, asset := range []string{"css/materialdesignicons.min.css", "fonts/materialdesignicons-webfont.woff2"} {
+		reference, err := url.Parse(asset)
+		if err != nil {
+			t.Fatal(err)
+		}
+		response := requestIcon(e, http.MethodGet, base.ResolveReference(reference).String(), "", "")
+		if response.Code != http.StatusOK || response.Body.Len() == 0 {
+			t.Fatalf("asset %s: status %d, bytes %d", asset, response.Code, response.Body.Len())
+		}
+	}
+}
+
+func TestCheatSheetNamesRenderInFlare(t *testing.T) {
+	newIconTestRouter(t, false)
+	for _, name := range []string{"accessPoint", "accountBoxEditOutline", "account"} {
+		t.Run(name, func(t *testing.T) {
+			if GetIconByName(name) == _EMPTY_ICON {
+				t.Fatalf("copied name %q did not render on the homepage", name)
+			}
+			if !strings.Contains(GetIconSVGByName(name), "<path") {
+				t.Fatalf("copied name %q did not render an editor preview", name)
+			}
+		})
+	}
+}
+
+func TestCheatSheetBundledVersion(t *testing.T) {
+	const version = "7.4.47"
+	index, err := MdiExampleAssets.ReadFile("mdi-cheat-sheets/index.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, marker := range []string{`<span class="version">` + version + `</span>`, `icon.version === '` + version + `'`, `name:"account-box-edit-outline"`} {
+		if !strings.Contains(string(index), marker) {
+			t.Fatalf("cheat sheet missing current version marker: %s", marker)
+		}
+	}
+	css, err := MdiExampleAssets.ReadFile("mdi-cheat-sheets/css/materialdesignicons.min.css")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(css), "?v="+version) || !strings.Contains(string(css), ".mdi-account-box-edit-outline::before") {
+		t.Fatal("cheat sheet stylesheet does not match the current icon release")
+	}
+}
 
 // newIconTestRouter isolates the package's startup state and registers the real routes.
 // These tests intentionally do not run in parallel because the application flags are global.
