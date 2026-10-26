@@ -29,6 +29,7 @@ feature does not publish an image or move `latest`.
 - [Reverse proxies and deployment boundaries](reverse-proxy.md)
 - [Troubleshooting and evidence collection](troubleshooting.md)
 - [Build and test from a clean checkout](development.md)
+- [Interface language and translation development](i18n.md)
 - [Navigation cache and invalidation](navigation-cache.md) (since 0.6.5)
 - [Performance decisions and current observation index](performance.md), [measurement methods](baseline-metrics.md)
 - [Physical mobile acceptance](mobile-device-acceptance.md)

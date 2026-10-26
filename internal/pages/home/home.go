@@ -176,7 +176,7 @@ func pageBookmark(c fiber.Ctx) error {
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	if options.ShowBookmarks {
-		m["Bookmarks"] = GenerateBookmarkNavigationTemplate(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options, &requestURL)
+		m["Bookmarks"], m["BookmarksError"] = generateBookmarkNavigation(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options, &requestURL)
 	}
 	m["OptionTitle"] = options.Title
 	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
@@ -205,7 +205,7 @@ func pageApplication(c fiber.Ctx) error {
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	if options.ShowApps {
-		m["Applications"] = GenerateApplicationsTemplate("", &options, &requestURL)
+		m["Applications"], m["ApplicationsError"] = generateApplications("", &options, &requestURL)
 	}
 	m["PageName"] = i18n.T(locale, "page_apps")
 	m["SubPage"] = true
@@ -267,7 +267,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	var apps template.HTML
 	if options.ShowApps {
-		apps = GenerateApplicationsTemplate(filter, &options, &requestURL)
+		apps, m["ApplicationsError"] = generateApplications(filter, &options, &requestURL)
 	}
 	selected := c.Query("category")
 	if c.Method() == http.MethodPost {
@@ -276,12 +276,12 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["BookmarkCategory"] = selected
 	var bookmarks template.HTML
 	if options.ShowBookmarks {
-		bookmarks = GenerateBookmarkNavigationTemplate(filter, selected, c.Path(), &options, &requestURL)
+		bookmarks, m["BookmarksError"] = generateBookmarkNavigation(filter, selected, c.Path(), &options, &requestURL)
 	}
 	m["Applications"] = apps
 	m["Bookmarks"] = bookmarks
 	if filter != "" {
-		dataFailed := strings.Contains(string(apps), `class="navigation-data-error"`) || strings.Contains(string(bookmarks), `class="navigation-data-error"`)
+		dataFailed := m["ApplicationsError"] != nil && m["ApplicationsError"] != "" || m["BookmarksError"] != nil && m["BookmarksError"] != ""
 		m["SearchNoResults"] = !dataFailed && (!options.ShowApps || !strings.Contains(string(apps), `class="app-item"`)) && (!options.ShowBookmarks || !strings.Contains(string(bookmarks), `class="bookmark"`))
 	}
 	m["SearchKeyword"] = searchKeyword

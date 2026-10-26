@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/soulteary/cli-kit v1.9.2
 	github.com/soulteary/funny-china-weather v0.4.0
+	github.com/soulteary/i18n-kit/v4 v4.0.3
 	github.com/soulteary/memfs-kit v1.1.1
 	github.com/soulteary/version-kit/v4 v4.0.2
 	github.com/spf13/pflag v1.0.10

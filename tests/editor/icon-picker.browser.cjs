@@ -2,13 +2,14 @@
 const {chromium}=require(require.resolve('playwright',{paths:[__dirname,`${__dirname}/../clock`]}));
 const fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
 (async()=>{
+ const fixture=await require('./fixture.cjs').editorFixture();
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox']});
  try{
   const page=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
   let fail=false;const requests=[];
   await page.route('http://picker.test/**',async route=>{
    const url=new URL(route.request().url());
-   if(url.pathname==='/')return route.fulfill({contentType:'text/html',body:await fs.readFile(path.join(__dirname,'../../embed/templates/editor.html'),'utf8')});
+   if(url.pathname==='/')return route.fulfill({contentType:'text/html',body:fixture.html});
    if(url.pathname.startsWith('/assets/editor-ui/'))return route.fulfill({contentType:url.pathname.endsWith('.css')?'text/css':'application/javascript',body:await fs.readFile(path.join(__dirname,'../../internal/pages/editor/client',path.basename(url.pathname)),'utf8')});
    if(url.pathname==='/editor/document')return route.fulfill({contentType:'application/json',body:JSON.stringify({version:'one',categories:[{ID:'group',Name:'Group'}],apps:[{Name:'Existing',URL:'http://nas'}],bookmarks:[]})});
    if(url.pathname==='/editor/icons'){

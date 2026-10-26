@@ -9,6 +9,7 @@ import (
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/fn"
+	"github.com/soulteary/flare/internal/i18n"
 )
 
 func GenerateBookmarkTemplate(filter string, options *model.Application) template.HTML {
@@ -17,16 +18,21 @@ func GenerateBookmarkTemplate(filter string, options *model.Application) templat
 
 // GenerateBookmarkNavigationTemplate keeps category navigation server-rendered and search-scoped.
 func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *model.Application, requestInfo ...*fn.DynamicURL) template.HTML {
+	markup, _ := generateBookmarkNavigation(filter, selected, path, options, requestInfo...)
+	return markup
+}
+
+func generateBookmarkNavigation(filter, selected, path string, options *model.Application, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	if options == nil {
 		op, err := data.GetAllSettingsOptions()
 		if err != nil {
-			return navigationDataError("bookmarks", "", err)
+			return "", navigationDataError("bookmarks", "", err)
 		}
 		options = &op
 	}
 	bookmarksData, err := data.LoadNormalBookmarks()
 	if err != nil {
-		return navigationDataError("bookmarks", options.Locale, err)
+		return "", navigationDataError("bookmarks", options.Locale, err)
 	}
 	b, ok := builderPool.Get().(*strings.Builder)
 	if !ok {
@@ -85,7 +91,8 @@ func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *
 		renderBookmarksWithoutCategories(b, &bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, firstRequestInfo(requestInfo))
 	}
 
-	return template.HTML(b.String())
+	// #nosec G203 -- Names, categories, translations, and attributes are HTML-escaped; navigationHref validates schemes and navigationIcon emits validated images or bundled SVG.
+	return template.HTML(b.String()), ""
 }
 
 func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]model.Bookmark, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string, requestInfo ...*fn.DynamicURL) {
@@ -170,11 +177,8 @@ func renderBookmarksWithCategoriesForRequest(b *strings.Builder, bookmarks *[]mo
 // renderCategoryNavigation preserves search terms and category IDs in escaped links.
 func renderCategoryNavigation(b *strings.Builder, categories []model.Category, selected, filter, path, locale string) {
 	b.WriteString(`<nav class="bookmark-category-nav" aria-label="`)
-	all, label := "All", "Bookmark categories"
-	if locale == "zh" || locale == "" {
-		all, label = "全部", "书签分类"
-	}
-	b.WriteString(label)
+	all, label := i18n.T(locale, "navigation.all"), i18n.T(locale, "navigation.categories")
+	b.WriteString(html.EscapeString(label))
 	b.WriteString(`">`)
 	items := append([]model.Category{{Name: all}}, categories...)
 	for _, category := range items {

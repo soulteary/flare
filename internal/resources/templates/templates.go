@@ -51,6 +51,7 @@ func (r *Renderer) Render(w io.Writer, templateName string, data any, _ ...strin
 
 var templateFuncMap = template.FuncMap{
 	"T":               i18n.T,
+	"HTMLLang":        i18n.HTMLLang,
 	"FaviconURL":      assets.FaviconURL,
 	"ThemeFaviconURL": assets.ThemeFaviconURL,
 }
