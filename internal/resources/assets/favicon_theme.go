@@ -2,6 +2,7 @@ package assets
 
 import (
 	"embed"
+	"fmt"
 	"io"
 
 	"github.com/gofiber/fiber/v3"
@@ -31,7 +32,11 @@ func registerThemeFavicons(app *fiber.App) {
 			}
 			defer file.Close()
 			c.Set("Cache-Control", "public, max-age=31536000, immutable")
-			return serveReader(c, icon.name, "image/x-icon", icon.etag, file.(io.ReadSeeker))
+			reader, ok := file.(io.ReadSeeker)
+			if !ok {
+				return fmt.Errorf("embedded favicon %s does not support seeking", icon.name)
+			}
+			return serveReader(c, icon.name, "image/x-icon", icon.etag, reader)
 		}
 		app.Get(icon.url, handler)
 		app.Head(icon.url, handler)
