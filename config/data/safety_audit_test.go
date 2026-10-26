@@ -253,3 +253,42 @@ func TestAppearanceResetsPersistWithoutDroppingExtensions(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, os.SameFile(info, after))
 }
+
+func TestRetiredEngineKeywordDoesNotBlockReplacement(t *testing.T) {
+	for _, replacement := range []string{"rename", "replace", "extension"} {
+		t.Run(replacement, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			raw := "ShowSearchComponent: true\nSearch:\n  Mode: select\n  DefaultTarget: local\n  EnableKeywords: true\n  Engines:\n    - ID: old\n      Name: Old\n      URLTemplate: 'https://old.example/?q={query}'\n      Keyword: old\n      Enabled: true\n"
+			if replacement == "extension" {
+				raw += "      Extension: keep-me\n"
+			}
+			require.NoError(t, os.WriteFile("config.yml", []byte(raw), 0600))
+			opts, err := GetAllSettingsOptions()
+			require.NoError(t, err)
+			// A normal save retains unknown YAML fields, including the retired Keyword.
+			opts.Search.OpenNewTab = true
+			require.NoError(t, UpdateSearchOptions(true, false, opts.Search))
+			before, err := os.ReadFile("config.yml")
+			require.NoError(t, err)
+			require.Contains(t, string(before), "Keyword: old")
+			if replacement == "replace" {
+				opts.Search.Engines = []model.SearchEngine{{ID: "new", Name: "New", URLTemplate: "https://new.example/?q={query}", Enabled: true}}
+			} else {
+				opts.Search.Engines[0].ID = "new"
+			}
+			err = UpdateSearchOptions(true, false, opts.Search)
+			if replacement == "extension" {
+				require.ErrorContains(t, err, "extension fields")
+				after, readErr := os.ReadFile("config.yml")
+				require.NoError(t, readErr)
+				require.Equal(t, before, after)
+				return
+			}
+			require.NoError(t, err)
+			saved, err := GetAllSettingsOptions()
+			require.NoError(t, err)
+			require.Len(t, saved.Search.Engines, 1)
+			require.Equal(t, "new", saved.Search.Engines[0].ID)
+		})
+	}
+}

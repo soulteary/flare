@@ -41,10 +41,10 @@ func Normalize(options *model.SearchOptions) model.SearchOptions {
 // Presets returns editable templates, not a list automatically enabled on upgrade.
 func Presets() []model.SearchEngine {
 	return []model.SearchEngine{
-		{ID: "bing", Name: "Bing", URLTemplate: "https://www.bing.com/search?q={query}", Keyword: "b", Enabled: true},
-		{ID: "google", Name: "Google", URLTemplate: "https://www.google.com/search?q={query}", Keyword: "g", Enabled: true},
-		{ID: "baidu", Name: "百度", URLTemplate: "https://www.baidu.com/s?wd={query}", Keyword: "bd", Enabled: true},
-		{ID: "duckduckgo", Name: "DuckDuckGo", URLTemplate: "https://duckduckgo.com/?q={query}", Keyword: "ddg", Enabled: true},
+		{ID: "bing", Name: "Bing", URLTemplate: "https://www.bing.com/search?q={query}", Enabled: true},
+		{ID: "google", Name: "Google", URLTemplate: "https://www.google.com/search?q={query}", Enabled: true},
+		{ID: "baidu", Name: "百度", URLTemplate: "https://www.baidu.com/s?wd={query}", Enabled: true},
+		{ID: "duckduckgo", Name: "DuckDuckGo", URLTemplate: "https://duckduckgo.com/?q={query}", Enabled: true},
 	}
 }
 
@@ -56,7 +56,7 @@ func Validate(options model.SearchOptions) error {
 	if len(options.Engines) > 32 {
 		return fmt.Errorf("at most 32 search engines are allowed")
 	}
-	ids, keywords := map[string]bool{"local": true}, map[string]bool{"local": true}
+	ids := map[string]bool{"local": true}
 	defaultFound := options.DefaultTarget == "local"
 	for _, engine := range options.Engines {
 		if !identifier.MatchString(engine.ID) || ids[engine.ID] {
@@ -65,13 +65,6 @@ func Validate(options model.SearchOptions) error {
 		ids[engine.ID] = true
 		if strings.TrimSpace(engine.Name) == "" || utf8.RuneCountInString(engine.Name) > 64 || hasControl(engine.Name) || !utf8.ValidString(engine.Name) {
 			return fmt.Errorf("engine %q requires a name of at most 64 characters", engine.ID)
-		}
-		keyword := strings.ToLower(engine.Keyword)
-		if keyword != "" {
-			if !identifier.MatchString(keyword) || keywords[keyword] {
-				return fmt.Errorf("invalid or duplicate engine keyword: %q", engine.Keyword)
-			}
-			keywords[keyword] = true
 		}
 		if _, err := parseTemplate(engine.URLTemplate); err != nil {
 			return fmt.Errorf("engine %q: %w", engine.ID, err)
@@ -189,33 +182,6 @@ func Resolve(options model.SearchOptions, query, target string) (Result, error) 
 		target = options.DefaultTarget
 		if options.Mode == "local-first" {
 			target = "local"
-		}
-	}
-	if options.EnableKeywords && strings.HasPrefix(query, "!") {
-		boundary := strings.IndexFunc(query, unicode.IsSpace)
-		if boundary < 0 {
-			boundary = len(query)
-		}
-		if boundary > 1 {
-			keyword := strings.ToLower(query[1:boundary])
-			matched := ""
-			if keyword == "local" {
-				matched = "local"
-			} else {
-				for _, engine := range options.Engines {
-					if engine.Enabled && engine.Keyword != "" && strings.EqualFold(engine.Keyword, keyword) {
-						matched = engine.ID
-						break
-					}
-				}
-			}
-			if matched != "" {
-				target = matched
-				query, err = ValidateQuery(query[boundary:])
-				if err != nil {
-					return Result{}, err
-				}
-			}
 		}
 	}
 	result := Result{Query: query, Target: target}

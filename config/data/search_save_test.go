@@ -28,7 +28,6 @@ Search:
     - ID: custom
       Name: My engine
       URLTemplate: "https://custom.example/?q={query}"
-      Keyword: c
       Enabled: true
       UnknownEngine: retain-engine
 `)

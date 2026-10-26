@@ -18,7 +18,7 @@ settings. Use Up/Down then Enter to open a selected match. With no selected matc
 Enter submits the normal form. When `OpenNewTab` is enabled, external targets
 open in a new tab while local search stays in the current tab. The explicit new-tab
 button always opens a new tab, including local search. Escape dismisses results. Input method composition
-never triggers navigation. Explicit keyword commands bypass local suggestions.
+never triggers navigation.
 
 Suggestions use a same-origin POST, with no external suggestion provider and no
 search history. The endpoint inherits the homepage's PRIVATE authentication,
@@ -41,8 +41,7 @@ script hashes.
 Changing the selected engine clears the active local match. Moving focus out of
 the search input cancels pending suggestions; stale responses cannot reopen a
 dismissed list. Mouse and touch activation still use the result's native anchor.
-Known enabled commands such as `!local`, `!ex` and `!s` bypass suggestions and
-override the selected target. Unknown commands remain ordinary searchable text.
+All queries are treated as ordinary search text and use the selected target.
 
 ## Legacy configuration safety
 

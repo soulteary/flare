@@ -2,7 +2,6 @@ package home
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
@@ -27,27 +26,7 @@ func hybridEnabled(options model.Application) bool {
 }
 
 func populateHybridSearch(m map[string]any, options model.Application) {
-	enabled := hybridEnabled(options) && m["SearchConfigured"] == true
-	m["SearchHybrid"] = enabled
-	if !enabled {
-		return
-	}
-	keywords := map[string]string{}
-	opts, _ := searchcore.Upgrade(options.Search)
-	if opts.EnableKeywords {
-		keywords["local"] = "local"
-		for _, engine := range opts.Engines {
-			if engine.Enabled && engine.Keyword != "" {
-				keywords[strings.ToLower(engine.Keyword)] = engine.ID
-			}
-		}
-	}
-	encoded, err := json.Marshal(keywords)
-	if err != nil {
-		m["SearchHybrid"] = false
-		return
-	}
-	m["SearchHybridKeywords"] = string(encoded)
+	m["SearchHybrid"] = hybridEnabled(options) && m["SearchConfigured"] == true
 }
 
 // Both optional homepage scripts share a single policy: no hash overwrites another.

@@ -28,17 +28,14 @@ Clock:
 Search:
   Mode: hybrid
   DefaultTarget: example
-  EnableKeywords: true
   OpenNewTab: true
   Engines:
     - ID: example
       Name: Example
-      Keyword: ex
       URLTemplate: "https://search.example/search?q={query}"
       Enabled: true
     - ID: secondary
       Name: Secondary
-      Keyword: s
       URLTemplate: "https://search.example/secondary?q={query}"
       Enabled: true
 `);
@@ -102,38 +99,26 @@ Search:
   assert.equal(await page.locator('#search-suggestions').isVisible(),false,'blurred requests must not reopen suggestions');
   await page.unroute('**/search/suggest');
   await page.context().route('https://search.example/**',route=>route.fulfill({body:'external search'}));
-  async function knownCommandDoesNotSuggest(query) {
-   const before=requests;
-   await page.locator('#search').fill(query);
-   await page.waitForTimeout(230);
-   assert.equal(requests,before,query+' must bypass suggestions');
-   assert.equal(await page.locator('#search-suggestions').isVisible(),false);
-  }
   async function externalSubmit(query, selected, expectedPath) {
    await page.locator('#search-target label').filter({has: page.locator('input[value="' + selected + '"]')}).click();
-   await knownCommandDoesNotSuggest(query);
+   await page.locator('#search').fill(query);
+   await page.waitForResponse(response=>response.url()===base+'/search/suggest');
+   assert.equal(await page.locator('#search-suggestions').isVisible(),false);
    const requestPromise=page.context().waitForEvent('request',request=>request.url().startsWith('https://search.example/'));
    const popupPromise=page.waitForEvent('popup');
    await page.locator('#search').press('Enter');
    const popup=await popupPromise;
    const submitted=await requestPromise;
    assert.equal(new URL(submitted.url()).pathname,expectedPath);
+   assert.equal(new URL(submitted.url()).searchParams.get('q'),query);
    assert.equal((await submitted.allHeaders()).referer,undefined,'external redirect must not disclose the Flare page');
    await popup.close();
    assert.equal(page.url(),base+'/');
   }
-  // A shortcut must override a contradictory selection, including names containing s.
-  await externalSubmit('!ex external','secondary','/search');
-  await externalSubmit('!s external','example','/secondary');
-  await page.locator('#search-target label').filter({has: page.locator('input[value="example"]')}).click();
-  await knownCommandDoesNotSuggest('!local Needle');
-  const pagesBefore=page.context().pages().length;
-  const localResponse=page.waitForResponse(response=>response.url()===base+'/' && response.request().method()==='POST');
-  await page.locator('#search').press('Enter');
-  await localResponse;
-  await page.waitForLoadState();
-  assert.equal(page.context().pages().length,pagesBefore,'!local from external default must stay in current tab');
-  assert.equal(await page.locator('#search-target input:checked').inputValue(),'example');
+  // Former shortcuts are ordinary text and must respect the selected engine.
+  await externalSubmit('!ex external','secondary','/secondary');
+  await externalSubmit('!s external','example','/search');
+  await externalSubmit('!local Needle','example','/search');
   // Changing the engine invalidates the previously keyboard-selected local match.
   await page.goto(base);
   await page.locator('#search').fill('Needle');
