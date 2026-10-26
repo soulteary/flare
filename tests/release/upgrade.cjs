@@ -105,7 +105,10 @@ Search:
     assert.deepEqual(await hashes(data), originalHashes, 'read-only upgrade must preserve all data bytes');
     assert.deepEqual(await document(), originalDoc);
     const html = await (await client.get('/settings/search')).text();
-    const hidden = name => { const match = html.match(new RegExp(`name="${name}" value="([^"]*)"`)); assert.ok(match, name); return match[1]; };
+    const hidden = name => {
+      const match = html.match(new RegExp(`name=["']?${name}["']?\\s+value=(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`));
+      assert.ok(match, name); return match[1] ?? match[2] ?? match[3];
+    };
     const form = {'csrf-token': hidden('csrf-token'), 'config-revision': hidden('config-revision'),
       action: 'save', 'search-mode': 'local-first', 'default-target': 'local', 'show-search-component': '1',
       'auto-focus-setting': '1', 'search-auto-focus': '1', 'engine-count': '1', 'engine-0-id': 'example',
