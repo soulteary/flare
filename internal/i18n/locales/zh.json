@@ -102,7 +102,7 @@
   "mobile_bookmark_layout": "手机书签布局",
   "mobile_bookmark_single": "单列 · 按数据顺序",
   "mobile_bookmark_compact": "双列紧凑布局",
-  "mobile_bookmark_help": "双列先从上到下、再从左到右阅读；小于360 CSS像素时恢复单列，不改变已保存的分类顺序。",
+  "mobile_bookmark_help": "手机宽度下双列先从上到下、再从左到右阅读；小于360 CSS像素时恢复单列，600 CSS像素及以上按可用宽度自动多列，不改变已保存的分类顺序。",
   "navigation_text_size": "导航文字大小",
   "homepage_title_size": "首页标题大小",
   "size_standard": "标准",
