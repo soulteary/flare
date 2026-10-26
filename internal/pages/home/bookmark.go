@@ -91,6 +91,7 @@ func generateBookmarkNavigation(filter, selected, path string, options *model.Ap
 		renderBookmarksWithoutCategories(b, &bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, firstRequestInfo(requestInfo))
 	}
 
+	// #nosec G203 -- Names, categories, translations, and attributes are HTML-escaped; navigationHref validates schemes and navigationIcon emits validated images or bundled SVG.
 	return template.HTML(b.String()), ""
 }
 

@@ -290,22 +290,30 @@ var transferMessageKeys = map[string]string{
 }
 
 func transferText(source string) string {
+	return transferTextWithLocale(editorLocale(), source)
+}
+
+func transferTextWithLocale(locale, source string) string {
 	if key, ok := transferMessageKeys[source]; ok {
-		return i18n.T(editorLocale(), key)
+		return i18n.T(locale, key)
 	}
 	for prefix, key := range transferMessageKeys {
 		if strings.HasPrefix(source, prefix+": ") {
-			return i18n.T(editorLocale(), key) + strings.TrimPrefix(source, prefix)
+			return i18n.T(locale, key) + strings.TrimPrefix(source, prefix)
 		}
 	}
 	if source == "" {
 		return ""
 	}
-	return i18n.T(editorLocale(), "transfer.unknown_error")
+	return i18n.T(locale, "transfer.unknown_error")
 }
 
 func localizeTransferPlan(plan *bookmarks.Plan) {
+	localizeTransferPlanWithLocale(plan, editorLocale())
+}
+
+func localizeTransferPlanWithLocale(plan *bookmarks.Plan, locale string) {
 	for index := range plan.Rows {
-		plan.Rows[index].Reason = transferText(plan.Rows[index].Reason)
+		plan.Rows[index].Reason = transferTextWithLocale(locale, plan.Rows[index].Reason)
 	}
 }

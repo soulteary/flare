@@ -86,6 +86,7 @@ func generateApplications(filter string, options *model.Application, requestInfo
 			b.WriteString(`</p></div></a></div>`)
 		}
 	}
+	// #nosec G203 -- Names, descriptions, and attributes are HTML-escaped; navigationHref validates schemes and navigationIcon emits validated images or bundled SVG.
 	return template.HTML(b.String()), ""
 }
 

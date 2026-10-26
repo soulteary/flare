@@ -67,3 +67,30 @@ func TestTransferReasonsTranslateWithoutChangingUserData(t *testing.T) {
 		t.Fatal("internal diagnostic exposed")
 	}
 }
+
+// The explicit-locale path must not consult site settings while walking rows.
+func TestTransferPlanUsesOneExplicitLocale(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.WriteFile("config.yml", []byte("Locale: zh\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	plan := bookmarks.Plan{Rows: make([]bookmarks.Row, bookmarks.MaxItems)}
+	for index := range plan.Rows {
+		plan.Rows[index] = bookmarks.Row{Name: "我的书签", Target: "我的分类", Reason: "不支持或不安全的协议: custom"}
+	}
+	localizeTransferPlanWithLocale(&plan, "en")
+	for index, row := range plan.Rows {
+		if row.Reason != "Unsupported or unsafe protocol: custom" {
+			t.Fatalf("row %d ignored the plan locale: %q", index, row.Reason)
+		}
+		if row.Name != "我的书签" || row.Target != "我的分类" {
+			t.Fatalf("row %d user data changed", index)
+		}
+	}
+	if got := transferTextWithLocale("en", ""); got != "" {
+		t.Fatalf("empty reason changed: %q", got)
+	}
+	if got := transferTextWithLocale("en", "open /private/config.yml: denied"); strings.Contains(got, "/private/") {
+		t.Fatal("internal diagnostic exposed")
+	}
+}
