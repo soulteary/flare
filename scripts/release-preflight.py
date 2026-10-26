@@ -47,16 +47,16 @@ def main():
     ldflags = f'-w -s -X github.com/soulteary/version-kit/v4.Version={args.version} -X github.com/soulteary/version-kit/v4.Commit={commit} -X github.com/soulteary/version-kit/v4.BuildDate={date}'
     checksums = []
     # Build the committed tree, excluding unrelated output files and local data.
-    source = tempfile.TemporaryDirectory(prefix='flare-release-source-')
+    source_tree = tempfile.TemporaryDirectory(prefix='flare-release-source-')
     with tarfile.open(fileobj=io.BytesIO(subprocess.check_output(['git', 'archive', commit], cwd=ROOT))) as tar:
-        tar.extractall(source.name, filter='data')
+        tar.extractall(source_tree.name, filter='data')
     for goos, arch, arm in TARGETS:
         name = f'{goos}_{arch}' + (f'v{arm}' if arm else '')
         directory = output / name
         directory.mkdir()
         binary = directory / 'flare'
         env = {**os.environ, 'CGO_ENABLED': '0', 'GOOS': goos, 'GOARCH': arch, 'GOARM': arm}
-        subprocess.run(['go', 'build', '-buildvcs=false', '-ldflags', ldflags, '-o', str(binary), '.'], cwd=source.name, env=env, check=True)
+        subprocess.run(['go', 'build', '-buildvcs=false', '-ldflags', ldflags, '-o', str(binary), '.'], cwd=source_tree.name, env=env, check=True)
         info = run(['go', 'version', '-m', str(binary)])
         for expected in (f'GOOS={goos}', f'GOARCH={arch}', 'CGO_ENABLED=0', commit, args.version):
             if expected not in info:
@@ -80,7 +80,7 @@ def main():
         print(f'PASS {name}', flush=True)
     (output / f'flare_{args.version}_checksums.txt').write_text(''.join(checksums))
     (output / 'archives-verification.json').write_text(json.dumps(evidence, indent=2) + '\n')
-    source.cleanup()
+    source_tree.cleanup()
 
 
 if __name__ == '__main__':
