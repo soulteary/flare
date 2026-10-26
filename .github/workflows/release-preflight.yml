@@ -104,6 +104,9 @@ jobs:
           export FLARE_CONTAINER_URL="http://127.0.0.1:$port"
           python3 tests/clock/container-smoke.py
           docker restart flare-preflight
+          # Docker may allocate a different random host port after restart.
+          port="$(docker port flare-preflight 5005/tcp | sed 's/.*://')"
+          export FLARE_CONTAINER_URL="http://127.0.0.1:$port"
           python3 tests/clock/container-smoke.py
           docker image inspect flare-local-preflight:check > "$RUNNER_TEMP/image-inspect.json"
       - uses: actions/upload-artifact@v6
