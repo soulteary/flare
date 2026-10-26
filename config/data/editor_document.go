@@ -12,7 +12,8 @@ import (
 	"strings"
 
 	"github.com/soulteary/flare/config/model"
-	"gopkg.in/yaml.v2"
+	"github.com/soulteary/flare/internal/yamlutil"
+	"go.yaml.in/yaml/v3"
 )
 
 // EditorDocument retains category IDs and private flags across every editor view.
@@ -86,10 +87,10 @@ func editorSnapshotLocked() (EditorDocument, [2][]byte, error) {
 		raw[i] = b
 	}
 	var apps, bookmarks model.Bookmarks
-	if err := yaml.UnmarshalStrict(raw[0], &apps); err != nil {
+	if err := yamlutil.UnmarshalStrict(raw[0], &apps); err != nil {
 		return doc, raw, err
 	}
-	if err := yaml.UnmarshalStrict(raw[1], &bookmarks); err != nil {
+	if err := yamlutil.UnmarshalStrict(raw[1], &bookmarks); err != nil {
 		return doc, raw, err
 	}
 	doc = EditorDocument{Version: editorVersion(raw[0], raw[1]), Categories: bookmarks.Categories, Apps: apps.Items, Bookmarks: bookmarks.Items}

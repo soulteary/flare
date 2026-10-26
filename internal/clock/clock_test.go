@@ -1,11 +1,12 @@
 package clock
 
 import (
-	"github.com/soulteary/flare/config/model"
-	"gopkg.in/yaml.v2"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/soulteary/flare/config/model"
+	"go.yaml.in/yaml/v3"
 )
 
 func TestOldConfigurationDefaults(t *testing.T) {

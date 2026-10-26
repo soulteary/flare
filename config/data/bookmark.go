@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/soulteary/flare/config/model"
 )
