@@ -70,6 +70,10 @@ jobs:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
           EDITOR_SCREENSHOT_DIR: ${{ runner.temp }}/flare-editor-screenshots
         run: node tests/editor/browser.cjs
+      - name: Editor write-source errors and proxy recovery
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/editor/write-source.browser.cjs
       - name: Hybrid search browser acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock

@@ -19,7 +19,10 @@ func protectWriteSource(c fiber.Ctx) error {
 		return c.Next()
 	}
 	reject := func() error {
-		return c.Status(http.StatusForbidden).SendString("Write request rejected. Use the Flare page on this origin and retry.")
+		return c.Status(http.StatusForbidden).JSON(fiber.Map{
+			"code":  "write_source_rejected",
+			"error": "Write request rejected by origin protection. Open the Flare page on this origin and retry. If using a reverse proxy, preserve the original Host header including the public port. Disabling login does not disable origin protection.",
+		})
 	}
 	sites := c.Request().Header.PeekAll("Sec-Fetch-Site")
 	if len(sites) > 1 {
