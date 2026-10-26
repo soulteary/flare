@@ -47,8 +47,8 @@ environment:
 ```
 
 Restart after changing `TZ`. Stop writers before externally editing `config.yml`;
-0.6.5 requires a restart to observe those edits, while the unpublished 0.6.6
-candidate checks the file on each configuration read. Web settings take effect
+0.6.5 requires a restart to observe those edits, while 0.6.6 checks the file on each
+configuration read. Web settings take effect
 on the next page load. Page settings never modify `TZ`, `time.Local`, the host
 clock, or the weather location.
 

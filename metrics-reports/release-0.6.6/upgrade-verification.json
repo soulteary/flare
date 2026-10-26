@@ -1,0 +1,66 @@
+{
+  "scope": "Disposable synthetic legacy data, actual published 0.6.5 host binary; offline weather. Full data backup is restored for rollback.",
+  "phases": [
+    {
+      "phase": "published-0.6.5",
+      "private_auth": true,
+      "invalid_login_rejected": true,
+      "session_retained": false,
+      "data_sha256": {
+        ".flare-cookie-secret": "ae2ed3fc8a9ff5adc1421cc106a38504cf2b7c34e2a9749164cb871ec5223a82",
+        "apps.yml": "4ba9e1d40dde27fd6ca9522994129a3b40e1be64964bc70a85a02649e98187c4",
+        "bookmarks.yml": "378e9d1750580ffd1d4195bfd8d4e39648947026e42a2d8b277337220f233d81",
+        "config.yml": "aaffdb6fac46fdb757448f79b0073c713ed1036b5828b6a79d8253bebbbe4e96"
+      }
+    },
+    {
+      "phase": "upgrade-before-write",
+      "private_auth": true,
+      "invalid_login_rejected": true,
+      "session_retained": true,
+      "data_sha256": {
+        ".flare-cookie-secret": "ae2ed3fc8a9ff5adc1421cc106a38504cf2b7c34e2a9749164cb871ec5223a82",
+        "apps.yml": "4ba9e1d40dde27fd6ca9522994129a3b40e1be64964bc70a85a02649e98187c4",
+        "bookmarks.yml": "378e9d1750580ffd1d4195bfd8d4e39648947026e42a2d8b277337220f233d81",
+        "config.yml": "aaffdb6fac46fdb757448f79b0073c713ed1036b5828b6a79d8253bebbbe4e96"
+      }
+    },
+    {
+      "phase": "restart-after-search-and-editor-save",
+      "private_auth": true,
+      "invalid_login_rejected": true,
+      "session_retained": true,
+      "data_sha256": {
+        ".flare-cookie-secret": "ae2ed3fc8a9ff5adc1421cc106a38504cf2b7c34e2a9749164cb871ec5223a82",
+        ".flare-search-backups/first-upgrade-to-0.6.6.bak": "aaffdb6fac46fdb757448f79b0073c713ed1036b5828b6a79d8253bebbbe4e96",
+        ".flare-search-backups/manifest.json": "05b8d2f1d5a7b58e53424072747ae11e136b1ffe1b65fe7986ec44007d0e4592",
+        "apps.yml": "3133e47d4ff53e3545564864a14ae912c72ef350f1f634c049932871237802c4",
+        "bookmarks.yml": "378e9d1750580ffd1d4195bfd8d4e39648947026e42a2d8b277337220f233d81",
+        "config.yml": "02444ad4a5cbf2c63890cc3921cbb17321be4f586287210681c53f29c2331cd0"
+      }
+    },
+    {
+      "phase": "rollback-with-restored-complete-backup",
+      "private_auth": true,
+      "invalid_login_rejected": true,
+      "session_retained": true,
+      "data_sha256": {
+        ".flare-cookie-secret": "ae2ed3fc8a9ff5adc1421cc106a38504cf2b7c34e2a9749164cb871ec5223a82",
+        "apps.yml": "4ba9e1d40dde27fd6ca9522994129a3b40e1be64964bc70a85a02649e98187c4",
+        "bookmarks.yml": "378e9d1750580ffd1d4195bfd8d4e39648947026e42a2d8b277337220f233d81",
+        "config.yml": "aaffdb6fac46fdb757448f79b0073c713ed1036b5828b6a79d8253bebbbe4e96"
+      }
+    }
+  ],
+  "ok": true,
+  "checks": [
+    "read-only byte preservation",
+    "search migration backup",
+    "unknown YAML field preservation",
+    "editor mutation",
+    "stale editor conflict rejected",
+    "restart persistence",
+    "complete backup rollback",
+    "session continuity"
+  ]
+}

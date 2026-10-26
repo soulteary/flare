@@ -2,7 +2,7 @@
 
 > Availability: external engines, the selector and hybrid suggestions shipped in
 > 0.6.5. Revision-protected settings writes and retirement of keyword shortcuts
-> belong to the unpublished 0.6.6 candidate. Use the documentation at your release
+> shipped in 0.6.6. Use the documentation at your release
 > tag for 0.6.5 behavior. See [search modes and upgrade safety](search-hybrid.md).
 
 The home page retains one search field. Existing installations and legacy POST
@@ -53,8 +53,8 @@ keep the original Host (including a nondefault public port) and configure `FLARE
 cookies in that deployment. Token-bearing clients without browser metadata remain
 supported. Form responses use `Cache-Control: no-store`.
 
-The signed form token protects the search settings endpoint. In the 0.6.6
-candidate, forms also carry `config-revision`: a stale revision is rejected and
+The signed form token protects the search settings endpoint. In 0.6.6, forms also
+carry `config-revision`: a stale revision is rejected and
 submitted values are retained. Preserve those values, reload the current settings
 and review the differences before saving again. Programmatic clients should
 submit both hidden fields. Legacy clients without a revision remain accepted and
@@ -86,7 +86,7 @@ Search:
       Enabled: true
 ```
 
-In the 0.6.6 candidate, `config.yml` is checked on each configuration read, so
+In 0.6.6, `config.yml` is checked on each configuration read, so
 external search-setting edits are observed without a restart. Stop the process
 before external edits to avoid racing a settings save. On 0.6.5, restart after
 editing YAML directly.

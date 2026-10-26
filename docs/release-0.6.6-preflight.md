@@ -1,5 +1,10 @@
 # Flare 0.6.6 release preflight
 
+> Historical candidate record. Version 0.6.6 is now published; see
+> [final acceptance](release-0.6.6-final-preflight.md) and
+> [published verification](release-0.6.6-verification.md). Candidate-time statements
+> below are preserved as historical evidence.
+
 Preparation only, recorded 2026-10-26 (Asia/Shanghai). No tag, release or registry
 publication is implied by this preflight. The preparation was merged into `main`
 through [PR #172](https://github.com/soulteary/flare/pull/172) at
@@ -31,7 +36,7 @@ the candidate. Unrelated `output/imagegen` assets are excluded.
 ## Publication gates
 
 - All automated evidence must identify the fixed candidate commit.
-- Review the [unpublished release notes](release-0.6.6-draft.md), especially the
+- Review the [release notes](release-0.6.6.md), especially the
   keyword and weather selection changes.
 - Physical mobile environments in [the matrix](mobile-device-acceptance.md)
   remain NOT TESTED until actual evidence is supplied. Any release-owner exception

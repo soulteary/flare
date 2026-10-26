@@ -1,0 +1,280 @@
+{
+  "version": "0.6.6",
+  "expected_commit": "26596ab40ba9960bdcc8803719e211b45e2c26c8",
+  "status": "passed",
+  "release_url": "https://github.com/soulteary/flare/releases/tag/0.6.6",
+  "assets": {
+    "flare_0.6.6_checksums.txt": {
+      "sha256": "13ff8dfc5b519d8a45a52dfed1cd4cfd6446a1df8bdbc4bf9b41a5d627a33bb5",
+      "size": 679,
+      "github_asset_digest": "sha256:13ff8dfc5b519d8a45a52dfed1cd4cfd6446a1df8bdbc4bf9b41a5d627a33bb5",
+      "github_asset_digest_checked": true
+    },
+    "flare_0.6.6_darwin_amd64.tar.gz": {
+      "sha256": "8ba4b622758146a3c9b4da708a24d2bdb4d11bc3feb3706e1c71d5c5312faa2e",
+      "size": 9185868,
+      "github_asset_digest": "sha256:8ba4b622758146a3c9b4da708a24d2bdb4d11bc3feb3706e1c71d5c5312faa2e",
+      "github_asset_digest_checked": true
+    },
+    "flare_0.6.6_darwin_arm64.tar.gz": {
+      "sha256": "1fddfc9ddf5bb99d17c15c74d00240336a6cbcd1c745424e836bf72b754ea2c4",
+      "size": 8682679,
+      "github_asset_digest": "sha256:1fddfc9ddf5bb99d17c15c74d00240336a6cbcd1c745424e836bf72b754ea2c4",
+      "github_asset_digest_checked": true
+    },
+    "flare_0.6.6_linux_386.tar.gz": {
+      "sha256": "b09436b03742c742a63dd666c3363ea94d5bba11564df82f281bfbfb8a3aece9",
+      "size": 8841906,
+      "github_asset_digest": "sha256:b09436b03742c742a63dd666c3363ea94d5bba11564df82f281bfbfb8a3aece9",
+      "github_asset_digest_checked": true
+    },
+    "flare_0.6.6_linux_amd64.tar.gz": {
+      "sha256": "10315159d576975bc7d1626ef675e1f5d842a4bd8e60d1ffda92e5d7973906f5",
+      "size": 9068847,
+      "github_asset_digest": "sha256:10315159d576975bc7d1626ef675e1f5d842a4bd8e60d1ffda92e5d7973906f5",
+      "github_asset_digest_checked": true
+    },
+    "flare_0.6.6_linux_arm64.tar.gz": {
+      "sha256": "eb6c435bef9fddd8af3bab524af6b9b4b66d55f208dc86c93fd3bf25f1aa0492",
+      "size": 8377349,
+      "github_asset_digest": "sha256:eb6c435bef9fddd8af3bab524af6b9b4b66d55f208dc86c93fd3bf25f1aa0492",
+      "github_asset_digest_checked": true
+    },
+    "flare_0.6.6_linux_armv6.tar.gz": {
+      "sha256": "86e1c8cfd4d869ce87fb719147ab385e95f92811f6f97fe99d43fb94f06f7809",
+      "size": 8769846,
+      "github_asset_digest": "sha256:86e1c8cfd4d869ce87fb719147ab385e95f92811f6f97fe99d43fb94f06f7809",
+      "github_asset_digest_checked": true
+    },
+    "flare_0.6.6_linux_armv7.tar.gz": {
+      "sha256": "b021643979ebb80e839dc700f5b75c28c730dd34ddfeb04773ac2caceb4e1098",
+      "size": 8752374,
+      "github_asset_digest": "sha256:b021643979ebb80e839dc700f5b75c28c730dd34ddfeb04773ac2caceb4e1098",
+      "github_asset_digest_checked": true
+    }
+  },
+  "binaries": [
+    {
+      "target": "darwin_amd64",
+      "binary_sha256": "894ecd179b5fa1d4424adc5be3169004050c54cce8a28287389d522fd213b2e7",
+      "file": "/tmp/flare-0.6.6-published-assets/darwin_amd64-flare: Mach-O 64-bit executable x86_64",
+      "build_settings": {
+        "-buildmode": "exe",
+        "-compiler": "gc",
+        "-ldflags": "-w -s -X \"github.com/soulteary/version-kit/v4.Version=0.6.6\" -X \"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\" -X \"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\"",
+        "CGO_ENABLED": "0",
+        "GOARCH": "amd64",
+        "GOOS": "darwin",
+        "GOAMD64": "v1",
+        "vcs": "git",
+        "vcs.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8",
+        "vcs.time": "2026-10-26T07:41:29Z",
+        "vcs.modified": "true"
+      },
+      "metadata": "/tmp/flare-0.6.6-published-assets/darwin_amd64-flare: go1.27.3\n\tpath\tgithub.com/soulteary/flare\n\tmod\tgithub.com/soulteary/flare\tv0.0.18-0.20261026074129-26596ab40ba9+dirty\t\n\tdep\tgithub.com/caarlos0/env/v6\tv6.10.1\th1:t1mPSxNpei6M5yAeu1qtRdPAK29Nbcf/n3G7x+b3/II=\n\tdep\tgithub.com/fatih/color\tv1.19.0\th1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=\n\tdep\tgithub.com/gofiber/fiber/v3\tv3.6.1\th1:wYjbgqpJm6VErIVLSGzGpX7lLZyTNgElsj8nQ1i+iFo=\n\tdep\tgithub.com/gofiber/schema\tv1.8.8\th1:md5t65+Z9LttOuj7FdMcQ63D2+6GniT2ganLXwvTJM4=\n\tdep\tgithub.com/gofiber/utils/v2\tv2.6.2\th1:+tX8EPc/WO4f8DiV1W3gGWPJvGdHFW3qLIR2ws06At0=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/gorilla/securecookie\tv1.1.2\th1:YCIWL56dvtr73r6715mJs5ZvhtnY73hBvEF8kXD8ePA=\n\tdep\tgithub.com/gorilla/sessions\tv1.4.0\th1:kpIYOp/oi6MG/p5PgxApU8srsSw9tuFbt46Lt7auzqQ=\n\tdep\tgithub.com/klauspost/compress\tv1.20.3\th1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.16\th1:+2YjeAe7xP1OQbZW1jERPWWCDLlNqFNCvjiqGiAt84A=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/molecule-man/go-brrr\tv1.3.0\th1:KEGPkUk9PYFw5+Sv/evCOSU5OmMDXCGFqQ9YjRB7GeU=\n\tdep\tgithub.com/philhofer/fwd\tv1.2.0\th1:e6DnBTl7vGY+Gz322/ASL4Gyp1FspeMvx1RNDoToZuM=\n\tdep\tgithub.com/soulteary/cli-kit\tv1.9.2\th1:lciNt542e/YwV8aTSOLABtA6GTOv6i7iaTV+4w9SAAA=\n\tdep\tgithub.com/soulteary/funny-china-weather\tv0.4.0\th1:/k88YaXLXLs37qA1ifiQSFZuzXpEhobEABzYIykMtH8=\n\tdep\tgithub.com/soulteary/memfs-kit\tv1.1.1\th1:5uBniqmR3dY81vF0NPhTK97yGzzgcHtp3vRP3rTOou8=\n\tdep\tgithub.com/soulteary/version-kit/v4\tv4.0.2\th1:IUByGmmT8y5wlq/JEAUXRHs+wN9RdZhwA8GzEIMQ3Ho=\n\tdep\tgithub.com/spf13/pflag\tv1.0.10\th1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=\n\tdep\tgithub.com/tinylib/msgp\tv1.6.5\th1:iAH6XTP7BpzErjBZlujJQXxA+GmRi2YWs6M4KdLtNbE=\n\tdep\tgithub.com/valyala/bytebufferpool\tv1.0.0\th1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=\n\tdep\tgithub.com/valyala/fasthttp\tv1.75.0\th1:W3xrvNJHG60j2ZCjxpP8kkB+oPG8kh9/g1n4+3xUwNA=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.5\th1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=\n\tdep\tgolang.org/x/crypto\tv0.58.0\th1:COkYLr4k7nDI4r6QtMML2AfzeIswWHAJthLS6K/M/54=\n\tdep\tgolang.org/x/net\tv0.61.0\th1:RR+6j/BTBCrggOLugxa+66R8FvoN6MHlzDlZIbN9YFw=\n\tdep\tgolang.org/x/sys\tv0.49.0\th1:XbzkgYJHdqh/8m2Uu0W/dQv8nktxx4BFHp1M0gROTXA=\n\tdep\tgolang.org/x/text\tv0.43.0\th1:1QivrlhwAsnMOcqgOdl9my7s9OyZl8O5/UGUTJVXoWc=\n\tdep\tgopkg.in/ini.v1\tv1.67.3\th1:iM9Lhz5MRSGhHVGGwCuzG9KO8PoirCXj/m/qTmOJJQw=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-ldflags=\"-w -s -X \\\"github.com/soulteary/version-kit/v4.Version=0.6.6\\\" -X \\\"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\\\" -X \\\"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\\\"\"\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=darwin\n\tbuild\tGOAMD64=v1\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=26596ab40ba9960bdcc8803719e211b45e2c26c8\n\tbuild\tvcs.time=2026-10-26T07:41:29Z\n\tbuild\tvcs.modified=true",
+      "executed": false
+    },
+    {
+      "target": "darwin_arm64",
+      "binary_sha256": "291f19f0469d8b51c6d37b392b4368adf4580cd21ae07b6ec2d85d060523bdf6",
+      "file": "/tmp/flare-0.6.6-published-assets/darwin_arm64-flare: Mach-O 64-bit executable arm64",
+      "build_settings": {
+        "-buildmode": "exe",
+        "-compiler": "gc",
+        "-ldflags": "-w -s -X \"github.com/soulteary/version-kit/v4.Version=0.6.6\" -X \"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\" -X \"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\"",
+        "CGO_ENABLED": "0",
+        "GOARCH": "arm64",
+        "GOOS": "darwin",
+        "GOARM64": "v8.0",
+        "vcs": "git",
+        "vcs.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8",
+        "vcs.time": "2026-10-26T07:41:29Z",
+        "vcs.modified": "true"
+      },
+      "metadata": "/tmp/flare-0.6.6-published-assets/darwin_arm64-flare: go1.27.3\n\tpath\tgithub.com/soulteary/flare\n\tmod\tgithub.com/soulteary/flare\tv0.0.18-0.20261026074129-26596ab40ba9+dirty\t\n\tdep\tgithub.com/caarlos0/env/v6\tv6.10.1\th1:t1mPSxNpei6M5yAeu1qtRdPAK29Nbcf/n3G7x+b3/II=\n\tdep\tgithub.com/fatih/color\tv1.19.0\th1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=\n\tdep\tgithub.com/gofiber/fiber/v3\tv3.6.1\th1:wYjbgqpJm6VErIVLSGzGpX7lLZyTNgElsj8nQ1i+iFo=\n\tdep\tgithub.com/gofiber/schema\tv1.8.8\th1:md5t65+Z9LttOuj7FdMcQ63D2+6GniT2ganLXwvTJM4=\n\tdep\tgithub.com/gofiber/utils/v2\tv2.6.2\th1:+tX8EPc/WO4f8DiV1W3gGWPJvGdHFW3qLIR2ws06At0=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/gorilla/securecookie\tv1.1.2\th1:YCIWL56dvtr73r6715mJs5ZvhtnY73hBvEF8kXD8ePA=\n\tdep\tgithub.com/gorilla/sessions\tv1.4.0\th1:kpIYOp/oi6MG/p5PgxApU8srsSw9tuFbt46Lt7auzqQ=\n\tdep\tgithub.com/klauspost/compress\tv1.20.3\th1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.16\th1:+2YjeAe7xP1OQbZW1jERPWWCDLlNqFNCvjiqGiAt84A=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/molecule-man/go-brrr\tv1.3.0\th1:KEGPkUk9PYFw5+Sv/evCOSU5OmMDXCGFqQ9YjRB7GeU=\n\tdep\tgithub.com/philhofer/fwd\tv1.2.0\th1:e6DnBTl7vGY+Gz322/ASL4Gyp1FspeMvx1RNDoToZuM=\n\tdep\tgithub.com/soulteary/cli-kit\tv1.9.2\th1:lciNt542e/YwV8aTSOLABtA6GTOv6i7iaTV+4w9SAAA=\n\tdep\tgithub.com/soulteary/funny-china-weather\tv0.4.0\th1:/k88YaXLXLs37qA1ifiQSFZuzXpEhobEABzYIykMtH8=\n\tdep\tgithub.com/soulteary/memfs-kit\tv1.1.1\th1:5uBniqmR3dY81vF0NPhTK97yGzzgcHtp3vRP3rTOou8=\n\tdep\tgithub.com/soulteary/version-kit/v4\tv4.0.2\th1:IUByGmmT8y5wlq/JEAUXRHs+wN9RdZhwA8GzEIMQ3Ho=\n\tdep\tgithub.com/spf13/pflag\tv1.0.10\th1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=\n\tdep\tgithub.com/tinylib/msgp\tv1.6.5\th1:iAH6XTP7BpzErjBZlujJQXxA+GmRi2YWs6M4KdLtNbE=\n\tdep\tgithub.com/valyala/bytebufferpool\tv1.0.0\th1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=\n\tdep\tgithub.com/valyala/fasthttp\tv1.75.0\th1:W3xrvNJHG60j2ZCjxpP8kkB+oPG8kh9/g1n4+3xUwNA=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.5\th1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=\n\tdep\tgolang.org/x/crypto\tv0.58.0\th1:COkYLr4k7nDI4r6QtMML2AfzeIswWHAJthLS6K/M/54=\n\tdep\tgolang.org/x/net\tv0.61.0\th1:RR+6j/BTBCrggOLugxa+66R8FvoN6MHlzDlZIbN9YFw=\n\tdep\tgolang.org/x/sys\tv0.49.0\th1:XbzkgYJHdqh/8m2Uu0W/dQv8nktxx4BFHp1M0gROTXA=\n\tdep\tgolang.org/x/text\tv0.43.0\th1:1QivrlhwAsnMOcqgOdl9my7s9OyZl8O5/UGUTJVXoWc=\n\tdep\tgopkg.in/ini.v1\tv1.67.3\th1:iM9Lhz5MRSGhHVGGwCuzG9KO8PoirCXj/m/qTmOJJQw=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-ldflags=\"-w -s -X \\\"github.com/soulteary/version-kit/v4.Version=0.6.6\\\" -X \\\"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\\\" -X \\\"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\\\"\"\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=darwin\n\tbuild\tGOARM64=v8.0\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=26596ab40ba9960bdcc8803719e211b45e2c26c8\n\tbuild\tvcs.time=2026-10-26T07:41:29Z\n\tbuild\tvcs.modified=true",
+      "executed": true
+    },
+    {
+      "target": "linux_386",
+      "binary_sha256": "7116c993694ad9106a3ae1fa440dfc03e0fa46e1db6222b937c81b7bb9f01391",
+      "file": "/tmp/flare-0.6.6-published-assets/linux_386-flare: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, Go BuildID=0TVP66tAWO8w9GBDbKT_/xbWoM1OQ7lwaVg6BN-QN/ZZ0TuGLmAqaZcFKrviU2/Mb9B2wO5HIBJXwuP7miU, BuildID[sha1]=8f0f0ec559f8b2c02a4e60d93b0d963b74c03c3a, stripped",
+      "build_settings": {
+        "-buildmode": "exe",
+        "-compiler": "gc",
+        "-ldflags": "-w -s -X \"github.com/soulteary/version-kit/v4.Version=0.6.6\" -X \"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\" -X \"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\"",
+        "CGO_ENABLED": "0",
+        "GOARCH": "386",
+        "GOOS": "linux",
+        "GO386": "sse2",
+        "vcs": "git",
+        "vcs.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8",
+        "vcs.time": "2026-10-26T07:41:29Z",
+        "vcs.modified": "true"
+      },
+      "metadata": "/tmp/flare-0.6.6-published-assets/linux_386-flare: go1.27.3\n\tpath\tgithub.com/soulteary/flare\n\tmod\tgithub.com/soulteary/flare\tv0.0.18-0.20261026074129-26596ab40ba9+dirty\t\n\tdep\tgithub.com/caarlos0/env/v6\tv6.10.1\th1:t1mPSxNpei6M5yAeu1qtRdPAK29Nbcf/n3G7x+b3/II=\n\tdep\tgithub.com/fatih/color\tv1.19.0\th1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=\n\tdep\tgithub.com/gofiber/fiber/v3\tv3.6.1\th1:wYjbgqpJm6VErIVLSGzGpX7lLZyTNgElsj8nQ1i+iFo=\n\tdep\tgithub.com/gofiber/schema\tv1.8.8\th1:md5t65+Z9LttOuj7FdMcQ63D2+6GniT2ganLXwvTJM4=\n\tdep\tgithub.com/gofiber/utils/v2\tv2.6.2\th1:+tX8EPc/WO4f8DiV1W3gGWPJvGdHFW3qLIR2ws06At0=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/gorilla/securecookie\tv1.1.2\th1:YCIWL56dvtr73r6715mJs5ZvhtnY73hBvEF8kXD8ePA=\n\tdep\tgithub.com/gorilla/sessions\tv1.4.0\th1:kpIYOp/oi6MG/p5PgxApU8srsSw9tuFbt46Lt7auzqQ=\n\tdep\tgithub.com/klauspost/compress\tv1.20.3\th1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.16\th1:+2YjeAe7xP1OQbZW1jERPWWCDLlNqFNCvjiqGiAt84A=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/molecule-man/go-brrr\tv1.3.0\th1:KEGPkUk9PYFw5+Sv/evCOSU5OmMDXCGFqQ9YjRB7GeU=\n\tdep\tgithub.com/philhofer/fwd\tv1.2.0\th1:e6DnBTl7vGY+Gz322/ASL4Gyp1FspeMvx1RNDoToZuM=\n\tdep\tgithub.com/soulteary/cli-kit\tv1.9.2\th1:lciNt542e/YwV8aTSOLABtA6GTOv6i7iaTV+4w9SAAA=\n\tdep\tgithub.com/soulteary/funny-china-weather\tv0.4.0\th1:/k88YaXLXLs37qA1ifiQSFZuzXpEhobEABzYIykMtH8=\n\tdep\tgithub.com/soulteary/memfs-kit\tv1.1.1\th1:5uBniqmR3dY81vF0NPhTK97yGzzgcHtp3vRP3rTOou8=\n\tdep\tgithub.com/soulteary/version-kit/v4\tv4.0.2\th1:IUByGmmT8y5wlq/JEAUXRHs+wN9RdZhwA8GzEIMQ3Ho=\n\tdep\tgithub.com/spf13/pflag\tv1.0.10\th1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=\n\tdep\tgithub.com/tinylib/msgp\tv1.6.5\th1:iAH6XTP7BpzErjBZlujJQXxA+GmRi2YWs6M4KdLtNbE=\n\tdep\tgithub.com/valyala/bytebufferpool\tv1.0.0\th1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=\n\tdep\tgithub.com/valyala/fasthttp\tv1.75.0\th1:W3xrvNJHG60j2ZCjxpP8kkB+oPG8kh9/g1n4+3xUwNA=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.5\th1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=\n\tdep\tgolang.org/x/crypto\tv0.58.0\th1:COkYLr4k7nDI4r6QtMML2AfzeIswWHAJthLS6K/M/54=\n\tdep\tgolang.org/x/net\tv0.61.0\th1:RR+6j/BTBCrggOLugxa+66R8FvoN6MHlzDlZIbN9YFw=\n\tdep\tgolang.org/x/sys\tv0.49.0\th1:XbzkgYJHdqh/8m2Uu0W/dQv8nktxx4BFHp1M0gROTXA=\n\tdep\tgolang.org/x/text\tv0.43.0\th1:1QivrlhwAsnMOcqgOdl9my7s9OyZl8O5/UGUTJVXoWc=\n\tdep\tgopkg.in/ini.v1\tv1.67.3\th1:iM9Lhz5MRSGhHVGGwCuzG9KO8PoirCXj/m/qTmOJJQw=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-ldflags=\"-w -s -X \\\"github.com/soulteary/version-kit/v4.Version=0.6.6\\\" -X \\\"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\\\" -X \\\"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\\\"\"\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=386\n\tbuild\tGOOS=linux\n\tbuild\tGO386=sse2\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=26596ab40ba9960bdcc8803719e211b45e2c26c8\n\tbuild\tvcs.time=2026-10-26T07:41:29Z\n\tbuild\tvcs.modified=true",
+      "executed": false
+    },
+    {
+      "target": "linux_amd64",
+      "binary_sha256": "ff02aa3802b4487c2251a585b99ad67edb52bc3d7b4d07c389ad6bbe5c983e24",
+      "file": "/tmp/flare-0.6.6-published-assets/linux_amd64-flare: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, Go BuildID=OL1obII5AxiGXfib3Cnd/Rs8E7cQ5QNgV4C0d0vIv/Iw5aADf7dFk2qoyXG4Zl/Lr9R4HscTd0jvGv3Xxi0, BuildID[sha1]=e5bfaa0962879c03b3f71adf7a005cfa49895dba, stripped",
+      "build_settings": {
+        "-buildmode": "exe",
+        "-compiler": "gc",
+        "-ldflags": "-w -s -X \"github.com/soulteary/version-kit/v4.Version=0.6.6\" -X \"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\" -X \"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\"",
+        "CGO_ENABLED": "0",
+        "GOARCH": "amd64",
+        "GOOS": "linux",
+        "GOAMD64": "v1",
+        "vcs": "git",
+        "vcs.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8",
+        "vcs.time": "2026-10-26T07:41:29Z",
+        "vcs.modified": "true"
+      },
+      "metadata": "/tmp/flare-0.6.6-published-assets/linux_amd64-flare: go1.27.3\n\tpath\tgithub.com/soulteary/flare\n\tmod\tgithub.com/soulteary/flare\tv0.0.18-0.20261026074129-26596ab40ba9+dirty\t\n\tdep\tgithub.com/caarlos0/env/v6\tv6.10.1\th1:t1mPSxNpei6M5yAeu1qtRdPAK29Nbcf/n3G7x+b3/II=\n\tdep\tgithub.com/fatih/color\tv1.19.0\th1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=\n\tdep\tgithub.com/gofiber/fiber/v3\tv3.6.1\th1:wYjbgqpJm6VErIVLSGzGpX7lLZyTNgElsj8nQ1i+iFo=\n\tdep\tgithub.com/gofiber/schema\tv1.8.8\th1:md5t65+Z9LttOuj7FdMcQ63D2+6GniT2ganLXwvTJM4=\n\tdep\tgithub.com/gofiber/utils/v2\tv2.6.2\th1:+tX8EPc/WO4f8DiV1W3gGWPJvGdHFW3qLIR2ws06At0=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/gorilla/securecookie\tv1.1.2\th1:YCIWL56dvtr73r6715mJs5ZvhtnY73hBvEF8kXD8ePA=\n\tdep\tgithub.com/gorilla/sessions\tv1.4.0\th1:kpIYOp/oi6MG/p5PgxApU8srsSw9tuFbt46Lt7auzqQ=\n\tdep\tgithub.com/klauspost/compress\tv1.20.3\th1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.16\th1:+2YjeAe7xP1OQbZW1jERPWWCDLlNqFNCvjiqGiAt84A=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/molecule-man/go-brrr\tv1.3.0\th1:KEGPkUk9PYFw5+Sv/evCOSU5OmMDXCGFqQ9YjRB7GeU=\n\tdep\tgithub.com/philhofer/fwd\tv1.2.0\th1:e6DnBTl7vGY+Gz322/ASL4Gyp1FspeMvx1RNDoToZuM=\n\tdep\tgithub.com/soulteary/cli-kit\tv1.9.2\th1:lciNt542e/YwV8aTSOLABtA6GTOv6i7iaTV+4w9SAAA=\n\tdep\tgithub.com/soulteary/funny-china-weather\tv0.4.0\th1:/k88YaXLXLs37qA1ifiQSFZuzXpEhobEABzYIykMtH8=\n\tdep\tgithub.com/soulteary/memfs-kit\tv1.1.1\th1:5uBniqmR3dY81vF0NPhTK97yGzzgcHtp3vRP3rTOou8=\n\tdep\tgithub.com/soulteary/version-kit/v4\tv4.0.2\th1:IUByGmmT8y5wlq/JEAUXRHs+wN9RdZhwA8GzEIMQ3Ho=\n\tdep\tgithub.com/spf13/pflag\tv1.0.10\th1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=\n\tdep\tgithub.com/tinylib/msgp\tv1.6.5\th1:iAH6XTP7BpzErjBZlujJQXxA+GmRi2YWs6M4KdLtNbE=\n\tdep\tgithub.com/valyala/bytebufferpool\tv1.0.0\th1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=\n\tdep\tgithub.com/valyala/fasthttp\tv1.75.0\th1:W3xrvNJHG60j2ZCjxpP8kkB+oPG8kh9/g1n4+3xUwNA=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.5\th1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=\n\tdep\tgolang.org/x/crypto\tv0.58.0\th1:COkYLr4k7nDI4r6QtMML2AfzeIswWHAJthLS6K/M/54=\n\tdep\tgolang.org/x/net\tv0.61.0\th1:RR+6j/BTBCrggOLugxa+66R8FvoN6MHlzDlZIbN9YFw=\n\tdep\tgolang.org/x/sys\tv0.49.0\th1:XbzkgYJHdqh/8m2Uu0W/dQv8nktxx4BFHp1M0gROTXA=\n\tdep\tgolang.org/x/text\tv0.43.0\th1:1QivrlhwAsnMOcqgOdl9my7s9OyZl8O5/UGUTJVXoWc=\n\tdep\tgopkg.in/ini.v1\tv1.67.3\th1:iM9Lhz5MRSGhHVGGwCuzG9KO8PoirCXj/m/qTmOJJQw=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-ldflags=\"-w -s -X \\\"github.com/soulteary/version-kit/v4.Version=0.6.6\\\" -X \\\"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\\\" -X \\\"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\\\"\"\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=linux\n\tbuild\tGOAMD64=v1\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=26596ab40ba9960bdcc8803719e211b45e2c26c8\n\tbuild\tvcs.time=2026-10-26T07:41:29Z\n\tbuild\tvcs.modified=true",
+      "executed": false
+    },
+    {
+      "target": "linux_arm64",
+      "binary_sha256": "e8ba2774720d05f6963a4f8306fa8ef3836dce85afb0a916a660ecddc796b768",
+      "file": "/tmp/flare-0.6.6-published-assets/linux_arm64-flare: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), statically linked, Go BuildID=c40S65eSGKcJj1nd_px4/bfdiCLC-qISYUwyuyT82/pEUw9mKH7Y4xFeVCKfeH/_jwUEc89_w6Gb9Io9WI6, BuildID[sha1]=ca88261ec8fbbc1f650e7d1d3f1860504ad57ccd, stripped",
+      "build_settings": {
+        "-buildmode": "exe",
+        "-compiler": "gc",
+        "-ldflags": "-w -s -X \"github.com/soulteary/version-kit/v4.Version=0.6.6\" -X \"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\" -X \"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\"",
+        "CGO_ENABLED": "0",
+        "GOARCH": "arm64",
+        "GOOS": "linux",
+        "GOARM64": "v8.0",
+        "vcs": "git",
+        "vcs.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8",
+        "vcs.time": "2026-10-26T07:41:29Z",
+        "vcs.modified": "true"
+      },
+      "metadata": "/tmp/flare-0.6.6-published-assets/linux_arm64-flare: go1.27.3\n\tpath\tgithub.com/soulteary/flare\n\tmod\tgithub.com/soulteary/flare\tv0.0.18-0.20261026074129-26596ab40ba9+dirty\t\n\tdep\tgithub.com/caarlos0/env/v6\tv6.10.1\th1:t1mPSxNpei6M5yAeu1qtRdPAK29Nbcf/n3G7x+b3/II=\n\tdep\tgithub.com/fatih/color\tv1.19.0\th1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=\n\tdep\tgithub.com/gofiber/fiber/v3\tv3.6.1\th1:wYjbgqpJm6VErIVLSGzGpX7lLZyTNgElsj8nQ1i+iFo=\n\tdep\tgithub.com/gofiber/schema\tv1.8.8\th1:md5t65+Z9LttOuj7FdMcQ63D2+6GniT2ganLXwvTJM4=\n\tdep\tgithub.com/gofiber/utils/v2\tv2.6.2\th1:+tX8EPc/WO4f8DiV1W3gGWPJvGdHFW3qLIR2ws06At0=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/gorilla/securecookie\tv1.1.2\th1:YCIWL56dvtr73r6715mJs5ZvhtnY73hBvEF8kXD8ePA=\n\tdep\tgithub.com/gorilla/sessions\tv1.4.0\th1:kpIYOp/oi6MG/p5PgxApU8srsSw9tuFbt46Lt7auzqQ=\n\tdep\tgithub.com/klauspost/compress\tv1.20.3\th1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.16\th1:+2YjeAe7xP1OQbZW1jERPWWCDLlNqFNCvjiqGiAt84A=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/molecule-man/go-brrr\tv1.3.0\th1:KEGPkUk9PYFw5+Sv/evCOSU5OmMDXCGFqQ9YjRB7GeU=\n\tdep\tgithub.com/philhofer/fwd\tv1.2.0\th1:e6DnBTl7vGY+Gz322/ASL4Gyp1FspeMvx1RNDoToZuM=\n\tdep\tgithub.com/soulteary/cli-kit\tv1.9.2\th1:lciNt542e/YwV8aTSOLABtA6GTOv6i7iaTV+4w9SAAA=\n\tdep\tgithub.com/soulteary/funny-china-weather\tv0.4.0\th1:/k88YaXLXLs37qA1ifiQSFZuzXpEhobEABzYIykMtH8=\n\tdep\tgithub.com/soulteary/memfs-kit\tv1.1.1\th1:5uBniqmR3dY81vF0NPhTK97yGzzgcHtp3vRP3rTOou8=\n\tdep\tgithub.com/soulteary/version-kit/v4\tv4.0.2\th1:IUByGmmT8y5wlq/JEAUXRHs+wN9RdZhwA8GzEIMQ3Ho=\n\tdep\tgithub.com/spf13/pflag\tv1.0.10\th1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=\n\tdep\tgithub.com/tinylib/msgp\tv1.6.5\th1:iAH6XTP7BpzErjBZlujJQXxA+GmRi2YWs6M4KdLtNbE=\n\tdep\tgithub.com/valyala/bytebufferpool\tv1.0.0\th1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=\n\tdep\tgithub.com/valyala/fasthttp\tv1.75.0\th1:W3xrvNJHG60j2ZCjxpP8kkB+oPG8kh9/g1n4+3xUwNA=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.5\th1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=\n\tdep\tgolang.org/x/crypto\tv0.58.0\th1:COkYLr4k7nDI4r6QtMML2AfzeIswWHAJthLS6K/M/54=\n\tdep\tgolang.org/x/net\tv0.61.0\th1:RR+6j/BTBCrggOLugxa+66R8FvoN6MHlzDlZIbN9YFw=\n\tdep\tgolang.org/x/sys\tv0.49.0\th1:XbzkgYJHdqh/8m2Uu0W/dQv8nktxx4BFHp1M0gROTXA=\n\tdep\tgolang.org/x/text\tv0.43.0\th1:1QivrlhwAsnMOcqgOdl9my7s9OyZl8O5/UGUTJVXoWc=\n\tdep\tgopkg.in/ini.v1\tv1.67.3\th1:iM9Lhz5MRSGhHVGGwCuzG9KO8PoirCXj/m/qTmOJJQw=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-ldflags=\"-w -s -X \\\"github.com/soulteary/version-kit/v4.Version=0.6.6\\\" -X \\\"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\\\" -X \\\"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\\\"\"\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=linux\n\tbuild\tGOARM64=v8.0\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=26596ab40ba9960bdcc8803719e211b45e2c26c8\n\tbuild\tvcs.time=2026-10-26T07:41:29Z\n\tbuild\tvcs.modified=true",
+      "executed": false
+    },
+    {
+      "target": "linux_armv6",
+      "binary_sha256": "7d9f819e4d988ac08e8fe432dc93384b8c6dec9d4a8d11e772c1f0167c0b989b",
+      "file": "/tmp/flare-0.6.6-published-assets/linux_armv6-flare: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, Go BuildID=VKFykTCLUhfCDAoG_qDv/hNPmiwC6kcRo4tSky59g/4IVETCRtPtjOfYfCfqYV/1MjhUvxWb9AP__IF8rjw, BuildID[sha1]=d807b3dd74c95e43d825b9850eba31671674963f, stripped",
+      "build_settings": {
+        "-buildmode": "exe",
+        "-compiler": "gc",
+        "-ldflags": "-w -s -X \"github.com/soulteary/version-kit/v4.Version=0.6.6\" -X \"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\" -X \"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\"",
+        "CGO_ENABLED": "0",
+        "GOARCH": "arm",
+        "GOOS": "linux",
+        "GOARM": "6",
+        "vcs": "git",
+        "vcs.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8",
+        "vcs.time": "2026-10-26T07:41:29Z",
+        "vcs.modified": "true"
+      },
+      "metadata": "/tmp/flare-0.6.6-published-assets/linux_armv6-flare: go1.27.3\n\tpath\tgithub.com/soulteary/flare\n\tmod\tgithub.com/soulteary/flare\tv0.0.18-0.20261026074129-26596ab40ba9+dirty\t\n\tdep\tgithub.com/caarlos0/env/v6\tv6.10.1\th1:t1mPSxNpei6M5yAeu1qtRdPAK29Nbcf/n3G7x+b3/II=\n\tdep\tgithub.com/fatih/color\tv1.19.0\th1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=\n\tdep\tgithub.com/gofiber/fiber/v3\tv3.6.1\th1:wYjbgqpJm6VErIVLSGzGpX7lLZyTNgElsj8nQ1i+iFo=\n\tdep\tgithub.com/gofiber/schema\tv1.8.8\th1:md5t65+Z9LttOuj7FdMcQ63D2+6GniT2ganLXwvTJM4=\n\tdep\tgithub.com/gofiber/utils/v2\tv2.6.2\th1:+tX8EPc/WO4f8DiV1W3gGWPJvGdHFW3qLIR2ws06At0=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/gorilla/securecookie\tv1.1.2\th1:YCIWL56dvtr73r6715mJs5ZvhtnY73hBvEF8kXD8ePA=\n\tdep\tgithub.com/gorilla/sessions\tv1.4.0\th1:kpIYOp/oi6MG/p5PgxApU8srsSw9tuFbt46Lt7auzqQ=\n\tdep\tgithub.com/klauspost/compress\tv1.20.3\th1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.16\th1:+2YjeAe7xP1OQbZW1jERPWWCDLlNqFNCvjiqGiAt84A=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/molecule-man/go-brrr\tv1.3.0\th1:KEGPkUk9PYFw5+Sv/evCOSU5OmMDXCGFqQ9YjRB7GeU=\n\tdep\tgithub.com/philhofer/fwd\tv1.2.0\th1:e6DnBTl7vGY+Gz322/ASL4Gyp1FspeMvx1RNDoToZuM=\n\tdep\tgithub.com/soulteary/cli-kit\tv1.9.2\th1:lciNt542e/YwV8aTSOLABtA6GTOv6i7iaTV+4w9SAAA=\n\tdep\tgithub.com/soulteary/funny-china-weather\tv0.4.0\th1:/k88YaXLXLs37qA1ifiQSFZuzXpEhobEABzYIykMtH8=\n\tdep\tgithub.com/soulteary/memfs-kit\tv1.1.1\th1:5uBniqmR3dY81vF0NPhTK97yGzzgcHtp3vRP3rTOou8=\n\tdep\tgithub.com/soulteary/version-kit/v4\tv4.0.2\th1:IUByGmmT8y5wlq/JEAUXRHs+wN9RdZhwA8GzEIMQ3Ho=\n\tdep\tgithub.com/spf13/pflag\tv1.0.10\th1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=\n\tdep\tgithub.com/tinylib/msgp\tv1.6.5\th1:iAH6XTP7BpzErjBZlujJQXxA+GmRi2YWs6M4KdLtNbE=\n\tdep\tgithub.com/valyala/bytebufferpool\tv1.0.0\th1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=\n\tdep\tgithub.com/valyala/fasthttp\tv1.75.0\th1:W3xrvNJHG60j2ZCjxpP8kkB+oPG8kh9/g1n4+3xUwNA=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.5\th1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=\n\tdep\tgolang.org/x/crypto\tv0.58.0\th1:COkYLr4k7nDI4r6QtMML2AfzeIswWHAJthLS6K/M/54=\n\tdep\tgolang.org/x/net\tv0.61.0\th1:RR+6j/BTBCrggOLugxa+66R8FvoN6MHlzDlZIbN9YFw=\n\tdep\tgolang.org/x/sys\tv0.49.0\th1:XbzkgYJHdqh/8m2Uu0W/dQv8nktxx4BFHp1M0gROTXA=\n\tdep\tgolang.org/x/text\tv0.43.0\th1:1QivrlhwAsnMOcqgOdl9my7s9OyZl8O5/UGUTJVXoWc=\n\tdep\tgopkg.in/ini.v1\tv1.67.3\th1:iM9Lhz5MRSGhHVGGwCuzG9KO8PoirCXj/m/qTmOJJQw=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-ldflags=\"-w -s -X \\\"github.com/soulteary/version-kit/v4.Version=0.6.6\\\" -X \\\"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\\\" -X \\\"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\\\"\"\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=arm\n\tbuild\tGOOS=linux\n\tbuild\tGOARM=6\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=26596ab40ba9960bdcc8803719e211b45e2c26c8\n\tbuild\tvcs.time=2026-10-26T07:41:29Z\n\tbuild\tvcs.modified=true",
+      "executed": false
+    },
+    {
+      "target": "linux_armv7",
+      "binary_sha256": "46e3582e9274d4f57ca4cfc3f1bf2116fe38f4881e927f5123b2f24707ed121d",
+      "file": "/tmp/flare-0.6.6-published-assets/linux_armv7-flare: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, Go BuildID=_HbHzcYvnXYNE3suOU-x/VnQygFuaE2w4bMbtq1YH/DDLMkQCtvW0fvTa25NsE/suAwuiuFFI5wzfymogPo, BuildID[sha1]=a549d420d492831f40eed000d48c18408081b252, stripped",
+      "build_settings": {
+        "-buildmode": "exe",
+        "-compiler": "gc",
+        "-ldflags": "-w -s -X \"github.com/soulteary/version-kit/v4.Version=0.6.6\" -X \"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\" -X \"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\"",
+        "CGO_ENABLED": "0",
+        "GOARCH": "arm",
+        "GOOS": "linux",
+        "GOARM": "7",
+        "vcs": "git",
+        "vcs.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8",
+        "vcs.time": "2026-10-26T07:41:29Z",
+        "vcs.modified": "true"
+      },
+      "metadata": "/tmp/flare-0.6.6-published-assets/linux_armv7-flare: go1.27.3\n\tpath\tgithub.com/soulteary/flare\n\tmod\tgithub.com/soulteary/flare\tv0.0.18-0.20261026074129-26596ab40ba9+dirty\t\n\tdep\tgithub.com/caarlos0/env/v6\tv6.10.1\th1:t1mPSxNpei6M5yAeu1qtRdPAK29Nbcf/n3G7x+b3/II=\n\tdep\tgithub.com/fatih/color\tv1.19.0\th1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=\n\tdep\tgithub.com/gofiber/fiber/v3\tv3.6.1\th1:wYjbgqpJm6VErIVLSGzGpX7lLZyTNgElsj8nQ1i+iFo=\n\tdep\tgithub.com/gofiber/schema\tv1.8.8\th1:md5t65+Z9LttOuj7FdMcQ63D2+6GniT2ganLXwvTJM4=\n\tdep\tgithub.com/gofiber/utils/v2\tv2.6.2\th1:+tX8EPc/WO4f8DiV1W3gGWPJvGdHFW3qLIR2ws06At0=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/gorilla/securecookie\tv1.1.2\th1:YCIWL56dvtr73r6715mJs5ZvhtnY73hBvEF8kXD8ePA=\n\tdep\tgithub.com/gorilla/sessions\tv1.4.0\th1:kpIYOp/oi6MG/p5PgxApU8srsSw9tuFbt46Lt7auzqQ=\n\tdep\tgithub.com/klauspost/compress\tv1.20.3\th1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.16\th1:+2YjeAe7xP1OQbZW1jERPWWCDLlNqFNCvjiqGiAt84A=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/molecule-man/go-brrr\tv1.3.0\th1:KEGPkUk9PYFw5+Sv/evCOSU5OmMDXCGFqQ9YjRB7GeU=\n\tdep\tgithub.com/philhofer/fwd\tv1.2.0\th1:e6DnBTl7vGY+Gz322/ASL4Gyp1FspeMvx1RNDoToZuM=\n\tdep\tgithub.com/soulteary/cli-kit\tv1.9.2\th1:lciNt542e/YwV8aTSOLABtA6GTOv6i7iaTV+4w9SAAA=\n\tdep\tgithub.com/soulteary/funny-china-weather\tv0.4.0\th1:/k88YaXLXLs37qA1ifiQSFZuzXpEhobEABzYIykMtH8=\n\tdep\tgithub.com/soulteary/memfs-kit\tv1.1.1\th1:5uBniqmR3dY81vF0NPhTK97yGzzgcHtp3vRP3rTOou8=\n\tdep\tgithub.com/soulteary/version-kit/v4\tv4.0.2\th1:IUByGmmT8y5wlq/JEAUXRHs+wN9RdZhwA8GzEIMQ3Ho=\n\tdep\tgithub.com/spf13/pflag\tv1.0.10\th1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=\n\tdep\tgithub.com/tinylib/msgp\tv1.6.5\th1:iAH6XTP7BpzErjBZlujJQXxA+GmRi2YWs6M4KdLtNbE=\n\tdep\tgithub.com/valyala/bytebufferpool\tv1.0.0\th1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=\n\tdep\tgithub.com/valyala/fasthttp\tv1.75.0\th1:W3xrvNJHG60j2ZCjxpP8kkB+oPG8kh9/g1n4+3xUwNA=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.5\th1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=\n\tdep\tgolang.org/x/crypto\tv0.58.0\th1:COkYLr4k7nDI4r6QtMML2AfzeIswWHAJthLS6K/M/54=\n\tdep\tgolang.org/x/net\tv0.61.0\th1:RR+6j/BTBCrggOLugxa+66R8FvoN6MHlzDlZIbN9YFw=\n\tdep\tgolang.org/x/sys\tv0.49.0\th1:XbzkgYJHdqh/8m2Uu0W/dQv8nktxx4BFHp1M0gROTXA=\n\tdep\tgolang.org/x/text\tv0.43.0\th1:1QivrlhwAsnMOcqgOdl9my7s9OyZl8O5/UGUTJVXoWc=\n\tdep\tgopkg.in/ini.v1\tv1.67.3\th1:iM9Lhz5MRSGhHVGGwCuzG9KO8PoirCXj/m/qTmOJJQw=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-ldflags=\"-w -s -X \\\"github.com/soulteary/version-kit/v4.Version=0.6.6\\\" -X \\\"github.com/soulteary/version-kit/v4.Commit=26596ab40ba9960bdcc8803719e211b45e2c26c8\\\" -X \\\"github.com/soulteary/version-kit/v4.BuildDate=2026-10-26T07:46:26Z\\\"\"\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=arm\n\tbuild\tGOOS=linux\n\tbuild\tGOARM=7\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=26596ab40ba9960bdcc8803719e211b45e2c26c8\n\tbuild\tvcs.time=2026-10-26T07:41:29Z\n\tbuild\tvcs.modified=true",
+      "executed": false
+    }
+  ],
+  "native_version": "0.6.6",
+  "registries": {
+    "anonymous": true,
+    "manifest_digest": "sha256:4a33de00c2fa4f729c18011ad62a4779a3e0e834e9a2dd6fcdf9175e32f48a25",
+    "refs": {
+      "docker.io/soulteary/flare:0.6.6": "sha256:4a33de00c2fa4f729c18011ad62a4779a3e0e834e9a2dd6fcdf9175e32f48a25",
+      "docker.io/soulteary/flare:latest": "sha256:4a33de00c2fa4f729c18011ad62a4779a3e0e834e9a2dd6fcdf9175e32f48a25",
+      "ghcr.io/soulteary/flare:0.6.6": "sha256:4a33de00c2fa4f729c18011ad62a4779a3e0e834e9a2dd6fcdf9175e32f48a25",
+      "ghcr.io/soulteary/flare:latest": "sha256:4a33de00c2fa4f729c18011ad62a4779a3e0e834e9a2dd6fcdf9175e32f48a25"
+    },
+    "platforms": {
+      "docker.io/soulteary/flare": {
+        "linux/amd64": {
+          "digest": "sha256:eeee1010afbef9bbadd655dec2bc9a2e644b2aeea66e9dc522f3c469794f8eef",
+          "labels": {
+            "org.opencontainers.image.version": "0.6.6",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8"
+          }
+        },
+        "linux/arm64": {
+          "digest": "sha256:1acc440fda62e50959c40381a345d4f065dfe71b83e878ff2e26b592d50e2205",
+          "labels": {
+            "org.opencontainers.image.version": "0.6.6",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8"
+          }
+        },
+        "linux/arm/v6": {
+          "digest": "sha256:abd5c523bee65002f9da72d10f062467e6e8a48d91e18d95a66b18df873624af",
+          "labels": {
+            "org.opencontainers.image.version": "0.6.6",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8"
+          }
+        },
+        "linux/arm/v7": {
+          "digest": "sha256:cb2f2ff33e4c1925e80eaaf1a3f7635144a6c63fef5aa29079b60867af50746d",
+          "labels": {
+            "org.opencontainers.image.version": "0.6.6",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8"
+          }
+        }
+      },
+      "ghcr.io/soulteary/flare": {
+        "linux/amd64": {
+          "digest": "sha256:eeee1010afbef9bbadd655dec2bc9a2e644b2aeea66e9dc522f3c469794f8eef",
+          "labels": {
+            "org.opencontainers.image.version": "0.6.6",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8"
+          }
+        },
+        "linux/arm64": {
+          "digest": "sha256:1acc440fda62e50959c40381a345d4f065dfe71b83e878ff2e26b592d50e2205",
+          "labels": {
+            "org.opencontainers.image.version": "0.6.6",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8"
+          }
+        },
+        "linux/arm/v6": {
+          "digest": "sha256:abd5c523bee65002f9da72d10f062467e6e8a48d91e18d95a66b18df873624af",
+          "labels": {
+            "org.opencontainers.image.version": "0.6.6",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8"
+          }
+        },
+        "linux/arm/v7": {
+          "digest": "sha256:cb2f2ff33e4c1925e80eaaf1a3f7635144a6c63fef5aa29079b60867af50746d",
+          "labels": {
+            "org.opencontainers.image.version": "0.6.6",
+            "org.opencontainers.image.source": "https://github.com/soulteary/flare",
+            "org.opencontainers.image.revision": "26596ab40ba9960bdcc8803719e211b45e2c26c8"
+          }
+        }
+      }
+    }
+  },
+  "verified_at": "2026-10-26T07:53:06.701427+00:00"
+}

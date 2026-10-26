@@ -2,7 +2,7 @@
 
 Display reads retain immutable parsed snapshots of `config.yml`, `apps.yml` and
 `bookmarks.yml`. An unchanged snapshot avoids repeated YAML decoding. On 0.6.5,
-all three use the existing byte cache. The 0.6.6 candidate rereads `config.yml`
+all three use the existing byte cache. The 0.6.6 rereads `config.yml`
 bytes for revision/version checks and reuses its parsed snapshot only when those
 bytes are unchanged; navigation collections retain their byte cache.
 Public configuration/collection APIs return independent copies of nested settings
@@ -17,7 +17,7 @@ otherwise normal reads, target lookups, search and import previews leave it miss
 and require manual recovery instead of creating example data. Editor revisions and import previews continue reading
 exact on-disk bytes and strict-decoding them; the display cache never replaces
 those external-edit/conflict checks. Restart after externally editing `apps.yml`
-or `bookmarks.yml`. On 0.6.5 this also applies to `config.yml`; the 0.6.6 candidate
+or `bookmarks.yml`. On 0.6.5 this also applies to `config.yml`; the 0.6.6
 observes external `config.yml` changes on the next configuration read. Stop writers
 before making external edits to avoid racing in-process saves.
 
