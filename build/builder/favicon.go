@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io/fs"
 	"log"
 	"math"
 	"os"
@@ -28,24 +29,34 @@ func TaskForFavicon(src string, dest string) {
 // buildFavicons uses the original icon's alpha mask, retaining its pixel artwork.
 // All image processing and content hashing happen here, never in the server.
 func buildFavicons(src, dest string) error {
-	raw, err := os.ReadFile(src)
+	input, err := os.OpenRoot(filepath.Dir(src))
 	if err != nil {
 		return err
 	}
-	if err = os.WriteFile(dest, raw, 0644); err != nil {
+	defer input.Close()
+	raw, err := input.ReadFile(filepath.Base(src))
+	if err != nil {
 		return err
 	}
-	dir := filepath.Join(filepath.Dir(dest), "favicons")
-	if err = os.MkdirAll(dir, 0755); err != nil {
+	output, err := os.OpenRoot(filepath.Dir(dest))
+	if err != nil {
 		return err
 	}
-	entries, err := os.ReadDir(dir)
+	defer output.Close()
+	if err = output.WriteFile(filepath.Base(dest), raw, 0600); err != nil {
+		return err
+	}
+	dir := "favicons"
+	if err = output.MkdirAll(dir, 0750); err != nil {
+		return err
+	}
+	entries, err := fs.ReadDir(output.FS(), dir)
 	if err != nil {
 		return err
 	}
 	for _, entry := range entries {
 		if filepath.Ext(entry.Name()) == ".ico" {
-			if err = os.Remove(filepath.Join(dir, entry.Name())); err != nil {
+			if err = output.Remove(filepath.Join(dir, entry.Name())); err != nil {
 				return err
 			}
 		}
@@ -63,7 +74,7 @@ func buildFavicons(src, dest string) error {
 		}
 		hash := fmt.Sprintf("%x", sha256.Sum256(icon))
 		name := theme.Name + "." + hash + ".ico"
-		if err = os.WriteFile(filepath.Join(dir, name), icon, 0644); err != nil {
+		if err = output.WriteFile(filepath.Join(dir, name), icon, 0600); err != nil {
 			return err
 		}
 		fmt.Fprintf(&manifest, "%q: {url: %q, name: %q, etag: %q},\n", theme.Name, "/assets/favicon/"+name, "favicons/"+name, `"`+hash+`"`)
@@ -73,7 +84,7 @@ func buildFavicons(src, dest string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(filepath.Dir(dest), "favicon_generated.go"), source, 0644)
+	return output.WriteFile("favicon_generated.go", source, 0600)
 }
 
 func colorFavicon(raw []byte, background string) ([]byte, error) {
@@ -113,12 +124,17 @@ func colorFavicon(raw []byte, background string) ([]byte, error) {
 		img := image.NewNRGBA(mask.Bounds())
 		for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 			for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
-				_, _, _, a := mask.At(x, y).RGBA()
+				pixel := color.AlphaModel.Convert(mask.At(x, y))
+				alpha, ok := pixel.(color.Alpha)
+				if !ok {
+					return nil, fmt.Errorf("cannot convert icon alpha")
+				}
+				a := alpha.A
 				// Preserve the original transparency, including the squirrel cutout.
 				if a == 0 {
 					continue
 				}
-				img.SetNRGBA(x, y, color.NRGBA{R: bg.R, G: bg.G, B: bg.B, A: uint8(a >> 8)})
+				img.SetNRGBA(x, y, color.NRGBA{R: bg.R, G: bg.G, B: bg.B, A: a})
 			}
 		}
 		var data bytes.Buffer
@@ -126,22 +142,30 @@ func colorFavicon(raw []byte, background string) ([]byte, error) {
 			return nil, err
 		}
 		images = append(images, data.Bytes())
-		sizes = append(sizes, byte(size))
+		sizes = append(sizes, raw[offset])
 	}
 	if len(images) != 3 {
 		return nil, fmt.Errorf("source ICO must contain 16, 32 and 48 pixel PNG images")
 	}
 	result := make([]byte, 6+16*len(images))
 	binary.LittleEndian.PutUint16(result[2:4], 1)
-	binary.LittleEndian.PutUint16(result[4:6], uint16(len(images)))
+	binary.LittleEndian.PutUint16(result[4:6], 3)
 	for i, data := range images {
 		entry := result[6+i*16 : 6+(i+1)*16]
 		entry[0] = sizes[i]
 		entry[1] = sizes[i]
 		binary.LittleEndian.PutUint16(entry[4:6], 1)
 		binary.LittleEndian.PutUint16(entry[6:8], 32)
-		binary.LittleEndian.PutUint32(entry[8:12], uint32(len(data)))
-		binary.LittleEndian.PutUint32(entry[12:16], uint32(len(result)))
+		length, err := icoUint32(uint64(len(data)))
+		if err != nil {
+			return nil, err
+		}
+		offset, err := icoUint32(uint64(len(result)))
+		if err != nil {
+			return nil, err
+		}
+		binary.LittleEndian.PutUint32(entry[8:12], length)
+		binary.LittleEndian.PutUint32(entry[12:16], offset)
 		result = append(result, data...)
 	}
 	return result, nil
@@ -171,4 +195,11 @@ func darkestPaletteColor(palette model.Palette) (string, error) {
 		}
 	}
 	return selected, nil
+}
+
+func icoUint32(value uint64) (uint32, error) {
+	if value > math.MaxUint32 {
+		return 0, fmt.Errorf("ICO image exceeds 32-bit directory limits")
+	}
+	return uint32(value), nil
 }

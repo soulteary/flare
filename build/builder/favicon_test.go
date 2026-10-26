@@ -77,3 +77,21 @@ func TestDarkestPaletteColor(t *testing.T) {
 		require.Equal(t, test.want, got)
 	}
 }
+
+func TestFaviconOutputCannotEscapeDirectory(t *testing.T) {
+	dir := t.TempDir()
+	outside := t.TempDir()
+	require.NoError(t, os.Symlink(outside, filepath.Join(dir, "favicons")))
+	require.Error(t, buildFavicons("../../embed/assets/favicon.ico", filepath.Join(dir, "favicon.ico")))
+	entries, err := os.ReadDir(outside)
+	require.NoError(t, err)
+	require.Empty(t, entries)
+}
+
+func TestICOIntegerBounds(t *testing.T) {
+	got, err := icoUint32(4294967295)
+	require.NoError(t, err)
+	require.EqualValues(t, 4294967295, got)
+	_, err = icoUint32(4294967296)
+	require.Error(t, err)
+}
