@@ -2,23 +2,19 @@ package editor
 
 import (
 	"embed"
-	"github.com/soulteary/flare/config/data"
 	"io/fs"
 	"log/slog"
 	"net/http"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/internal/resources/assets"
-	memfs "github.com/soulteary/memfs-kit"
 
+	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/auth"
 )
 
-var MemFs *memfs.FS
-
-const _ASSETS_BASE_DIR = "assets/editor"
-const _ASSETS_WEB_URI = "/" + _ASSETS_BASE_DIR
+const _ASSETS_WEB_URI = "/assets/editor"
 
 //go:embed editor-assets
 var editorAssets embed.FS
@@ -30,11 +26,6 @@ func Init() error {
 	}
 	for _, path := range recoveries {
 		slog.Warn("Editor recovery copies detected; stop writers, preserve current files, and inspect both YAML files before saving", "recovery_path", path)
-	}
-	MemFs = memfs.New()
-	err = MemFs.MkdirAll(_ASSETS_BASE_DIR, 0777)
-	if err != nil {
-		return err
 	}
 	return nil
 }
