@@ -1,0 +1,5 @@
+  • checking                                  path=.goreleaser.yaml
+  •  dockers  and  docker_manifests  are being phased out and will eventually be replaced by  dockers_v2 , check https://goreleaser.com/deprecations#dockers for more info
+  •  dockers  and  docker_manifests  are being phased out and will eventually be replaced by  dockers_v2 , check https://goreleaser.com/deprecations#dockers for more info
+  • 1 configuration file(s) validated
+  • thanks for using GoReleaser!

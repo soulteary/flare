@@ -1,0 +1,113 @@
+name: Release preflight (no publication)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archives:
+    name: Seven candidate archives
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Verify production assets are current
+        run: |
+          go run build/build.go
+          git diff --exit-code
+      - name: Build and inspect local candidate archives
+        run: python3 scripts/release-preflight.py --version 0.6.6 --output "$RUNNER_TEMP/preflight-archives"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: candidate-archives-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/preflight-archives/*.tar.gz
+            ${{ runner.temp }}/preflight-archives/*checksums.txt
+            ${{ runner.temp }}/preflight-archives/archives-verification.json
+          retention-days: 7
+
+  images:
+    name: Local image ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            arch: amd64
+            arm: ""
+            dockerfile: amd64
+          - platform: linux/arm64
+            arch: arm64
+            arm: ""
+            dockerfile: arm64v8
+          - platform: linux/arm/v7
+            arch: arm
+            arm: "7"
+            dockerfile: arm32v7
+          - platform: linux/arm/v6
+            arch: arm
+            arm: "6"
+            dockerfile: arm32v6
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Generate production resources
+        run: go run build/build.go
+      - name: Build candidate binary
+        env:
+          CGO_ENABLED: "0"
+          GOOS: linux
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/image-context"
+          go build -ldflags "-w -s -X github.com/soulteary/version-kit/v4.Version=0.6.6 -X github.com/soulteary/version-kit/v4.Commit=${{ github.sha }}" -o "$RUNNER_TEMP/image-context/flare" .
+      - name: Build release Dockerfile without pushing
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          RECIPE: ${{ matrix.dockerfile }}
+        run: |
+          docker buildx build --load --platform "$PLATFORM" \
+            --label "org.opencontainers.image.version=0.6.6-preflight" \
+            --label "org.opencontainers.image.revision=${{ github.sha }}" \
+            -t flare-local-preflight:check \
+            -f "docker/goreleaser/Dockerfile.$RECIPE" "$RUNNER_TEMP/image-context"
+      - name: HTTP, timezone and restart acceptance
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          docker create --name flare-preflight --platform "$PLATFORM" \
+            -p 127.0.0.1::5005 -e FLARE_DISABLE_LOGIN=true -e FLARE_OFFLINE=true \
+            -e TZ=America/New_York flare-local-preflight:check
+          trap 'docker logs flare-preflight; docker rm -f flare-preflight' EXIT
+          docker cp tests/clock/container.yml flare-preflight:/app/config.yml
+          docker start flare-preflight
+          port="$(docker port flare-preflight 5005/tcp | sed 's/.*://')"
+          export FLARE_CONTAINER_URL="http://127.0.0.1:$port"
+          python3 tests/clock/container-smoke.py
+          docker restart flare-preflight
+          python3 tests/clock/container-smoke.py
+          docker image inspect flare-local-preflight:check > "$RUNNER_TEMP/image-inspect.json"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: candidate-image-${{ matrix.dockerfile }}-${{ github.sha }}
+          path: ${{ runner.temp }}/image-inspect.json
+          retention-days: 7

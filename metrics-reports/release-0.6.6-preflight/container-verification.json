@@ -1,0 +1,38 @@
+[
+  {
+    "ok": true,
+    "platform": "linux/arm64",
+    "image": "flare-preflight:0.6.6-linux_arm64",
+    "id": "sha256:dc0045843f985549345226d2b067e4005fd82dad263dc1969e9f7db1d1b57f84",
+    "commit": "995666d34f430d6d8e8e00a26f88f89bfb1eafb5",
+    "checks": [
+      "HTTP homepage",
+      "custom Kathmandu timezone",
+      "New York server timezone",
+      "configuration persists across container restart"
+    ],
+    "labels": {
+      "io.buildah.version": "1.43.2",
+      "org.opencontainers.image.revision": "995666d34f430d6d8e8e00a26f88f89bfb1eafb5",
+      "org.opencontainers.image.version": "0.6.6-preflight"
+    }
+  },
+  {
+    "ok": true,
+    "platform": "linux/amd64",
+    "image": "flare-preflight:0.6.6-linux_amd64",
+    "id": "sha256:a565afbbb7d2b68fcb8c1f7109f483da954a358ad856ed0385934d168cb48c85",
+    "commit": "995666d34f430d6d8e8e00a26f88f89bfb1eafb5",
+    "checks": [
+      "HTTP homepage",
+      "custom Kathmandu timezone",
+      "New York server timezone",
+      "configuration persists across container restart"
+    ],
+    "labels": {
+      "io.buildah.version": "1.43.2",
+      "org.opencontainers.image.revision": "995666d34f430d6d8e8e00a26f88f89bfb1eafb5",
+      "org.opencontainers.image.version": "0.6.6-preflight"
+    }
+  }
+]

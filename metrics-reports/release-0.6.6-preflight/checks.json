@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-26",
+  "timezone": "Asia/Shanghai",
+  "candidate_commit": "995666d34f430d6d8e8e00a26f88f89bfb1eafb5",
+  "application_test_commit": "6ffcafa6bc00a487ce34a26f54f8ae4b2516e48f",
+  "application_tree_identical": true,
+  "go_race_tests": "PASS",
+  "all_package_statement_coverage_percent": 86.5,
+  "coverage_threshold_percent": 85,
+  "js_tests": {
+    "passed": 28,
+    "failed": 0
+  },
+  "browser_suites": [
+    {
+      "suite": "tests/mobile/bookmark-columns.browser.cjs",
+      "exit_code": 0,
+      "seconds": 1.51
+    },
+    {
+      "suite": "tests/mobile/layout.browser.cjs",
+      "exit_code": 0,
+      "seconds": 1.03
+    },
+    {
+      "suite": "tests/mobile/category-navigation.browser.cjs",
+      "exit_code": 0,
+      "seconds": 1.98
+    },
+    {
+      "suite": "tests/mobile/readability.browser.cjs",
+      "exit_code": 0,
+      "seconds": 1.03
+    },
+    {
+      "suite": "tests/mobile/desktop-columns.browser.cjs",
+      "exit_code": 0,
+      "seconds": 0.66
+    },
+    {
+      "suite": "tests/editor/scale.browser.cjs",
+      "exit_code": 0,
+      "seconds": 2.32
+    },
+    {
+      "suite": "tests/clock/browser.cjs",
+      "exit_code": 0,
+      "seconds": 1.62
+    },
+    {
+      "suite": "tests/mobile/browser.cjs",
+      "exit_code": 0,
+      "seconds": 3.82
+    },
+    {
+      "suite": "tests/editor/browser.cjs",
+      "exit_code": 0,
+      "seconds": 17.07
+    },
+    {
+      "suite": "tests/search/hybrid.cjs",
+      "exit_code": 0,
+      "seconds": 9.58
+    },
+    {
+      "suite": "tests/editor/legacy.browser.cjs",
+      "exit_code": 0,
+      "seconds": 2.03
+    },
+    {
+      "suite": "tests/editor/icon-picker.browser.cjs",
+      "exit_code": 0,
+      "seconds": 1.46
+    }
+  ],
+  "weather_browser": "PASS desktop/mobile deterministic fixtures",
+  "weather_live_integration": "PASS migration, duplicate place names, authenticated production router",
+  "weather_live_browser": "PASS desktop/mobile real lookup, save, reload, weather query",
+  "go_vet": "PASS",
+  "gofmt": "PASS",
+  "golangci_lint": "PASS (2.15.0)",
+  "workflow_safeguard_tests": {
+    "passed": 19
+  },
+  "actionlint": "PASS (1.7.12)",
+  "goreleaser_config": "PASS (2.19.0), existing dockers/docker_manifests deprecation warning",
+  "goreleaser_snapshot": "PASS seven archives; isolated synthetic Git snapshot; --snapshot --skip=docker; snapshot version 0.6.6-preflight. Authoritative candidate SHA and metadata are in archives-verification.json.",
+  "generated_assets": "PASS rebuilt twice with no tracked diff",
+  "published_baseline_archive": {
+    "name": "flare_0.6.5_darwin_arm64.tar.gz",
+    "published_sha256": "6f12c9dae60ebb8beaea1dbb635316a65ede5591d511d9f6d16b1313d13c48a7",
+    "checksum_verified": true
+  },
+  "remaining_gates": [
+    "ARMv6/ARMv7 image build/runtime: local engine lacks emulation (Exec format error at /bin/sh); rerun in QEMU-capable release preflight environment",
+    "Physical Safari/Via/Android/iPad: NOT TESTED; release-owner acceptance or explicit documented exception required",
+    "Remote CI/CodeQL at final reviewed commit: NOT RUN (local-only preparation)"
+  ],
+  "publication_performed": false,
+  "log_sha256": {
+    "flare-066-tests.log": "7c2141a0fb220e13dc8a2853021e7c2958cae4b8b1a9f604cf9aa8368a26d2a4",
+    "flare-066-js.log": "4a509b19e7bb7d0e8950c02e69f7cf5e831c99a942450fc61d1029374cceea6e",
+    "flare-066-weather-browser.log": "71c63b746ef42e561cb1624211afaf7a926ffcca20bb27810aba4788f5229aba",
+    "flare-066-live-weather.log": "1189c577dd2edbb87f3721a3c3fe904ff923fff95efeed41d05925270dd20611",
+    "flare-066-weather-live-browser.log": "56fc5ace614748c74b1a45b6542b1a23052b95c3dde565b89cd512e16860ab5a",
+    "flare-066-actionlint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "flare-066-goreleaser-check.log": "c446d4898a1d95f9208f999292b0edac3a1966d6bfea3ba16d0d1d422890507d",
+    "flare-066-goreleaser-snapshot.log": "8591bd8f92553bb9fe36a9cb22f6a65506ff1ed29a81bf7e15bd8d9ca3e8c5a1",
+    "flare-066-lint.log": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47"
+  }
+}
