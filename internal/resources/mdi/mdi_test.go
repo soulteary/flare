@@ -287,7 +287,7 @@ func TestIconRoute_ConcurrentGenerationAndReads(t *testing.T) {
 			for worker := range workers {
 				go func() {
 					defer workersDone.Done()
-					// The two spellings share icon data but use distinct cache/file keys.
+					// Name variants must share one cache entry and generated file.
 					name := "serverNetwork"
 					if worker%2 != 0 {
 						name = "servernetwork"
@@ -320,5 +320,57 @@ func TestIconRoute_ConcurrentGenerationAndReads(t *testing.T) {
 				t.Error(err)
 			}
 		})
+	}
+}
+
+func TestIconNamesShareOneCanonicalCacheEntry(t *testing.T) {
+	for _, inline := range []bool{false, true} {
+		t.Run(fmt.Sprintf("inline=%t", inline), func(t *testing.T) {
+			_ = newIconTestRouter(t, inline)
+			first := GetIconByName("serverNetwork")
+			for _, name := range []string{"servernetwork", "ServerNetwork", "SERVERNETWORK"} {
+				if got := GetIconByName(name); got != first {
+					t.Fatalf("name variant generated another resource: %s", name)
+				}
+			}
+			iconCacheMu.RLock()
+			entries := len(iconMarkupCache)
+			iconCacheMu.RUnlock()
+			if entries != 1 {
+				t.Fatalf("canonical icon created %d cache entries", entries)
+			}
+		})
+	}
+}
+
+func TestSameThemeColorChangeReplacesSVGValidator(t *testing.T) {
+	app := newIconTestRouter(t, false)
+	url := generatedIconURL(t)
+	before := requestIcon(app, http.MethodGet, url, "", "")
+	define.ThemePrimaryColor = "#abcdef" // same length and same theme name
+	next := generatedIconURL(t)
+	if next == url {
+		t.Fatal("same-size content change did not update its URL version")
+	}
+	after := requestIcon(app, http.MethodGet, next, "If-None-Match", before.Header().Get("ETag"))
+	if after.Code != http.StatusOK || !strings.Contains(after.Body.String(), "fill:#abcdef;") || before.Header().Get("ETag") == after.Header().Get("ETag") {
+		t.Fatalf("same-size changed SVG reused old content: status=%d", after.Code)
+	}
+	define.ThemePrimaryColor = "#123456"
+	_ = generatedIconURL(t)
+	restored := requestIcon(app, http.MethodGet, url, "", "")
+	if restored.Body.String() != before.Body.String() {
+		t.Fatal("returning to the original color did not regenerate the SVG")
+	}
+}
+
+func TestMixedCaseLegacyResourceURLUsesCanonicalIcon(t *testing.T) {
+	app := newIconTestRouter(t, false)
+	canonical := generatedIconURL(t)
+	current := requestIcon(app, http.MethodGet, canonical, "", "")
+	legacy := strings.Replace(canonical, "servernetwork.svg", "serverNetwork.svg", 1)
+	cached := requestIcon(app, http.MethodGet, legacy, "If-None-Match", current.Header().Get("ETag"))
+	if cached.Code != http.StatusNotModified {
+		t.Fatalf("legacy mixed-case asset failed: status=%d", cached.Code)
 	}
 }

@@ -1,0 +1,82 @@
+{
+  "ok": true,
+  "scope": "Disposable copy of repository sample YAML; not user production data or physical devices. No editor mutations; release CI separately covers editor saves/conflicts. Rollback restores complete pre-upgrade data backup.",
+  "phases": [
+    {
+      "phase": "old-0.6.4",
+      "version": "0.6.4",
+      "private_auth": true,
+      "invalid_login_rejected": true,
+      "authenticated_routes": [
+        "/",
+        "/applications",
+        "/bookmarks",
+        "/editor"
+      ],
+      "existing_session_retained": false,
+      "data_sha256": {
+        "config.yml": "b0eedd644da33af5af9d3131dce9b12df041dce96440a8a2f9cca65d405af6ee",
+        "bookmarks.yml": "fb29bae10f1ecd7d90f5ecfe5a035380a7b6c5490067f5275259939a0b2b44ef",
+        ".flare-cookie-secret": "0e1719a373967da1bbbae6a73e2f970d7b85c8435f0cdab4d9e93e2d1f097b95",
+        "apps.yml": "90ed97710a888a80d3654950f763611d3c90158b91c37e380ae8325e1a0648a4"
+      }
+    },
+    {
+      "phase": "upgrade-0.6.5",
+      "version": "0.6.5",
+      "private_auth": true,
+      "invalid_login_rejected": true,
+      "authenticated_routes": [
+        "/",
+        "/applications",
+        "/bookmarks",
+        "/editor"
+      ],
+      "existing_session_retained": true,
+      "data_sha256": {
+        "config.yml": "b0eedd644da33af5af9d3131dce9b12df041dce96440a8a2f9cca65d405af6ee",
+        "bookmarks.yml": "fb29bae10f1ecd7d90f5ecfe5a035380a7b6c5490067f5275259939a0b2b44ef",
+        ".flare-cookie-secret": "0e1719a373967da1bbbae6a73e2f970d7b85c8435f0cdab4d9e93e2d1f097b95",
+        "apps.yml": "90ed97710a888a80d3654950f763611d3c90158b91c37e380ae8325e1a0648a4"
+      }
+    },
+    {
+      "phase": "restart-0.6.5",
+      "version": "0.6.5",
+      "private_auth": true,
+      "invalid_login_rejected": true,
+      "authenticated_routes": [
+        "/",
+        "/applications",
+        "/bookmarks",
+        "/editor"
+      ],
+      "existing_session_retained": true,
+      "data_sha256": {
+        "config.yml": "b0eedd644da33af5af9d3131dce9b12df041dce96440a8a2f9cca65d405af6ee",
+        "bookmarks.yml": "fb29bae10f1ecd7d90f5ecfe5a035380a7b6c5490067f5275259939a0b2b44ef",
+        ".flare-cookie-secret": "0e1719a373967da1bbbae6a73e2f970d7b85c8435f0cdab4d9e93e2d1f097b95",
+        "apps.yml": "90ed97710a888a80d3654950f763611d3c90158b91c37e380ae8325e1a0648a4"
+      }
+    },
+    {
+      "phase": "rollback-restored-0.6.4",
+      "version": "0.6.4",
+      "private_auth": true,
+      "invalid_login_rejected": true,
+      "authenticated_routes": [
+        "/",
+        "/applications",
+        "/bookmarks",
+        "/editor"
+      ],
+      "existing_session_retained": false,
+      "data_sha256": {
+        "config.yml": "b0eedd644da33af5af9d3131dce9b12df041dce96440a8a2f9cca65d405af6ee",
+        "bookmarks.yml": "fb29bae10f1ecd7d90f5ecfe5a035380a7b6c5490067f5275259939a0b2b44ef",
+        ".flare-cookie-secret": "0e1719a373967da1bbbae6a73e2f970d7b85c8435f0cdab4d9e93e2d1f097b95",
+        "apps.yml": "90ed97710a888a80d3654950f763611d3c90158b91c37e380ae8325e1a0648a4"
+      }
+    }
+  ]
+}

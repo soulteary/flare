@@ -1,5 +1,7 @@
 # Choosing built-in icons
 
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
+
 In an entry form, open **More options**, then **Choose icon** beside the icon
 input. Search uses English substrings of the existing Material Design icon names,
 ignores letter case, and displays at most 48 results per page. Selecting a result

@@ -3,6 +3,7 @@ package theme
 import (
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -17,7 +18,11 @@ func RegisterRouting(e *fiber.App) {
 	e.Post(define.SettingPages.Theme.Path, auth.AuthRequired, updateThemes)
 }
 
+var updateMu sync.Mutex
+
 func updateThemes(c fiber.Ctx) error {
+	updateMu.Lock()
+	defer updateMu.Unlock()
 	var body struct {
 		Theme string `form:"theme"`
 	}
@@ -27,10 +32,13 @@ func updateThemes(c fiber.Ctx) error {
 	// The form binder borrows PostArgs storage even when Fiber Immutable is enabled.
 	// ThemeCurrent survives the request, so retain an owned copy.
 	theme := strings.Clone(body.Theme)
-	data.UpdateThemeName(theme)
-	define.UpdatePagePalettes()
-	define.ThemeCurrent = theme
-	define.ThemePrimaryColor = define.GetThemePrimaryColor(theme)
+	if !define.IsKnownTheme(theme) {
+		return c.Status(http.StatusBadRequest).SendString("Unknown theme")
+	}
+	if !data.UpdateThemeName(theme) {
+		return c.Status(http.StatusInternalServerError).SendString("Unable to save theme; previous theme remains active")
+	}
+	define.SetTheme(theme)
 	return pageTheme(c)
 }
 

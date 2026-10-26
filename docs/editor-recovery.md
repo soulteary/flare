@@ -1,5 +1,7 @@
 # Editor save failures and recovery
 
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
+
 The editor reads the exact bytes of `apps.yml` and `bookmarks.yml` into one
 revision. Saving a stale revision returns HTTP 409 before either file is
 replaced. Reload only after exporting any pending editor draft you need to keep.
@@ -49,3 +51,28 @@ in-process lock. Recovery copies are retained after a reported replacement
 failure; they are removed after a successful save. Normal filesystem backups are
 still needed. This feature does not automatically recover after a crash or merge
 conflicting edits.
+
+## Recovery copies detected after restart
+
+At startup Flare scans `.flare-editor-recovery/save-*` beneath the applications
+configuration directory and logs each retained directory with an actionable
+warning. The editor document includes `recoveryPaths`, and the authenticated editor
+shows a persistent notice. Detection never restores, deletes, or merges files.
+Symlink directories are not followed. If a live collection is missing while a
+recovery directory exists, loading stops instead of creating example bookmarks.
+
+A retained directory does not prove that the live pair is inconsistent: it can
+also come from a completed rollback or failed cleanup. Stop Flare and external
+writers, preserve both live files and recovery copies, inspect both collections,
+and restore a consistent pair if needed. Once you have verified the live pair and
+saved an independent backup, archive or remove the inspected recovery directory.
+Do not remove a directory merely to silence the notice before checking its files.
+
+## Editor draft capacity
+
+Downloaded JSON drafts use compact UTF-8 JSON. Export and restore both accept up
+to **64 MiB**, including optional fields and private flags; exceeding that limit
+reports an error without replacing pending edits. The server's separate 32 MiB
+request-body limit still applies when saving. A large restored draft may require
+splitting before it can be saved; restoring does not bypass validation or revision
+checks. Draft export remains distinct from the original YAML recovery pair.

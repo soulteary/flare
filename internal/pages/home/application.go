@@ -1,6 +1,7 @@
 package home
 
 import (
+	"html"
 	"html/template"
 	"strings"
 	"sync"
@@ -8,24 +9,23 @@ import (
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/fn"
-	"github.com/soulteary/flare/internal/resources/mdi"
 )
 
 var builderPool = sync.Pool{
 	New: func() any { return &strings.Builder{} },
 }
 
-func GenerateApplicationsTemplate(filter string, options *model.Application) template.HTML {
+func GenerateApplicationsTemplate(filter string, options *model.Application, requestInfo ...*fn.DynamicURL) template.HTML {
 	if options == nil {
 		op, err := data.GetAllSettingsOptions()
 		if err != nil {
-			op = model.Application{}
+			return navigationDataError("applications", "", err)
 		}
 		options = &op
 	}
 	appsData, err := data.LoadFavoriteBookmarks()
 	if err != nil {
-		return template.HTML("")
+		return navigationDataError("applications", options.Locale, err)
 	}
 	b, ok := builderPool.Get().(*strings.Builder)
 	if !ok {
@@ -34,27 +34,14 @@ func GenerateApplicationsTemplate(filter string, options *model.Application) tem
 	b.Reset()
 	defer builderPool.Put(b)
 
-	n := len(appsData.Items)
-	parseApps := make([]model.Bookmark, 0, n)
+	apps := make([]model.Bookmark, 0, len(appsData.Items))
+	filterLower := strings.ToLower(filter)
 	for _, app := range appsData.Items {
-		app.URL = fn.ParseDynamicUrl(app.URL)
-		parseApps = append(parseApps, app)
-	}
-
-	var apps []model.Bookmark
-	if filter != "" {
-		apps = make([]model.Bookmark, 0, n)
-	}
-
-	if filter != "" {
-		filterLower := strings.ToLower(filter)
-		for _, bookmark := range parseApps {
-			if strings.Contains(strings.ToLower(bookmark.Name), filterLower) || strings.Contains(strings.ToLower(bookmark.URL), filterLower) || strings.Contains(strings.ToLower(bookmark.Desc), filterLower) {
-				apps = append(apps, bookmark)
-			}
+		app.URL = fn.ParseDynamicUrlWith(app.URL, firstRequestInfo(requestInfo))
+		if filter != "" && !strings.Contains(strings.ToLower(app.Name), filterLower) && !strings.Contains(strings.ToLower(app.URL), filterLower) && !strings.Contains(strings.ToLower(app.Desc), filterLower) {
+			continue
 		}
-	} else {
-		apps = parseApps
+		apps = append(apps, app)
 	}
 
 	for _, app := range apps {
@@ -62,47 +49,44 @@ func GenerateApplicationsTemplate(filter string, options *model.Application) tem
 		if desc == "" {
 			desc = app.URL
 		}
-		templateURL := app.URL
-		if strings.HasPrefix(app.URL, "chrome-extension://") || options.EnableEncryptedLink {
-			templateURL = "/redir/url?go=" + data.Base64EncodeUrl(app.URL)
-		}
-		templateIcon := mdi.GetIconByName(app.Icon)
-		if strings.HasPrefix(app.Icon, "http://") || strings.HasPrefix(app.Icon, "https://") {
-			templateIcon = `<img src="` + app.Icon + `"/>`
-		} else if app.Icon != "" {
-			templateIcon = mdi.GetIconByName(app.Icon)
-		} else if options.IconMode == "FILLING" {
-			templateIcon = fn.GetYandexFavicon(app.URL, mdi.GetIconByName(app.Icon))
-		}
+		templateURL := navigationHref(app.URL, options.EnableEncryptedLink, firstRequestInfo(requestInfo))
+		templateIcon := navigationIcon(app.Icon, app.URL, options.IconMode)
 		if options.OpenAppNewTab {
 			b.WriteString(`<div class="app-container" data-id="`)
-			b.WriteString(app.Icon)
+			b.WriteString(html.EscapeString(app.Icon))
 			b.WriteString(`"><a target="_blank" rel="noopener" href="`)
-			b.WriteString(templateURL)
+			b.WriteString(html.EscapeString(templateURL))
 			b.WriteString(`" class="app-item" title="`)
-			b.WriteString(app.Name)
+			b.WriteString(html.EscapeString(app.Name))
 			b.WriteString(`"><div class="app-icon">`)
 			b.WriteString(templateIcon)
 			b.WriteString(`</div><div class="app-text"><p class="app-title">`)
-			b.WriteString(app.Name)
+			b.WriteString(html.EscapeString(app.Name))
 			b.WriteString(`</p><p class="app-desc">`)
-			b.WriteString(desc)
+			b.WriteString(html.EscapeString(desc))
 			b.WriteString(`</p></div></a></div>`)
 		} else {
 			b.WriteString(`<div class="app-container" data-id="`)
-			b.WriteString(app.Icon)
+			b.WriteString(html.EscapeString(app.Icon))
 			b.WriteString(`"><a rel="noopener" href="`)
-			b.WriteString(templateURL)
+			b.WriteString(html.EscapeString(templateURL))
 			b.WriteString(`" class="app-item" title="`)
-			b.WriteString(app.Name)
+			b.WriteString(html.EscapeString(app.Name))
 			b.WriteString(`"><div class="app-icon">`)
 			b.WriteString(templateIcon)
 			b.WriteString(`</div><div class="app-text"><p class="app-title">`)
-			b.WriteString(app.Name)
+			b.WriteString(html.EscapeString(app.Name))
 			b.WriteString(`</p><p class="app-desc">`)
-			b.WriteString(desc)
+			b.WriteString(html.EscapeString(desc))
 			b.WriteString(`</p></div></a></div>`)
 		}
 	}
 	return template.HTML(b.String())
+}
+
+func firstRequestInfo(info []*fn.DynamicURL) *fn.DynamicURL {
+	if len(info) > 0 {
+		return info[0]
+	}
+	return nil
 }

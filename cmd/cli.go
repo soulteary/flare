@@ -12,6 +12,7 @@ import (
 
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/logger"
 )
 
 var flagsMapTrimValue = regexp.MustCompile(`=.*`)
@@ -109,15 +110,30 @@ func parseCLI(baseFlags model.Flags) model.Flags {
 		baseFlags.AccessLog = normalizeAccessLog(cliFlags.AccessLog, "--"+_KEY_ACCESS_LOG)
 	}
 
-	baseFlags.EnableMinimumRequest = configutil.ResolveBoolPflag(fs, _KEY_MINI_REQUEST, "", baseFlags.EnableMinimumRequest)
-	baseFlags.DisableLoginMode = configutil.ResolveBoolPflag(fs, _KEY_DISABLE_LOGIN, "", baseFlags.DisableLoginMode)
+	// Canonical/deprecated spellings share a pflag destination. Use its final
+	// value whenever either name was explicitly set: last occurrence wins across
+	// both spellings and shorthands, and an alias alone overrides env/.env too.
+	if fs.Changed(_KEY_MINI_REQUEST) || fs.Changed(_KEY_MINI_REQUEST_OLD) {
+		baseFlags.EnableMinimumRequest = cliFlags.EnableMinimumRequest
+	}
+	if fs.Changed(_KEY_DISABLE_LOGIN) || fs.Changed(_KEY_DISABLE_LOGIN_OLD) {
+		baseFlags.DisableLoginMode = cliFlags.DisableLoginMode
+	}
 	baseFlags.DisableCSP = configutil.ResolveBoolPflag(fs, _KEY_DISABLE_CSP, "", baseFlags.DisableCSP)
 
-	visibility, err := configutil.ResolveEnumPflag(fs, _KEY_VISIBILITY, "", baseFlags.Visibility, []string{"DEFAULT", "PRIVATE"}, false)
-	if err != nil {
-		visibility = define.DEFAULT_VISIBILITY
+	visibility := baseFlags.Visibility
+	if fs.Changed(_KEY_VISIBILITY) {
+		visibility = cliFlags.Visibility
 	}
-	baseFlags.Visibility = strings.ToUpper(visibility)
+	visibility = strings.ToUpper(strings.TrimSpace(visibility))
+	switch visibility {
+	case "DEFAULT", "PRIVATE":
+	default:
+		logger.GetLogger().Warn("Invalid visibility; using PRIVATE with login enabled. Allowed values: DEFAULT, PRIVATE")
+		visibility = "PRIVATE"
+		baseFlags.DisableLoginMode = false
+	}
+	baseFlags.Visibility = visibility
 
 	baseFlags.EnableOfflineMode = configutil.ResolveBoolPflag(fs, _KEY_ENABLE_OFFLINE, "", baseFlags.EnableOfflineMode)
 	baseFlags.EnableDeprecatedNotice = configutil.ResolveBoolPflag(fs, _KEY_ENABLE_DEPRECATED_NOTICE, "", baseFlags.EnableDeprecatedNotice)

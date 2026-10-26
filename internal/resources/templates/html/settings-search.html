@@ -1,4 +1,4 @@
-{{ define "settings-search.html" }}<div class="setting-group-container search-settings"><form method=POST action="{{.SettingPages.Search.Path}}" rel="noopener noreferrer"><input type=hidden name=csrf-token value="{{.SearchCSRFToken}}">
+{{ define "settings-search.html" }}<div class="setting-group-container search-settings"><form method=POST action="{{.SettingPages.Search.Path}}" rel=noopener><input type=hidden name=csrf-token value="{{.SearchCSRFToken}}">
 <input type=hidden name=config-revision value="{{.SearchConfigRevision}}"><h2>{{T .Locale "page_search"}}</h2><button name=action value=save hidden>{{T .Locale "save_changes"}}</button>
 {{if .SearchError}}<p role=alert>{{.SearchError}}</p>{{end}}
 {{if .SearchVersionDowngrade}}<p role=alert>{{T .Locale "search_version_downgrade"}} ({{.SearchConfigVersion}})</p>{{end}}

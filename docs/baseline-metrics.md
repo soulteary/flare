@@ -53,6 +53,12 @@ python3 scripts/analyze-redirect.py \
 
 `results.json` 保存逐轮数据、顺序、二进制哈希、环境与响应验证。比较会检查状态、正文大小/哈希、Content-Type、CSP 和 Location；只归一化时钟文本与 MIME 大小写。先解决响应差异，再解读性能。
 
+### Linux RSS 与 PID 命名空间
+
+Linux 的 `getrusage(RUSAGE_SELF).Maxrss` 可能包含启动器在 fork/exec 之间继承的驻留内存，不能直接把历史 `lifetime_peak_rss_bytes` 当作目标程序自身的峰值。独立诊断中，仅让启动器额外分配 80 MiB，未改变的目标程序 `Maxrss` 就从约 18 MiB 升到 97 MiB，而目标 `/proc` 的 `VmRSS`／`VmHWM` 仍约 18.5 MiB。
+
+新比较使用预热后的 `VmRSS`、负载期间采样峰值，以及 exec 后地址空间的 `VmHWM`；原始 `Maxrss` 仍保留但不用于比较。PID 命名空间与 `/proc` 视图不一致时，必须同时核对父进程 `PPid` 和目标 `NSpid`，不能直接用子进程的本地 PID 读取 `/proc/PID`，以免测到其他进程。历史报告和原始数据保持不变，新的诊断与限制见[整进程资源比较](../metrics-reports/audit-resource-comparison-2026-10-26.md)。
+
 ### 连接池口径
 
 默认 `--pools 0 8`：0 保留 Go 客户端每主机最多 2 条空闲连接的原口径，8 显式保留 8 条。空闲连接数量不是并发上限，并发为 8 时默认池可能发生关闭/重建。两组应各自比较版本间的差异，不能跨时间用绝对 QPS 判断连接池优劣。

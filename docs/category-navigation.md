@@ -1,5 +1,7 @@
 # Bookmark category navigation
 
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
+
 Appearance settings offer three bookmark category modes. All groups remains the
 backward-compatible default. Category links filter the server-rendered response;
 All restores every group. Links preserve the current search query and category

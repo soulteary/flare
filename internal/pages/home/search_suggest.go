@@ -104,21 +104,6 @@ func pageSearchSuggestions(c fiber.Ctx) error {
 	if query == "" {
 		return c.JSON([]searchSuggestion{})
 	}
-	// A hidden module is outside the search scope. Its missing or malformed
-	// backing file must not break suggestions from a visible module.
-	var apps, bookmarks model.Bookmarks
-	if options.ShowApps {
-		apps, err = data.LoadFavoriteBookmarks()
-		if err != nil {
-			return c.SendStatus(http.StatusInternalServerError)
-		}
-	}
-	if options.ShowBookmarks {
-		bookmarks, err = data.LoadNormalBookmarks()
-		if err != nil {
-			return c.SendStatus(http.StatusInternalServerError)
-		}
-	}
 	// Suggestions are for the homepage, not the endpoint's own pathname. Use request-
 	// scoped dynamic URL metadata so simultaneous clients cannot alter one another.
 	r := http.Request{Host: string(c.Request().Host()), URL: &url.URL{Path: "/"}, RequestURI: "/"}
@@ -126,54 +111,31 @@ func pageSearchSuggestions(c fiber.Ctx) error {
 		r.TLS = &tls.ConnectionState{}
 	}
 	info := fn.ParseRequestURLTo(&r)
-	return c.JSON(collectSearchSuggestions(options, query, apps, bookmarks, &info))
+	matches, err := collectSearchSuggestions(options, query, &info)
+	if err != nil {
+		return c.SendStatus(http.StatusInternalServerError)
+	}
+	return c.JSON(matches)
 }
 
-func collectSearchSuggestions(options model.Application, query string, apps, bookmarks model.Bookmarks, info *fn.DynamicURL) []searchSuggestion {
-	result := make([]searchSuggestion, 0, 8)
-	query = strings.ToLower(query)
-	appendMatches := func(items []model.Bookmark, isApp bool) {
-		for _, item := range items {
-			if len(result) == 8 {
-				return
-			}
-			link := fn.ParseDynamicUrlWith(item.URL, info)
-			matched := strings.Contains(strings.ToLower(item.Name), query) || strings.Contains(strings.ToLower(link), query)
-			if isApp {
-				matched = matched || strings.Contains(strings.ToLower(item.Desc), query)
-			}
-			if !matched || !safeSuggestionURL(link) {
-				continue
-			}
-			if !isApp && item.Category != "" && len(bookmarks.Categories) > 0 {
-				found := false
-				for _, category := range bookmarks.Categories {
-					if category.ID == item.Category {
-						found = true
-						break
-					}
-				}
-				if !found {
-					continue
-				}
-			}
-			if options.EnableEncryptedLink || strings.HasPrefix(link, "chrome-extension://") {
-				link = "/redir/url?go=" + data.Base64EncodeUrl(link)
-			}
-			newTab := options.OpenBookmarkNewTab
-			if isApp {
-				newTab = options.OpenAppNewTab
-			}
-			result = append(result, searchSuggestion{Name: item.Name, URL: link, NewTab: newTab})
+func collectSearchSuggestions(options model.Application, query string, info *fn.DynamicURL) ([]searchSuggestion, error) {
+	matches, err := data.SearchNavigationMatches(query, options.ShowApps, options.ShowBookmarks, 8, func(link string) string { return fn.ParseDynamicUrlWith(link, info) }, safeSuggestionURL)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]searchSuggestion, 0, len(matches))
+	for _, match := range matches {
+		link := match.URL
+		if options.EnableEncryptedLink || strings.HasPrefix(link, "chrome-extension://") {
+			link = fn.EncodedNavigationURL(link, info)
 		}
+		newTab := options.OpenBookmarkNewTab
+		if match.IsApp {
+			newTab = options.OpenAppNewTab
+		}
+		result = append(result, searchSuggestion{Name: match.Bookmark.Name, URL: link, NewTab: newTab})
 	}
-	if options.ShowApps {
-		appendMatches(apps.Items, true)
-	}
-	if options.ShowBookmarks {
-		appendMatches(bookmarks.Items, false)
-	}
-	return result
+	return result, nil
 }
 
 func safeSuggestionURL(value string) bool {

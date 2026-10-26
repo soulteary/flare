@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/soulteary/flare/config/model"
@@ -17,10 +18,11 @@ import (
 // EditorDocument retains category IDs and private flags across every editor view.
 // Versions cover the on-disk bytes of BOTH collections, including external edits.
 type EditorDocument struct {
-	Version    string           `json:"version"`
-	Categories []model.Category `json:"categories"`
-	Apps       []model.Bookmark `json:"apps"`
-	Bookmarks  []model.Bookmark `json:"bookmarks"`
+	RecoveryPaths []string         `json:"recoveryPaths,omitempty"`
+	Version       string           `json:"version"`
+	Categories    []model.Category `json:"categories"`
+	Apps          []model.Bookmark `json:"apps"`
+	Bookmarks     []model.Bookmark `json:"bookmarks"`
 }
 
 type EditorValidationError struct {
@@ -59,6 +61,17 @@ func editorVersion(apps, bookmarks []byte) string {
 func editorSnapshotLocked() (EditorDocument, [2][]byte, error) {
 	var doc EditorDocument
 	var raw [2][]byte
+	recoveries, err := EditorRecoveryDirectories()
+	if err != nil {
+		return doc, raw, err
+	}
+	if len(recoveries) > 0 {
+		for _, name := range []string{"apps", "bookmarks"} {
+			if _, statErr := os.Stat(getConfigPath(name)); statErr != nil {
+				return doc, raw, fmt.Errorf("live editor file %s is unavailable while recovery copies exist; inspect %s before restoring files: %w", name, recoveries[0], statErr)
+			}
+		}
+	}
 	for i, name := range []string{"apps", "bookmarks"} {
 		file := getConfigPath(name)
 		if _, err := os.Stat(file); os.IsNotExist(err) {
@@ -87,6 +100,10 @@ func EditorSnapshot() (EditorDocument, error) {
 	bookmarkMu.Lock()
 	defer bookmarkMu.Unlock()
 	doc, _, err := editorSnapshotLocked()
+	if err != nil {
+		return doc, err
+	}
+	doc.RecoveryPaths, err = EditorRecoveryDirectories()
 	return doc, err
 }
 
@@ -263,4 +280,33 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	_ = os.RemoveAll(recovery)
 	next.Version = editorVersion(output[0], output[1])
 	return next, nil
+}
+
+// EditorRecoveryDirectories reports retained recovery copies without trusting symlinks
+// or silently overwriting either live collection. Old copies may follow a complete
+// rollback, so presence alone cannot establish whether the live pair is consistent.
+func EditorRecoveryDirectories() ([]string, error) {
+	root := filepath.Join(filepath.Dir(getConfigPath("apps")), ".flare-editor-recovery")
+	info, err := os.Lstat(root)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("editor recovery path is not a directory: %s", root)
+	}
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return nil, err
+	}
+	var paths []string
+	for _, entry := range entries {
+		if entry.IsDir() && strings.HasPrefix(entry.Name(), "save-") {
+			paths = append(paths, filepath.Join(root, entry.Name()))
+		}
+	}
+	sort.Strings(paths)
+	return paths, nil
 }

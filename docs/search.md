@@ -1,5 +1,7 @@
 # Search targets
 
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
+
 The home page retains one search field. Existing installations and legacy POST
 requests continue to search local bookmarks and applications. Add engines under
 Settings → Search to enable the target selector. The basic selector works without

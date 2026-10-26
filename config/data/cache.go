@@ -1,6 +1,7 @@
 package data
 
 import (
+	"bytes"
 	"sync"
 )
 
@@ -75,9 +76,29 @@ func invalidateFileCache(name string) {
 	switch name {
 	case "config":
 		cachedConfig = nil
+		cachedApplication = nil
 	case "apps":
 		cachedApps = nil
+		cachedFavorite = nil
 	case "bookmarks":
 		cachedBookmarks = nil
+		cachedNormal = nil
 	}
+}
+
+// Read current bytes for downgrade/revision checks while reusing an unchanged
+// snapshot's identity so strict parsing and cloning can still be cached.
+func readFreshAppConfig(path string) ([]byte, error) {
+	raw, err := readFile(path)
+	if err != nil {
+		return nil, err
+	}
+	fileCacheMu.Lock()
+	defer fileCacheMu.Unlock()
+	if cachedConfig != nil && bytes.Equal(cachedConfig, raw) {
+		return cachedConfig, nil
+	}
+	cachedConfig = raw
+	cachedApplication = nil
+	return raw, nil
 }

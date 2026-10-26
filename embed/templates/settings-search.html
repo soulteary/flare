@@ -1,6 +1,6 @@
 {{ define "settings-search.html" }}
 <div class="setting-group-container search-settings">
-<form method="POST" action="{{.SettingPages.Search.Path}}" rel="noopener noreferrer">
+<form method="POST" action="{{.SettingPages.Search.Path}}" rel="noopener">
 <input type="hidden" name="csrf-token" value="{{.SearchCSRFToken}}">
 <input type="hidden" name="config-revision" value="{{.SearchConfigRevision}}">
 <h2>{{T .Locale "page_search"}}</h2>

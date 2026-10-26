@@ -1,5 +1,7 @@
 # Homepage search modes
 
+> Hybrid search is available in Flare 0.6.5 and later. The additional modes and configuration protections described below require this change.
+
 Search settings provide three modes, saved with the rest of the search configuration:
 
 - `hybrid`: typing suggests local bookmarks and apps; Enter searches the selected web engine. Requires an enabled external default target. Use a local suggestion to open a bookmark or app.

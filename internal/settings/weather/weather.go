@@ -69,15 +69,19 @@ func pageHome(c fiber.Ctx) error {
 	return render(c, "")
 }
 
+type weatherForm struct {
+	Location    string `form:"location"`
+	ShowWeather bool   `form:"show"`
+}
+
 func updateWeatherOptions(c fiber.Ctx) error {
-	var body struct {
-		Location    string `form:"location"`
-		ShowWeather bool   `form:"show"`
-	}
+	var body weatherForm
 	if err := c.Bind().Body(&body); err != nil {
 		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
 	}
-	data.UpdateWeatherAndLocation(body.ShowWeather, body.Location)
+	if !data.UpdateWeatherAndLocation(body.ShowWeather, body.Location) {
+		return renderForm(c, "", http.StatusInternalServerError, &body)
+	}
 	return render(c, "")
 }
 
@@ -91,9 +95,13 @@ func testWeatherFetch(c fiber.Ctx) error {
 }
 
 func render(c fiber.Ctx, testResult string) error {
+	return renderForm(c, testResult, http.StatusOK, nil)
+}
+
+func renderForm(c fiber.Ctx, testResult string, status int, submitted *weatherForm) error {
 	location, showWeather := data.GetLocationAndWeatherShow()
 	options, err := data.GetAllSettingsOptions()
-	if err != nil {
+	if err != nil && submitted == nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	locale := options.Locale
@@ -115,5 +123,11 @@ func render(c fiber.Ctx, testResult string) error {
 	m["SettingPagesAPI"] = define.SettingPagesAPI
 	m["Location"] = location
 	m["TestResult"] = testResult
-	return c.Status(http.StatusOK).Render("settings.html", m)
+	if submitted != nil {
+		m["Location"] = submitted.Location
+		m["ShowWeather"] = submitted.ShowWeather
+		m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && submitted.ShowWeather
+		m["SaveFailed"] = true
+	}
+	return c.Status(status).Render("settings.html", m)
 }

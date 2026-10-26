@@ -1,0 +1,27 @@
+goos: linux
+goarch: amd64
+pkg: github.com/soulteary/flare/internal/pages/home
+cpu: AMD EPYC 9V74 80-Core Processor                
+BenchmarkCategorizedNavigation/entries-1000/categories-10-8         	      22	  10566256 ns/op	 5521642 B/op	   56461 allocs/op
+BenchmarkCategorizedNavigation/entries-1000/categories-10-8         	      20	  11996866 ns/op	 5521763 B/op	   56462 allocs/op
+BenchmarkCategorizedNavigation/entries-1000/categories-10-8         	      27	  11980976 ns/op	 5521516 B/op	   56461 allocs/op
+BenchmarkCategorizedNavigation/entries-1000/categories-100-8        	       4	  59809011 ns/op	31461644 B/op	  239195 allocs/op
+BenchmarkCategorizedNavigation/entries-1000/categories-100-8        	       4	  57859520 ns/op	31461024 B/op	  239193 allocs/op
+BenchmarkCategorizedNavigation/entries-1000/categories-100-8        	       4	  50736434 ns/op	31461156 B/op	  239194 allocs/op
+BenchmarkCategorizedNavigation/entries-10000/categories-10-8        	       3	  94843948 ns/op	56013448 B/op	  560553 allocs/op
+BenchmarkCategorizedNavigation/entries-10000/categories-10-8        	       2	 135974474 ns/op	56013256 B/op	  560552 allocs/op
+BenchmarkCategorizedNavigation/entries-10000/categories-10-8        	       2	 250716602 ns/op	56013424 B/op	  560553 allocs/op
+BenchmarkCategorizedNavigation/entries-10000/categories-100-8       	       1	 497789667 ns/op	315678184 B/op	 2363914 allocs/op
+BenchmarkCategorizedNavigation/entries-10000/categories-100-8       	       1	 503804460 ns/op	315677512 B/op	 2363908 allocs/op
+BenchmarkCategorizedNavigation/entries-10000/categories-100-8       	       1	 486930866 ns/op	315677160 B/op	 2363905 allocs/op
+PASS
+ok  	github.com/soulteary/flare/internal/pages/home	9.700s
+goos: linux
+goarch: amd64
+pkg: github.com/soulteary/flare/internal/pages/home
+cpu: AMD EPYC 9V74 80-Core Processor                
+BenchmarkCategorizedNavigation/entries-20/categories-4-8         	    1453	    161061 ns/op	   85479 B/op	    1068 allocs/op
+BenchmarkCategorizedNavigation/entries-20/categories-4-8         	    1597	    141417 ns/op	   85473 B/op	    1068 allocs/op
+BenchmarkCategorizedNavigation/entries-20/categories-4-8         	    1807	    128673 ns/op	   85474 B/op	    1068 allocs/op
+PASS
+ok  	github.com/soulteary/flare/internal/pages/home	0.767s

@@ -7,7 +7,7 @@
   <meta name="google" content="notranslate">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{.OptionTitle}}</title>
-  <link rel="shortcut icon" href="favicon.ico"/>
+  <link rel="shortcut icon" href="{{ FaviconURL }}"/>
   {{ if .DebugMode }}
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/home/search.css">
@@ -26,7 +26,7 @@
 
       {{ if .ShowSearchComponent }}
       <div class="module-container" id="search-container">
-        <form action="/" method="POST" id="search-form" rel="noopener noreferrer" {{ if .SearchHybrid }}data-keywords="{{.SearchHybridKeywords}}" data-open-new-tab="{{.SearchOptions.OpenNewTab}}" data-match-count="{{ T .Locale "search_match_count" }}"{{ end }}>
+        <form action="/" method="POST" id="search-form" rel="noopener" {{ if .SearchHybrid }}data-keywords="{{.SearchHybridKeywords}}" data-open-new-tab="{{.SearchOptions.OpenNewTab}}" data-match-count="{{ T .Locale "search_match_count" }}"{{ end }}>
           {{ if .BookmarkCategory }}<input type="hidden" name="category" value="{{.BookmarkCategory}}">{{ end }}
           <label for="search" class="search-accessible-label">{{ T .Locale "search_placeholder" }}</label>
           <input type="text" name="search" id="search" value="{{.SearchQuery}}" autocomplete="off" placeholder="{{.SearchKeyword}}" {{ if not .DisabledSearchAutoFocus }}autofocus{{ end }}/>

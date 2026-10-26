@@ -1,6 +1,7 @@
 package data
 
 import (
+	"net/url"
 	"testing"
 )
 
@@ -80,5 +81,20 @@ func TestBase64DecodeUrl(t *testing.T) {
 	_, err = Base64DecodeUrl("%")
 	if err == nil {
 		t.Fatal("Base64DecodeUrl invalid input should return error")
+	}
+}
+
+func TestBase64DecodeParsedQueryPreservesPlus(t *testing.T) {
+	const target = "https://example.com/?q=~~~"
+	escaped := Base64EncodeUrl(target)
+	parsed, err := url.QueryUnescape(escaped)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, value := range []string{escaped, parsed} {
+		decoded, err := Base64DecodeUrl(value)
+		if err != nil || string(decoded) != target {
+			t.Fatalf("decode %q: got %q, %v", value, decoded, err)
+		}
 	}
 }

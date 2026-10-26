@@ -48,3 +48,43 @@
 - 历史重放短烟雾测试验证四个目标、五场景、响应一致性与 8/64 KiB/1 MiB 实际配置。入口拒绝复用来源不明的二进制或不兼容参考提交；短测数据不作为吞吐收益证据。
 
 具体命令和采样范围见 [基线方法](baseline-metrics.md)。
+
+
+## Optimizations shipped in 0.6.5
+
+The following reports measure separate optimizations; their percentages must not
+be added together or presented as a whole-service RSS guarantee:
+
+- [Parsed snapshots and lazy indexes](../metrics-reports/navigation-snapshots-2026-10-26.md): warmed data reads, ownership/invalidation semantics and allocation costs.
+- [Category rendering](../metrics-reports/navigation-render-2026-10-26.md): matching/grouping and disabled-module work with small and large fixtures.
+- [Editor client](../metrics-reports/editor-client-2026-10-26.md): repeated rendering, dirty checks, listeners, initial-load tradeoffs and JS heap; not server RSS.
+- [Resources and URL validation](../metrics-reports/resources-and-url-validation-2026-10-26.md): conditional requests, icon-cache paths and parser microbenchmarks.
+
+The [combined isolated-process report](../metrics-reports/audit-resource-comparison-2026-10-26.md)
+compares pre-audit main `39df281` with reviewed head `94d2c0a` (merged as
+`a116b716`). It retains the initial MIME-registry memory regression and a separate
+final rerun: CPU/allocation traffic falls, while RSS/retained memory remains mixed.
+It does not establish uniformly lower memory or whole-page browser latency.
+
+Read each report's exact source/fixture, raw rounds and limitations. Snapshot and
+index caches deliberately retain some data to reduce repeated decoding and GC
+work; fewer allocated bytes per request do not alone prove a smaller idle process.
+
+## Immutable resource metadata and navigation parsing
+
+The resource follow-up shipped in 0.6.5 prepares strong content validators once per
+immutable embedded file and avoids file opens/reads for warmed conditional and
+HEAD responses. It retains conditional/range semantics, versions favicon/MDI
+references, canonicalizes icon-cache names, and removes repeated navigation URL
+parsing. Mutable generated SVG validators still derive from actual current bytes.
+See the [microbenchmark report and raw rounds](../metrics-reports/resources-and-url-validation-2026-10-26.md).
+Those allocation/time measurements are not a process CPU or RSS reduction claim.
+
+### Avoidable MIME-registry initialization
+
+The first combined resource measurement exposed additional retained heap after
+favicon access. The embedded metadata loader now uses explicit bundled types and
+content sniffing instead of initializing the host MIME registry. See the
+[diagnostic and unchanged historical context](../metrics-reports/favicon-mime-init-2026-10-26.md).
+The effect depends on installed system MIME mappings; its isolated HeapAlloc
+result is not a universal RSS or CPU claim.

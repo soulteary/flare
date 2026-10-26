@@ -1,5 +1,7 @@
 # Navigation editor
 
+> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
+
 ## State and persistence
 
 The editor loads `/editor/document` with a revision covering the exact on-disk
@@ -31,8 +33,8 @@ second-file failure with recovery. `node --test tests/editor/state.test.cjs` tes
 the shared working state. The mobile browser acceptance test exercises the legacy
 table UI against the versioned document interface.
 
-The editor is delivered as three dependent pull requests: persistence/shared
-state, list/forms, then batch integration and acceptance.
+The integrated editor shares one working document across persistence, list/forms
+and the optional batch view.
 
 ## List and form workflow
 
@@ -96,3 +98,22 @@ Filtering the first named category includes default-placement links; the default
 placement filter can also show just those links. Unknown nonempty category IDs
 remain validation errors. `tests/editor/legacy.browser.cjs` covers both legacy
 layouts, app-only saves, add/edit preservation and the special-ID collision.
+
+## Language
+
+The editor shell, entry forms, category controls, batch table, icon picker and
+status/validation messages follow `config.yml`'s `Locale: zh` or `Locale: en`.
+Messages use the same embedded locale bundles as the other settings pages. User
+names, addresses, category labels and descriptions are never translated. The
+HTML language attribute follows the selected locale. JSON recovery drafts have a
+shared 64 MiB export/restore limit; see [recovery behavior](editor-recovery.md).
+
+Run `FLARE_BINARY=/path/to/flare node tests/editor/reliability.browser.cjs` after
+building production resources to verify the English UI, startup recovery notice,
+and a draft larger than the historical 4 MiB restore limit.
+
+
+## Screenshots
+
+See the [English and Chinese editor screenshots](screenshots/README.md) for
+the list, entry form and batch views. Stable 0.6.4 screenshots show the older UI.

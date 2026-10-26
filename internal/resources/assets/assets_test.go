@@ -1,11 +1,14 @@
 package assets
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
@@ -57,7 +60,7 @@ func TestResourceCacheResponses(t *testing.T) {
 			require.True(t, called, "cache middleware must let the handler check the resource")
 			require.Equal(t, tt.status, response.Code)
 			if tt.cacheable {
-				assert.Equal(t, "public, max-age=31536000", response.Header().Get("Cache-Control"))
+				assert.Equal(t, "public, max-age=0, must-revalidate", response.Header().Get("Cache-Control"))
 				assert.Equal(t, `"fixture"`, response.Header().Get("ETag"))
 			} else {
 				assert.NotContains(t, response.Header().Get("Cache-Control"), "max-age")
@@ -157,4 +160,67 @@ func serveHTTP(app *fiber.App, rec *httptest.ResponseRecorder, req *http.Request
 	if _, err := io.Copy(rec.Body, res.Body); err != nil {
 		panic(err)
 	}
+}
+
+// Same-size replacements with identical embedded timestamps must not reuse the
+// old script. This models a browser revalidating the same URL after deployment.
+func TestStaticFSUpgradeRevalidation(t *testing.T) {
+	newApp := func(content string) *fiber.App {
+		e := fiber.New()
+		e.Use(optimizeResourceCacheTime())
+		e.Use("/assets/editor-ui", StaticFS(fstest.MapFS{
+			"app.js": &fstest.MapFile{Data: []byte(content)},
+		}, "/assets/editor-ui"))
+		return e
+	}
+	get := func(app *fiber.App, method, etag, byteRange string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(method, "/assets/editor-ui/app.js", nil)
+		if etag != "" {
+			req.Header.Set("If-None-Match", etag)
+		}
+		if byteRange != "" {
+			req.Header.Set("Range", byteRange)
+		}
+		rec := httptest.NewRecorder()
+		serveHTTP(app, rec, req)
+		return rec
+	}
+	before, after := newApp("old-script"), newApp("new-script")
+	original := get(before, http.MethodGet, "", "")
+	require.Equal(t, http.StatusOK, original.Code)
+	require.Equal(t, "public, max-age=0, must-revalidate", original.Header().Get("Cache-Control"))
+	require.NotEmpty(t, original.Header().Get("ETag"))
+	cached := get(before, http.MethodGet, original.Header().Get("ETag"), "")
+	require.Equal(t, http.StatusNotModified, cached.Code)
+	require.Empty(t, cached.Body.String())
+	upgraded := get(after, http.MethodGet, original.Header().Get("ETag"), "")
+	require.Equal(t, http.StatusOK, upgraded.Code)
+	require.Equal(t, "new-script", upgraded.Body.String())
+	require.NotEqual(t, original.Header().Get("ETag"), upgraded.Header().Get("ETag"))
+	head := get(after, http.MethodHead, "", "")
+	require.Equal(t, http.StatusOK, head.Code)
+	require.Empty(t, head.Body.String())
+	require.Equal(t, upgraded.Header().Get("ETag"), head.Header().Get("ETag"))
+	partial := get(after, http.MethodGet, "", "bytes=0-2")
+	require.Equal(t, http.StatusPartialContent, partial.Code)
+	require.Equal(t, "new", partial.Body.String())
+	require.Equal(t, "bytes 0-2/10", partial.Header().Get("Content-Range"))
+	invalid := get(after, http.MethodGet, "", "bytes=100-")
+	require.Equal(t, http.StatusRequestedRangeNotSatisfiable, invalid.Code)
+	require.Equal(t, "no-store", invalid.Header().Get("Cache-Control"))
+	require.Empty(t, invalid.Header().Get("ETag"))
+}
+
+func TestFaviconURLUsesContentVersion(t *testing.T) {
+	data, err := Favicon.ReadFile("favicon.ico")
+	require.NoError(t, err)
+	expected := fmt.Sprintf("/favicon.ico?v=%x", sha256.Sum256(data))
+	require.Equal(t, expected, FaviconURL())
+	require.Equal(t, expected, FaviconURL())
+	app := fiber.New()
+	RegisterRouting(app)
+	response := httptest.NewRecorder()
+	serveHTTP(app, response, httptest.NewRequest(http.MethodGet, FaviconURL(), nil))
+	require.Equal(t, http.StatusOK, response.Code)
+	require.Equal(t, data, response.Body.Bytes())
 }

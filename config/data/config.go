@@ -162,6 +162,7 @@ func loadAppConfigFromYaml(name string) (model.Application, error) {
 
 	if _, statErr := os.Lstat(filePath); os.IsNotExist(statErr) {
 		fmt.Println("找不到配置文件" + name + "，创建默认配置。")
+		invalidateFileCache(name)
 		var createErr error
 		result, createErr = initAppConfig(filePath)
 		if createErr != nil {
@@ -170,11 +171,11 @@ func loadAppConfigFromYaml(name string) (model.Application, error) {
 		return result, nil
 	}
 	// Configuration/version checks must observe external edits, especially downgrades.
-	configFile, err := readFile(filePath)
+	configFile, err := readFreshAppConfig(filePath)
 	if err != nil {
 		return result, fmt.Errorf("读取配置文件 %s: %w", name, err)
 	}
-	_, result, parseErr := readConfigDocument(configFile)
+	result, parseErr := parsedApp(configFile)
 	if parseErr != nil {
 		return result, fmt.Errorf("解析配置文件 %s 错误，请检查配置文件内容: %w", name, parseErr)
 	}

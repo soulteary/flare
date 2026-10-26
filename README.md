@@ -6,7 +6,9 @@
 
 Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.
 
-🚧 **Code is being prepared and refactored, commits are slow.**
+The latest stable release is [**0.6.5**](https://github.com/soulteary/flare/releases/tag/0.6.5),
+including the search, navigation editor and layout controls described in the
+[documentation index](docs/README.md).
 
 ## Feature
 
@@ -24,23 +26,27 @@ The editor includes browser HTML and native Flare YAML import/export, with
 preview, duplicate handling, conflict detection, and automatic pre-import backups.
 See [Bookmark transfer](docs/bookmark-transfer.md) for usage and limits.
 
-## ScreenShot
+## Screenshots
 
-TBD
+See the [deployment screenshots](https://github.com/soulteary/docker-flare#快速上手).
+See the [English and Chinese editor screenshots](docs/screenshots/README.md) for
+the editor shipped in 0.6.5; older deployment screenshots show the earlier UI.
 
 ## Documentation
 
-TBD
-
-- Browse automatically generated program documentation:
-    - `godoc --http=localhost:8080`
+Start with the [documentation index](docs/README.md), including configuration,
+backup/restore, reverse proxies, development builds and release availability.
 
 ### Build and HTTP behavior
 
 ```sh
-go run .
-go build -o flare .
+go run build/build.go
+go build -o /tmp/flare .
+/tmp/flare
 ```
+
+Generate resources after a clean checkout or changes under `embed/`; see
+[build and test instructions](docs/development.md).
 
 All normal builds, container builds and tests use Fiber on its native fasthttp
 listener. The migration keeps Gorilla signed session cookies, direct TLS and
@@ -70,8 +76,8 @@ Echo is no longer part of the production dependency graph. See
 Published stable versions are available from both registries:
 
 ```sh
-docker pull soulteary/flare:0.6.4
-docker pull ghcr.io/soulteary/flare:0.6.4
+docker pull soulteary/flare:0.6.5
+docker pull ghcr.io/soulteary/flare:0.6.5
 ```
 
 Both images support `linux/amd64`, `linux/arm64`, `linux/arm/v7`, and
