@@ -170,8 +170,10 @@
     busy(true);setStatus(t('editor.saving'));let message=t('editor.all_changes_saved'),error=false, responseParsed=false, serverInvalid=null;
     try {
       const response=await fetch('/editor/document',{method:'POST',headers:{'Content-Type':'application/json','X-Flare-Editor':'1'},body:JSON.stringify(store.toJSON()),signal:AbortSignal.timeout(30000)});
-      if(response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('editor.your_session_may_have_expired_sign_in_in_another'));
+      if(response.redirected)throw Error(t('editor.your_session_may_have_expired_sign_in_in_another'));
+      if(!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('editor.unexpected_save_response',{status:response.status}));
       const result=await response.json();responseParsed=true;
+      if(!response.ok&&result.code==='write_source_rejected')throw Error(t('editor.write_source_rejected'));
       if(!response.ok){if(result.recoveryRequired){recoveryRequired=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(response.status===409){conflict=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(result.field)serverInvalid=result;throw Error(result.error||t('editor.save_failed_please_retry'));}
       if(!result.saved||!result.document)throw Error(t('editor.the_save_response_is_incomplete_check_the_data_before'));
       store.accept(result.document);batch?.refresh();undo=null;conflict=false;$('export-draft').hidden=true;$('reload-data').hidden=true;render();

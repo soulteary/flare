@@ -50,6 +50,30 @@ test('mobile editor preserves focus and drafts when save outcome is unknown',asy
   const dimensions=await page.evaluate(()=>({padding:parseFloat(getComputedStyle(document.querySelector('.shell')).paddingBottom),bar:document.querySelector('.savebar').getBoundingClientRect().height,scroll:document.documentElement.scrollWidth,width:document.documentElement.clientWidth}));
   assert.ok(dimensions.padding>=dimensions.bar+23,JSON.stringify(dimensions));assert.ok(dimensions.scroll<=dimensions.width+1,JSON.stringify(dimensions));
   await page.unroute('**/editor/document');
+  // Rejected writes and proxy error pages must not be reported as expired sessions.
+  for(const response of [
+   {status:403,contentType:'application/json',body:JSON.stringify({code:'write_source_rejected',error:'Origin rejected'})},
+   {status:403,contentType:'text/plain',body:'Write request rejected. Use the Flare page on this origin and retry.'},
+   {status:502,contentType:'text/html',body:'<h1>Bad gateway</h1>'},
+  ]){
+   await page.route('**/editor/document',route=>route.request().method()==='POST'?route.fulfill(response):route.continue());
+   await page.locator('#save-changes').click();
+   const expected=response.contentType==='application/json'?'来源校验':`HTTP ${response.status}`;
+   await page.waitForFunction(text=>document.getElementById('save-status').textContent.includes(text),expected);
+   const message=await page.locator('#save-status').textContent();assert.doesNotMatch(message,/登录可能已过期/);
+   if(response.contentType==='application/json')assert.match(message,/Host.*外部端口/);
+   assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.dirty),true);
+   assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.toJSON().version),'initial');
+   assert.equal(await page.locator('#save-changes').isEnabled(),true);
+   assert.equal(await page.getByRole('button',{name:'Added',exact:true}).count(),1);
+   await page.unroute('**/editor/document');
+  }
+  // A genuine authentication redirect still receives the session guidance.
+  await page.route('**/editor/document',route=>route.request().method()==='POST'?route.fulfill({status:302,headers:{location:'/editor'}}):route.continue());
+  await page.locator('#save-changes').click();
+  await page.waitForFunction(()=>document.getElementById('save-status').textContent.includes('登录可能已过期'));
+  assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.dirty),true);
+  await page.unroute('**/editor/document');
   await page.route('**/editor/document',route=>route.request().method()==='POST'?route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({saved:false,field:'apps.1.Name',error:'Server rejected name'})}):route.continue());
   await page.locator('#save-changes').click();await page.waitForFunction(()=>document.getElementById('entry-dialog').open);
   assert.equal(await page.evaluate(()=>document.activeElement.id),'entry-name');assert.match(await page.locator('#error-name').textContent(),/Server rejected name/);

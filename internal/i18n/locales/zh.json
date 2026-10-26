@@ -446,5 +446,7 @@
   "transfer.depth_limit": "目录深度不能超过 32",
   "transfer.merged_item_limit": "合并后最多支持 20000 个书签或分类",
   "transfer.invalid_collection": "无效的数据类型",
-  "transfer.unknown_error": "操作失败，请检查文件和选项，或查看服务日志。"
+  "transfer.unknown_error": "操作失败，请检查文件和选项，或查看服务日志。",
+  "editor.write_source_rejected": "保存请求未通过来源校验。请从当前 Flare 页面重试；使用反向代理时，请保留原始 Host 请求头及外部端口。关闭登录不会关闭来源校验。",
+  "editor.unexpected_save_response": "保存响应格式异常（HTTP {status}），请检查服务端或反向代理配置。"
 }

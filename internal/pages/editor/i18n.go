@@ -7,6 +7,9 @@ import (
 )
 
 var editorMessages = map[string]string{
+	"保存请求未通过来源校验。请从当前 Flare 页面重试；使用反向代理时，请保留原始 Host 请求头及外部端口。关闭登录不会关闭来源校验。": "editor.write_source_rejected",
+	"保存响应格式异常（HTTP {status}），请检查服务端或反向代理配置。":                                "editor.unexpected_save_response",
+
 	"编辑器已升级，请先保留当前内容，再刷新页面后重新编辑。":     "editor.the_editor_was_upgraded_keep_your_pending_edits_then",
 	"无法读取导航数据，请检查配置文件及日志。":            "editor.cannot_read_navigation_data_check_the_configuration_files_and",
 	"请从 Flare 编辑器保存":                  "editor.save_from_the_flare_editor",

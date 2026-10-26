@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,6 +13,7 @@ import (
 func TestWriteSourceProtection(t *testing.T) {
 	for _, tc := range []struct {
 		name, origin, referer, site string
+		host                        string
 		want                        int
 	}{
 		{name: "headerless API", want: 200},
@@ -25,6 +27,8 @@ func TestWriteSourceProtection(t *testing.T) {
 		{name: "origin userinfo", origin: "http://user@flare.example:8080", want: 403},
 		{name: "origin path", origin: "http://flare.example:8080/path", want: 403},
 		{name: "wrong public port", origin: "http://flare.example", want: 403},
+		{name: "proxy rewrites host", host: "flare:5005", origin: "https://flare.example:8080", site: "same-origin", want: 403},
+		{name: "proxy drops public port", host: "flare.example", origin: "https://flare.example:8080", site: "same-origin", want: 403},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			writes := 0
@@ -32,6 +36,9 @@ func TestWriteSourceProtection(t *testing.T) {
 			app.Use(protectWriteSource)
 			app.Post("/write", func(c fiber.Ctx) error { writes++; return c.SendStatus(200) })
 			req := httptest.NewRequest("POST", "http://flare.example:8080/write", strings.NewReader("value=x"))
+			if tc.host != "" {
+				req.Host = tc.host
+			}
 			if tc.origin != "" {
 				req.Header.Set("Origin", tc.origin)
 			}
@@ -41,7 +48,8 @@ func TestWriteSourceProtection(t *testing.T) {
 			if tc.site != "" {
 				req.Header.Set("Sec-Fetch-Site", tc.site)
 			}
-			req.Header.Set("X-Forwarded-Host", "evil.example")
+			// Even a matching forwarded public host must not bypass the actual Host check.
+			req.Header.Set("X-Forwarded-Host", "flare.example:8080")
 			res, err := app.Test(req)
 			if err != nil {
 				t.Fatal(err)
@@ -49,6 +57,15 @@ func TestWriteSourceProtection(t *testing.T) {
 			defer res.Body.Close()
 			if res.StatusCode != tc.want || (tc.want == 403 && writes != 0) {
 				t.Fatalf("status=%d writes=%d", res.StatusCode, writes)
+			}
+			if tc.want == 403 {
+				var result struct{ Code, Error string }
+				if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+					t.Fatal(err)
+				}
+				if result.Code != "write_source_rejected" || !strings.Contains(result.Error, "Host header including the public port") {
+					t.Fatalf("unexpected rejection: %+v", result)
+				}
 			}
 		})
 	}

@@ -446,5 +446,7 @@
   "transfer.depth_limit": "Folder depth must not exceed 32.",
   "transfer.merged_item_limit": "The merged collection must not exceed 20,000 bookmarks or categories.",
   "transfer.invalid_collection": "Invalid collection.",
-  "transfer.unknown_error": "Operation failed. Check the file and options, or consult the server logs."
+  "transfer.unknown_error": "Operation failed. Check the file and options, or consult the server logs.",
+  "editor.write_source_rejected": "The save request was rejected by origin protection. Retry from this Flare page. If using a reverse proxy, preserve the original Host header including the public port. Disabling login does not disable origin protection.",
+  "editor.unexpected_save_response": "Unexpected save response (HTTP {status}). Check the server or reverse proxy configuration."
 }
