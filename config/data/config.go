@@ -8,8 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 
-	yaml3 "go.yaml.in/yaml/v3"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/soulteary/flare/config/model"
 )
@@ -133,7 +132,7 @@ func saveAppConfigToYamlFile(name string, result model.Application) bool {
 		return false
 	}
 	result.AppVersion = writer
-	var patch yaml3.Node
+	var patch yaml.Node
 	if err = patch.Encode(result); err != nil {
 		return false
 	}
@@ -142,10 +141,10 @@ func saveAppConfigToYamlFile(name string, result model.Application) bool {
 	}
 	// Explicitly clear a previous structured location when a legacy API replaces it.
 	if original.WeatherLocation != nil && result.WeatherLocation == nil {
-		patch.Content = append(patch.Content, &yaml3.Node{Kind: yaml3.ScalarNode, Tag: "!!str", Value: "WeatherLocation"}, &yaml3.Node{Kind: yaml3.ScalarNode, Tag: "!!null", Value: "null"})
+		patch.Content = append(patch.Content, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: "WeatherLocation"}, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!null", Value: "null"})
 	}
 	mergeSearchNodes(doc.Content[0], &patch)
-	out, err := yaml3.Marshal(doc)
+	out, err := yaml.Marshal(doc)
 	if err != nil {
 		return false
 	}

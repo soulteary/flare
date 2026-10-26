@@ -22,7 +22,7 @@ import (
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/bookmarks"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v3"
 )
 
 const transferPath = "/editor/transfer"

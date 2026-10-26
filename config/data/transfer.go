@@ -13,7 +13,8 @@ import (
 	"time"
 
 	"github.com/soulteary/flare/config/model"
-	"gopkg.in/yaml.v2"
+	"github.com/soulteary/flare/internal/yamlutil"
+	"go.yaml.in/yaml/v3"
 )
 
 // All in-process bookmark writers share this lock, including the legacy editor.
@@ -55,7 +56,7 @@ func BookmarkSnapshot(name string) (model.Bookmarks, string, error) {
 		return model.Bookmarks{}, "", err
 	}
 	var src model.Bookmarks
-	if err = yaml.UnmarshalStrict(raw, &src); err != nil {
+	if err = yamlutil.UnmarshalStrict(raw, &src); err != nil {
 		return src, "", err
 	}
 	return src, bookmarkVersion(raw), nil

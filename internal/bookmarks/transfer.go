@@ -11,8 +11,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/yamlutil"
 	xhtml "golang.org/x/net/html"
-	"gopkg.in/yaml.v2"
 )
 
 // Parse reads browser HTML or the existing Flare YAML schema.
@@ -25,7 +25,7 @@ func Parse(raw []byte, format string) ([]Entry, error) {
 		return parseHTML(raw)
 	case "yaml":
 		var src model.Bookmarks
-		if err := yaml.UnmarshalStrict(raw, &src); err != nil {
+		if err := yamlutil.UnmarshalStrict(raw, &src); err != nil {
 			return nil, fmt.Errorf("无效的 Flare YAML: %w", err)
 		}
 		if src.Items == nil {
