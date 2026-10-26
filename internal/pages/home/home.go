@@ -20,6 +20,7 @@ import (
 	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/pool"
 	searchcore "github.com/soulteary/flare/internal/search"
+	weatherui "github.com/soulteary/flare/internal/settings/weather"
 	weatherip "github.com/soulteary/funny-china-weather"
 )
 
@@ -131,7 +132,7 @@ func renderHelp(c fiber.Ctx) error {
 	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && configWeatherShow && weatherData.Location != ""
 	m["Location"] = options.Location
 	m["WeatherData"] = weatherData
-	m["WeatherIcon"] = weatherip.GetSVGCodeByName(weatherData.ConditionCode)
+	m["WeatherIcon"] = weatherui.IconHTML(weatherData.ConditionCode)
 	m["Greetings"] = i18n.T(locale, "page_help")
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
@@ -297,7 +298,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && configWeatherShow && weatherData.Location != ""
 	m["Location"] = options.Location
 	m["WeatherData"] = weatherData
-	m["WeatherIcon"] = weatherip.GetSVGCodeByName(weatherData.ConditionCode)
+	m["WeatherIcon"] = weatherui.IconHTML(weatherData.ConditionCode)
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
