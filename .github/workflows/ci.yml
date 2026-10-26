@@ -84,6 +84,8 @@ jobs:
 
   test:
     name: Test & Coverage
+    env:
+      COVERAGE_THRESHOLD: "85"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -107,7 +109,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+          go test -v -race -count=1 -coverpkg=./... -coverprofile=coverage.out -covermode=atomic ./...
 
         if: "!(github.event_name == 'pull_request')"
       - name: Remove stale generated report evidence
@@ -126,7 +128,8 @@ jobs:
           directory: "."
           packages: "./..."
           race: "true"
-          coverage_threshold: "0"
+          coverage_threshold: ${{ env.COVERAGE_THRESHOLD }}
+          cover_pkg: "./..."
           test_args: "-count=1"
           version: "v1.1.2"
           cover_mode: "atomic"
@@ -166,7 +169,7 @@ jobs:
           name: coverage-report
           path: coverage.html
 
-      # 在仓库 Variables 或 job env 中设置 COVERAGE_THRESHOLD（如 50）可强制最低覆盖率
+      # Keep push and PR coverage on the same all-package instrumentation and gate.
       - name: Check coverage threshold
         run: |
           COVER=$(go tool cover -func=coverage.out | grep 'total:' | awk '{gsub(/%/,""); print $3}')
@@ -176,8 +179,6 @@ jobs:
             echo "Coverage ${COVER}% is below threshold ${THRESHOLD}%"
             exit 1
           fi
-        env:
-          COVERAGE_THRESHOLD: "0"
       - name: Upload read-only PR quality evidence
         if: "always() && steps.report_cleanup.outcome == 'success' && ((github.event_name == 'pull_request'))"
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
