@@ -3,11 +3,14 @@
 > Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
 
 Appearance settings offer a sequential single-column layout (the default) and
-opt-in compact columns on 360–768 CSS-pixel viewports. Compact columns read down
+opt-in compact columns on 360–599 CSS-pixel phone viewports. Compact columns read down
 the first column and then down the second; a bookmark group is kept together.
 Below 360px the layout falls back to a single column. Neither option changes the
-saved category order. Mobile layout choices do not change desktop layout; desktop
-column limits are configured separately.
+saved category order. At 600 CSS pixels and above, bookmark groups automatically
+form multiple columns
+with a preferred minimum width of 11.25rem and a default maximum of four columns.
+The 768px boundary no longer switches bookmarks to a single column. Mobile layout
+choices only affect phones; desktop column limits still apply from 769px.
 
 Long greetings and weather now use natural wrapping at all viewport widths,
 including tablet widths and desktop zoom. Physical Safari/Via font scaling and
@@ -22,7 +25,10 @@ FLARE_BINARY=/tmp/flare-layout node tests/mobile/layout.browser.cjs
 ```
 
 The browser suite checks compact columns, the narrow-screen fallback, breakpoint
-boundaries and DOM category order. Configuration and HTTP tests reject invalid
+boundaries and DOM category order. Run `node tests/mobile/bookmark-columns.browser.cjs`
+to check default/compact layouts, tablet column counts, constrained content widths,
+and category navigation across the 599/600 and 767/768/769 boundaries.
+Configuration and HTTP tests reject invalid
 choices without writing and preserve saved choices when an older form omits them.
 
 ## Readability
