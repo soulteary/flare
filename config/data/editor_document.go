@@ -122,28 +122,7 @@ func ValidateEditorDocument(doc EditorDocument) error {
 		}
 		ids[c.ID], names[name] = true, true
 	}
-	for _, group := range []struct {
-		name  string
-		items []model.Bookmark
-	}{{"apps", doc.Apps}, {"bookmarks", doc.Bookmarks}} {
-		for i, b := range group.items {
-			field := fmt.Sprintf("%s.%d", group.name, i)
-			if strings.TrimSpace(b.Name) == "" {
-				return invalid(field+".Name", "请填写名称")
-			}
-			if strings.TrimSpace(b.URL) == "" {
-				return invalid(field+".URL", "请填写地址")
-			}
-			// Preserve existing custom schemes, intranet URLs and their exact encoding.
-			if group.name == "apps" && b.Category != "" {
-				return invalid(field+".Category", "应用不能引用书签分类")
-			}
-			if group.name == "bookmarks" && b.Category != "" && !ids[b.Category] {
-				return invalid(field+".Category", "书签引用的分类不存在，请选择有效位置")
-			}
-		}
-	}
-	return nil
+	return validateEditorBookmarks(doc, ids)
 }
 
 // CommitEditorDocument prepares both files and recovery copies before replacing
@@ -172,59 +151,18 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	if appsUnchanged && bookmarksUnchanged {
 		return before, nil
 	}
-	output := [2][]byte{}
-	output[0], err = yaml.Marshal(model.Bookmarks{Items: next.Apps})
+	output, err := encodeEditorFiles(next, raw, appsUnchanged, bookmarksUnchanged)
 	if err != nil {
 		return EditorDocument{}, err
-	}
-	output[1], err = yaml.Marshal(model.Bookmarks{Categories: next.Categories, Items: next.Bookmarks})
-	if err != nil {
-		return EditorDocument{}, err
-	}
-	if appsUnchanged {
-		output[0] = raw[0]
-	}
-	if bookmarksUnchanged {
-		output[1] = raw[1]
-	}
-	type stagedFile struct {
-		name, path, stage string
-		original, next    []byte
-		mode              os.FileMode
 	}
 	files := []*stagedFile{
 		{name: "apps", original: raw[0], next: output[0]},
 		{name: "bookmarks", original: raw[1], next: output[1]},
 	}
+	defer cleanupEditorStages(files)
 	for _, file := range files {
-		file.path = getConfigPath(file.name)
-		info, statErr := os.Lstat(file.path)
-		if statErr != nil {
-			return EditorDocument{}, statErr
-		}
-		if !info.Mode().IsRegular() {
-			return EditorDocument{}, fmt.Errorf("配置目标不是普通文件：%s", file.name)
-		}
-		file.mode = info.Mode().Perm()
-		f, stageErr := os.CreateTemp(filepath.Dir(file.path), ".flare-editor-stage-*")
-		if stageErr != nil {
-			return EditorDocument{}, stageErr
-		}
-		file.stage = f.Name()
-		defer func(path string) { _ = os.Remove(path) }(file.stage)
-		stageErr = f.Chmod(file.mode)
-		if stageErr == nil {
-			_, stageErr = f.Write(file.next)
-		}
-		if stageErr == nil {
-			stageErr = f.Sync()
-		}
-		closeErr := f.Close()
-		if stageErr == nil {
-			stageErr = closeErr
-		}
-		if stageErr != nil {
-			return EditorDocument{}, stageErr
+		if err := stageEditorFile(file); err != nil {
+			return EditorDocument{}, err
 		}
 	}
 	// Disk versions are checked again after staging, so edits during preparation
@@ -236,45 +174,12 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	if check.Version != next.Version {
 		return EditorDocument{}, ErrBookmarkConflict
 	}
-	recoveryRoot := filepath.Join(filepath.Dir(getConfigPath("apps")), ".flare-editor-recovery")
-	if err = os.MkdirAll(recoveryRoot, 0700); err != nil {
-		return EditorDocument{}, err
-	}
-	info, err := os.Lstat(recoveryRoot)
+	recovery, err := prepareEditorRecovery(files)
 	if err != nil {
 		return EditorDocument{}, err
 	}
-	if !info.IsDir() {
-		return EditorDocument{}, errors.New("恢复目录无效")
-	}
-	recovery, err := os.MkdirTemp(recoveryRoot, "save-")
-	if err != nil {
+	if err := replaceEditorFiles(files, recovery, rename); err != nil {
 		return EditorDocument{}, err
-	}
-	for _, file := range files {
-		if err = atomicBookmarkWrite(filepath.Join(recovery, file.name+".yml"), file.original, 0600); err != nil {
-			return EditorDocument{}, err
-		}
-	}
-	// Keep completed replacements themselves, rather than indexing parallel
-	// arrays. The rollback list contains only files actually replaced.
-	var replaced []*stagedFile
-	for _, file := range files {
-		if err = rename(file.stage, file.path); err != nil {
-			var restoreErrors []error
-			for _, written := range replaced {
-				if restoreErr := atomicBookmarkWrite(written.path, written.original, written.mode); restoreErr != nil {
-					restoreErrors = append(restoreErrors, restoreErr)
-				}
-			}
-			invalidateFileCache("apps")
-			invalidateFileCache("bookmarks")
-			if len(restoreErrors) > 0 {
-				return EditorDocument{}, &EditorSaveError{RecoveryPath: recovery, RecoveryRequired: true, Cause: errors.Join(append([]error{err}, restoreErrors...)...)}
-			}
-			return EditorDocument{}, &EditorSaveError{RecoveryPath: recovery, Cause: err}
-		}
-		replaced = append(replaced, file)
 	}
 	invalidateFileCache("apps")
 	invalidateFileCache("bookmarks")
@@ -310,4 +215,145 @@ func EditorRecoveryDirectories() ([]string, error) {
 	}
 	sort.Strings(paths)
 	return paths, nil
+}
+
+func validateEditorBookmarks(doc EditorDocument, ids map[string]bool) error {
+	invalid := func(field, message string) error { return &EditorValidationError{field, message} }
+	for _, group := range []struct {
+		name  string
+		items []model.Bookmark
+	}{{"apps", doc.Apps}, {"bookmarks", doc.Bookmarks}} {
+		for i, b := range group.items {
+			field := fmt.Sprintf("%s.%d", group.name, i)
+			if strings.TrimSpace(b.Name) == "" {
+				return invalid(field+".Name", "请填写名称")
+			}
+			if strings.TrimSpace(b.URL) == "" {
+				return invalid(field+".URL", "请填写地址")
+			}
+			// Preserve existing custom schemes, intranet URLs and their exact encoding.
+			if group.name == "apps" && b.Category != "" {
+				return invalid(field+".Category", "应用不能引用书签分类")
+			}
+			if group.name == "bookmarks" && b.Category != "" && !ids[b.Category] {
+				return invalid(field+".Category", "书签引用的分类不存在，请选择有效位置")
+			}
+		}
+	}
+	return nil
+}
+
+type stagedFile struct {
+	name, path, stage string
+	original, next    []byte
+	mode              os.FileMode
+}
+
+func stageEditorFile(file *stagedFile) error {
+	file.path = getConfigPath(file.name)
+	info, statErr := os.Lstat(file.path)
+	if statErr != nil {
+		return statErr
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("配置目标不是普通文件：%s", file.name)
+	}
+	file.mode = info.Mode().Perm()
+	f, stageErr := os.CreateTemp(filepath.Dir(file.path), ".flare-editor-stage-*")
+	if stageErr != nil {
+		return stageErr
+	}
+	file.stage = f.Name()
+	stageErr = f.Chmod(file.mode)
+	if stageErr == nil {
+		_, stageErr = f.Write(file.next)
+	}
+	if stageErr == nil {
+		stageErr = f.Sync()
+	}
+	closeErr := f.Close()
+	if stageErr == nil {
+		stageErr = closeErr
+	}
+	if stageErr != nil {
+		return stageErr
+	}
+	return nil
+}
+
+func prepareEditorRecovery(files []*stagedFile) (string, error) {
+	recoveryRoot := filepath.Join(filepath.Dir(getConfigPath("apps")), ".flare-editor-recovery")
+	if err := os.MkdirAll(recoveryRoot, 0700); err != nil {
+		return "", err
+	}
+	info, err := os.Lstat(recoveryRoot)
+	if err != nil {
+		return "", err
+	}
+	if !info.IsDir() {
+		return "", errors.New("恢复目录无效")
+	}
+	recovery, err := os.MkdirTemp(recoveryRoot, "save-")
+	if err != nil {
+		return "", err
+	}
+	for _, file := range files {
+		if err := atomicBookmarkWrite(filepath.Join(recovery, file.name+".yml"), file.original, 0600); err != nil {
+			return "", err
+		}
+	}
+
+	return recovery, nil
+}
+
+func replaceEditorFiles(files []*stagedFile, recovery string, rename func(string, string) error) error {
+	// Keep completed replacements themselves, rather than indexing parallel
+	// arrays. The rollback list contains only files actually replaced.
+	var replaced []*stagedFile
+	for _, file := range files {
+		if err := rename(file.stage, file.path); err != nil {
+			var restoreErrors []error
+			for _, written := range replaced {
+				if restoreErr := atomicBookmarkWrite(written.path, written.original, written.mode); restoreErr != nil {
+					restoreErrors = append(restoreErrors, restoreErr)
+				}
+			}
+			invalidateFileCache("apps")
+			invalidateFileCache("bookmarks")
+			if len(restoreErrors) > 0 {
+				return &EditorSaveError{RecoveryPath: recovery, RecoveryRequired: true, Cause: errors.Join(append([]error{err}, restoreErrors...)...)}
+			}
+			return &EditorSaveError{RecoveryPath: recovery, Cause: err}
+		}
+		replaced = append(replaced, file)
+	}
+	return nil
+}
+
+func encodeEditorFiles(next EditorDocument, raw [2][]byte, appsUnchanged, bookmarksUnchanged bool) ([2][]byte, error) {
+	output := [2][]byte{}
+	var err error
+	output[0], err = yaml.Marshal(model.Bookmarks{Items: next.Apps})
+	if err != nil {
+		return output, err
+	}
+	output[1], err = yaml.Marshal(model.Bookmarks{Categories: next.Categories, Items: next.Bookmarks})
+	if err != nil {
+		return output, err
+	}
+	if appsUnchanged {
+		output[0] = raw[0]
+	}
+	if bookmarksUnchanged {
+		output[1] = raw[1]
+	}
+	return output, nil
+}
+
+func cleanupEditorStages(files []*stagedFile) {
+	for _, file := range files {
+		if file.stage != "" {
+			_ = os.Remove(file.stage)
+		}
+	}
 }

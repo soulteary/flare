@@ -65,28 +65,11 @@ func NewFiberWithConfig(logger *slog.Logger, config LoggerConfig) fiber.Handler 
 		path := c.Path()
 		query := c.Request().URI().QueryString()
 		err := c.Next()
-		status := c.Response().StatusCode()
-		if err != nil {
-			// Fiber resolves returned errors after middleware unwinds. Unlike
-			// net/http, its buffered response has not been committed at this point.
-			status = http.StatusInternalServerError
-			var httpErr *fiber.Error
-			if errors.As(err, &httpErr) && httpErr != nil {
-				status = httpErr.Code
-			}
-		}
+		status := requestStatus(c, err)
 		if err == nil && status < http.StatusBadRequest && (accessLog == "errors" || skip) {
 			return nil
 		}
-		var params map[string]string
-		if err != nil || status >= http.StatusBadRequest {
-			if names := c.Route().Params; len(names) > 0 {
-				params = make(map[string]string, len(names))
-				for _, name := range names {
-					params[strings.Clone(name)] = strings.Clone(c.Params(name))
-				}
-			}
-		}
+		params := requestParams(c, err, status)
 		attrs := acquireRequestAttrs(&requestAttrsPool)
 		// Fiber strings can alias pooled request buffers. Copy every retained
 		// string before the successful request log moves to its goroutine.
@@ -108,12 +91,7 @@ func NewFiberWithConfig(logger *slog.Logger, config LoggerConfig) fiber.Handler 
 			slog.Duration("latency", time.Since(start)),
 			slog.Int("status", status),
 		)
-		level, message := slog.LevelInfo, "REQUEST"
-		if status >= http.StatusBadRequest && status < http.StatusInternalServerError {
-			level = slog.LevelWarn
-		} else if status >= http.StatusInternalServerError || err != nil {
-			level = slog.LevelError
-		}
+		level, message := requestLogLevel(status, err), "REQUEST"
 		if err != nil {
 			message = err.Error()
 			*attrs = append(*attrs, slog.Any("error", err))
@@ -139,4 +117,41 @@ func NewFiberWithConfig(logger *slog.Logger, config LoggerConfig) fiber.Handler 
 func DefaultRequestLogSkipper(c fiber.Ctx) bool {
 	path := c.Path()
 	return path == "/ping" || path == "/favicon.ico" || strings.HasPrefix(path, "/assets/") || strings.HasPrefix(path, "/redir/")
+}
+
+func requestStatus(c fiber.Ctx, err error) int {
+	status := c.Response().StatusCode()
+	if err != nil {
+		// Fiber resolves returned errors after middleware unwinds. Unlike
+		// net/http, its buffered response has not been committed at this point.
+		status = http.StatusInternalServerError
+		var httpErr *fiber.Error
+		if errors.As(err, &httpErr) && httpErr != nil {
+			status = httpErr.Code
+		}
+	}
+	return status
+}
+
+func requestParams(c fiber.Ctx, err error, status int) map[string]string {
+	var params map[string]string
+	if err != nil || status >= http.StatusBadRequest {
+		if names := c.Route().Params; len(names) > 0 {
+			params = make(map[string]string, len(names))
+			for _, name := range names {
+				params[strings.Clone(name)] = strings.Clone(c.Params(name))
+			}
+		}
+	}
+	return params
+}
+
+func requestLogLevel(status int, err error) slog.Level {
+	level := slog.LevelInfo
+	if status >= http.StatusBadRequest && status < http.StatusInternalServerError {
+		level = slog.LevelWarn
+	} else if status >= http.StatusInternalServerError || err != nil {
+		level = slog.LevelError
+	}
+	return level
 }

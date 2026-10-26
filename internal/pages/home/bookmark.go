@@ -52,41 +52,7 @@ func generateBookmarkNavigation(filter, selected, path string, options *model.Ap
 	}
 
 	if len(bookmarksData.Categories) > 0 {
-		mode := "all"
-		if options.Homepage != nil && options.Homepage.CategoryNavigation != "" {
-			mode = options.Homepage.CategoryNavigation
-		}
-		valid := false
-		for _, category := range bookmarksData.Categories {
-			if category.ID == selected {
-				valid = true
-			}
-		}
-		if !valid || mode != "tabs" {
-			selected = ""
-		}
-		if mode == "tabs" {
-			renderCategoryNavigation(b, bookmarksData.Categories, selected, filter, path, options.Locale)
-		}
-		defaultCategory := bookmarksData.Categories[0]
-		// Group once before rendering. Default-placement entries follow the first
-		// named group; unknown IDs remain absent, matching the existing behavior.
-		groups := make(map[string][]model.Bookmark, len(bookmarksData.Categories))
-		for _, bookmark := range bookmarks {
-			id := bookmark.Category
-			if id == "" {
-				id = defaultCategory.ID
-			}
-			groups[id] = append(groups[id], bookmark)
-		}
-		for _, category := range bookmarksData.Categories {
-			if selected != "" && category.ID != selected {
-				continue
-			}
-			categoryCopy := category
-			items := groups[category.ID]
-			renderBookmarksWithCategoriesForRequest(b, &items, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, firstRequestInfo(requestInfo), mode == "collapse" && filter == "")
-		}
+		renderBookmarkGroups(b, bookmarksData.Categories, bookmarks, selected, filter, path, options, firstRequestInfo(requestInfo))
 	} else {
 		renderBookmarksWithoutCategories(b, &bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, firstRequestInfo(requestInfo))
 	}
@@ -204,4 +170,42 @@ func renderCategoryNavigation(b *strings.Builder, categories []model.Category, s
 		b.WriteString(`</a>`)
 	}
 	b.WriteString(`</nav>`)
+}
+
+func renderBookmarkGroups(b *strings.Builder, categories []model.Category, bookmarks []model.Bookmark, selected, filter, path string, options *model.Application, info *fn.DynamicURL) {
+	mode := "all"
+	if options.Homepage != nil && options.Homepage.CategoryNavigation != "" {
+		mode = options.Homepage.CategoryNavigation
+	}
+	valid := false
+	for _, category := range categories {
+		if category.ID == selected {
+			valid = true
+		}
+	}
+	if !valid || mode != "tabs" {
+		selected = ""
+	}
+	if mode == "tabs" {
+		renderCategoryNavigation(b, categories, selected, filter, path, options.Locale)
+	}
+	defaultCategory := categories[0]
+	// Group once before rendering. Default-placement entries follow the first
+	// named group; unknown IDs remain absent, matching the existing behavior.
+	groups := make(map[string][]model.Bookmark, len(categories))
+	for _, bookmark := range bookmarks {
+		id := bookmark.Category
+		if id == "" {
+			id = defaultCategory.ID
+		}
+		groups[id] = append(groups[id], bookmark)
+	}
+	for _, category := range categories {
+		if selected != "" && category.ID != selected {
+			continue
+		}
+		categoryCopy := category
+		items := groups[category.ID]
+		renderBookmarksWithCategoriesForRequest(b, &items, &categoryCopy, &defaultCategory, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, info, mode == "collapse" && filter == "")
+	}
 }

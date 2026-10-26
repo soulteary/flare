@@ -1,31 +1,31 @@
-.app-content-uppercase #container-bookmakrs .bookmark-group-container h3.bookmark-group-title {
+.app-content-uppercase #container-bookmarks .bookmark-group-container h3.bookmark-group-title {
   text-transform: uppercase;
 }
 
-#container-bookmakrs .bookmark-group-container h3.bookmark-group-title {
+#container-bookmarks .bookmark-group-container h3.bookmark-group-title {
   color: var(--color-accent);
   margin-bottom: 10px;
   font-size: 16px;
   font-weight: 400;
 }
 
-#container-bookmakrs .bookmark-group-container {
+#container-bookmarks .bookmark-group-container {
   display: inline-block;
   width: 23.99%;
 }
 
-#container-bookmakrs .bookmark-group-container h3{
+#container-bookmarks .bookmark-group-container h3{
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-#container-bookmakrs .bookmark-group-container .bookmark-list {
+#container-bookmarks .bookmark-group-container .bookmark-list {
   list-style: none;
   margin: 5px 0;
 }
 
-#container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark {
+#container-bookmarks .bookmark-group-container .bookmark-list a.bookmark {
   line-height: 2;
   transition: all 0.25s;
 
@@ -36,62 +36,62 @@
 }
 
 
-#container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark:hover {
+#container-bookmarks .bookmark-group-container .bookmark-list a.bookmark:hover {
   text-decoration: underline;
   padding-left: 10px;
   }
 
 
-#container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark img {
+#container-bookmarks .bookmark-group-container .bookmark-list a.bookmark img {
   display: inline-block;
   width: 20px;
   height: 20px;
   color: var(--color-primary);
   vertical-align: middle;
 }
-#container-bookmakrs .bookmark-group-container .bookmark svg,
-#container-bookmakrs .bookmark-group-container .bookmark span {
+#container-bookmarks .bookmark-group-container .bookmark svg,
+#container-bookmarks .bookmark-group-container .bookmark span {
   display: inline;
   vertical-align: middle;
 }
 
-#container-bookmakrs .bookmark-group-container .bookmark span {
+#container-bookmarks .bookmark-group-container .bookmark span {
   margin-left: 4px;
 }
 
-#container-bookmakrs .bookmark-group-container .bookmark svg {
+#container-bookmarks .bookmark-group-container .bookmark svg {
   width: 24px;
 }
 
 /* Phones retain sequential groups; tablets use the available content width. */
 @media (max-width: 599px) {
-  #container-bookmakrs .bookmark-group-container { display: block; float: none; width: 100%; margin-bottom: 20px; }
+  #container-bookmarks .bookmark-group-container { display: block; float: none; width: 100%; margin-bottom: 20px; }
 }
 @media (max-width: 768px) {
-  #container-bookmakrs .bookmark-group-container h3,
-  #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark { white-space: normal; overflow-wrap: anywhere; }
-  #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark { min-height: 44px; padding: 8px 0; line-height: 1.6; }
-  #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark:hover { padding-left: 0; }
+  #container-bookmarks .bookmark-group-container h3,
+  #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark { white-space: normal; overflow-wrap: anywhere; }
+  #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark { min-height: 44px; padding: 8px 0; line-height: 1.6; }
+  #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark:hover { padding-left: 0; }
 }
 
 /* Opt-in newspaper flow preserves DOM order and keeps each group together. */
 @media (min-width: 360px) and (max-width: 599px) {
- .mobile-bookmarks-compact #container-bookmakrs .bookmark-groups { column-count: 2; column-gap: 16px; }
- .mobile-bookmarks-compact #container-bookmakrs .bookmark-group-container { break-inside: avoid; page-break-inside: avoid; }
+ .mobile-bookmarks-compact #container-bookmarks .bookmark-groups { column-count: 2; column-gap: 16px; }
+ .mobile-bookmarks-compact #container-bookmarks .bookmark-group-container { break-inside: avoid; page-break-inside: avoid; }
 }
 /* Four is the default upper bound, rather than a fixed count on narrow tablets. */
 @media (min-width: 600px) {
  body { --desktop-column-width: max(11.25rem, calc((100% - 48px) / 4)); }
- #container-bookmakrs .bookmark-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--desktop-column-width)), 1fr)); gap: 16px; align-items: start; }
- #container-bookmakrs .bookmark-group-container { width: auto; min-width: 0; float: none; }
+ #container-bookmarks .bookmark-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--desktop-column-width)), 1fr)); gap: 16px; align-items: start; }
+ #container-bookmarks .bookmark-group-container { width: auto; min-width: 0; float: none; }
  .bookmark-category-nav { grid-column: 1 / -1; }
 }
 /* Category navigation remains usable without JavaScript. */
 .bookmark-category-nav { display:flex; gap:8px; overflow-x:auto; max-width:100%; padding:8px 0 16px; }
 .bookmark-category-nav a { flex:0 0 auto; min-height:44px; padding:10px 14px; border:1px solid var(--color-accent); border-radius:6px; }
 .bookmark-category-nav a[aria-current="page"] { background:var(--color-accent); color:var(--color-background); }
-#container-bookmakrs .bookmark-collapsible { vertical-align:top; }
-#container-bookmakrs .bookmark-collapsible summary { cursor:pointer; min-height:44px; padding:10px 0; overflow-wrap:anywhere; }
+#container-bookmarks .bookmark-collapsible { vertical-align:top; }
+#container-bookmarks .bookmark-collapsible summary { cursor:pointer; min-height:44px; padding:10px 0; overflow-wrap:anywhere; }
 .bookmark-category-nav a:focus-visible, .bookmark-collapsible summary:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
 
 .bookmark-category-nav { column-span: all; }
@@ -102,17 +102,17 @@
  .desktop-columns-5 { --desktop-column-width: max(11.25rem, calc((100% - 64px) / 5)); }
  .desktop-columns-6 { --desktop-column-width: max(11.25rem, calc((100% - 80px) / 6)); }
  .desktop-columns-8 { --desktop-column-width: max(11.25rem, calc((100% - 112px) / 8)); }
- body[class*="desktop-columns-"]:not(.bookmark-layout-sections) #container-bookmakrs .bookmark-groups,
+ body[class*="desktop-columns-"]:not(.bookmark-layout-sections) #container-bookmarks .bookmark-groups,
  body[class*="desktop-columns-"] #container-apps .apps-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--desktop-column-width)),1fr)); gap:16px; }
- body[class*="desktop-columns-"]:not(.bookmark-layout-sections) #container-bookmakrs .bookmark-group-container,
+ body[class*="desktop-columns-"]:not(.bookmark-layout-sections) #container-bookmarks .bookmark-group-container,
  body[class*="desktop-columns-"] #container-apps .apps-container .app-container { width:auto; min-width:0; float:none; }
  body[class*="desktop-columns-"] .bookmark-category-nav { grid-column:1 / -1; }
 }
 
 /* Each category uses the full width; bookmarks retain row-major DOM order. */
 @media (min-width: 600px) {
- .bookmark-layout-sections #container-bookmakrs .bookmark-groups { display: block; }
- .bookmark-layout-sections #container-bookmakrs .bookmark-group-container { display: block; width: 100%; min-width: 0; float: none; margin-bottom: 24px; }
- .bookmark-layout-sections #container-bookmakrs .bookmark-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--desktop-column-width)), 1fr)); gap: 0 16px; }
- .bookmark-layout-sections #container-bookmakrs .bookmark-list > li { min-width: 0; }
+ .bookmark-layout-sections #container-bookmarks .bookmark-groups { display: block; }
+ .bookmark-layout-sections #container-bookmarks .bookmark-group-container { display: block; width: 100%; min-width: 0; float: none; margin-bottom: 24px; }
+ .bookmark-layout-sections #container-bookmarks .bookmark-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--desktop-column-width)), 1fr)); gap: 0 16px; }
+ .bookmark-layout-sections #container-bookmarks .bookmark-list > li { min-width: 0; }
 }

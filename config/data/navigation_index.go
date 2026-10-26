@@ -44,12 +44,7 @@ func SearchNavigationMatches(query string, showApps, showBookmarks bool, limit i
 	if limit < 1 || limit > 64 {
 		limit = 8
 	}
-	matches := make([]NavigationMatch, 0, limit)
 	query = strings.ToLower(query)
-	type searchCollection struct {
-		snapshot *parsedBookmarks
-		isApp    bool
-	}
 	collections := make([]searchCollection, 0, 2)
 	for _, collection := range []struct {
 		name           string
@@ -65,6 +60,16 @@ func SearchNavigationMatches(query string, showApps, showBookmarks bool, limit i
 		snapshot.prepareSearch(collection.isApp)
 		collections = append(collections, searchCollection{snapshot: snapshot, isApp: collection.isApp})
 	}
+	return collectNavigationMatches(collections, query, limit, resolve, accept), nil
+}
+
+type searchCollection struct {
+	snapshot *parsedBookmarks
+	isApp    bool
+}
+
+func collectNavigationMatches(collections []searchCollection, query string, limit int, resolve func(string) string, accept func(string) bool) []NavigationMatch {
+	matches := make([]NavigationMatch, 0, limit)
 	for _, collection := range collections {
 		snapshot := collection.snapshot
 		for _, entry := range snapshot.search {
@@ -84,9 +89,9 @@ func SearchNavigationMatches(query string, showApps, showBookmarks bool, limit i
 			}
 			matches = append(matches, NavigationMatch{Bookmark: item, URL: link, IsApp: collection.isApp})
 			if len(matches) == limit {
-				return matches, nil
+				return matches
 			}
 		}
 	}
-	return matches, nil
+	return matches
 }

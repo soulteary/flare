@@ -54,116 +54,17 @@ func retainSearchBackupWithWriter(raw []byte, upgrading bool, write func(string,
 	dir := filepath.Join(filepath.Dir(getConfigPath("config")), searchBackupDir)
 	manifestPath := filepath.Join(dir, "manifest.json")
 	state := searchBackupManifest{Owner: "flare-search-backups-v1"}
-	err := os.Mkdir(dir, 0700)
-	if err != nil {
-		if !os.IsExist(err) {
-			return err
-		}
-		info, e := os.Lstat(dir)
-		if e != nil {
-			return e
-		}
-		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 || info.Mode().Perm()&0077 != 0 {
-			return fmt.Errorf("unsafe backup directory")
-		}
-		if e = regularBackupFile(manifestPath); e != nil {
-			return fmt.Errorf("unrecognized backup directory: %w", e)
-		}
-		data, e := readFile(manifestPath)
-		if e != nil {
-			return e
-		}
-		decoder := json.NewDecoder(bytes.NewReader(data))
-		decoder.DisallowUnknownFields()
-		if e = decoder.Decode(&state); e != nil {
-			return e
-		}
-		var extra any
-		if e = decoder.Decode(&extra); e != io.EOF {
-			return fmt.Errorf("invalid backup manifest trailer")
-		}
-		if state.Owner != "flare-search-backups-v1" {
-			return fmt.Errorf("unrecognized backup owner")
-		}
-	} else {
-		// Claim the newly created directory before adding any backup.
-		data, marshalErr := json.Marshal(state)
-		if marshalErr != nil {
-			return marshalErr
-		}
-		if !write(manifestPath, data) {
-			// Only remove our newly created directory if still empty.
-			if cleanupErr := os.Remove(dir); cleanupErr != nil && !os.IsNotExist(cleanupErr) {
-				return fmt.Errorf("cannot initialize backup manifest (cleanup: %w)", cleanupErr)
-			}
-			return fmt.Errorf("cannot initialize backup manifest")
-		}
+	if err := initializeSearchBackup(dir, manifestPath, &state, write); err != nil {
+		return err
 	}
 	if state.UpgradeFile != "" && state.Upgrade == "" {
 		return fmt.Errorf("incomplete upgrade backup metadata")
 	}
-	if state.Pending != nil {
-		pending := state.Pending
-		if pending.Hash == "" || (pending.Name != "latest.bak" && !upgradeBackupName.MatchString(pending.Name)) || (pending.Name != "latest.bak" && state.Upgrade != "") {
-			return fmt.Errorf("invalid pending backup")
-		}
-		oldHash := state.Latest
-		if pending.Name != "latest.bak" {
-			oldHash = ""
-		}
-		p := filepath.Join(dir, pending.Name)
-		info, e := os.Lstat(p)
-		if e == nil {
-			if !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
-				return fmt.Errorf("unsafe pending backup")
-			}
-			contents, readErr := readFile(p)
-			if readErr != nil {
-				return readErr
-			}
-			digest := backupDigest(contents)
-			if digest == pending.Hash {
-				if pending.Name == "latest.bak" {
-					state.Latest = digest
-				} else {
-					state.Upgrade = digest
-					state.UpgradeFile = pending.Name
-					state.UpgradeVersion = pending.Version
-				}
-			} else if digest != oldHash {
-				return fmt.Errorf("pending backup was externally modified")
-			}
-		} else if !os.IsNotExist(e) || oldHash != "" {
-			return fmt.Errorf("pending backup missing or unreadable")
-		}
-		state.Pending = nil
-		// Recovery updates the manifest only after validating all owned files below.
+	if err := recoverSearchBackup(dir, &state); err != nil {
+		return err
 	}
-	upgradeName := "first-upgrade.bak"
-	if state.UpgradeFile != "" {
-		if !upgradeBackupName.MatchString(state.UpgradeFile) {
-			return fmt.Errorf("invalid managed upgrade filename")
-		}
-		upgradeName = state.UpgradeFile
-	}
-	for _, entry := range []struct{ name, hash string }{{upgradeName, state.Upgrade}, {"latest.bak", state.Latest}} {
-		path := filepath.Join(dir, entry.name)
-		if entry.hash == "" {
-			if _, e := os.Lstat(path); !os.IsNotExist(e) {
-				return fmt.Errorf("unowned backup file: %s", entry.name)
-			}
-			continue
-		}
-		if e := regularBackupFile(path); e != nil {
-			return e
-		}
-		data, e := readFile(path)
-		if e != nil {
-			return e
-		}
-		if backupDigest(data) != entry.hash {
-			return fmt.Errorf("backup was externally modified: %s", entry.name)
-		}
+	if err := validateSearchBackups(dir, state); err != nil {
+		return err
 	}
 	name := "latest.bak"
 	if upgrading && state.Upgrade == "" {
@@ -199,6 +100,143 @@ func retainSearchBackupWithWriter(raw []byte, upgrading bool, write func(string,
 	}
 	if !write(manifestPath, data) {
 		return fmt.Errorf("cannot update backup manifest")
+	}
+	return nil
+}
+
+func initializeSearchBackup(dir, manifestPath string, state *searchBackupManifest, write func(string, []byte) bool) error {
+	err := os.Mkdir(dir, 0700)
+	if err != nil {
+		if !os.IsExist(err) {
+			return err
+		}
+		info, e := os.Lstat(dir)
+		if e != nil {
+			return e
+		}
+		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 || info.Mode().Perm()&0077 != 0 {
+			return fmt.Errorf("unsafe backup directory")
+		}
+		if e = regularBackupFile(manifestPath); e != nil {
+			return fmt.Errorf("unrecognized backup directory: %w", e)
+		}
+		data, e := readFile(manifestPath)
+		if e != nil {
+			return e
+		}
+		if err := decodeSearchBackupManifest(data, state); err != nil {
+			return err
+		}
+	} else {
+		// Claim the newly created directory before adding any backup.
+		data, marshalErr := json.Marshal(state)
+		if marshalErr != nil {
+			return marshalErr
+		}
+		if !write(manifestPath, data) {
+			// Only remove our newly created directory if still empty.
+			if cleanupErr := os.Remove(dir); cleanupErr != nil && !os.IsNotExist(cleanupErr) {
+				return fmt.Errorf("cannot initialize backup manifest (cleanup: %w)", cleanupErr)
+			}
+			return fmt.Errorf("cannot initialize backup manifest")
+		}
+	}
+
+	return nil
+}
+
+func recoverSearchBackup(dir string, state *searchBackupManifest) error {
+	if state.Pending != nil {
+		pending := state.Pending
+		if pending.Hash == "" || (pending.Name != "latest.bak" && !upgradeBackupName.MatchString(pending.Name)) || (pending.Name != "latest.bak" && state.Upgrade != "") {
+			return fmt.Errorf("invalid pending backup")
+		}
+		oldHash := state.Latest
+		if pending.Name != "latest.bak" {
+			oldHash = ""
+		}
+		if err := recoverPendingBackup(dir, state, pending, oldHash); err != nil {
+			return err
+		}
+		state.Pending = nil
+		// Recovery updates the manifest only after validating all owned files below.
+	}
+
+	return nil
+}
+
+func validateSearchBackups(dir string, state searchBackupManifest) error {
+	upgradeName := "first-upgrade.bak"
+	if state.UpgradeFile != "" {
+		if !upgradeBackupName.MatchString(state.UpgradeFile) {
+			return fmt.Errorf("invalid managed upgrade filename")
+		}
+		upgradeName = state.UpgradeFile
+	}
+	for _, entry := range []struct{ name, hash string }{{upgradeName, state.Upgrade}, {"latest.bak", state.Latest}} {
+		path := filepath.Join(dir, entry.name)
+		if entry.hash == "" {
+			if _, e := os.Lstat(path); !os.IsNotExist(e) {
+				return fmt.Errorf("unowned backup file: %s", entry.name)
+			}
+			continue
+		}
+		if e := regularBackupFile(path); e != nil {
+			return e
+		}
+		data, e := readFile(path)
+		if e != nil {
+			return e
+		}
+		if backupDigest(data) != entry.hash {
+			return fmt.Errorf("backup was externally modified: %s", entry.name)
+		}
+	}
+
+	return nil
+}
+
+func decodeSearchBackupManifest(data []byte, state *searchBackupManifest) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if e := decoder.Decode(state); e != nil {
+		return e
+	}
+	var extra any
+	if e := decoder.Decode(&extra); e != io.EOF {
+		return fmt.Errorf("invalid backup manifest trailer")
+	}
+	if state.Owner != "flare-search-backups-v1" {
+		return fmt.Errorf("unrecognized backup owner")
+	}
+	return nil
+}
+
+func recoverPendingBackup(dir string, state *searchBackupManifest, pending *searchPendingBackup, oldHash string) error {
+	p := filepath.Join(dir, pending.Name)
+	info, e := os.Lstat(p)
+	if e == nil {
+		if !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
+			return fmt.Errorf("unsafe pending backup")
+		}
+		contents, readErr := readFile(p)
+		if readErr != nil {
+			return readErr
+		}
+		digest := backupDigest(contents)
+		if digest == pending.Hash {
+			if pending.Name == "latest.bak" {
+				state.Latest = digest
+			} else {
+				state.Upgrade = digest
+				state.UpgradeFile = pending.Name
+				state.UpgradeVersion = pending.Version
+			}
+		} else if digest != oldHash {
+			return fmt.Errorf("pending backup was externally modified")
+		}
+	} else if !os.IsNotExist(e) || oldHash != "" {
+		return fmt.Errorf("pending backup missing or unreadable")
 	}
 	return nil
 }

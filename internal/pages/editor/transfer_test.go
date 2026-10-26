@@ -17,6 +17,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/bookmarks"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTransferHTTP(t *testing.T) {
@@ -30,21 +31,13 @@ func TestTransferHTTP(t *testing.T) {
 		var buf bytes.Buffer
 		w := multipart.NewWriter(&buf)
 		part, err := w.CreateFormFile("file", "bookmarks.html")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		_, err = part.Write([]byte(`<DL><p><DT><A HREF="https://nas:8443/a?x=1&amp;y=2#x">中文 &amp; &lt;script&gt;</A></DL>`))
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		for k, v := range map[string]string{"format": "html", "collection": "bookmarks", "strategy": "skip"} {
-			if err = w.WriteField(k, v); err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, w.WriteField(k, v))
 		}
-		if err = w.Close(); err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, w.Close())
 		req := httptest.NewRequest(http.MethodPost, transferPath+"/preview", &buf)
 		req.Header.Set("Content-Type", w.FormDataContentType())
 		if header {
@@ -65,9 +58,7 @@ func TestTransferHTTP(t *testing.T) {
 		Token string         `json:"token"`
 		Plan  bookmarks.Plan `json:"plan"`
 	}
-	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
 	if response.Plan.Added != 1 {
 		t.Fatalf("unexpected preview: %+v", response.Plan)
 	}
@@ -84,9 +75,7 @@ func TestTransferHTTP(t *testing.T) {
 		t.Fatal("tampered ticket accepted")
 	}
 	original, err := os.ReadFile("bookmarks.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if result := commit(response.Token); result.Code != 200 {
 		t.Fatalf("commit: %s", result.Body)
 	}
@@ -117,9 +106,7 @@ func TestTransferAuthAndTicketExpiry(t *testing.T) {
 	define.AppFlags.DisableLoginMode = false
 	define.AppFlags.CookieSecret = strings.Repeat("s", 32)
 	e := fiber.New(fiber.Config{BodyLimit: 32 << 20})
-	if err := auth.RequestHandle(e); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, auth.RequestHandle(e))
 	registerTransfers(e)
 	for _, path := range []string{"", "/export?collection=apps&format=yaml", "/backup?collection=apps"} {
 		req := httptest.NewRequest("GET", transferPath+path, nil)
@@ -139,16 +126,12 @@ func TestTransferAuthAndTicketExpiry(t *testing.T) {
 		}
 	}
 	token, err := signTicket(transferTicket{User: "alice", Expires: time.Now().Add(time.Minute).Unix()})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if _, err = readTicket(token, "bob"); err == nil {
 		t.Fatal("ticket not bound to user")
 	}
 	token, err = signTicket(transferTicket{Expires: time.Now().Add(-time.Minute).Unix()})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if _, err = readTicket(token, ""); err == nil {
 		t.Fatal("expired ticket accepted")
 	}
@@ -157,9 +140,7 @@ func TestTransferAuthAndTicketExpiry(t *testing.T) {
 func serveTransferHTTP(t *testing.T, app *fiber.App, rec *httptest.ResponseRecorder, req *http.Request) {
 	t.Helper()
 	res, err := app.Test(req)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer res.Body.Close()
 	for key, values := range res.Header {
 		rec.Header()[key] = values

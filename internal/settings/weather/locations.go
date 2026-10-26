@@ -113,24 +113,7 @@ func MigrateLegacyLocation(value string) {
 func resolveLegacy(ctx context.Context, value string) ([]provider.Location, error) {
 	parts := strings.Split(value, ",")
 	if len(parts) != 2 && len(parts) != 3 {
-		// v0.3.0 defaults and documented municipality inputs used the 市 suffix.
-		// This compatibility map is deliberately limited to exact old names;
-		// accept only the province/city pair confirmed by the provider.
-		legacyMunicipalities := map[string]string{"北京市": "北京", "天津市": "天津", "上海市": "上海", "重庆市": "重庆"}
-		if name, ok := legacyMunicipalities[value]; ok {
-			values, err := searchProvider(ctx, name)
-			if err != nil {
-				return nil, err
-			}
-			matches := []provider.Location{}
-			for _, candidate := range values {
-				if candidate.Province == name && candidate.City == name && candidate.County == "" {
-					matches = append(matches, candidate)
-				}
-			}
-			return matches, nil
-		}
-		return searchProvider(ctx, value)
+		return resolveLegacyMunicipality(ctx, value)
 	}
 	for i := range parts {
 		parts[i] = strings.TrimSpace(parts[i])
@@ -188,4 +171,25 @@ func locationFailure(c fiber.Ctx, err error) error {
 	}
 	slog.Warn("weather location request failed", "keyword", c.Query("q"), "kind", code, "error", err)
 	return c.Status(status).JSON(fiber.Map{"error": message(c, key), "code": code})
+}
+
+func resolveLegacyMunicipality(ctx context.Context, value string) ([]provider.Location, error) {
+	// v0.3.0 defaults and documented municipality inputs used the 市 suffix.
+	// This compatibility map is deliberately limited to exact old names;
+	// accept only the province/city pair confirmed by the provider.
+	legacyMunicipalities := map[string]string{"北京市": "北京", "天津市": "天津", "上海市": "上海", "重庆市": "重庆"}
+	if name, ok := legacyMunicipalities[value]; ok {
+		values, err := searchProvider(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		matches := []provider.Location{}
+		for _, candidate := range values {
+			if candidate.Province == name && candidate.City == name && candidate.County == "" {
+				matches = append(matches, candidate)
+			}
+		}
+		return matches, nil
+	}
+	return searchProvider(ctx, value)
 }

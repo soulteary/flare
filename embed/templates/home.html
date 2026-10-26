@@ -102,7 +102,7 @@
       {{ end }}
 
       {{ if .OptionShowBookmarks }}
-      <div class="plugin-container clearfix" id="container-bookmakrs">
+      <div class="plugin-container clearfix" id="container-bookmarks">
         <h2><a href="{{.BookmarksURI}}">{{ T .Locale "bookmarks" }}</a></h2>
         <div class="bookmark-groups">{{ if .BookmarksError }}<p class="navigation-data-error" role="alert">{{.BookmarksError}}</p>{{ else }}{{.Bookmarks}}{{ end }}</div>
       </div>

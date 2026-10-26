@@ -63,11 +63,8 @@ func Validate(options model.SearchOptions) error {
 			return fmt.Errorf("invalid or duplicate engine ID: %q", engine.ID)
 		}
 		ids[engine.ID] = true
-		if strings.TrimSpace(engine.Name) == "" || utf8.RuneCountInString(engine.Name) > 64 || hasControl(engine.Name) || !utf8.ValidString(engine.Name) {
-			return fmt.Errorf("engine %q requires a name of at most 64 characters", engine.ID)
-		}
-		if _, err := parseTemplate(engine.URLTemplate); err != nil {
-			return fmt.Errorf("engine %q: %w", engine.ID, err)
+		if err := validateEngine(engine); err != nil {
+			return err
 		}
 		if engine.ID == options.DefaultTarget && engine.Enabled {
 			defaultFound = true
@@ -110,7 +107,7 @@ func ValidateQuery(query string) (string, error) {
 }
 
 func parseTemplate(template string) (*url.URL, error) {
-	if len(template) > 4096 || !utf8.ValidString(template) || hasControl(template) || strings.TrimSpace(template) != template {
+	if invalidTemplateText(template) {
 		return nil, fmt.Errorf("invalid search URL template")
 	}
 	if strings.Count(template, placeholder) != 1 {
@@ -128,27 +125,8 @@ func parseTemplate(template string) (*url.URL, error) {
 	if (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" || u.Hostname() == "" || u.User != nil || u.Opaque != "" {
 		return nil, fmt.Errorf("search URL must be absolute HTTP(S) without credentials")
 	}
-	// The token may occur only within one query parameter value, never in a key, host, path, or fragment.
-	if strings.Contains(u.Scheme+u.Host+u.Path+u.Fragment, marker) {
-		return nil, fmt.Errorf("{query} must occur in a query parameter value")
-	}
-	values, err := url.ParseQuery(u.RawQuery)
-	if err != nil {
-		return nil, fmt.Errorf("invalid search URL query")
-	}
-	found := false
-	for key, items := range values {
-		if strings.Contains(key, marker) {
-			return nil, fmt.Errorf("{query} cannot occur in a parameter name")
-		}
-		for _, value := range items {
-			if strings.Contains(value, marker) {
-				found = true
-			}
-		}
-	}
-	if !found {
-		return nil, fmt.Errorf("{query} must occur in a query parameter value")
+	if err := validateTemplateQuery(u, marker); err != nil {
+		return nil, err
 	}
 	return u, nil
 }
@@ -195,4 +173,44 @@ func Resolve(options model.SearchOptions, query, target string) (Result, error) 
 		}
 	}
 	return Result{}, fmt.Errorf("search target is unavailable")
+}
+
+func validateEngine(engine model.SearchEngine) error {
+	if strings.TrimSpace(engine.Name) == "" || utf8.RuneCountInString(engine.Name) > 64 || hasControl(engine.Name) || !utf8.ValidString(engine.Name) {
+		return fmt.Errorf("engine %q requires a name of at most 64 characters", engine.ID)
+	}
+	if _, err := parseTemplate(engine.URLTemplate); err != nil {
+		return fmt.Errorf("engine %q: %w", engine.ID, err)
+	}
+	return nil
+}
+
+func validateTemplateQuery(u *url.URL, marker string) error {
+	// The token may occur only within one query parameter value, never in a key, host, path, or fragment.
+	if strings.Contains(u.Scheme+u.Host+u.Path+u.Fragment, marker) {
+		return fmt.Errorf("{query} must occur in a query parameter value")
+	}
+	values, err := url.ParseQuery(u.RawQuery)
+	if err != nil {
+		return fmt.Errorf("invalid search URL query")
+	}
+	found := false
+	for key, items := range values {
+		if strings.Contains(key, marker) {
+			return fmt.Errorf("{query} cannot occur in a parameter name")
+		}
+		for _, value := range items {
+			if strings.Contains(value, marker) {
+				found = true
+			}
+		}
+	}
+	if !found {
+		return fmt.Errorf("{query} must occur in a query parameter value")
+	}
+	return nil
+}
+
+func invalidTemplateText(template string) bool {
+	return len(template) > 4096 || !utf8.ValidString(template) || hasControl(template) || strings.TrimSpace(template) != template
 }

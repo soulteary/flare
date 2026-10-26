@@ -24,7 +24,7 @@ func saveSearchConfigPreservingData(options model.Application) error {
 	if options.ConfigRevision != "" && options.ConfigRevision != backupDigest(raw) {
 		return fmt.Errorf("configuration changed since this form was loaded; reload before saving")
 	}
-	if original.ShowSearchComponent == options.ShowSearchComponent && original.DisabledSearchAutoFocus == options.DisabledSearchAutoFocus && reflect.DeepEqual(search.Normalize(original.Search), search.Normalize(options.Search)) {
+	if sameSearchSettings(original, options) {
 		return nil
 	}
 	if err = rejectSharedConfigNodes(doc); err != nil {
@@ -106,4 +106,8 @@ func mergeSearchNodes(dst, src *yaml.Node) {
 	head, line, foot := dst.HeadComment, dst.LineComment, dst.FootComment
 	*dst = *src
 	dst.HeadComment, dst.LineComment, dst.FootComment = head, line, foot
+}
+
+func sameSearchSettings(original, options model.Application) bool {
+	return original.ShowSearchComponent == options.ShowSearchComponent && original.DisabledSearchAutoFocus == options.DisabledSearchAutoFocus && reflect.DeepEqual(search.Normalize(original.Search), search.Normalize(options.Search))
 }

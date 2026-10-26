@@ -24,122 +24,106 @@ func Parse(raw []byte, format string) ([]Entry, error) {
 	case "html":
 		return parseHTML(raw)
 	case "yaml":
-		var src model.Bookmarks
-		if err := yamlutil.UnmarshalStrict(raw, &src); err != nil {
-			return nil, fmt.Errorf("无效的 Flare YAML: %w", err)
-		}
-		if src.Items == nil {
-			return nil, fmt.Errorf("缺少 links 字段")
-		}
-		if len(src.Items) > MaxItems || len(src.Categories) > MaxItems {
-			return nil, fmt.Errorf("最多支持 %d 个书签或分类", MaxItems)
-		}
-		cats := map[string]string{}
-		for _, cat := range src.Categories {
-			if cat.ID == "" || strings.TrimSpace(cat.Name) == "" || cats[cat.ID] != "" {
-				return nil, fmt.Errorf("分类 ID 或名称无效或重复")
-			}
-			cats[cat.ID] = cat.Name
-		}
-		entries := make([]Entry, 0, len(src.Items))
-		for _, b := range src.Items {
-			e := Entry{Bookmark: b}
-			if b.Category != "" {
-				name, ok := cats[b.Category]
-				if !ok {
-					return nil, fmt.Errorf("书签引用了不存在的分类: %s", b.Category)
-				}
-				e.Path = []string{name}
-			}
-			entries = append(entries, e)
-		}
-		return entries, nil
+		return parseYAML(raw)
 	default:
 		return nil, fmt.Errorf("请选择 HTML 或 Flare YAML 格式")
 	}
 }
 
 func parseHTML(raw []byte) ([]Entry, error) {
+	p := new(bookmarkHTMLParser)
 	z := xhtml.NewTokenizer(bytes.NewReader(raw))
-	var entries []Entry
-	var stack []string
-	var pending, text, href string
-	var inHeading, inLink, sawDL bool
 	for {
-		kind := z.Next()
-		if kind == xhtml.ErrorToken {
+		switch z.Next() {
+		case xhtml.ErrorToken:
 			if z.Err() != io.EOF {
 				return nil, z.Err()
 			}
-			if !sawDL || inLink || inHeading || len(stack) != 0 {
+			if !p.sawDL || p.inLink || p.inHeading || len(p.stack) != 0 {
 				return nil, fmt.Errorf("书签 HTML 不完整或缺少 DL 目录")
 			}
-			return entries, nil
-		}
-		switch kind {
+			return p.entries, nil
 		case xhtml.StartTagToken, xhtml.SelfClosingTagToken:
-			token := z.Token()
-			switch token.Data {
-			case "h3":
-				inHeading = true
-				text = ""
-			case "a":
-				if inLink {
-					return nil, fmt.Errorf("嵌套的书签链接")
-				}
-				inLink = true
-				text = ""
-				href = ""
-				for _, a := range token.Attr {
-					if a.Key == "href" {
-						href = a.Val
-						break
-					}
-				}
-			case "dl":
-				sawDL = true
-				stack = append(stack, pending)
-				pending = ""
-				if len(stack) > MaxDepth+1 {
-					return nil, fmt.Errorf("目录深度不能超过 %d", MaxDepth)
-				}
+			if err := p.start(z.Token()); err != nil {
+				return nil, err
 			}
 		case xhtml.TextToken:
-			if inHeading || inLink {
-				text += string(z.Text())
+			if p.inHeading || p.inLink {
+				p.text += string(z.Text())
 			}
 		case xhtml.EndTagToken:
-			token := z.Token()
-			switch token.Data {
-			case "h3":
-				if inHeading {
-					pending = strings.TrimSpace(text)
-					inHeading = false
-				}
-			case "a":
-				if !inLink {
-					continue
-				}
-				path := make([]string, 0, len(stack))
-				for _, part := range stack {
-					if part != "" {
-						path = append(path, part)
-					}
-				}
-				entries = append(entries, Entry{Bookmark: model.Bookmark{Name: strings.TrimSpace(text), URL: href}, Path: path})
-				if len(entries) > MaxItems {
-					return nil, fmt.Errorf("最多支持 %d 个书签", MaxItems)
-				}
-				inLink = false
-			case "dl":
-				if len(stack) == 0 {
-					return nil, fmt.Errorf("目录结构不完整")
-				}
-				stack = stack[:len(stack)-1]
-				pending = ""
+			if err := p.end(z.Token()); err != nil {
+				return nil, err
 			}
 		}
 	}
+}
+
+type bookmarkHTMLParser struct {
+	entries                  []Entry
+	stack                    []string
+	pending, text, href      string
+	inHeading, inLink, sawDL bool
+}
+
+func (p *bookmarkHTMLParser) start(token xhtml.Token) error {
+	switch token.Data {
+	case "h3":
+		p.inHeading = true
+		p.text = ""
+	case "a":
+		if p.inLink {
+			return fmt.Errorf("嵌套的书签链接")
+		}
+		p.inLink = true
+		p.text = ""
+		p.href = ""
+		for _, a := range token.Attr {
+			if a.Key == "href" {
+				p.href = a.Val
+				break
+			}
+		}
+	case "dl":
+		p.sawDL = true
+		p.stack = append(p.stack, p.pending)
+		p.pending = ""
+		if len(p.stack) > MaxDepth+1 {
+			return fmt.Errorf("目录深度不能超过 %d", MaxDepth)
+		}
+	}
+	return nil
+}
+func (p *bookmarkHTMLParser) end(token xhtml.Token) error {
+	switch token.Data {
+	case "h3":
+		if p.inHeading {
+			p.pending = strings.TrimSpace(p.text)
+			p.inHeading = false
+		}
+	case "a":
+		if !p.inLink {
+			return nil
+		}
+		path := make([]string, 0, len(p.stack))
+		for _, part := range p.stack {
+			if part != "" {
+				path = append(path, part)
+			}
+		}
+		p.entries = append(p.entries, Entry{Bookmark: model.Bookmark{Name: strings.TrimSpace(p.text), URL: p.href}, Path: path})
+		if len(p.entries) > MaxItems {
+			return fmt.Errorf("最多支持 %d 个书签", MaxItems)
+		}
+		p.inLink = false
+	case "dl":
+		if len(p.stack) == 0 {
+			return fmt.Errorf("目录结构不完整")
+		}
+		p.stack = p.stack[:len(p.stack)-1]
+		p.pending = ""
+	}
+	return nil
 }
 
 // URLKey validates a link without fetching it; normalization is used only for comparison.
@@ -158,7 +142,7 @@ func URLKey(raw string, allowOther bool) (string, error) {
 			return "", fmt.Errorf("缺少域名")
 		}
 	} else {
-		safe := scheme == "" || scheme == "ftp" || scheme == "ftps" || scheme == "mailto" || scheme == "tel" || scheme == "ssh" || scheme == "smb" || scheme == "rdp" || scheme == "vnc" || scheme == "magnet" || scheme == "steam" || scheme == "obsidian"
+		safe := safeImportScheme(scheme)
 		if !safe {
 			return "", fmt.Errorf("不支持或不安全的协议: %s", scheme)
 		}
@@ -198,95 +182,7 @@ func Build(current model.Bookmarks, entries []Entry, options Options) (Plan, err
 		}
 	}
 	for _, e := range entries {
-		b := e.Bookmark
-		b.URL = strings.TrimSpace(b.URL)
-		path := e.Path
-		if options.StripRoot && len(path) > 0 {
-			path = path[1:]
-		}
-		target := strings.Join(path, " / ")
-		if options.Flatten || target == "" {
-			target = strings.TrimSpace(options.Folder)
-			if target == "" {
-				target = "导入书签"
-			}
-		}
-		if options.Apps {
-			target = "首页应用"
-		}
-		row := Row{Source: strings.Join(e.Path, " / "), Target: target, Name: b.Name, URL: b.URL}
-		key, err := URLKey(b.URL, options.AllowOther)
-		if err == nil && b.Icon != "" {
-			// Icon identifiers and safe image paths are retained; executable image URLs are rejected.
-			if strings.Contains(b.Icon, ":") || strings.HasPrefix(b.Icon, "//") {
-				_, err = URLKey(b.Icon, false)
-			}
-			if strings.IndexFunc(b.Icon, unicode.IsControl) >= 0 {
-				err = fmt.Errorf("图标包含非法字符")
-			}
-		}
-		if err != nil {
-			row.Action = "invalid"
-			row.Reason = err.Error()
-			p.Invalid++
-			p.Rows = append(p.Rows, row)
-			continue
-		}
-		if strings.TrimSpace(b.Name) == "" {
-			b.Name = ""
-			if u, parseErr := url.Parse(b.URL); parseErr == nil {
-				b.Name = u.Hostname()
-			}
-			if b.Name == "" {
-				b.Name = b.URL
-			}
-			row.Name = b.Name
-			row.Reason = "缺少名称，已使用域名或链接"
-		}
-		b.Category = ""
-		if !options.Apps {
-			id, ok := byName[target]
-			if !ok {
-				for n := len(p.Result.Categories) + 1; ; n++ {
-					id = fmt.Sprintf("import-%d", n)
-					if !ids[id] {
-						break
-					}
-				}
-				byName[target] = id
-				ids[id] = true
-				p.Result.Categories = append(p.Result.Categories, model.Category{ID: id, Name: target})
-				p.Categories++
-			}
-			b.Category = id
-		}
-		k := b.Category + "\x00" + key
-		index, duplicate := existing[k]
-		switch {
-		case duplicate && options.Strategy == "skip":
-			row.Action = "skip"
-			p.Skipped++
-		case duplicate && options.Strategy == "update":
-			dest := p.Result.Items[index]
-			dest.Name = b.Name
-			if b.Icon != "" {
-				dest.Icon = b.Icon
-			}
-			if b.Desc != "" {
-				dest.Desc = b.Desc
-			}
-			// Import never weakens a pre-existing private flag.
-			dest.Private = dest.Private || b.Private
-			p.Result.Items[index] = dest
-			row.Action = "update"
-			p.Updated++
-		default:
-			existing[k] = len(p.Result.Items)
-			p.Result.Items = append(p.Result.Items, b)
-			row.Action = "add"
-			p.Added++
-		}
-		p.Rows = append(p.Rows, row)
+		appendImportEntry(&p, e, options, byName, ids, existing)
 	}
 	if len(p.Result.Items) > MaxItems || len(p.Result.Categories) > MaxItems {
 		return Plan{}, fmt.Errorf("合并后最多支持 %d 个书签或分类", MaxItems)
@@ -326,4 +222,158 @@ func HTML(src model.Bookmarks) ([]byte, error) {
 	}
 	out.WriteString("</DL><p>\n")
 	return out.Bytes(), nil
+}
+
+func parseYAML(raw []byte) ([]Entry, error) {
+	var src model.Bookmarks
+	if err := yamlutil.UnmarshalStrict(raw, &src); err != nil {
+		return nil, fmt.Errorf("无效的 Flare YAML: %w", err)
+	}
+	if src.Items == nil {
+		return nil, fmt.Errorf("缺少 links 字段")
+	}
+	if len(src.Items) > MaxItems || len(src.Categories) > MaxItems {
+		return nil, fmt.Errorf("最多支持 %d 个书签或分类", MaxItems)
+	}
+	cats := map[string]string{}
+	for _, cat := range src.Categories {
+		if cat.ID == "" || strings.TrimSpace(cat.Name) == "" || cats[cat.ID] != "" {
+			return nil, fmt.Errorf("分类 ID 或名称无效或重复")
+		}
+		cats[cat.ID] = cat.Name
+	}
+	entries := make([]Entry, 0, len(src.Items))
+	for _, b := range src.Items {
+		e := Entry{Bookmark: b}
+		if b.Category != "" {
+			name, ok := cats[b.Category]
+			if !ok {
+				return nil, fmt.Errorf("书签引用了不存在的分类: %s", b.Category)
+			}
+			e.Path = []string{name}
+		}
+		entries = append(entries, e)
+	}
+	return entries, nil
+}
+
+func safeImportScheme(scheme string) bool {
+	switch scheme {
+	case "", "ftp", "ftps", "mailto", "tel", "ssh", "smb", "rdp", "vnc", "magnet", "steam", "obsidian":
+		return true
+	default:
+		return false
+	}
+}
+
+func appendImportEntry(p *Plan, e Entry, options Options, byName map[string]string, ids map[string]bool, existing map[string]int) {
+	b := e.Bookmark
+	b.URL = strings.TrimSpace(b.URL)
+	target := importTarget(e, options)
+	row := Row{Source: strings.Join(e.Path, " / "), Target: target, Name: b.Name, URL: b.URL}
+	key, err := importBookmarkKey(b, options.AllowOther)
+	if err != nil {
+		row.Action = "invalid"
+		row.Reason = err.Error()
+		p.Invalid++
+		p.Rows = append(p.Rows, row)
+		return
+	}
+	if strings.TrimSpace(b.Name) == "" {
+		b.Name = ""
+		if u, parseErr := url.Parse(b.URL); parseErr == nil {
+			b.Name = u.Hostname()
+		}
+		if b.Name == "" {
+			b.Name = b.URL
+		}
+		row.Name = b.Name
+		row.Reason = "缺少名称，已使用域名或链接"
+	}
+	b.Category = importCategory(p, target, options.Apps, byName, ids)
+	mergeImportBookmark(p, b, key, options.Strategy, existing, &row)
+	p.Rows = append(p.Rows, row)
+}
+
+func importTarget(e Entry, options Options) string {
+	path := e.Path
+	if options.StripRoot && len(path) > 0 {
+		path = path[1:]
+	}
+	target := strings.Join(path, " / ")
+	if options.Flatten || target == "" {
+		target = strings.TrimSpace(options.Folder)
+		if target == "" {
+			target = "导入书签"
+		}
+	}
+	if options.Apps {
+		target = "首页应用"
+	}
+	return target
+}
+
+func importBookmarkKey(b model.Bookmark, allowOther bool) (string, error) {
+	key, err := URLKey(b.URL, allowOther)
+	if err == nil && b.Icon != "" {
+		// Icon identifiers and safe image paths are retained; executable image URLs are rejected.
+		if strings.Contains(b.Icon, ":") || strings.HasPrefix(b.Icon, "//") {
+			_, err = URLKey(b.Icon, false)
+		}
+		if strings.IndexFunc(b.Icon, unicode.IsControl) >= 0 {
+			err = fmt.Errorf("图标包含非法字符")
+		}
+	}
+	return key, err
+}
+
+func importCategory(p *Plan, target string, apps bool, byName map[string]string, ids map[string]bool) string {
+	category := ""
+	if !apps {
+		id, ok := byName[target]
+		if !ok {
+			for n := len(p.Result.Categories) + 1; ; n++ {
+				id = fmt.Sprintf("import-%d", n)
+				if !ids[id] {
+					break
+				}
+			}
+			byName[target] = id
+			ids[id] = true
+			p.Result.Categories = append(p.Result.Categories, model.Category{ID: id, Name: target})
+			p.Categories++
+		}
+		category = id
+	}
+	return category
+}
+
+func mergeImportBookmark(p *Plan, b model.Bookmark, key, strategy string, existing map[string]int, row *Row) {
+	k := b.Category + "\x00" + key
+	index, duplicate := existing[k]
+	switch {
+	case duplicate && strategy == "skip":
+		row.Action = "skip"
+		p.Skipped++
+	case duplicate && strategy == "update":
+		dest := p.Result.Items[index]
+		dest.Name = b.Name
+		if b.Icon != "" {
+			dest.Icon = b.Icon
+		}
+		if b.Desc != "" {
+			dest.Desc = b.Desc
+		}
+		// Import never weakens a pre-existing private flag.
+		dest.Private = dest.Private || b.Private
+		p.Result.Items[index] = dest
+		row.Action = "update"
+		p.Updated++
+	default:
+		existing[k] = len(p.Result.Items)
+		p.Result.Items = append(p.Result.Items, b)
+		row.Action = "add"
+		p.Added++
+	}
+
 }

@@ -1,10 +1,12 @@
 package data
 
 import (
-	"github.com/soulteary/flare/config/model"
-	"github.com/soulteary/flare/internal/search"
 	"os"
 	"testing"
+
+	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/search"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSearchSettingsPreserveOtherSettingsAndRejectInvalidChanges(t *testing.T) {
@@ -16,16 +18,16 @@ func TestSearchSettingsPreserveOtherSettingsAndRejectInvalidChanges(t *testing.T
 		t.Fatal("seed failed")
 	}
 	options := model.SearchOptions{DefaultTarget: "bing", Engines: search.Presets()}
-	if err := UpdateSearchOptions(true, true, &options); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, UpdateSearchOptions(true, true, &options))
 	got, err := GetAllSettingsOptions()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got.Title != "unchanged" || got.Locale != "en" || got.Location != "London" || got.Clock == nil || !got.Clock.Dynamic || got.Search == nil || got.Search.DefaultTarget != "bing" {
-		t.Fatalf("settings lost: %+v", got)
-	}
+	require.NoError(t, err)
+	require.Equal(t, "unchanged", got.Title)
+	require.Equal(t, "en", got.Locale)
+	require.Equal(t, "London", got.Location)
+	require.NotNil(t, got.Clock)
+	require.True(t, got.Clock.Dynamic)
+	require.NotNil(t, got.Search)
+	require.Equal(t, "bing", got.Search.DefaultTarget)
 	if !UpdateSearch(false, false) {
 		t.Fatal("legacy update failed")
 	}
@@ -34,24 +36,18 @@ func TestSearchSettingsPreserveOtherSettingsAndRejectInvalidChanges(t *testing.T
 		t.Fatal("legacy form removed engines", err)
 	}
 	before, err := os.ReadFile("config.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	options.DefaultTarget = "missing"
 	if updateErr := UpdateSearchOptions(true, true, &options); updateErr == nil {
 		t.Fatal("invalid change saved")
 	}
 	after, err := os.ReadFile("config.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if string(before) != string(after) {
 		t.Fatal("invalid change modified file")
 	}
 	// A malformed backing file must not be overwritten by an apparently successful save.
-	if writeErr := os.WriteFile("config.yml", []byte("Search: ["), 0600); writeErr != nil {
-		t.Fatal(writeErr)
-	}
+	require.NoError(t, os.WriteFile("config.yml", []byte("Search: ["), 0600))
 	invalidateFileCache("config")
 	if updateErr := UpdateSearchOptions(true, true, nil); updateErr == nil {
 		t.Fatal("failed read was not reported")

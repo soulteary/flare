@@ -95,17 +95,7 @@ func rejectAmbiguousEngineReplacement(root, patch *yaml.Node) error {
 	if oldRows == nil || newRows == nil {
 		return nil
 	}
-	oldIDs, newIDs := map[string]bool{}, map[string]bool{}
-	for _, row := range oldRows.Content {
-		if id := mappingValue(row, "ID"); id != nil {
-			oldIDs[id.Value] = true
-		}
-	}
-	for _, row := range newRows.Content {
-		if id := mappingValue(row, "ID"); id != nil {
-			newIDs[id.Value] = true
-		}
-	}
+	oldIDs, newIDs := engineIDs(oldRows), engineIDs(newRows)
 	added := false
 	for id := range newIDs {
 		if !oldIDs[id] {
@@ -129,4 +119,14 @@ func rejectAmbiguousEngineReplacement(root, patch *yaml.Node) error {
 		}
 	}
 	return nil
+}
+
+func engineIDs(rows *yaml.Node) map[string]bool {
+	ids := map[string]bool{}
+	for _, row := range rows.Content {
+		if id := mappingValue(row, "ID"); id != nil {
+			ids[id.Value] = true
+		}
+	}
+	return ids
 }

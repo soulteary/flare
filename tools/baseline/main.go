@@ -186,35 +186,7 @@ func runScenario(router http.Handler, targetURL string, s scenario, requests int
 	defer client.CloseIdleConnections()
 
 	doReq := func() (time.Duration, error) {
-		bodyReader := strings.NewReader(s.Body)
-		req, err := http.NewRequest(s.Method, targetURL+s.Path, bodyReader)
-		if err != nil {
-			return 0, err
-		}
-		if s.ContentType != "" {
-			req.Header.Set("Content-Type", s.ContentType)
-		}
-		start := time.Now()
-		resp, err := client.Do(req)
-		if err != nil {
-			return 0, err
-		}
-		_, drainErr := io.Copy(io.Discard, resp.Body)
-		closeErr := resp.Body.Close()
-		if drainErr != nil {
-			return 0, fmt.Errorf("read response: %w", drainErr)
-		}
-		if closeErr != nil {
-			return 0, fmt.Errorf("close response: %w", closeErr)
-		}
-		expectedStatus := s.ExpectedStatus
-		if expectedStatus == 0 {
-			expectedStatus = http.StatusOK
-		}
-		if resp.StatusCode != expectedStatus {
-			return 0, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-		return time.Since(start), nil
+		return performScenarioRequest(client, targetURL, s)
 	}
 
 	for i := 0; i < warmup; i++ {
@@ -304,22 +276,7 @@ func main() {
 	keepaliveConnections := flag.Int("keepalive-connections", 0, "idle connections per host; 0 preserves the original default transport")
 	flag.Parse()
 
-	if *cpuProfile != "" {
-		abs, err := filepath.Abs(*cpuProfile)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "resolve cpuprofile path failed: %v\n", err)
-			os.Exit(1)
-		}
-		*cpuProfile = abs
-	}
-	if *memProfile != "" {
-		abs, err := filepath.Abs(*memProfile)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "resolve memprofile path failed: %v\n", err)
-			os.Exit(1)
-		}
-		*memProfile = abs
-	}
+	resolveProfilePaths(cpuProfile, memProfile)
 
 	var router http.Handler
 	if *targetURL == "" {
@@ -344,24 +301,7 @@ func main() {
 		return
 	}
 
-	scenarios := buildScenarios()
-	var selected []scenario
-	if *scenarioName == "all" {
-		selected = []scenario{
-			scenarios["home"],
-			scenarios["home-search"],
-			scenarios["bookmarks"],
-			scenarios["applications"],
-			scenarios["redir-url"],
-		}
-	} else {
-		s, ok := scenarios[*scenarioName]
-		if !ok {
-			fmt.Fprintf(os.Stderr, "unknown scenario: %s\n", *scenarioName)
-			os.Exit(1)
-		}
-		selected = []scenario{s}
-	}
+	selected := selectScenarios(*scenarioName)
 
 	if *cpuProfile != "" {
 		f, err := os.Create(*cpuProfile)
@@ -389,9 +329,90 @@ func main() {
 		results = append(results, result)
 	}
 
+	writeMemoryProfile(*memProfile)
+
+	printMetrics(results, *jsonOutput, *markdown)
+}
+
+func performScenarioRequest(client *http.Client, targetURL string, s scenario) (time.Duration, error) {
+	bodyReader := strings.NewReader(s.Body)
+	req, err := http.NewRequest(s.Method, targetURL+s.Path, bodyReader)
+	if err != nil {
+		return 0, err
+	}
+	if s.ContentType != "" {
+		req.Header.Set("Content-Type", s.ContentType)
+	}
+	start := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	_, drainErr := io.Copy(io.Discard, resp.Body)
+	closeErr := resp.Body.Close()
+	if drainErr != nil {
+		return 0, fmt.Errorf("read response: %w", drainErr)
+	}
+	if closeErr != nil {
+		return 0, fmt.Errorf("close response: %w", closeErr)
+	}
+	expectedStatus := s.ExpectedStatus
+	if expectedStatus == 0 {
+		expectedStatus = http.StatusOK
+	}
+	if resp.StatusCode != expectedStatus {
+		return 0, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	return time.Since(start), nil
+}
+
+func resolveProfilePaths(cpuProfile, memProfile *string) {
+	if *cpuProfile != "" {
+		abs, err := filepath.Abs(*cpuProfile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "resolve cpuprofile path failed: %v\n", err)
+			os.Exit(1)
+		}
+		*cpuProfile = abs
+	}
 	if *memProfile != "" {
+		abs, err := filepath.Abs(*memProfile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "resolve memprofile path failed: %v\n", err)
+			os.Exit(1)
+		}
+		*memProfile = abs
+	}
+
+}
+
+func selectScenarios(scenarioName string) []scenario {
+	scenarios := buildScenarios()
+	var selected []scenario
+	if scenarioName == "all" {
+		selected = []scenario{
+			scenarios["home"],
+			scenarios["home-search"],
+			scenarios["bookmarks"],
+			scenarios["applications"],
+			scenarios["redir-url"],
+		}
+	} else {
+		s, ok := scenarios[scenarioName]
+		if !ok {
+			fmt.Fprintf(os.Stderr, "unknown scenario: %s\n", scenarioName)
+			os.Exit(1)
+		}
+		selected = []scenario{s}
+	}
+
+	return selected
+}
+
+func writeMemoryProfile(memProfile string) {
+	if memProfile != "" {
 		runtime.GC()
-		f, err := os.Create(*memProfile)
+		f, err := os.Create(memProfile)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "create memprofile failed: %v\n", err)
 			os.Exit(1)
@@ -404,7 +425,10 @@ func main() {
 		_ = f.Close()
 	}
 
-	if *jsonOutput {
+}
+
+func printMetrics(results []metrics, jsonOutput, markdown bool) {
+	if jsonOutput {
 		if err := json.NewEncoder(os.Stdout).Encode(results); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -412,7 +436,7 @@ func main() {
 		return
 	}
 
-	if *markdown {
+	if markdown {
 		for _, item := range results {
 			fmt.Printf("| %s | %s %s | %.2f | %s | %s | %s | %.2f | %.2f |\n",
 				item.Scenario,

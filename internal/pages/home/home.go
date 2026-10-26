@@ -281,8 +281,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["Applications"] = apps
 	m["Bookmarks"] = bookmarks
 	if filter != "" {
-		dataFailed := m["ApplicationsError"] != nil && m["ApplicationsError"] != "" || m["BookmarksError"] != nil && m["BookmarksError"] != ""
-		m["SearchNoResults"] = !dataFailed && (!options.ShowApps || !strings.Contains(string(apps), `class="app-item"`)) && (!options.ShowBookmarks || !strings.Contains(string(bookmarks), `class="bookmark"`))
+		m["SearchNoResults"] = searchHasNoResults(m, options, apps, bookmarks)
 	}
 	m["SearchKeyword"] = searchKeyword
 	PopulateSearch(m, options, query, target, searchError)
@@ -290,7 +289,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["ShowSearchComponent"] = options.ShowSearchComponent
 	// Keep the script-free homepage while avoiding an unsolicited mobile keyboard.
 	ua := strings.ToLower(c.Get("User-Agent"))
-	mobile := strings.Contains(ua, "mobile") || strings.Contains(ua, "android") || strings.Contains(ua, "ipad") || strings.Contains(ua, "iphone")
+	mobile := isMobileUserAgent(ua)
 	c.Response().Header.Add("Vary", "User-Agent")
 	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus || mobile
 	m["OptionTitle"] = options.Title
@@ -334,4 +333,13 @@ func homepageBodyClasses(options model.Application) string {
 		classes += "app-content-uppercase "
 	}
 	return classes
+}
+
+func searchHasNoResults(m map[string]any, options model.Application, apps, bookmarks template.HTML) bool {
+	dataFailed := m["ApplicationsError"] != nil && m["ApplicationsError"] != "" || m["BookmarksError"] != nil && m["BookmarksError"] != ""
+	return !dataFailed && (!options.ShowApps || !strings.Contains(string(apps), `class="app-item"`)) && (!options.ShowBookmarks || !strings.Contains(string(bookmarks), `class="bookmark"`))
+}
+
+func isMobileUserAgent(ua string) bool {
+	return strings.Contains(ua, "mobile") || strings.Contains(ua, "android") || strings.Contains(ua, "ipad") || strings.Contains(ua, "iphone")
 }

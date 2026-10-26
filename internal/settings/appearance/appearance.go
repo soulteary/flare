@@ -54,80 +54,16 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		body.Locale = locale
 	}
 	var update model.Application
-	// Copy existing options so older forms cannot erase newer preferences.
-	layout, textSize, titleSize, hideDesc := formvalue.Get(c, "mobile-bookmark-layout"), formvalue.Get(c, "navigation-text-size"), formvalue.Get(c, "title-size"), formvalue.Get(c, "hide-app-descriptions")
-	if layout != "" || textSize != "" || titleSize != "" || hideDesc != "" {
-		existing, err := data.GetAllSettingsOptions()
-		if err != nil {
-			return c.Status(http.StatusInternalServerError).SendString("config error")
-		}
-		homepage := model.HomepageOptions{}
-		if existing.Homepage != nil {
-			homepage = *existing.Homepage
-		}
-		if layout != "" {
-			homepage.MobileBookmarkLayout = layout
-		}
-		if textSize != "" {
-			homepage.NavigationTextSize = textSize
-		}
-		if titleSize != "" {
-			homepage.TitleSize = titleSize
-		}
-		if hideDesc != "" {
-			if hideDesc != "0" && hideDesc != "1" {
-				return c.Status(http.StatusBadRequest).SendString("invalid description visibility")
-			}
-			homepage.HideAppDescriptions = hideDesc == "1"
-		}
-		if err := homepage.Validate(); err != nil {
-			return c.Status(http.StatusBadRequest).SendString(err.Error())
-		}
-		update.Homepage = &homepage
+	if err := updateHomepageTypography(c, &update); err != nil {
+		return c.Status(err.Code).SendString(err.Message)
 	}
 
-	if mode, columns, bookmarkLayout := formvalue.Get(c, "category-navigation"), formvalue.Get(c, "desktop-columns"), formvalue.Get(c, "bookmark-layout"); mode != "" || columns != "" || bookmarkLayout != "" {
-		existing, err := data.GetAllSettingsOptions()
-		if err != nil {
-			return c.Status(http.StatusInternalServerError).SendString("config error")
-		}
-		homepage := model.HomepageOptions{}
-		if existing.Homepage != nil {
-			homepage = *existing.Homepage
-		}
-		if update.Homepage != nil {
-			homepage = *update.Homepage
-		}
-		if bookmarkLayout != "" {
-			homepage.BookmarkLayout = bookmarkLayout
-		}
-		if mode != "" {
-			homepage.CategoryNavigation = mode
-		}
-		if columns != "" {
-			if columns == "legacy" {
-				homepage.DesktopColumns = ""
-			} else {
-				homepage.DesktopColumns = columns
-			}
-		}
-		if err := homepage.Validate(); err != nil {
-			return c.Status(http.StatusBadRequest).SendString(err.Error())
-		}
-		update.Homepage = &homepage
+	if err := updateHomepageNavigation(c, &update); err != nil {
+		return c.Status(err.Code).SendString(err.Message)
 	}
 
-	// Missing fields from older forms must not erase existing clock preferences.
-	if formvalue.Get(c, "clock-timezone-mode") != "" {
-		dynamic, seconds := formvalue.Get(c, "clock-dynamic"), formvalue.Get(c, "clock-seconds")
-		if (dynamic != "0" && dynamic != "1") || (seconds != "0" && seconds != "1") {
-			return c.Status(http.StatusBadRequest).SendString("invalid clock options")
-		}
-		showSeconds := seconds == "1"
-		update.Clock = &model.ClockOptions{Dynamic: dynamic == "1", Seconds: &showSeconds, TimezoneMode: formvalue.Get(c, "clock-timezone-mode"), Timezone: strings.TrimSpace(formvalue.Get(c, "clock-timezone"))}
-		if err := clock.Validate(*update.Clock); err != nil {
-			return c.Status(http.StatusBadRequest).SendString(err.Error())
-		}
+	if err := updateClockOptions(c, &update); err != nil {
+		return c.Status(err.Code).SendString(err.Message)
 	}
 
 	update.Title = body.OptionTitle
@@ -238,4 +174,92 @@ func settingsLocale() string {
 		return "zh"
 	}
 	return options.Locale
+}
+
+func updateHomepageTypography(c fiber.Ctx, update *model.Application) *fiber.Error {
+	// Copy existing options so older forms cannot erase newer preferences.
+	layout, textSize, titleSize, hideDesc := formvalue.Get(c, "mobile-bookmark-layout"), formvalue.Get(c, "navigation-text-size"), formvalue.Get(c, "title-size"), formvalue.Get(c, "hide-app-descriptions")
+	if layout != "" || textSize != "" || titleSize != "" || hideDesc != "" {
+		existing, err := data.GetAllSettingsOptions()
+		if err != nil {
+			return fiber.NewError(http.StatusInternalServerError, "config error")
+		}
+		homepage := model.HomepageOptions{}
+		if existing.Homepage != nil {
+			homepage = *existing.Homepage
+		}
+		if layout != "" {
+			homepage.MobileBookmarkLayout = layout
+		}
+		if textSize != "" {
+			homepage.NavigationTextSize = textSize
+		}
+		if titleSize != "" {
+			homepage.TitleSize = titleSize
+		}
+		if hideDesc != "" {
+			if hideDesc != "0" && hideDesc != "1" {
+				return fiber.NewError(http.StatusBadRequest, "invalid description visibility")
+			}
+			homepage.HideAppDescriptions = hideDesc == "1"
+		}
+		if err := homepage.Validate(); err != nil {
+			return fiber.NewError(http.StatusBadRequest, err.Error())
+		}
+		update.Homepage = &homepage
+	}
+
+	return nil
+}
+
+func updateHomepageNavigation(c fiber.Ctx, update *model.Application) *fiber.Error {
+	if mode, columns, bookmarkLayout := formvalue.Get(c, "category-navigation"), formvalue.Get(c, "desktop-columns"), formvalue.Get(c, "bookmark-layout"); mode != "" || columns != "" || bookmarkLayout != "" {
+		existing, err := data.GetAllSettingsOptions()
+		if err != nil {
+			return fiber.NewError(http.StatusInternalServerError, "config error")
+		}
+		homepage := model.HomepageOptions{}
+		if existing.Homepage != nil {
+			homepage = *existing.Homepage
+		}
+		if update.Homepage != nil {
+			homepage = *update.Homepage
+		}
+		if bookmarkLayout != "" {
+			homepage.BookmarkLayout = bookmarkLayout
+		}
+		if mode != "" {
+			homepage.CategoryNavigation = mode
+		}
+		if columns != "" {
+			if columns == "legacy" {
+				homepage.DesktopColumns = ""
+			} else {
+				homepage.DesktopColumns = columns
+			}
+		}
+		if err := homepage.Validate(); err != nil {
+			return fiber.NewError(http.StatusBadRequest, err.Error())
+		}
+		update.Homepage = &homepage
+	}
+
+	return nil
+}
+
+func updateClockOptions(c fiber.Ctx, update *model.Application) *fiber.Error {
+	// Missing fields from older forms must not erase existing clock preferences.
+	if formvalue.Get(c, "clock-timezone-mode") != "" {
+		dynamic, seconds := formvalue.Get(c, "clock-dynamic"), formvalue.Get(c, "clock-seconds")
+		if (dynamic != "0" && dynamic != "1") || (seconds != "0" && seconds != "1") {
+			return fiber.NewError(http.StatusBadRequest, "invalid clock options")
+		}
+		showSeconds := seconds == "1"
+		update.Clock = &model.ClockOptions{Dynamic: dynamic == "1", Seconds: &showSeconds, TimezoneMode: formvalue.Get(c, "clock-timezone-mode"), Timezone: strings.TrimSpace(formvalue.Get(c, "clock-timezone"))}
+		if err := clock.Validate(*update.Clock); err != nil {
+			return fiber.NewError(http.StatusBadRequest, err.Error())
+		}
+	}
+
+	return nil
 }
