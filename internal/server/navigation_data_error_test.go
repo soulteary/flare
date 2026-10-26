@@ -65,7 +65,7 @@ func TestMalformedNavigationDataIsVisibleWithoutInternalDetails(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
 		require.Equal(t, 200, recorder.Code)
-		require.Contains(t, recorder.Body.String(), `class="navigation-data-error" role="alert"`)
+		require.Regexp(t, `class="?navigation-data-error"? role="?alert"?`, recorder.Body.String())
 		require.NotContains(t, recorder.Body.String(), dir)
 		require.NotContains(t, recorder.Body.String(), "sensitive-sentinel")
 		require.NotContains(t, recorder.Body.String(), "yaml:")

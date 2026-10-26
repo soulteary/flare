@@ -3,6 +3,7 @@ const {chromium}=require(require.resolve('playwright',{paths:[__dirname,`${__dir
 const assert=require('node:assert/strict'), fs=require('node:fs/promises'), path=require('node:path');
 (async()=>{
  const root=process.env.EDITOR_SOURCE_ROOT?path.resolve(process.env.EDITOR_SOURCE_ROOT):path.resolve(__dirname,'../..');
+ const fixture=await require('./fixture.cjs').editorFixture(root);
  const document={version:'measurement',categories:[{ID:'group',Name:'Group'}],apps:[],bookmarks:[]};
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
  try{
@@ -12,7 +13,7 @@ const assert=require('node:assert/strict'), fs=require('node:fs/promises'), path
    if(url.pathname==='/editor/document')return route.fulfill({contentType:'application/json',body:JSON.stringify(document)});
    const file=url.pathname==='/editor'?path.join(root,'embed/templates/editor.html'):url.pathname.startsWith('/assets/editor-ui/')?path.join(root,'internal/pages/editor/client',path.basename(url.pathname)):null;
    if(!file)return route.fulfill({status:404,body:''});
-   return route.fulfill({contentType:file.endsWith('.html')?'text/html':file.endsWith('.css')?'text/css':'application/javascript',body:await fs.readFile(file,'utf8')});
+   return route.fulfill({contentType:file.endsWith('.html')?'text/html':file.endsWith('.css')?'text/css':'application/javascript',body:url.pathname==='/editor'?fixture.html:await fs.readFile(file,'utf8')});
   });
   await page.goto('http://flare.test/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);
   const measurements=[],cdp=await page.context().newCDPSession(page);

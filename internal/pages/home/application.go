@@ -16,16 +16,21 @@ var builderPool = sync.Pool{
 }
 
 func GenerateApplicationsTemplate(filter string, options *model.Application, requestInfo ...*fn.DynamicURL) template.HTML {
+	markup, _ := generateApplications(filter, options, requestInfo...)
+	return markup
+}
+
+func generateApplications(filter string, options *model.Application, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	if options == nil {
 		op, err := data.GetAllSettingsOptions()
 		if err != nil {
-			return navigationDataError("applications", "", err)
+			return "", navigationDataError("applications", "", err)
 		}
 		options = &op
 	}
 	appsData, err := data.LoadFavoriteBookmarks()
 	if err != nil {
-		return navigationDataError("applications", options.Locale, err)
+		return "", navigationDataError("applications", options.Locale, err)
 	}
 	b, ok := builderPool.Get().(*strings.Builder)
 	if !ok {
@@ -81,7 +86,7 @@ func GenerateApplicationsTemplate(filter string, options *model.Application, req
 			b.WriteString(`</p></div></a></div>`)
 		}
 	}
-	return template.HTML(b.String())
+	return template.HTML(b.String()), ""
 }
 
 func firstRequestInfo(info []*fn.DynamicURL) *fn.DynamicURL {

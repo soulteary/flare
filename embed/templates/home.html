@@ -96,7 +96,7 @@
         <h2><a href="{{.ApplicationsURI}}">{{ T .Locale "apps" }}</a></h2>
         
         <div class="apps-container clearfix">
-          {{.Applications}}
+          {{ if .ApplicationsError }}<p class="navigation-data-error" role="alert">{{.ApplicationsError}}</p>{{ else }}{{.Applications}}{{ end }}
         </div>
       </div>
       {{ end }}
@@ -104,7 +104,7 @@
       {{ if .OptionShowBookmarks }}
       <div class="plugin-container clearfix" id="container-bookmakrs">
         <h2><a href="{{.BookmarksURI}}">{{ T .Locale "bookmarks" }}</a></h2>
-        <div class="bookmark-groups">{{.Bookmarks}}</div>
+        <div class="bookmark-groups">{{ if .BookmarksError }}<p class="navigation-data-error" role="alert">{{.BookmarksError}}</p>{{ else }}{{.Bookmarks}}{{ end }}</div>
       </div>
       {{ end }}
 

@@ -8,9 +8,7 @@ const {chromium}=require(require.resolve('playwright',{paths:[__dirname,path.joi
 
 test('mobile editor preserves focus and drafts when save outcome is unknown',async()=>{
  const root=path.resolve(__dirname,'../..');
- const messages=JSON.parse(await fs.readFile(path.join(root,'internal/i18n/locales/zh.json'),'utf8'));
- const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
- const renderEditor=source=>source.replace(/\{\{T \.Locale "([^"]+)"\}\}/g,(_,key)=>{assert.ok(Object.hasOwn(messages,key),`Missing editor fixture message: ${key}`);return escapeHTML(messages[key]);}).replace(/\{\{HTMLLang \.Locale\}\}/g,'zh-CN').replace(/\{\{\.EditorAssetVersion\}\}/g,'test').replace(/\{\{\.EditorMessages\}\}/g,escapeHTML(JSON.stringify(messages)));
+ const {messages,render:renderEditor}=await require('./fixture.cjs').editorFixture(root);
  const doc={version:'initial',categories:[{ID:'one',Name:'First'},{ID:'two',Name:'Second'}],apps:[{Name:'Original',URL:'http://nas:8080',Category:''}],bookmarks:[]};
  const server=http.createServer(async(req,res)=>{
   if(req.url==='/editor/document'){res.setHeader('content-type','application/json');res.end(JSON.stringify(doc));return;}

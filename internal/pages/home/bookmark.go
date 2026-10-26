@@ -18,16 +18,21 @@ func GenerateBookmarkTemplate(filter string, options *model.Application) templat
 
 // GenerateBookmarkNavigationTemplate keeps category navigation server-rendered and search-scoped.
 func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *model.Application, requestInfo ...*fn.DynamicURL) template.HTML {
+	markup, _ := generateBookmarkNavigation(filter, selected, path, options, requestInfo...)
+	return markup
+}
+
+func generateBookmarkNavigation(filter, selected, path string, options *model.Application, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	if options == nil {
 		op, err := data.GetAllSettingsOptions()
 		if err != nil {
-			return navigationDataError("bookmarks", "", err)
+			return "", navigationDataError("bookmarks", "", err)
 		}
 		options = &op
 	}
 	bookmarksData, err := data.LoadNormalBookmarks()
 	if err != nil {
-		return navigationDataError("bookmarks", options.Locale, err)
+		return "", navigationDataError("bookmarks", options.Locale, err)
 	}
 	b, ok := builderPool.Get().(*strings.Builder)
 	if !ok {
@@ -86,7 +91,7 @@ func GenerateBookmarkNavigationTemplate(filter, selected, path string, options *
 		renderBookmarksWithoutCategories(b, &bookmarks, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, firstRequestInfo(requestInfo))
 	}
 
-	return template.HTML(b.String())
+	return template.HTML(b.String()), ""
 }
 
 func renderBookmarksWithoutCategories(b *strings.Builder, bookmarks *[]model.Bookmark, OpenBookmarkNewTab bool, EnableEncryptedLink bool, IconMode string, requestInfo ...*fn.DynamicURL) {

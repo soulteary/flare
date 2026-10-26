@@ -2,7 +2,6 @@ package i18n
 
 import (
 	"encoding/json"
-	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -129,7 +128,7 @@ func TestCatalogParity(t *testing.T) {
 			}
 			translated, ok := catalogs[other][key]
 			if !ok {
-				t.Error(fmt.Sprintf("%s missing %s", other, key))
+				t.Errorf("%s missing %s", other, key)
 				continue
 			}
 			if signature(value) != signature(translated) {
