@@ -1,8 +1,11 @@
 # Flare 0.6.6 release preflight
 
 Preparation only, recorded 2026-10-26 (Asia/Shanghai). No tag, release or registry
-publication is authorized by this preflight. A preparation branch/draft PR may be
-pushed for read-only CI acceptance. Current stable is 0.6.5.
+publication is implied by this preflight. The preparation was merged into `main`
+through [PR #172](https://github.com/soulteary/flare/pull/172) at
+`db57b9d22cc81304d11a9b1a14d307f3ae1cb1c3`. Current published stable remains 0.6.5.
+Evidence below identifies its tested candidate; it does not certify subsequent
+changes or publication readiness of the current branch.
 
 The candidate includes search/configuration safety improvements after 0.6.5,
 weather 0.4.0 with explicit location selection, retirement of search keyword
@@ -40,12 +43,12 @@ the candidate. Unrelated `output/imagegen` assets are excluded.
 ## Candidate and decision
 
 Candidate source: `6296c81c5e4e19c3d2c6a8ccf2e34950ad84ce96` on branch
-`codex/release-0.6.6-preflight`, reviewed through [draft PR #172](https://github.com/soulteary/flare/pull/172).
-Later evidence/documentation commits do not change
-the tested application. Status: **local automated acceptance passed, held for
-review; not cleared for publication**. No tag, GitHub release or registry
-publication was performed. Existing `output/imagegen` content remains untracked
-and outside the candidate.
+`codex/release-0.6.6-preflight`, reviewed through [PR #172](https://github.com/soulteary/flare/pull/172)
+and subsequently merged into `main`. Later evidence/documentation commits in that
+PR did not change the tested application. Status: **candidate automated acceptance
+passed and preparation merged; publication gates remain open**. No tag, GitHub
+release or registry publication was performed by this preflight. Unrelated
+`output/imagegen` content was excluded from the candidate.
 
 After synchronizing main, the full application race/coverage suite ran on
 `f2f9429`. Application contents (`config`, `internal`, `embed`, `go.mod`, `go.sum`)
@@ -146,14 +149,15 @@ vulnerability audit. See [security comparison](../metrics-reports/release-0.6.6-
 1. Record physical Safari/Via/Android/iPad acceptance, or an explicit release-owner
    exception with named follow-up ownership. No exception is granted here.
 2. Review the candidate/notes and require remote CI and CodeQL on the exact final
-   reviewed commit. The draft PR runs the new `Release preflight (no publication)`
+   reviewed commit. PR #172 ran the `Release preflight (no publication)`
    workflow: seven archive checks and four actual release Dockerfile builds and
    HTTP/timezone/restart checks with QEMU. It has read-only repository permissions,
    performs no registry login and contains no push or release step. At PR head
    `6296c81`, CI, CodeQL, Security Scan, Clock acceptance and Release preflight
    all passed. Seven archive and all four image jobs passed, including editor
    browser tests against the packaged Linux binary. See [remote CI evidence](../metrics-reports/release-0.6.6-preflight/remote-ci.json).
-   Subsequent evidence-only commits rerun CI; check the PR's latest status before
-   a separately authorized merge or release.
+   Before release, check CI for the exact final source being tagged, including
+   any merge or subsequent changes; candidate-head evidence alone does not certify
+   a later commit.
 3. Only after explicit publication authorization, use the reviewed source and
    numeric tag `0.6.6`, then verify public artifacts and registry manifests.

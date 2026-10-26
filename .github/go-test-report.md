@@ -1,3 +1,9 @@
+> Historical 0.6.5 report snapshot for source
+> [`a2ed02e`](https://github.com/soulteary/flare/commit/a2ed02e0085df283fd1a6a685b97fad3b6377b78),
+> saved in report commit [`c3106b0`](https://github.com/soulteary/flare/commit/c3106b0fbe2fa18fc54fae1c0cb1bc94efb5087c)
+> (2026-10-26 Asia/Shanghai). These are not current-main results.
+> See [report scope and current evidence](GO-REPORTS.md#reading-report-evidence).
+
 ## Test Report
 
 ### Summary

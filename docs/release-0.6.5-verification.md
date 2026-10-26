@@ -69,6 +69,6 @@ retains the unverified environments.
 
 The [performance report](../metrics-reports/audit-resource-comparison-2026-10-26.md)
 compares pre-audit main, not release 0.6.4. CPU/allocation gains do not establish
-universally lower RSS or ARM performance. Historical
-[preflight](release-preflight-2026-10-26.md) statements remain archived as the
-candidate-time snapshot, not a current release dashboard.
+universally lower RSS or ARM performance. This published-artifact record
+supersedes the preparation draft and checklist; the original preparation material
+remains available in Git history.

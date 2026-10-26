@@ -1,7 +1,10 @@
 # Parsed navigation snapshots
 
 Display reads retain immutable parsed snapshots of `config.yml`, `apps.yml` and
-`bookmarks.yml` alongside the existing byte cache. A warm read avoids YAML decoding.
+`bookmarks.yml`. An unchanged snapshot avoids repeated YAML decoding. On 0.6.5,
+all three use the existing byte cache. The 0.6.6 candidate rereads `config.yml`
+bytes for revision/version checks and reuses its parsed snapshot only when those
+bytes are unchanged; navigation collections retain their byte cache.
 Public configuration/collection APIs return independent copies of nested settings
 and slices, so mutating a returned model never changes another request's data.
 Concurrent bookmark readers share a read lock; first-file initialization and
@@ -13,8 +16,10 @@ snapshot. It is regenerated only when no retained editor recovery copies exist;
 otherwise normal reads, target lookups, search and import previews leave it missing
 and require manual recovery instead of creating example data. Editor revisions and import previews continue reading
 exact on-disk bytes and strict-decoding them; the display cache never replaces
-those external-edit/conflict checks. Display caches still require a restart after
-manual edits to existing YAML files, as before.
+those external-edit/conflict checks. Restart after externally editing `apps.yml`
+or `bookmarks.yml`. On 0.6.5 this also applies to `config.yml`; the 0.6.6 candidate
+observes external `config.yml` changes on the next configuration read. Stop writers
+before making external edits to avoid racing in-process saves.
 
 Redirect lookup builds a static URL set and a separate list of dynamic templates
 on first use. Request-expanded URLs are never cached globally. The route keeps

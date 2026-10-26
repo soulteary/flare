@@ -42,7 +42,7 @@ ShowBookmarks: true
 HideSettingButton: false
 # 隐藏界面中的帮助按钮
 HideHelpButton: false
-# 加密展示链接
+# 编码展示链接（非加密，不提供访问控制）
 EnableEncryptedLink: false
 # 链接图标展示模式
 IconMode: "DEFAULT"
@@ -50,7 +50,7 @@ IconMode: "DEFAULT"
 Theme: "blackboard"
 # 是否启用天气组件
 ShowWeather: true
-# 天气组件使用的位置，仅在程序自动识别出错时，需要修改
+# 天气位置的显示和兼容值；请在天气设置中搜索、选择并保存准确地点
 Location: "北京市"
 # 保持界面中链接大小写和配置中一致
 KeepLetterCase: false
