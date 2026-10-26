@@ -6,6 +6,7 @@ import (
 
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/clock"
+	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/search"
 )
 
@@ -115,9 +116,7 @@ func GetAllSettingsOptions() (model.Application, error) {
 		return options, err
 	}
 	options.ConfigVersionState = ConfigurationVersionState(options.AppVersion)
-	if options.Locale == "" {
-		options.Locale = "zh"
-	}
+	options.Locale = i18n.Normalize(options.Locale)
 	return options, nil
 }
 
@@ -155,7 +154,13 @@ func UpdateAppearance(update model.Application) bool {
 	options.EnableEncryptedLink = update.EnableEncryptedLink
 	options.IconMode = update.IconMode
 	options.KeepLetterCase = update.KeepLetterCase
-	options.Locale = update.Locale
+	if update.Locale != "" {
+		locale, ok := i18n.ParseLocale(update.Locale)
+		if !ok {
+			return false
+		}
+		options.Locale = locale
+	}
 
 	return saveAppConfigToYamlFile("config", options)
 }

@@ -8,13 +8,16 @@ const {chromium}=require(require.resolve('playwright',{paths:[__dirname,path.joi
 
 test('mobile editor preserves focus and drafts when save outcome is unknown',async()=>{
  const root=path.resolve(__dirname,'../..');
+ const messages=JSON.parse(await fs.readFile(path.join(root,'internal/i18n/locales/zh.json'),'utf8'));
+ const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+ const renderEditor=source=>source.replace(/\{\{T \.Locale "([^"]+)"\}\}/g,(_,key)=>{assert.ok(Object.hasOwn(messages,key),`Missing editor fixture message: ${key}`);return escapeHTML(messages[key]);}).replace(/\{\{HTMLLang \.Locale\}\}/g,'zh-CN').replace(/\{\{\.EditorAssetVersion\}\}/g,'test').replace(/\{\{\.EditorMessages\}\}/g,escapeHTML(JSON.stringify(messages)));
  const doc={version:'initial',categories:[{ID:'one',Name:'First'},{ID:'two',Name:'Second'}],apps:[{Name:'Original',URL:'http://nas:8080',Category:''}],bookmarks:[]};
  const server=http.createServer(async(req,res)=>{
   if(req.url==='/editor/document'){res.setHeader('content-type','application/json');res.end(JSON.stringify(doc));return;}
   const pathname=new URL(req.url,'http://flare.test').pathname;
   const file=pathname==='/editor'?path.join(root,'embed/templates/editor.html'):pathname.startsWith('/assets/editor-ui/')?path.join(root,'internal/pages/editor/client',path.basename(pathname)):null;
   if(!file){res.writeHead(404);res.end();return;}
-  res.setHeader('content-type',file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(await fs.readFile(file));
+  res.setHeader('content-type',file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':'text/html');const content=await fs.readFile(file);res.end(pathname==='/editor'?renderEditor(content.toString('utf8')):content);
  });
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  let browser;
@@ -23,6 +26,9 @@ test('mobile editor preserves focus and drafts when save outcome is unknown',asy
   const page=await browser.newPage({viewport:{width:320,height:640},isMobile:true,hasTouch:true});
   await page.goto(`http://127.0.0.1:${server.address().port}/editor`);
   await page.waitForFunction(()=>window.FlareEditorUI?.store);
+  assert.equal(await page.locator('html').getAttribute('lang'),'zh-CN');
+  assert.equal(await page.title(),messages['editor.manage_navigation_flare']);
+  assert.equal(await page.locator('#new-entry').textContent(),messages['editor.new']);
   await page.locator('#new-entry').click();
   await page.locator('#entry-name').fill('Added');await page.locator('#entry-url').fill('http://new');await page.locator('#entry-location').selectOption('apps');
   await page.locator('#entry-form').getByRole('button',{name:'完成',exact:true}).click();

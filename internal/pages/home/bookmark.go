@@ -9,6 +9,7 @@ import (
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/fn"
+	"github.com/soulteary/flare/internal/i18n"
 )
 
 func GenerateBookmarkTemplate(filter string, options *model.Application) template.HTML {
@@ -170,11 +171,8 @@ func renderBookmarksWithCategoriesForRequest(b *strings.Builder, bookmarks *[]mo
 // renderCategoryNavigation preserves search terms and category IDs in escaped links.
 func renderCategoryNavigation(b *strings.Builder, categories []model.Category, selected, filter, path, locale string) {
 	b.WriteString(`<nav class="bookmark-category-nav" aria-label="`)
-	all, label := "All", "Bookmark categories"
-	if locale == "zh" || locale == "" {
-		all, label = "全部", "书签分类"
-	}
-	b.WriteString(label)
+	all, label := i18n.T(locale, "navigation.all"), i18n.T(locale, "navigation.categories")
+	b.WriteString(html.EscapeString(label))
 	b.WriteString(`">`)
 	items := append([]model.Category{{Name: all}}, categories...)
 	for _, category := range items {

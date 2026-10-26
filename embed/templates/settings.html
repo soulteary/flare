@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ HTMLLang .Locale }}">
 
 <head>
   <meta charset="UTF-8">
@@ -7,7 +7,7 @@
   <meta name="google" content="notranslate">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/x-icon" href="{{ ThemeFaviconURL }}">
-  <title>{{.OptionTitle}} - Settings</title>
+  <title>{{.OptionTitle}} - {{ T .Locale "app_settings" }}</title>
   {{ if .DebugMode }}
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/settings/sidebar.css">

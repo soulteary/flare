@@ -14,6 +14,7 @@ import (
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/clock"
 	"github.com/soulteary/flare/internal/formvalue"
+	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/pool"
 )
 
@@ -44,6 +45,13 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 	}
 	if err := c.Bind().Body(&body); err != nil {
 		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
+	}
+	if body.Locale != "" {
+		locale, ok := i18n.ParseLocale(body.Locale)
+		if !ok {
+			return c.Status(http.StatusBadRequest).SendString(i18n.T(settingsLocale(), "settings_invalid_locale"))
+		}
+		body.Locale = locale
 	}
 	var update model.Application
 	// Copy existing options so older forms cannot erase newer preferences.
@@ -215,4 +223,12 @@ func pageAppearance(c fiber.Ctx) error {
 	}
 	m["Locale"] = options.Locale
 	return c.Status(http.StatusOK).Render("settings.html", m)
+}
+
+func settingsLocale() string {
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return "zh"
+	}
+	return options.Locale
 }

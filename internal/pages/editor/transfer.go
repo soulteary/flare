@@ -22,6 +22,7 @@ import (
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/bookmarks"
+	"github.com/soulteary/flare/internal/i18n"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -42,7 +43,9 @@ type transferTicket struct {
 }
 
 func registerTransfers(e *fiber.App) {
-	e.Get(transferPath, auth.AuthRequired, func(c fiber.Ctx) error { return c.Status(http.StatusOK).Render("transfer.html", nil) })
+	e.Get(transferPath, auth.AuthRequired, func(c fiber.Ctx) error {
+		return c.Status(http.StatusOK).Render("transfer.html", fiber.Map{"Locale": editorLocale(), "HTMLLang": i18n.HTMLLang(editorLocale())})
+	})
 	e.Post(transferPath+"/preview", auth.AuthRequired, transferRequest, previewTransfer)
 	e.Post(transferPath+"/commit", auth.AuthRequired, transferRequest, commitTransfer)
 	e.Get(transferPath+"/export", auth.AuthRequired, exportTransfer)
@@ -52,7 +55,7 @@ func registerTransfers(e *fiber.App) {
 // A custom header cannot be sent by cross-origin forms. No CORS access is granted.
 func transferRequest(c fiber.Ctx) error {
 	if c.Get("X-Flare-Transfer") != "1" || c.Get("Sec-Fetch-Site") == "cross-site" {
-		return c.Status(http.StatusForbidden).SendString("请从 Flare 管理页面操作")
+		return c.Status(http.StatusForbidden).SendString(transferText("请从 Flare 管理页面操作"))
 	}
 	return c.Next()
 }
@@ -105,7 +108,8 @@ func readTicket(token, user string) (transferTicket, error) {
 }
 
 func transferError(c fiber.Ctx, status int, err error) error {
-	return c.Status(status).JSON(map[string]string{"error": err.Error()})
+	log.Printf("bookmark transfer failed: %v", err)
+	return c.Status(status).JSON(map[string]string{"error": transferText(err.Error())})
 }
 
 func previewTransfer(c fiber.Ctx) error {
@@ -157,6 +161,7 @@ func previewTransfer(c fiber.Ctx) error {
 	if err != nil {
 		return transferError(c, http.StatusInternalServerError, err)
 	}
+	localizeTransferPlan(&plan)
 	c.Set("Cache-Control", "no-store")
 	return c.Status(http.StatusOK).JSON(map[string]any{"plan": plan, "token": token})
 }
@@ -197,6 +202,7 @@ func commitTransfer(c fiber.Ctx) error {
 			return transferError(c, status, err)
 		}
 	}
+	localizeTransferPlan(&plan)
 	c.Set("Cache-Control", "no-store")
 	return c.Status(http.StatusOK).JSON(plan)
 }
@@ -244,4 +250,62 @@ func backupTransfer(c fiber.Ctx) error {
 		return transferError(c, status, fmt.Errorf("没有可用的备份或备份无法读取"))
 	}
 	return transferDownload(c, "flare-"+collection+"-before-import-"+when.UTC().Format("20060102T150405")+".yml", "application/yaml", raw)
+}
+
+// Translate validation messages at the HTTP boundary, preserving parser details
+// and user-provided field values following a diagnostic prefix.
+var transferMessageKeys = map[string]string{
+	"无效的数据类型":                  "transfer.invalid_collection",
+	"书签已发生变化，请重新预览":            "transfer.conflict",
+	"请从 Flare 管理页面操作":          "transfer.management_required",
+	"无效的预览凭据":                  "transfer.invalid_token",
+	"预览凭据无效，请重新预览":             "transfer.invalid_signature",
+	"预览已失效，请重新预览":              "transfer.preview_expired",
+	"无法读取文件（最大 8 MiB）":         "transfer.file_read_error",
+	"请选择书签文件":                  "transfer.choose_bookmark_file",
+	"请选择 HTML 或 YAML":          "transfer.choose_export_format",
+	"没有可用的备份或备份无法读取":           "transfer.backup_unavailable",
+	"文件必须为 UTF-8，且不超过 8 MiB":   "transfer.invalid_encoding_or_size",
+	"无效的 Flare YAML":           "transfer.invalid_yaml",
+	"缺少 links 字段":              "transfer.missing_links",
+	"分类 ID 或名称无效或重复":           "transfer.invalid_category",
+	"书签引用了不存在的分类":              "transfer.unknown_category",
+	"请选择 HTML 或 Flare YAML 格式": "transfer.choose_import_format",
+	"书签 HTML 不完整或缺少 DL 目录":     "transfer.incomplete_html",
+	"嵌套的书签链接":                  "transfer.nested_links",
+	"目录结构不完整":                  "transfer.incomplete_folders",
+	"链接为空或包含非法字符":              "transfer.invalid_url_characters",
+	"链接格式无效":                   "transfer.invalid_url",
+	"缺少域名":                     "transfer.missing_hostname",
+	"不支持或不安全的协议":               "transfer.unsafe_protocol",
+	"相对地址或其他协议需要手动允许":          "transfer.allow_other_required",
+	"无效的重复处理策略":                "transfer.invalid_strategy",
+	"书签数量超出限制":                 "transfer.bookmark_limit",
+	"图标包含非法字符":                 "transfer.invalid_icon",
+	"缺少名称，已使用域名或链接":            "transfer.missing_name",
+	"最多支持 20000 个书签或分类":        "transfer.item_limit",
+	"最多支持 20000 个书签":           "transfer.bookmark_count_limit",
+	"目录深度不能超过 32":              "transfer.depth_limit",
+	"合并后最多支持 20000 个书签或分类":     "transfer.merged_item_limit",
+}
+
+func transferText(source string) string {
+	if key, ok := transferMessageKeys[source]; ok {
+		return i18n.T(editorLocale(), key)
+	}
+	for prefix, key := range transferMessageKeys {
+		if strings.HasPrefix(source, prefix+": ") {
+			return i18n.T(editorLocale(), key) + strings.TrimPrefix(source, prefix)
+		}
+	}
+	if source == "" {
+		return ""
+	}
+	return i18n.T(editorLocale(), "transfer.unknown_error")
+}
+
+func localizeTransferPlan(plan *bookmarks.Plan) {
+	for index := range plan.Rows {
+		plan.Rows[index].Reason = transferText(plan.Rows[index].Reason)
+	}
 }

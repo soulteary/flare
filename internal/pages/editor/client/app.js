@@ -2,7 +2,7 @@
 (async function () {
   'use strict';
   const t = window.FlareEditorI18n?.t || ((text,...args)=>text.replace(/\{(\d+)\}/g,(_,i)=>String(args[i]??'')));
-  const stateErrorText=error=>error.code==='entry_not_found'?t('条目不存在'):error.code==='draft_too_large'?t('草稿文件不能超过 64 MiB'):error.message;
+  const stateErrorText=error=>error.code==='entry_not_found'?t('editor.entry_does_not_exist'):error.code==='draft_too_large'?t('editor.draft_files_must_not_exceed_64_mib'):error.message;
   const $ = id => document.getElementById(id);
   let filterTimer;
   let store, saving=false, editingKey=null, formStart='', lastLocation='', undo=null, migrationID=null, conflict=false, recoveryRequired=false, focusBeforeDialog=null, batch=null;
@@ -23,18 +23,18 @@
   function button(text, action, className) {const node=el('button',text,className);node.type='button';node.addEventListener('click',action);return node;}
   function entryButton(text,action,className){const node=el('button',text,className);node.type='button';node.dataset.entryAction=action;return node;}
   function categoryName(id) {
-    if(id==='apps')return t('应用区');
-    if(id==='category:')return store.working.categories.length ? t('默认分类 · ')+store.working.categories[0].Name : t('未分类书签');
-    return store.working.categories.find(c=>'category:'+c.ID===id)?.Name || t('分类缺失：')+id;
+    if(id==='apps')return t('editor.applications');
+    if(id==='category:')return store.working.categories.length ? t('editor.default_category',{name:store.working.categories[0].Name}) : t('editor.uncategorized_bookmarks');
+    return store.working.categories.find(c=>'category:'+c.ID===id)?.Name || t('editor.missing_category',{location:id});
   }
 
   function locations(select, value, includeAll=false, exclude=null) {
     select.replaceChildren();
     function option(v,t){const o=el('option',t);o.value=v;select.append(o);}
-    if(includeAll)option('all',t('全部位置'));else option('',t('请选择位置'));
-    option('apps',t('应用区'));if(exclude===null)option('category:',categoryName('category:'));
+    if(includeAll)option('all',t('editor.all_locations'));else option('',t('editor.choose_a_location'));
+    option('apps',t('editor.applications'));if(exclude===null)option('category:',categoryName('category:'));
     for(const c of store.working.categories)if(c.ID!==exclude)option('category:'+c.ID,c.Name);
-    if(value && ![...select.options].some(o=>o.value===value))option(value,t('分类缺失：')+value);
+    if(value && ![...select.options].some(o=>o.value===value))option(value,t('editor.missing_category',{location:value}));
     select.value=value || (includeAll?'all':'');
   }
   function setStatus(message, error=false) {
@@ -42,31 +42,31 @@
     document.querySelector('.savebar').dataset.error=String(error);
     if(store){const dirty=store.dirty || !!batch?.dirty;$('save-changes').disabled=saving || recoveryRequired || !dirty;$('discard-changes').disabled=saving || !dirty;}
   }
-  function syncStatus() {if(recoveryRequired){setStatus(t('保存恢复未完成，请先导出草稿并检查服务端恢复副本，再重新载入。'),true);return;}setStatus(conflict ? t('服务器数据已变化，请保留修改后重新载入。') : (store.dirty || batch?.dirty)?t('有未保存的更改'):t('所有更改已保存'), conflict);}
+  function syncStatus() {if(recoveryRequired){setStatus(t('editor.save_recovery_is_incomplete_export_your_draft_inspect_server'),true);return;}setStatus(conflict ? t('editor.server_data_changed_keep_your_edits_before_reloading') : (store.dirty || batch?.dirty)?t('editor.unsaved_changes'):t('editor.all_changes_saved'), conflict);}
   function render() {
     clearTimeout(filterTimer);
     const filter=$('location-filter').value, query=$('entry-search').value.trim().toLocaleLowerCase();
     locations($('location-filter'),filter,true);
     const entries=store.viewEntries();
     const shown=entries.filter(({item,location})=>(filter==='all'||filter===location||(location==='category:'&&filter==='category:'+store.working.categories[0]?.ID)) && [item.Name,item.URL,item.Desc].some(value=>String(value||'').toLocaleLowerCase().includes(query)));
-    $('total-count').textContent=entries.length+t(' 条');
-    $('result-count').textContent=(query||filter!=='all')?t('找到 {0} 条，共 {1} 条',shown.length,entries.length):t('共 {0} 条',entries.length);
+    $('total-count').textContent=t('editor.entry_count',{count:entries.length});
+    $('result-count').textContent=(query||filter!=='all')?t('editor.search_result_count',{shown:shown.length,total:entries.length}):t('editor.entry_count',{count:entries.length});
     const list=$('entry-list'),rowCache=new Map();
     for(let row=list.firstElementChild;row;row=row.nextElementSibling)if(row.dataset.key)rowCache.set(row.dataset.key,row);
-    const rows=[],categoryLabels=new Map(store.working.categories.map(category=>['category:'+category.ID,category.Name]));categoryLabels.set('apps',t('应用区'));categoryLabels.set('category:',categoryName('category:'));
-    if(!shown.length){const empty=el('div',undefined,'empty');empty.append(el('p',entries.length?t('没有找到匹配条目'):t('还没有条目，从新增或导入开始。')));empty.append(button(entries.length?t('清除筛选'):t('新增条目'),()=>{if(entries.length){$('entry-search').value='';$('location-filter').value='all';render();}else openEntry();}));rows.push(empty);}
+    const rows=[],categoryLabels=new Map(store.working.categories.map(category=>['category:'+category.ID,category.Name]));categoryLabels.set('apps',t('editor.applications'));categoryLabels.set('category:',categoryName('category:'));
+    if(!shown.length){const empty=el('div',undefined,'empty');empty.append(el('p',entries.length?t('editor.no_matching_entries'):t('editor.no_entries_yet_add_or_import_an_entry')));empty.append(button(entries.length?t('editor.clear_filters'):t('editor.new_entry'),()=>{if(entries.length){$('entry-search').value='';$('location-filter').value='all';render();}else openEntry();}));rows.push(empty);}
     for(const {item,location} of shown){
       let row=rowCache.get(item._key);
       if(!row){
         const key=item._key;row=el('article',undefined,'entry');row.setAttribute('role','listitem');row.dataset.key=key;
         const main=el('div',undefined,'entry-main'),name=entryButton('','edit','entry-name'),address=el('span',undefined,'entry-address');main.append(name,address);
-        const place=el('span',undefined,'entry-location'),actions=el('div',undefined,'entry-actions');actions.append(entryButton(t('编辑'),'edit'),entryButton(t('删除'),'delete','danger'));
+        const place=el('span',undefined,'entry-location'),actions=el('div',undefined,'entry-actions');actions.append(entryButton(t('editor.edit'),'edit'),entryButton(t('editor.delete'),'delete','danger'));
         row.append(main,place,actions);
       }
       const {Name,URL}=item,name=row.firstElementChild.firstElementChild,address=name.nextElementSibling,place=row.firstElementChild.nextElementSibling;
       if(name.textContent!==Name)name.textContent=Name;
       if(address.textContent!==URL){address.textContent=URL;address.title=URL;}
-      const label=categoryLabels.get(location) || t('分类缺失：')+location;if(place.textContent!==label)place.textContent=label;
+      const label=categoryLabels.get(location) || t('editor.missing_category',{location:location});if(place.textContent!==label)place.textContent=label;
       rows.push(row);
     }
     // Keep unchanged rows attached (including focus). Bulk replacement handles
@@ -86,12 +86,12 @@
   function openEntry(key=null) {
     if(saving)return;editingKey=key;const entry=key?store.find(key):null;
     $('entry-form').reset();clearErrors();$('entry-options').open=false;
-    $('entry-dialog-title').textContent=entry?t('编辑条目'):t('新增条目');
+    $('entry-dialog-title').textContent=entry?t('editor.edit_entry'):t('editor.new_entry');
     for(const name of ['Name','URL','Icon','Desc'])$('entry-form').elements[name].value=entry?.item[name]||'';
     const selected=entry?.location || ($('location-filter').value!=='all'?$('location-filter').value:lastLocation);
     locations($('entry-location'),selected);formStart=formValue();iconPreview();open(entryDialog);
   }
-  function cancelEntry() {if(formValue()!==formStart && !confirm(t('放弃本次表单修改？')))return;close(entryDialog);}
+  function cancelEntry() {if(formValue()!==formStart && !confirm(t('editor.discard_changes_in_this_form')))return;close(entryDialog);}
   function iconPreview() {
     const value=$('entry-icon').value.trim(), preview=$('icon-preview');preview.replaceChildren();
     if(!value){preview.textContent='◇';return;}
@@ -104,16 +104,16 @@
   $('entry-icon').addEventListener('input',iconPreview);
   $('entry-form').addEventListener('submit',event=>{
     event.preventDefault();clearErrors();const values=Object.fromEntries(new FormData(event.target));
-    if(!values.Name.trim())return fieldError('Name',t('请填写名称'));if(!values.URL.trim())return fieldError('URL',t('请填写地址'));
-    if(values.Location!=='apps' && values.Location!=='category:' && !store.working.categories.some(c=>'category:'+c.ID===values.Location))return fieldError('Category',t('请选择有效位置'));
+    if(!values.Name.trim())return fieldError('Name',t('editor.enter_a_name'));if(!values.URL.trim())return fieldError('URL',t('editor.enter_an_address'));
+    if(values.Location!=='apps' && values.Location!=='category:' && !store.working.categories.some(c=>'category:'+c.ID===values.Location))return fieldError('Category',t('editor.choose_a_valid_location'));
     const existed=editingKey && store.find(editingKey);
     const item={Name:values.Name.trim(),URL:values.URL.trim(),Icon:values.Icon,Desc:values.Desc};
     try{editingKey=store.put(item,values.Location,editingKey);}catch(error){setStatus(stateErrorText(error),true);return;}lastLocation=values.Location;undo=null;close(entryDialog);render();
     focusEntry(editingKey);
-    if(existed && $('location-filter').value!=='all' && $('location-filter').value!==values.Location)setStatus(t('条目已移至“')+categoryName(values.Location)+t('”，保存后生效。'));
+    if(existed && $('location-filter').value!=='all' && $('location-filter').value!==values.Location)setStatus(t('editor.move_success',{location:categoryName(values.Location)}));
   });
   function removeEntry(key) {
-    if(saving)return;undo=store.remove(key);render();$('undo-delete').focus();setStatus(t('条目已移除，保存后生效；可撤销本次删除。'));
+    if(saving)return;undo=store.remove(key);render();$('undo-delete').focus();setStatus(t('editor.entry_removed_save_changes_to_apply_you_can_undo'));
   }
   $('undo-delete').onclick=()=>{const key=undo?.item._key;store.restore(undo);undo=null;render();focusEntry(key);};
   $('new-entry').onclick=()=>openEntry();$('cancel-entry').onclick=cancelEntry;
@@ -129,32 +129,32 @@
   }
   function renderCategories() {
     const list=$('category-list');list.replaceChildren();
-    if(!store.working.categories.length)list.append(el('p',t('还没有书签分类。'),'muted'));
+    if(!store.working.categories.length)list.append(el('p',t('editor.no_bookmark_categories_yet'),'muted'));
     store.working.categories.forEach((category,index)=>{
       const row=el('div',undefined,'category'),top=el('div',undefined,'category-top');
-      const input=el('input');input.value=category.Name;input.setAttribute('aria-label',t('分类名称 ')+(index+1));input.dataset.category=category.ID;
+      const input=el('input');input.value=category.Name;input.setAttribute('aria-label',t('editor.category_name_label',{number:index+1}));input.dataset.category=category.ID;
       const error=el('p',undefined,'field-error');error.setAttribute('role','status');
-      input.onchange=()=>{if(!validCategoryName(input.value,category.ID)){error.textContent=t('名称不能为空、重复或使用保留名称');input.setAttribute('aria-invalid','true');return;}category.Name=input.value.trim();error.textContent='';input.removeAttribute('aria-invalid');render();};top.append(input);row.append(top,error);
-      const tools=el('div',undefined,'category-tools');const count=store.working.bookmarks.filter(b=>b.Category===category.ID).length;tools.append(el('span',count+t(' 条书签')));
-      for(const [label,offset] of [[t('上移'),-1],[t('下移'),1]]){const move=button(label,()=>{const target=index+offset;[store.working.categories[index],store.working.categories[target]]=[store.working.categories[target],store.working.categories[index]];renderCategories();render();categoryDialog.querySelectorAll('[data-category]')[target]?.focus();});move.disabled=index+offset<0||index+offset>=store.working.categories.length;tools.append(move);}
-      tools.append(button(t('删除'),()=>{if(count){migrationID=category.ID;renderCategories();}else if(confirm(t('删除空分类“')+category.Name+'”？'))removeCategory(category.ID,'apps');},'danger'));row.append(tools);
-      if(migrationID===category.ID){const migration=el('div',undefined,'migration');migration.append(el('p',t('包含 ')+count+t(' 条书签，请选择迁入位置。')));
-        const select=el('select');select.setAttribute('aria-label',t('迁入位置'));locations(select,'',false,category.ID);
-        const actions=el('div',undefined,'dialog-actions');actions.append(button(t('取消'),()=>{migrationID=null;renderCategories();}),button(t('迁移并删除'),()=>{if(!select.value)return select.focus();removeCategory(category.ID,select.value);},'danger'));migration.append(select,actions);row.append(migration);}
+      input.onchange=()=>{if(!validCategoryName(input.value,category.ID)){error.textContent=t('editor.the_name_must_not_be_empty_duplicated_or_reserved');input.setAttribute('aria-invalid','true');return;}category.Name=input.value.trim();error.textContent='';input.removeAttribute('aria-invalid');render();};top.append(input);row.append(top,error);
+      const tools=el('div',undefined,'category-tools');const count=store.working.bookmarks.filter(b=>b.Category===category.ID).length;tools.append(el('span',t('editor.bookmark_count',{count})));
+      for(const [label,offset] of [[t('editor.move_up'),-1],[t('editor.move_down'),1]]){const move=button(label,()=>{const target=index+offset;[store.working.categories[index],store.working.categories[target]]=[store.working.categories[target],store.working.categories[index]];renderCategories();render();categoryDialog.querySelectorAll('[data-category]')[target]?.focus();});move.disabled=index+offset<0||index+offset>=store.working.categories.length;tools.append(move);}
+      tools.append(button(t('editor.delete'),()=>{if(count){migrationID=category.ID;renderCategories();}else if(confirm(t('editor.delete_empty_category',{name:category.Name})))removeCategory(category.ID,'apps');},'danger'));row.append(tools);
+      if(migrationID===category.ID){const migration=el('div',undefined,'migration');migration.append(el('p',t('editor.category_migration_hint',{count})));
+        const select=el('select');select.setAttribute('aria-label',t('editor.move_to'));locations(select,'',false,category.ID);
+        const actions=el('div',undefined,'dialog-actions');actions.append(button(t('editor.cancel'),()=>{migrationID=null;renderCategories();}),button(t('editor.move_and_delete'),()=>{if(!select.value)return select.focus();removeCategory(category.ID,select.value);},'danger'));migration.append(select,actions);row.append(migration);}
       list.append(row);
     });
   }
   $('manage-categories').onclick=()=>{if(saving)return;migrationID=null;$('category-error').textContent='';renderCategories();open(categoryDialog);};
-  $('category-add-form').onsubmit=event=>{event.preventDefault();const name=$('new-category-name').value.trim();if(!validCategoryName(name)){$('category-error').textContent=t('名称不能为空、重复或使用保留名称');$('new-category-name').focus();return;}store.working.categories.push({ID:store.categoryID(),Name:name});$('new-category-name').value='';$('category-error').textContent='';renderCategories();render();};
-  function closeCategories() {if(categoryDialog.querySelector('[aria-invalid="true"]')){categoryDialog.querySelector('[aria-invalid="true"]').focus();return;}if($('new-category-name').value.trim()&&!confirm(t('尚未添加的新分类名称将被放弃，继续？')))return;$('new-category-name').value='';close(categoryDialog);batch?.refresh();}
+  $('category-add-form').onsubmit=event=>{event.preventDefault();const name=$('new-category-name').value.trim();if(!validCategoryName(name)){$('category-error').textContent=t('editor.the_name_must_not_be_empty_duplicated_or_reserved');$('new-category-name').focus();return;}store.working.categories.push({ID:store.categoryID(),Name:name});$('new-category-name').value='';$('category-error').textContent='';renderCategories();render();};
+  function closeCategories() {if(categoryDialog.querySelector('[aria-invalid="true"]')){categoryDialog.querySelector('[aria-invalid="true"]').focus();return;}if($('new-category-name').value.trim()&&!confirm(t('editor.discard_the_new_category_name_that_has_not_been')))return;$('new-category-name').value='';close(categoryDialog);batch?.refresh();}
   $('close-categories').onclick=closeCategories;categoryDialog.addEventListener('cancel',event=>{event.preventDefault();closeCategories();});
   $('entry-list').addEventListener('click',event=>{const button=event.target.closest('[data-entry-action]'),row=button?.closest('[data-key]');if(!row)return;if(button.dataset.entryAction==='delete')removeEntry(row.dataset.key);else openEntry(row.dataset.key);});
   $('entry-search').oninput=()=>{if(store){clearTimeout(filterTimer);filterTimer=setTimeout(render,100);}};$('location-filter').onchange=()=>{if(store)render();};
   function busy(value) {saving=value;$('workspace').inert=value;$('workspace').setAttribute('aria-busy',String(value));document.querySelectorAll('.save-actions button').forEach(b=>b.disabled=value);if(!value)syncStatus();}
   function validateDocument() {
     const names=new Set(),ids=new Set();
-    for(let i=0;i<store.working.categories.length;i++){const c=store.working.categories[i];if(!c.ID||ids.has(c.ID)||!c.Name.trim()||names.has(c.Name.trim())||c.Name.trim()==='[Flare 应用]')return {field:'categories.'+i+'.Name',error:t('分类名称或 ID 无效')};names.add(c.Name.trim());ids.add(c.ID);}
-    for(const collection of ['apps','bookmarks'])for(let i=0;i<store.working[collection].length;i++){const item=store.working[collection][i];for(const name of ['Name','URL'])if(!String(item[name]||'').trim())return{field:collection+'.'+i+'.'+name,error:name==='Name'?t('请填写名称'):t('请填写地址')};if(collection==='bookmarks'&&item.Category&&!ids.has(item.Category))return{field:collection+'.'+i+'.Category',error:t('请选择有效位置')};}
+    for(let i=0;i<store.working.categories.length;i++){const c=store.working.categories[i];if(!c.ID||ids.has(c.ID)||!c.Name.trim()||names.has(c.Name.trim())||c.Name.trim()==='[Flare 应用]')return {field:'categories.'+i+'.Name',error:t('editor.invalid_category_name_or_id')};names.add(c.Name.trim());ids.add(c.ID);}
+    for(const collection of ['apps','bookmarks'])for(let i=0;i<store.working[collection].length;i++){const item=store.working[collection][i];for(const name of ['Name','URL'])if(!String(item[name]||'').trim())return{field:collection+'.'+i+'.'+name,error:name==='Name'?t('editor.enter_a_name'):t('editor.enter_an_address')};if(collection==='bookmarks'&&item.Category&&!ids.has(item.Category))return{field:collection+'.'+i+'.Category',error:t('editor.choose_a_valid_location')};}
   }
   function locateError(result) {
     if(batch?.active && !result.field.startsWith('categories.')) { batch.locateError(result); return; }
@@ -167,46 +167,46 @@
     if(batch?.active && !batch.flush())return;
     if(!store.dirty){syncStatus();return;}
     const invalid=validateDocument();if(invalid){locateError(invalid);setStatus(invalid.error,true);return;}
-    busy(true);setStatus(t('正在保存…'));let message=t('所有更改已保存'),error=false, responseParsed=false, serverInvalid=null;
+    busy(true);setStatus(t('editor.saving'));let message=t('editor.all_changes_saved'),error=false, responseParsed=false, serverInvalid=null;
     try {
       const response=await fetch('/editor/document',{method:'POST',headers:{'Content-Type':'application/json','X-Flare-Editor':'1'},body:JSON.stringify(store.toJSON()),signal:AbortSignal.timeout(30000)});
-      if(response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('登录可能已过期，请在新窗口登录后重试。'));
+      if(response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('editor.your_session_may_have_expired_sign_in_in_another'));
       const result=await response.json();responseParsed=true;
-      if(!response.ok){if(result.recoveryRequired){recoveryRequired=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(response.status===409){conflict=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(result.field)serverInvalid=result;throw Error(result.error||t('保存失败，请重试。'));}
-      if(!result.saved||!result.document)throw Error(t('保存响应不完整，请检查数据后重试。'));
+      if(!response.ok){if(result.recoveryRequired){recoveryRequired=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(response.status===409){conflict=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(result.field)serverInvalid=result;throw Error(result.error||t('editor.save_failed_please_retry'));}
+      if(!result.saved||!result.document)throw Error(t('editor.the_save_response_is_incomplete_check_the_data_before'));
       store.accept(result.document);batch?.refresh();undo=null;conflict=false;$('export-draft').hidden=true;$('reload-data').hidden=true;render();
     } catch(err){
       error=true;
       if(!responseParsed && (err.name==='TimeoutError'||err.name==='AbortError'||err instanceof TypeError||err instanceof SyntaxError)){
-        message=t('保存结果待确认：请求中断或响应无法读取，服务端可能已经保存。请先导出草稿，再检查服务端数据；重新保存仍会校验版本。 当前编辑内容已保留。');
+        message=t('editor.save_outcome_unknown_the_request_was_interrupted_or_its');
         $('export-draft').hidden=false;$('reload-data').hidden=false;
-      }else message=err.message+t(' 当前编辑内容已保留。');
+      }else message=t('editor.error_draft_preserved',{error:err.message});
     }
     finally{busy(false);if(serverInvalid)locateError(serverInvalid);setStatus(message,error);}
   }
   $('save-changes').onclick=save;
-  $('discard-changes').onclick=()=>{if(!saving&&confirm(t('放弃全部未保存的更改？'))){store.discard();batch?.refresh();undo=null;$('location-filter').value='all';render();if(conflict)setStatus(t('已恢复加载时的数据；服务器已有更新，请重新载入。'),true);}};
-  $('export-draft').onclick=()=>{let blob;try{blob=FlareEditorState.draftBlob(batch?.active ? batch.exportDraft() : store.toJSON());}catch(error){setStatus(t('无法导出草稿：')+stateErrorText(error),true);return;}const url=URL.createObjectURL(blob);const a=el('a');a.href=url;a.download='flare-editor-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-  $('reload-data').onclick=()=>{if(!saving&&(!(store.dirty||batch?.dirty)||confirm(t('重新载入会放弃当前修改，请先导出需要保留的内容。继续？'))))location.reload();};
+  $('discard-changes').onclick=()=>{if(!saving&&confirm(t('editor.discard_all_unsaved_changes'))){store.discard();batch?.refresh();undo=null;$('location-filter').value='all';render();if(conflict)setStatus(t('editor.the_loaded_snapshot_was_restored_the_server_has_newer'),true);}};
+  $('export-draft').onclick=()=>{let blob;try{blob=FlareEditorState.draftBlob(batch?.active ? batch.exportDraft() : store.toJSON());}catch(error){setStatus(t('editor.draft_export_error',{error:stateErrorText(error)}),true);return;}const url=URL.createObjectURL(blob);const a=el('a');a.href=url;a.download='flare-editor-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+  $('reload-data').onclick=()=>{if(!saving&&(!(store.dirty||batch?.dirty)||confirm(t('editor.reloading_discards_your_edits_export_anything_you_need_first'))))location.reload();};
   $('restore-draft').onclick=()=>{if(!saving&&!entryDialog.open&&!categoryDialog.open)$('draft-file').click();};
   $('draft-file').onchange=async event=>{
     const file=event.target.files[0];if(!file)return;
     try {
-      if(file.size>FlareEditorState.maxDraftBytes)throw Error(t('草稿文件不能超过 64 MiB'));
+      if(file.size>FlareEditorState.maxDraftBytes)throw Error(t('editor.draft_files_must_not_exceed_64_mib'));
       const draft=JSON.parse(await file.text());
-      if(!draft || !Array.isArray(draft.categories) || !Array.isArray(draft.apps) || !Array.isArray(draft.bookmarks))throw Error(t('不是有效的编辑器草稿'));
-      const categories=draft.categories.map(c=>{if(!c||typeof c.ID!=='string'||typeof c.Name!=='string')throw Error(t('分类格式无效'));return{ID:c.ID,Name:c.Name};});
+      if(!draft || !Array.isArray(draft.categories) || !Array.isArray(draft.apps) || !Array.isArray(draft.bookmarks))throw Error(t('editor.not_a_valid_editor_draft'));
+      const categories=draft.categories.map(c=>{if(!c||typeof c.ID!=='string'||typeof c.Name!=='string')throw Error(t('editor.invalid_category_format'));return{ID:c.ID,Name:c.Name};});
       // Handsontable exports cleared text cells as null; keep them editable as empty strings.
-      const items=rows=>rows.map(item=>{if(!item||!['Name','URL'].every(name=>item[name]===null||typeof item[name]==='string'))throw Error(t('条目格式无效'));const out={Name:item.Name??'',URL:item.URL??'',Category:typeof item.Category==='string'?item.Category:''};for(const name of ['Icon','Desc'])if(typeof item[name]==='string')out[name]=item[name];if(typeof item.Private==='boolean')out.Private=item.Private;return out;});
+      const items=rows=>rows.map(item=>{if(!item||!['Name','URL'].every(name=>item[name]===null||typeof item[name]==='string'))throw Error(t('editor.invalid_entry_format'));const out={Name:item.Name??'',URL:item.URL??'',Category:typeof item.Category==='string'?item.Category:''};for(const name of ['Icon','Desc'])if(typeof item[name]==='string')out[name]=item[name];if(typeof item.Private==='boolean')out.Private=item.Private;return out;});
       const next={version:store.working.version,categories,apps:items(draft.apps),bookmarks:items(draft.bookmarks)};
-      if(!confirm(t('以草稿替换当前待保存内容？保存时仍会检查本页加载的服务器版本。')))return;
-      store.working=FlareEditorState.normalize(next);batch?.refresh();undo=null;$('location-filter').value='all';render();setStatus(t('草稿已恢复到待保存内容，请检查后保存。'));
-    }catch(error){setStatus(t('无法恢复草稿：')+error.message,true);}finally{event.target.value='';}
+      if(!confirm(t('editor.replace_pending_edits_with_this_draft_saving_still_checks')))return;
+      store.working=FlareEditorState.normalize(next);batch?.refresh();undo=null;$('location-filter').value='all';render();setStatus(t('editor.draft_restored_to_pending_edits_review_it_before_saving'));
+    }catch(error){setStatus(t('editor.draft_restore_error',{error:error.message}),true);}finally{event.target.value='';}
   };
-  document.querySelectorAll('[data-leave]').forEach(link=>link.onclick=event=>{if(saving||(hasUnsavedChanges()&&!confirm(t('更改尚未保存，确定离开？'))))event.preventDefault();});
+  document.querySelectorAll('[data-leave]').forEach(link=>link.onclick=event=>{if(saving||(hasUnsavedChanges()&&!confirm(t('editor.you_have_unsaved_changes_leave_this_page'))))event.preventDefault();});
   window.addEventListener('beforeunload',event=>{if(saving||hasUnsavedChanges()){event.preventDefault();event.returnValue='';}});
   // The lazy batch adapter attaches to this single working store.
   window.FlareEditorUI={get store(){return store;},get saving(){return saving;},render,setStatus,syncStatus,validateDocument,locateError,registerBatch(adapter){batch=adapter;},get hasOpenDialog(){return entryDialog.open||categoryDialog.open;}};
-  try {const response=await fetch('/editor/document',{cache:'no-store'});if(!response.ok||response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('无法读取导航数据，请重新登录或检查配置。'));const serverDoc=await response.json();store=new FlareEditorState.Store(serverDoc);if(serverDoc.recoveryPaths?.length){const warning=$('recovery-warning');warning.hidden=false;warning.textContent=t('发现服务端恢复副本，请先检查恢复目录及数据一致性，再继续编辑：')+serverDoc.recoveryPaths.join(', ');}$('workspace').setAttribute('aria-busy','false');render();document.dispatchEvent(new Event('flare-editor-ready'));}
-  catch(error){$('result-count').textContent=t('加载失败');setStatus(error.message,true);$('workspace').inert=true;}
+  try {const response=await fetch('/editor/document',{cache:'no-store'});if(!response.ok||response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('editor.cannot_load_navigation_data_sign_in_again_or_check'));const serverDoc=await response.json();store=new FlareEditorState.Store(serverDoc);if(serverDoc.recoveryPaths?.length){const warning=$('recovery-warning');warning.hidden=false;warning.textContent=t('editor.recovery_paths_warning',{paths:serverDoc.recoveryPaths.join(', ')});}$('workspace').setAttribute('aria-busy','false');render();document.dispatchEvent(new Event('flare-editor-ready'));}
+  catch(error){$('result-count').textContent=t('editor.loading_failed');setStatus(error.message,true);$('workspace').inert=true;}
 })();

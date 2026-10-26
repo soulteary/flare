@@ -4,14 +4,17 @@ import (
 	"crypto/subtle"
 	"errors"
 	"fmt"
+	"html"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gorilla/sessions"
+	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/formvalue"
+	"github.com/soulteary/flare/internal/i18n"
 )
 
 const (
@@ -86,11 +89,6 @@ func getSession(c fiber.Ctx) (*sessionState, error) {
 	return state, err
 }
 
-var commonText = `<a href="` + define.SettingPages.Others.Path + `">返回重试</a></p><p>或前往 <a href="https://github.com/soulteary/docker-flare/issues/" target="_blank">https://github.com/soulteary/docker-flare/issues/</a> 反馈使用中的问题，谢谢！`
-var internalErrorInput = []byte(`<html><p>请填写正确的用户名和密码 ` + commonText + `</html>`)
-var internalErrorEmpty = []byte(`<html><p>用户名或密码不能为空 ` + commonText + `</html>`)
-var internalErrorSave = []byte(`<html><p>程序内部错误，保存登陆状态失败 ` + commonText + `</html>`)
-
 func AuthRequired(c fiber.Ctx) error {
 	if !define.AppFlags.DisableLoginMode {
 		state, err := getSession(c)
@@ -131,15 +129,20 @@ func GetUserLoginDate(c fiber.Ctx) string {
 	return ""
 }
 
-func authError(c fiber.Ctx, body []byte) error {
+func authError(c fiber.Ctx, key string) error {
 	c.Set(fiber.HeaderContentType, fiber.MIMETextHTMLCharsetUTF8)
-	return c.Status(http.StatusBadRequest).Send(body)
+	locale := "zh"
+	if options, err := data.GetAllSettingsOptions(); err == nil {
+		locale = options.Locale
+	}
+	body := `<html lang="` + html.EscapeString(i18n.HTMLLang(locale)) + `"><p>` + html.EscapeString(i18n.T(locale, key)) + ` <a href="` + define.SettingPages.Others.Path + `">` + html.EscapeString(i18n.T(locale, "auth.retry")) + `</a></p><p><a href="https://github.com/soulteary/docker-flare/issues/" target="_blank" rel="noopener noreferrer">` + html.EscapeString(i18n.T(locale, "auth.report")) + `</a></p></html>`
+	return c.Status(http.StatusBadRequest).SendString(body)
 }
 
 func login(c fiber.Ctx) error {
 	state, err := getSession(c)
 	if state == nil || state.session == nil {
-		return authError(c, internalErrorSave)
+		return authError(c, "auth.save_error")
 	}
 	sess := state.session
 	if err != nil {
@@ -148,16 +151,16 @@ func login(c fiber.Ctx) error {
 	}
 	username, password := formvalue.Get(c, "username"), formvalue.Get(c, "password")
 	if strings.Trim(username, " ") == "" || strings.Trim(password, " ") == "" {
-		return authError(c, internalErrorEmpty)
+		return authError(c, "auth.empty_error")
 	}
 	if subtle.ConstantTimeCompare([]byte(username), []byte(define.AppFlags.User)) != 1 ||
 		subtle.ConstantTimeCompare([]byte(password), []byte(define.AppFlags.Pass)) != 1 {
-		return authError(c, internalErrorInput)
+		return authError(c, "auth.input_error")
 	}
 	sess.Values[SESSION_KEY_USER_NAME] = username
 	sess.Values[SESSION_KEY_LOGIN_DATE] = time.Now().Format("2006年01月02日 15:04:05 CST")
 	if err := saveSession(c, sess); err != nil {
-		return authError(c, internalErrorSave)
+		return authError(c, "auth.save_error")
 	}
 	return c.Redirect().Status(http.StatusFound).To(define.SettingPages.Others.Path)
 }
@@ -170,7 +173,7 @@ func logout(c fiber.Ctx) error {
 	delete(state.session.Values, SESSION_KEY_USER_NAME)
 	delete(state.session.Values, SESSION_KEY_LOGIN_DATE)
 	if err := saveSession(c, state.session); err != nil {
-		return authError(c, internalErrorSave)
+		return authError(c, "auth.save_error")
 	}
 	return c.Redirect().Status(http.StatusFound).To(define.SettingPages.Others.Path)
 }

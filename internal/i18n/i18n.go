@@ -2,70 +2,94 @@ package i18n
 
 import (
 	"embed"
-	"encoding/json"
 	"fmt"
-	"sync"
+	"io/fs"
+	"strings"
 	"time"
+
+	kit "github.com/soulteary/i18n-kit/v4"
 )
 
 //go:embed locales/*.json
 var localesFS embed.FS
 
-var (
-	mu      sync.RWMutex
-	bundles = make(map[string]map[string]string)
-)
+var bundle = mustLoadBundle(localesFS)
+var translator = kit.NewTranslator(bundle)
+var formatter = kit.NewFormatter(bundle)
 
-func init() {
-	load("zh", "locales/zh.json")
-	load("en", "locales/en.json")
-}
-
-func load(lang, path string) {
-	data, err := localesFS.ReadFile(path)
+func mustLoadBundle(source fs.FS) *kit.Bundle {
+	b, err := loadBundle(source)
 	if err != nil {
-		return
+		panic(err)
 	}
-	var m map[string]string
-	if err := json.Unmarshal(data, &m); err != nil {
-		return
-	}
-	mu.Lock()
-	bundles[lang] = m
-	mu.Unlock()
+	return b
 }
 
-// T 返回指定语言的文案，key 不存在或语言不存在时返回 key 本身。
-// 未知 locale 时优先回退到 en，其次 zh。
-func T(locale, key string) string {
-	mu.RLock()
-	m := bundles[locale]
-	mu.RUnlock()
-	if m == nil {
-		mu.RLock()
-		if locale != "zh" {
-			m = bundles["en"]
+func loadBundle(source fs.FS) (*kit.Bundle, error) {
+	b := kit.NewBundle(kit.LangEN)
+	for _, lang := range []kit.Language{kit.LangZH, kit.LangEN} {
+		path := "locales/" + lang.String() + ".json"
+		data, err := fs.ReadFile(source, path)
+		if err != nil {
+			return nil, fmt.Errorf("i18n: read %s: %w", path, err)
 		}
-		if m == nil {
-			m = bundles["zh"]
+		if err := b.LoadJSON(lang, data); err != nil {
+			return nil, fmt.Errorf("i18n: load %s: %w", path, err)
 		}
-		mu.RUnlock()
 	}
-	if m == nil {
+	return b, nil
+}
+
+// ParseLocale accepts aliases only for languages translated by this project.
+func ParseLocale(locale string) (string, bool) {
+	lang, ok := kit.ParseLanguage(locale)
+	if !ok || (lang != kit.LangZH && lang != kit.LangEN) {
+		return "", false
+	}
+	return lang.String(), true
+}
+
+// Normalize uses the site's Chinese default for an empty locale and English
+// for unsupported locales, matching the historical translation fallback.
+func Normalize(locale string) string {
+	if strings.TrimSpace(locale) == "" {
+		return "zh"
+	}
+	if lang, ok := ParseLocale(locale); ok {
+		return lang
+	}
+	return "en"
+}
+
+// HTMLLang returns the language tag for the rendered document.
+func HTMLLang(locale string) string {
+	if Normalize(locale) == "zh" {
+		return "zh-CN"
+	}
+	return "en"
+}
+
+// T returns a translation, falling back to English and then the key itself.
+func T(locale, key string) string {
+	return translator.TWithLang(kit.Language(Normalize(locale)), key)
+}
+
+// Tf applies printf arguments only when the translation exists.
+func Tf(locale, key string, args ...any) string {
+	return translator.TfWithLang(kit.Language(Normalize(locale)), key, args...)
+}
+
+// Format substitutes named {parameters}. Callers must escape output for their
+// rendering context, just as with T and Tf.
+func Format(locale, key string, params map[string]any) string {
+	lang := kit.Language(Normalize(locale))
+	if _, found := bundle.LookupTranslation(lang, key); !found {
 		return key
 	}
-	if s, ok := m[key]; ok {
-		return s
-	}
-	return key
+	return formatter.Format(lang, key, params)
 }
 
-// Tf 与 T 相同，但支持 fmt 格式化，args 用于 fmt.Sprintf。
-func Tf(locale, key string, args ...any) string {
-	return fmt.Sprintf(T(locale, key), args...)
-}
-
-// Weekday 返回某语言下的星期几名称（Sunday=0）。
+// Weekday returns a translated weekday name (Sunday=0).
 func Weekday(locale string, w time.Weekday) string {
 	keys := []string{"weekday_sun", "weekday_mon", "weekday_tue", "weekday_wed", "weekday_thu", "weekday_fri", "weekday_sat"}
 	if int(w) < 0 || int(w) > 6 {
@@ -74,12 +98,10 @@ func Weekday(locale string, w time.Weekday) string {
 	return T(locale, keys[w])
 }
 
-// DateFormat 返回该语言下日期的格式 layout（用于 time.Format）。
+// DateFormat returns a layout suitable for time.Format.
 func DateFormat(locale string) string {
-	switch locale {
-	case "en":
+	if Normalize(locale) == "en" {
 		return "Jan 02, 2006"
-	default:
-		return "2006年01月02日"
 	}
+	return "2006年01月02日"
 }
