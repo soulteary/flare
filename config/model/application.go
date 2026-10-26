@@ -23,6 +23,7 @@ type Application struct {
 	HideHelpButton          bool             `yaml:"HideHelpButton"`
 	Theme                   string           `yaml:"Theme"`
 	ShowWeather             bool             `yaml:"ShowWeather"`
+	WeatherLocation         *WeatherLocation `yaml:"WeatherLocation,omitempty"`
 	Location                string           `yaml:"Location"`
 	EnableEncryptedLink     bool             `yaml:"EnableEncryptedLink"`
 	IconMode                string           `yaml:"IconMode"`

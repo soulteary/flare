@@ -18,7 +18,6 @@
 <label class="search-switch-row"><span>{{T .Locale "show_search_toolbar"}}</span><input type="checkbox" role="switch" name="show-search-component" id="show-search-component" value="1" {{if .ShowSearchComponent}}checked{{end}}></label>
 <label class="search-switch-row"><span>{{T .Locale "search_auto_focus"}}</span><input type="checkbox" role="switch" name="search-auto-focus" id="search-auto-focus" value="1" {{if not .DisabledSearchAutoFocus}}checked{{end}}></label>
 <label class="search-switch-row"><span>{{T .Locale "search_new_tab_setting"}}<small>{{T .Locale "search_new_tab_help"}}</small></span><input type="checkbox" role="switch" name="open-new-tab" value="1" {{if .SearchOptions.OpenNewTab}}checked{{end}}></label>
-<label class="search-switch-row"><span>{{T .Locale "search_keywords"}}<small>{{T .Locale "search_keywords_help"}}</small></span><input type="checkbox" role="switch" name="enable-keywords" value="1" {{if .SearchOptions.EnableKeywords}}checked{{end}}></label>
 </div>
 <input type="hidden" name="engine-count" value="{{len .SearchOptions.Engines}}">
 {{range $i,$e:=.SearchOptions.Engines}}
@@ -28,7 +27,6 @@
 <details class="search-engine-advanced" {{if or (not $e.ID) (not $e.URLTemplate)}}open{{end}}><summary>{{T $.Locale "search_advanced"}}</summary>
 <div class="search-advanced-fields">
 <div class="form-group"><label for="engine-{{$i}}-id">ID</label><input id="engine-{{$i}}-id" name="engine-{{$i}}-id" value="{{$e.ID}}" maxlength="64"></div>
-<div class="form-group"><label for="engine-{{$i}}-keyword">{{T $.Locale "search_keyword"}}</label><input id="engine-{{$i}}-keyword" name="engine-{{$i}}-keyword" value="{{$e.Keyword}}" maxlength="32"></div>
 <div class="form-group search-template-field"><label for="engine-{{$i}}-url">{{T $.Locale "search_template"}}</label><input type="text" id="engine-{{$i}}-url" name="engine-{{$i}}-url" value="{{$e.URLTemplate}}" maxlength="4096"></div>
 <p>{{T $.Locale "search_template_help"}}</p>
 <p>{{T $.Locale "search_test_target"}} <code>{{$e.URLTemplate}}</code></p>

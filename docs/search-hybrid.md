@@ -1,6 +1,6 @@
 # Homepage search modes
 
-> Hybrid search is available in Flare 0.6.5 and later. The additional modes and configuration protections described below require this change.
+> Hybrid search is available in Flare 0.6.5. The additional modes and configuration protections below are planned for 0.6.6, which has not been published.
 
 Search settings provide three modes, saved with the rest of the search configuration:
 
@@ -18,7 +18,7 @@ settings. Use Up/Down then Enter to open a selected match. With no selected matc
 Enter submits the normal form. When `OpenNewTab` is enabled, external targets
 open in a new tab while local search stays in the current tab. The explicit new-tab
 button always opens a new tab, including local search. Escape dismisses results. Input method composition
-never triggers navigation. Explicit keyword commands bypass local suggestions.
+never triggers navigation.
 
 Suggestions use a same-origin POST, with no external suggestion provider and no
 search history. The endpoint inherits the homepage's PRIVATE authentication,
@@ -41,8 +41,12 @@ script hashes.
 Changing the selected engine clears the active local match. Moving focus out of
 the search input cancels pending suggestions; stale responses cannot reopen a
 dismissed list. Mouse and touch activation still use the result's native anchor.
-Known enabled commands such as `!local`, `!ex` and `!s` bypass suggestions and
-override the selected target. Unknown commands remain ordinary searchable text.
+In the 0.6.6 candidate, all queries are treated as ordinary search text and use
+the selected target. The previous `!keyword` engine shortcuts are retired;
+`!g example` is searched literally rather than selecting an engine. Existing
+`EnableKeywords` and per-engine `Keyword` YAML fields no longer control searches.
+Choose the target explicitly instead. Back up the complete data directory before
+upgrading; restore that backup together with the old binary when rolling back.
 
 ## Legacy configuration safety
 
