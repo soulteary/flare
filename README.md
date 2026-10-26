@@ -2,6 +2,8 @@
 
 # Flare
 
+[![Go Test Coverage](./.github/coverage.svg)](./.github/go-test-report.md) [![Go Report Card](./.github/goreportcard.svg)](./.github/goreportcard-report.md)
+
 [![CI results](https://github.com/soulteary/flare/actions/workflows/ci.yml/badge.svg)](https://github.com/soulteary/flare/actions/workflows/ci.yml)
 [![Go quality reports and source verification](https://img.shields.io/badge/Go-quality%20reports-00ADD8?logo=go&logoColor=white)](.github/GO-REPORTS.md)
 
