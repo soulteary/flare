@@ -39,23 +39,24 @@ the candidate. Unrelated `output/imagegen` assets are excluded.
 
 ## Candidate and decision
 
-Candidate source: `995666d34f430d6d8e8e00a26f88f89bfb1eafb5` on local branch
-`codex/release-0.6.6-preflight`. Later evidence/documentation commits do not change
+Candidate source: `6296c81c5e4e19c3d2c6a8ccf2e34950ad84ce96` on branch
+`codex/release-0.6.6-preflight`, reviewed through [draft PR #172](https://github.com/soulteary/flare/pull/172).
+Later evidence/documentation commits do not change
 the tested application. Status: **local automated acceptance passed, held for
 review; not cleared for publication**. No tag, GitHub release or registry
 publication was performed. Existing `output/imagegen` content remains untracked
 and outside the candidate.
 
-The full application race/coverage suite and browser suite ran on `6ffcafa`;
-only the new packaging/upgrade harness was corrected afterward. A comparison of
-`config`, `internal`, `embed`, `.github`, `go.mod` and `go.sum` confirms identical
-application contents at `995666d`. Final archives and a second upgrade/rollback
-exercise use `995666d` explicitly. A future application change invalidates these
-results and requires relevant checks again.
+After synchronizing main, the full application race/coverage suite ran on
+`f2f9429`. Application contents (`config`, `internal`, `embed`, `go.mod`, `go.sum`)
+are identical at `6296c81`; subsequent changes fix the preflight harness. Final
+archives and the upgrade/rollback exercise use `6296c81` explicitly. Browser
+acceptance runs directly against that archive's host binary. A future application
+change invalidates these results and requires relevant checks again.
 
 ## Completed checks
 
-- Full Go race suite passed with `-coverpkg=./...`: **86.5%** statement coverage,
+- Full Go race suite passed with `-coverpkg=./...`: **86.4%** statement coverage,
   exceeding the 85% CI gate. Vet, Go formatting and golangci-lint 2.15.0 passed.
 - All 28 clock/editor state/mobile focus tests passed. All 12 existing production
   browser suites passed: adaptive columns, compact layout, category navigation,
@@ -83,7 +84,7 @@ results and requires relevant checks again.
 
 Machine-readable results and logs: [checks](../metrics-reports/release-0.6.6-preflight/checks.json),
 [archive verification](../metrics-reports/release-0.6.6-preflight/archives-verification.json).
-Candidate archives remain local at `/tmp/flare-066-final`; reproduce them with
+Candidate archives remain local at `/tmp/flare-066-complete`; reproduce them with
 the committed preflight script rather than committing binaries to the repository.
 
 ## Upgrade, mutation, restart and rollback
@@ -116,11 +117,22 @@ New York timezone and container restart checks. Local image labels use
 AMD64 runs under the local engine's emulation; ARM64 runs on the ARM64 VM.
 See [container evidence](../metrics-reports/release-0.6.6-preflight/container-verification.json).
 
-ARMv6 and ARMv7 image builds stopped at `/bin/sh` with `Exec format error` before
+Local ARMv6 and ARMv7 image builds stopped at `/bin/sh` with `Exec format error` before
 running Flare. Their Go archives built successfully, but this engine cannot
 execute the ARM32 build stages. Do not infer image/device acceptance from that.
-Complete both builds and runtime smoke checks in a QEMU-capable environment;
-the existing Release workflow sets up QEMU, but its future success is unverified.
+This gap was subsequently resolved by the no-publication QEMU CI preflight.
+All four image jobs passed in [run 40278421194](https://github.com/soulteary/flare/actions/runs/40278421194)
+at PR head `dcf2394`, including actual ARMv6/ARMv7 builds and HTTP/timezone/restart
+checks. The initial run's four restart failures were a harness error: Docker
+reallocated random host ports; rereading the port after restart fixed all four.
+This is emulated CI execution, not Raspberry Pi/device validation.
+
+The first local archive script also omitted ignored generated editor/guide
+assets when building from a clean Git snapshot. Direct archived-binary browser
+checks exposed the missing batch editor code. The script now generates production
+assets inside the snapshot; the archive CI job runs both editor and legacy batch
+acceptance against the packaged binary. Earlier incomplete local archives are
+superseded by the `6296c81` archive evidence.
 
 Clean-source gosec scans of both 0.6.5 and the candidate reported **16 findings**.
 Comparing rule, relative file and description produced no new groups. Existing
@@ -131,14 +143,17 @@ vulnerability audit. See [security comparison](../metrics-reports/release-0.6.6-
 
 ## Still required before a separately authorized release
 
-1. Build and smoke-test ARMv6/ARMv7 images in a QEMU-capable environment.
-2. Record physical Safari/Via/Android/iPad acceptance, or an explicit release-owner
+1. Record physical Safari/Via/Android/iPad acceptance, or an explicit release-owner
    exception with named follow-up ownership. No exception is granted here.
-3. Review the candidate/notes and require remote CI and CodeQL on the exact final
+2. Review the candidate/notes and require remote CI and CodeQL on the exact final
    reviewed commit. The draft PR runs the new `Release preflight (no publication)`
    workflow: seven archive checks and four actual release Dockerfile builds and
    HTTP/timezone/restart checks with QEMU. It has read-only repository permissions,
-   performs no registry login and contains no push or release step. Remote results
-   are recorded separately after execution.
-4. Only after explicit publication authorization, use the reviewed source and
+   performs no registry login and contains no push or release step. At PR head
+   `6296c81`, CI, CodeQL, Security Scan, Clock acceptance and Release preflight
+   all passed. Seven archive and all four image jobs passed, including editor
+   browser tests against the packaged Linux binary. See [remote CI evidence](../metrics-reports/release-0.6.6-preflight/remote-ci.json).
+   Subsequent evidence-only commits rerun CI; check the PR's latest status before
+   a separately authorized merge or release.
+3. Only after explicit publication authorization, use the reviewed source and
    numeric tag `0.6.6`, then verify public artifacts and registry manifests.

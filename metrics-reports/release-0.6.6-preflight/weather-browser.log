@@ -7,16 +7,16 @@
  / __/ / / /_/ /  __/ /
 /_/   /_/_.___/\___/_/          v3.6.1
 --------------------------------------------------
-INFO Server started on: 	http://127.0.0.1:52188
+INFO Server started on: 	http://127.0.0.1:59875
 INFO Total handlers: 		20
 INFO Prefork: 			Disabled
-INFO PID: 			44917
+INFO PID: 			86065
 INFO Total process count: 	1
 
-2026/10/26 13:55:03 WARN weather location request failed keyword=失败 kind=upstream error="fixture unavailable"
-2026/10/26 13:55:06 WARN weather location request failed keyword=失败 kind=upstream error="fixture unavailable"
+2026/10/26 14:09:34 WARN weather location request failed keyword=失败 kind=upstream error="fixture unavailable"
+2026/10/26 14:09:37 WARN weather location request failed keyword=失败 kind=upstream error="fixture unavailable"
     browser_test.go:77: Weather browser checks passed: desktop/mobile, duplicate names, county save/reload, empty/error, stale responses, IP confirmation.
 
---- PASS: TestWeatherBrowser (6.73s)
+--- PASS: TestWeatherBrowser (7.20s)
 PASS
-ok  	github.com/soulteary/flare/internal/settings/weather	7.315s
+ok  	github.com/soulteary/flare/internal/settings/weather	7.778s

@@ -1,11 +1,11 @@
 {
   "date": "2026-10-26",
   "timezone": "Asia/Shanghai",
-  "candidate_commit": "995666d34f430d6d8e8e00a26f88f89bfb1eafb5",
-  "application_test_commit": "6ffcafa6bc00a487ce34a26f54f8ae4b2516e48f",
+  "candidate_commit": "6296c81c5e4e19c3d2c6a8ccf2e34950ad84ce96",
+  "application_test_commit": "f2f9429d16413ce1b8771b7b9ff527bfb5ab83a1",
   "application_tree_identical": true,
   "go_race_tests": "PASS",
-  "all_package_statement_coverage_percent": 86.5,
+  "all_package_statement_coverage_percent": 86.4,
   "coverage_threshold_percent": 85,
   "js_tests": {
     "passed": 28,
@@ -15,62 +15,62 @@
     {
       "suite": "tests/mobile/bookmark-columns.browser.cjs",
       "exit_code": 0,
-      "seconds": 1.51
+      "seconds": 1.35
     },
     {
       "suite": "tests/mobile/layout.browser.cjs",
       "exit_code": 0,
-      "seconds": 1.03
+      "seconds": 1.78
     },
     {
       "suite": "tests/mobile/category-navigation.browser.cjs",
       "exit_code": 0,
-      "seconds": 1.98
+      "seconds": 2.22
     },
     {
       "suite": "tests/mobile/readability.browser.cjs",
       "exit_code": 0,
-      "seconds": 1.03
+      "seconds": 1.09
     },
     {
       "suite": "tests/mobile/desktop-columns.browser.cjs",
       "exit_code": 0,
-      "seconds": 0.66
+      "seconds": 0.71
     },
     {
       "suite": "tests/editor/scale.browser.cjs",
       "exit_code": 0,
-      "seconds": 2.32
+      "seconds": 2.48
     },
     {
       "suite": "tests/clock/browser.cjs",
       "exit_code": 0,
-      "seconds": 1.62
+      "seconds": 1.63
     },
     {
       "suite": "tests/mobile/browser.cjs",
       "exit_code": 0,
-      "seconds": 3.82
+      "seconds": 4.19
     },
     {
       "suite": "tests/editor/browser.cjs",
       "exit_code": 0,
-      "seconds": 17.07
+      "seconds": 16.89
     },
     {
       "suite": "tests/search/hybrid.cjs",
       "exit_code": 0,
-      "seconds": 9.58
+      "seconds": 9.62
     },
     {
       "suite": "tests/editor/legacy.browser.cjs",
       "exit_code": 0,
-      "seconds": 2.03
+      "seconds": 2.05
     },
     {
       "suite": "tests/editor/icon-picker.browser.cjs",
       "exit_code": 0,
-      "seconds": 1.46
+      "seconds": 1.42
     }
   ],
   "weather_browser": "PASS desktop/mobile deterministic fixtures",
@@ -85,16 +85,15 @@
   "actionlint": "PASS (1.7.12)",
   "goreleaser_config": "PASS (2.19.0), existing dockers/docker_manifests deprecation warning",
   "goreleaser_snapshot": "PASS seven archives; isolated synthetic Git snapshot; --snapshot --skip=docker; snapshot version 0.6.6-preflight. Authoritative candidate SHA and metadata are in archives-verification.json.",
-  "generated_assets": "PASS rebuilt twice with no tracked diff",
+  "generated_assets": "PASS: generation inside committed source snapshot includes ignored embedded editor/guide assets.",
   "published_baseline_archive": {
     "name": "flare_0.6.5_darwin_arm64.tar.gz",
     "published_sha256": "6f12c9dae60ebb8beaea1dbb635316a65ede5591d511d9f6d16b1313d13c48a7",
     "checksum_verified": true
   },
   "remaining_gates": [
-    "ARMv6/ARMv7 image build/runtime: local engine lacks emulation (Exec format error at /bin/sh); rerun in QEMU-capable release preflight environment",
-    "Physical Safari/Via/Android/iPad: NOT TESTED; release-owner acceptance or explicit documented exception required",
-    "Remote CI/CodeQL at final reviewed commit: NOT RUN (local-only preparation)"
+    "Latest draft PR CI completion is recorded separately in remote-ci.json.",
+    "Physical Safari/Via/Android/iPad: NOT TESTED; release-owner acceptance or explicit documented exception required."
   ],
   "publication_performed": false,
   "log_sha256": {
@@ -105,10 +104,23 @@
     "linux_armv7-container-build.log": "5e44240f2cf25fc467720a230a8a6e80a1cfbf9ad3629f4b006990b9b8b55f34",
     "linux_armv6-container-build.log": "02ebe740831c8ba4662ad62f536e7e0bc900f07974f9ca318a3f50da6b102146",
     "js.log": "4a509b19e7bb7d0e8950c02e69f7cf5e831c99a942450fc61d1029374cceea6e",
-    "weather-browser.log": "3dd0db86c79673255722f5482784676a70ba97fb22b0ab7ac737073828e63463",
-    "tests.log": "7c2141a0fb220e13dc8a2853021e7c2958cae4b8b1a9f604cf9aa8368a26d2a4",
+    "weather-browser.log": "cdb6ac890afbc5dc3b99a238e25fe3e2b3f7137ce1c3519c658bda6ed824a93d",
+    "tests.log": "adce6251d76a74df16ebd2793ff37c5b0de94e509034e79844038dda555fca91",
     "actionlint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "goreleaser-check.log": "c446d4898a1d95f9208f999292b0edac3a1966d6bfea3ba16d0d1d422890507d"
   },
-  "log_storage": "Text logs have trailing whitespace and terminal carriage returns normalized."
+  "log_storage": "Text logs have trailing whitespace and terminal carriage returns normalized.",
+  "remote_four_platform_restart_fix": {
+    "commit": "dcf2394a6d0dcd1dfa3a041022cfb054f7979f54",
+    "run": "https://github.com/soulteary/flare/actions/runs/40278421194",
+    "platforms": [
+      "linux/amd64",
+      "linux/arm64",
+      "linux/arm/v7",
+      "linux/arm/v6"
+    ],
+    "all_image_jobs": "success",
+    "fix": "Refresh the random host port after docker restart; all four initial probes and restart probes pass."
+  },
+  "superseded_preflight_issue": "Earlier manually packaged snapshots omitted ignored generated editor/guide assets. The committed script now generates inside the snapshot; CI exercises the packaged binary editor and legacy batch functionality."
 }
