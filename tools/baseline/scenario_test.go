@@ -142,6 +142,28 @@ func baselineCLI(t *testing.T, args ...string) string {
 	return string(<-output)
 }
 
+func TestProfileOutputRejectsSymlinkOutsideDirectory(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(t.TempDir(), "keep.pprof")
+	require.NoError(t, os.WriteFile(target, []byte("existing profile"), 0600))
+	require.NoError(t, os.Symlink(target, filepath.Join(dir, "heap.pprof")))
+
+	file, err := createProfileOutput(filepath.Join(dir, "heap.pprof"))
+	if file != nil {
+		file.Close()
+	}
+	require.Error(t, err)
+	raw, err := os.ReadFile(target)
+	require.NoError(t, err)
+	require.Equal(t, "existing profile", string(raw))
+}
+
+func TestProfileOutputRequiresExistingDirectory(t *testing.T) {
+	file, err := createProfileOutput(filepath.Join(t.TempDir(), "missing", "heap.pprof"))
+	require.Error(t, err)
+	require.Nil(t, file)
+}
+
 func TestCLIReportsAndProfiles(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/redir/url" {

@@ -304,7 +304,7 @@ func main() {
 	selected := selectScenarios(*scenarioName)
 
 	if *cpuProfile != "" {
-		f, err := os.Create(*cpuProfile)
+		f, err := createProfileOutput(*cpuProfile)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "create cpuprofile failed: %v\n", err)
 			os.Exit(1)
@@ -409,10 +409,21 @@ func selectScenarios(scenarioName string) []scenario {
 	return selected
 }
 
+// createProfileOutput confines file creation to the explicitly selected parent
+// directory, including when an existing output name is a symbolic link.
+func createProfileOutput(path string) (*os.File, error) {
+	root, err := os.OpenRoot(filepath.Dir(path))
+	if err != nil {
+		return nil, err
+	}
+	defer root.Close()
+	return root.Create(filepath.Base(path))
+}
+
 func writeMemoryProfile(memProfile string) {
 	if memProfile != "" {
 		runtime.GC()
-		f, err := os.Create(memProfile)
+		f, err := createProfileOutput(memProfile)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "create memprofile failed: %v\n", err)
 			os.Exit(1)
