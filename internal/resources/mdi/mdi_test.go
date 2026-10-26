@@ -49,6 +49,20 @@ func TestCheatSheetRelativeAssets(t *testing.T) {
 	}
 }
 
+func TestCheatSheetNamesRenderInFlare(t *testing.T) {
+	newIconTestRouter(t, false)
+	for _, name := range []string{"accessPoint", "accountBoxEditOutline", "account"} {
+		t.Run(name, func(t *testing.T) {
+			if GetIconByName(name) == _EMPTY_ICON {
+				t.Fatalf("copied name %q did not render on the homepage", name)
+			}
+			if !strings.Contains(GetIconSVGByName(name), "<path") {
+				t.Fatalf("copied name %q did not render an editor preview", name)
+			}
+		})
+	}
+}
+
 func TestCheatSheetBundledVersion(t *testing.T) {
 	const version = "7.4.47"
 	index, err := MdiExampleAssets.ReadFile("mdi-cheat-sheets/index.html")

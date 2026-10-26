@@ -396,7 +396,7 @@
     </h1>
 
     <h2 class="usage">Usage</h2>
-    <pre><code>&lt;span class=&quot;mdi mdi-<span id="name">name</span>&quot;&gt;&lt;/span&gt;</code></pre>
+    <pre><code>Flare icon name: <span id="name">name</span></code></pre>
 
     <blockquote class="note">
         Click the icon, hex codepoint, or name below to copy the value to your clipboard.
@@ -645,6 +645,11 @@
                 document.body.removeChild(copied);
             }, 1500);
         };
+        function flareIconName(name) {
+            return name.replace(/-(\w)/g, function (all, letter) {
+                return letter.toUpperCase();
+            });
+        }
         function getIconItem(icon, isNewIcon, isDeprecatedIcon) {
             var div = document.createElement('div'),
                 i = document.createElement('i');
@@ -654,10 +659,10 @@
             code.appendChild(document.createTextNode(icon.hex));
             div.appendChild(code);
             var span = document.createElement('span');
-            span.appendChild(document.createTextNode('mdi-' + icon.name));
+            span.appendChild(document.createTextNode(flareIconName(icon.name)));
             div.appendChild(span);
             span.onclick = function () {
-                document.getElementById('name').innerHTML = icon.name;
+                document.getElementById('name').textContent = flareIconName(icon.name);
             };
             i.onmouseup = function () {
                 copyText(String.fromCodePoint(parseInt(icon.hex, 16)));
@@ -666,7 +671,7 @@
                 copyText(icon.hex);
             };
             span.onmouseup = function () {
-                copyText('mdi-' + icon.name);
+                copyText(flareIconName(icon.name));
             };
             if (isNewIcon) {
                 div.className = 'new';
