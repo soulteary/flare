@@ -15,6 +15,18 @@ Current published stable remains 0.6.5.
   Revalidate selected candidates on save; retain form input on errors. Uniquely
   resolvable existing locations can migrate without overwriting concurrent choices.
 - Improve phone/tablet bookmark columns and weather settings layout.
+- Unify YAML parsing and serialization on YAML v3, with strict bookmark/import
+  validation and coverage for legacy boolean and numeric-looking string values.
+  Remove unused legacy CSV editor code and editor/guide memory filesystems; old
+  CSV submissions continue to receive 409 rather than bypass revision protection.
+- Upgrade Material Design Icons to 7.4.47. Preserve all 19 retired identifiers
+  from the 0.6.5 bundle, including Discord, DesktopMac and TabletAndroid, using
+  their original SVG paths. They remain available in previews, navigation and
+  the editor picker without rewriting stored bookmarks.
+- Match the favicon to the darkest theme palette color. Generate content-hashed
+  icons at build time and retain correct conditional/range HTTP behavior.
+- Update CI actions to Node.js 24-compatible releases and verify seven archives
+  plus four container platforms without publication during preflight.
 
 ## Behavior changes and upgrade instructions
 
@@ -33,6 +45,12 @@ Current published stable remains 0.6.5.
   Do not rely on old binaries understanding newly written settings.
 
 ## Validation
+
+The release owner authorized publication after the icon compatibility and release
+documentation fixes, retaining the explicitly disclosed physical-device testing
+limitation. Safari/Via/Android/iPad remain NOT TESTED; follow-up owner is repository
+maintainer soulteary. Chromium emulation and QEMU execution are not physical-device
+certification. No device result or completion date is implied by this exception.
 
 See [the 0.6.6 preflight record](release-0.6.6-preflight.md) for the exact candidate,
 automated checks, packaging evidence and unresolved publication gates. Physical
