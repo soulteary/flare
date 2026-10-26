@@ -2,8 +2,8 @@
 
 # Flare
 
-[CI results](https://github.com/soulteary/flare/actions/workflows/ci.yml) ·
-[Go quality reports and source verification](.github/GO-REPORTS.md)
+[![CI results](https://github.com/soulteary/flare/actions/workflows/ci.yml/badge.svg)](https://github.com/soulteary/flare/actions/workflows/ci.yml)
+[![Go quality reports and source verification](https://img.shields.io/badge/Go-quality%20reports-00ADD8?logo=go&logoColor=white)](.github/GO-REPORTS.md)
 
 A lightweight self-hosted bookmark dashboard and start page, written in Go.
 

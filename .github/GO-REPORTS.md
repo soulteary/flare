@@ -40,7 +40,9 @@ and [release/manual report runs](https://github.com/soulteary/flare/actions/work
 to select the tested commit, run and attempt before interpreting a report.
 Check the generation settings and coverage instrumentation in that workflow.
 Reports checked into Git are snapshots; their numbers do not certify a later
-commit. The README links to workflows instead of displaying undated report badges.
+commit. The README displays a live CI status badge and a Go report navigation
+badge linking to this source-verification guide, without displaying undated
+report scores.
 
 The historical 0.6.5 report snapshot was committed by
 [`c3106b0`](https://github.com/soulteary/flare/commit/c3106b0fbe2fa18fc54fae1c0cb1bc94efb5087c)
