@@ -1,0 +1,80 @@
+{
+  "candidate_commit": "995666d34f430d6d8e8e00a26f88f89bfb1eafb5",
+  "baseline_tag": "0.6.5",
+  "baseline_findings": 16,
+  "candidate_findings": 16,
+  "new_rule_file_description_groups": [],
+  "comparison": "Same rule, relative file and description; not a claim of zero findings or complete vulnerability audit.",
+  "findings": [
+    {
+      "rule": "G101",
+      "file": "internal/resources/mdi/icons.go",
+      "description": "Potential hardcoded credentials"
+    },
+    {
+      "rule": "G104",
+      "file": "tools/baseline/main.go",
+      "description": "Errors unhandled"
+    },
+    {
+      "rule": "G203",
+      "file": "internal/pages/home/application.go",
+      "description": "The used method does not auto-escape HTML. This can potentially lead to 'Cross-site Scripting' vulnerabilities, in case the attacker controls the input."
+    },
+    {
+      "rule": "G203",
+      "file": "internal/pages/home/bookmark.go",
+      "description": "The used method does not auto-escape HTML. This can potentially lead to 'Cross-site Scripting' vulnerabilities, in case the attacker controls the input."
+    },
+    {
+      "rule": "G203",
+      "file": "internal/pages/home/help.go",
+      "description": "The used method does not auto-escape HTML. This can potentially lead to 'Cross-site Scripting' vulnerabilities, in case the attacker controls the input."
+    },
+    {
+      "rule": "G203",
+      "file": "internal/pages/home/home.go",
+      "description": "The used method does not auto-escape HTML. This can potentially lead to 'Cross-site Scripting' vulnerabilities, in case the attacker controls the input."
+    },
+    {
+      "rule": "G203",
+      "file": "internal/settings/appearance/appearance.go",
+      "description": "The used method does not auto-escape HTML. This can potentially lead to 'Cross-site Scripting' vulnerabilities, in case the attacker controls the input."
+    },
+    {
+      "rule": "G203",
+      "file": "internal/settings/others/others.go",
+      "description": "The used method does not auto-escape HTML. This can potentially lead to 'Cross-site Scripting' vulnerabilities, in case the attacker controls the input."
+    },
+    {
+      "rule": "G301",
+      "file": "build/builder/io.go",
+      "description": "Expect directory permissions to be 0750 or less"
+    },
+    {
+      "rule": "G306",
+      "file": "build/builder/mdi.go",
+      "description": "Expect WriteFile permissions to be 0600 or less"
+    },
+    {
+      "rule": "G306",
+      "file": "build/builder/style.go",
+      "description": "Expect WriteFile permissions to be 0600 or less"
+    },
+    {
+      "rule": "G306",
+      "file": "build/builder/template.go",
+      "description": "Expect WriteFile permissions to be 0600 or less"
+    },
+    {
+      "rule": "G306",
+      "file": "config/data/fs.go",
+      "description": "Expect WriteFile permissions to be 0600 or less"
+    },
+    {
+      "rule": "G703",
+      "file": "build/builder/template.go",
+      "description": "Path traversal via taint analysis: os.WriteFile"
+    }
+  ]
+}

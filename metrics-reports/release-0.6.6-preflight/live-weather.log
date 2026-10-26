@@ -1,0 +1,72 @@
+=== RUN   TestLiveWeatherSelectionAndMigration
+找不到配置文件config，创建默认配置。
+    live_integration_test.go:44: live search 北京: [北京, 北京]
+=== RUN   TestLiveWeatherSelectionAndMigration/北京/北京,_北京
+    live_integration_test.go:67: saved and queried real weather: 北京, 北京: 17°C, 34%, 晴, 202610261335 (ID 101010100)
+=== NAME  TestLiveWeatherSelectionAndMigration
+    live_integration_test.go:44: live search 北京市: [北京, 北京]
+=== RUN   TestLiveWeatherSelectionAndMigration/北京市/北京,_北京
+    live_integration_test.go:67: saved and queried real weather: 北京, 北京: 17°C, 34%, 晴, 202610261335 (ID 101010100)
+=== NAME  TestLiveWeatherSelectionAndMigration
+    live_integration_test.go:44: live search 朝阳: [北京, 北京, 朝阳 吉林, 长春, 朝阳 辽宁, 朝阳]
+=== RUN   TestLiveWeatherSelectionAndMigration/朝阳/北京,_北京,_朝阳
+    live_integration_test.go:67: saved and queried real weather: 北京, 北京, 朝阳: 17°C, 38%, 晴, 202610261340 (ID 101010300)
+=== RUN   TestLiveWeatherSelectionAndMigration/朝阳/吉林,_长春,_朝阳
+    live_integration_test.go:67: saved and queried real weather: 吉林, 长春, 朝阳: 12°C, 24%, 晴, 202610261335 (ID 101060110)
+=== RUN   TestLiveWeatherSelectionAndMigration/朝阳/辽宁,_朝阳
+    live_integration_test.go:67: saved and queried real weather: 辽宁, 朝阳: 13°C, 34%, 晴, 202610261335 (ID 101071201)
+=== NAME  TestLiveWeatherSelectionAndMigration
+    live_integration_test.go:44: live search 津市: [湖南, 常德, 津市]
+=== RUN   TestLiveWeatherSelectionAndMigration/津市/湖南,_常德,_津市
+    live_integration_test.go:67: saved and queried real weather: 湖南, 常德, 津市: 24°C, 68%, 多云, 202610261340 (ID 101250608)
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/北京
+    live_integration_test.go:112: legacy "北京" -> 北京, 北京: 17°C, 晴, updated 202610261335
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/北京市
+    live_integration_test.go:112: legacy "北京市" -> 北京, 北京: 17°C, 晴, updated 202610261335
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/朝阳
+    live_integration_test.go:99: legacy "朝阳" safely retained without automatic selection
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/山西省太原市
+    live_integration_test.go:99: legacy "山西省太原市" safely retained without automatic selection
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/湖南省常德市津市市
+    live_integration_test.go:99: legacy "湖南省常德市津市市" safely retained without automatic selection
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/北京,_北京
+    live_integration_test.go:112: legacy "北京, 北京" -> 北京, 北京: 17°C, 晴, updated 202610261335
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/北京,_北京#01
+    live_integration_test.go:112: legacy "北京, 北京" -> 北京, 北京: 17°C, 晴, updated 202610261335
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/北京,_北京,_朝阳
+    live_integration_test.go:112: legacy "北京, 北京, 朝阳" -> 北京, 北京, 朝阳: 17°C, 晴, updated 202610261340
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/吉林,_长春,_朝阳
+    live_integration_test.go:112: legacy "吉林, 长春, 朝阳" -> 吉林, 长春, 朝阳: 12°C, 晴, updated 202610261335
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/辽宁,_朝阳
+    live_integration_test.go:112: legacy "辽宁, 朝阳" -> 辽宁, 朝阳: 13°C, 晴, updated 202610261335
+=== RUN   TestLiveWeatherSelectionAndMigration/migration/湖南,_常德,_津市
+    live_integration_test.go:112: legacy "湖南, 常德, 津市" -> 湖南, 常德, 津市: 24°C, 多云, updated 202610261340
+--- PASS: TestLiveWeatherSelectionAndMigration (3.03s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/北京/北京,_北京 (0.28s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/北京市/北京,_北京 (0.08s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/朝阳/北京,_北京,_朝阳 (0.14s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/朝阳/吉林,_长春,_朝阳 (0.16s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/朝阳/辽宁,_朝阳 (0.13s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/津市/湖南,_常德,_津市 (0.16s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/北京 (0.17s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/北京市 (0.19s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/朝阳 (0.08s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/山西省太原市 (0.08s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/湖南省常德市津市市 (0.10s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/北京,_北京 (0.16s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/北京,_北京#01 (0.15s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/北京,_北京,_朝阳 (0.17s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/吉林,_长春,_朝阳 (0.19s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/辽宁,_朝阳 (0.16s)
+    --- PASS: TestLiveWeatherSelectionAndMigration/migration/湖南,_常德,_津市 (0.16s)
+PASS
+ok  	github.com/soulteary/flare/internal/settings/weather	3.603s
+=== RUN   TestLiveNativeWeather
+找不到配置文件config，创建默认配置。
+    weather_live_integration_test.go:74: full production router: 北京 -> 北京, 北京, saved and queried weather
+    weather_live_integration_test.go:74: full production router: 北京市 -> 北京, 北京, saved and queried weather
+    weather_live_integration_test.go:74: full production router: 朝阳 -> 北京, 北京, 朝阳, saved and queried weather
+    weather_live_integration_test.go:74: full production router: 津市 -> 湖南, 常德, 津市, saved and queried weather
+--- PASS: TestLiveNativeWeather (1.12s)
+PASS
+ok  	github.com/soulteary/flare/internal/server	2.289s

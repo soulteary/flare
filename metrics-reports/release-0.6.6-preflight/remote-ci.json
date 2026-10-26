@@ -1,0 +1,376 @@
+{
+  "verified_pr_head": "6296c81c5e4e19c3d2c6a8ccf2e34950ad84ce96",
+  "pr": "https://github.com/soulteary/flare/pull/172",
+  "scope": "Pull-request workflows build the GitHub merge ref. No release or image publication.",
+  "workflow_runs": [
+    {
+      "id": 40278610326,
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/soulteary/flare/actions/runs/40278610326"
+    },
+    {
+      "id": 40278608116,
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/soulteary/flare/actions/runs/40278608116"
+    },
+    {
+      "id": 40278608209,
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/soulteary/flare/actions/runs/40278608209"
+    },
+    {
+      "id": 40278608136,
+      "name": "Clock acceptance",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/soulteary/flare/actions/runs/40278608136"
+    },
+    {
+      "id": 40278608117,
+      "name": "Release preflight (no publication)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/soulteary/flare/actions/runs/40278608117"
+    }
+  ],
+  "preflight_jobs": [
+    {
+      "id": 121426675231,
+      "name": "Seven candidate archives",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-go@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify production assets are current",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build and inspect local candidate archives",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install archive browser acceptance dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify generated editor assets in the archived binary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-go@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 121426675304,
+      "name": "Local image linux/arm/v7",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-go@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run docker/setup-qemu-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run docker/setup-buildx-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Generate production resources",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build candidate binary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build release Dockerfile without pushing",
+          "conclusion": "success"
+        },
+        {
+          "name": "HTTP, timezone and restart acceptance",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run docker/setup-buildx-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run docker/setup-qemu-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-go@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 121426675334,
+      "name": "Local image linux/arm64",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-go@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run docker/setup-qemu-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run docker/setup-buildx-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Generate production resources",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build candidate binary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build release Dockerfile without pushing",
+          "conclusion": "success"
+        },
+        {
+          "name": "HTTP, timezone and restart acceptance",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run docker/setup-buildx-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run docker/setup-qemu-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-go@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 121426675342,
+      "name": "Local image linux/arm/v6",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-go@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run docker/setup-qemu-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run docker/setup-buildx-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Generate production resources",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build candidate binary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build release Dockerfile without pushing",
+          "conclusion": "success"
+        },
+        {
+          "name": "HTTP, timezone and restart acceptance",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run docker/setup-buildx-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run docker/setup-qemu-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-go@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 121426675997,
+      "name": "Local image linux/amd64",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-go@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run docker/setup-qemu-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run docker/setup-buildx-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Generate production resources",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build candidate binary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build release Dockerfile without pushing",
+          "conclusion": "success"
+        },
+        {
+          "name": "HTTP, timezone and restart acceptance",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run docker/setup-buildx-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run docker/setup-qemu-action@v3",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-go@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}

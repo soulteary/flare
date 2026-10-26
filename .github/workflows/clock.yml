@@ -75,6 +75,10 @@ jobs:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
           NODE_PATH: ${{ github.workspace }}/tests/clock/node_modules
         run: node tests/search/hybrid.cjs
+      - name: Weather location picker browser acceptance
+        env:
+          FLARE_WEATHER_BROWSER: "1"
+        run: go test ./internal/settings/weather -run '^TestWeatherBrowser$' -count=1 -v
       - name: Upload editor view screenshots
         if: always()
         uses: actions/upload-artifact@v6

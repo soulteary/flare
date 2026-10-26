@@ -1,0 +1,178 @@
+TAP version 13
+# Subtest: 2026-12-31T15:59:59Z in Asia/Shanghai
+ok 1 - 2026-12-31T15:59:59Z in Asia/Shanghai
+  ---
+  duration_ms: 64.314917
+  type: 'test'
+  ...
+# Subtest: 2026-12-31T16:00:00Z in Asia/Shanghai
+ok 2 - 2026-12-31T16:00:00Z in Asia/Shanghai
+  ---
+  duration_ms: 0.455
+  type: 'test'
+  ...
+# Subtest: 2024-02-28T16:00:00Z in Asia/Shanghai
+ok 3 - 2024-02-28T16:00:00Z in Asia/Shanghai
+  ---
+  duration_ms: 0.393833
+  type: 'test'
+  ...
+# Subtest: 2026-03-08T06:59:59Z in America/New_York
+ok 4 - 2026-03-08T06:59:59Z in America/New_York
+  ---
+  duration_ms: 1.41975
+  type: 'test'
+  ...
+# Subtest: 2026-03-08T07:00:00Z in America/New_York
+ok 5 - 2026-03-08T07:00:00Z in America/New_York
+  ---
+  duration_ms: 0.325959
+  type: 'test'
+  ...
+# Subtest: 2026-11-01T05:59:59Z in America/New_York
+ok 6 - 2026-11-01T05:59:59Z in America/New_York
+  ---
+  duration_ms: 0.255042
+  type: 'test'
+  ...
+# Subtest: 2026-11-01T06:00:00Z in America/New_York
+ok 7 - 2026-11-01T06:00:00Z in America/New_York
+  ---
+  duration_ms: 0.548584
+  type: 'test'
+  ...
+# Subtest: 2026-10-25T00:00:00Z in Asia/Kathmandu
+ok 8 - 2026-10-25T00:00:00Z in Asia/Kathmandu
+  ---
+  duration_ms: 0.532875
+  type: 'test'
+  ...
+# Subtest: midnight updates all fields together, without accumulating ticks
+ok 9 - midnight updates all fields together, without accumulating ticks
+  ---
+  duration_ms: 0.523833
+  type: 'test'
+  ...
+# Subtest: hidden tabs stop and resume from current device time
+ok 10 - hidden tabs stop and resume from current device time
+  ---
+  duration_ms: 0.452958
+  type: 'test'
+  ...
+# Subtest: BFCache, focus and repeated initialization cannot duplicate timers
+ok 11 - BFCache, focus and repeated initialization cannot duplicate timers
+  ---
+  duration_ms: 0.62525
+  type: 'test'
+  ...
+# Subtest: minute mode aligns the next update without second polling
+ok 12 - minute mode aligns the next update without second polling
+  ---
+  duration_ms: 0.221791
+  type: 'test'
+  ...
+# Subtest: static browser time initializes once, with no recurring work
+ok 13 - static browser time initializes once, with no recurring work
+  ---
+  duration_ms: 0.222041
+  type: 'test'
+  ...
+# Subtest: English format matches Go and midnight uses 00
+ok 14 - English format matches Go and midnight uses 00
+  ---
+  duration_ms: 0.943625
+  type: 'test'
+  ...
+# Subtest: unsupported zone or Intl leaves fallback untouched
+ok 15 - unsupported zone or Intl leaves fallback untouched
+  ---
+  duration_ms: 1.140542
+  type: 'test'
+  ...
+# Subtest: fixed help title has no greeting data and stays unchanged
+ok 16 - fixed help title has no greeting data and stays unchanged
+  ---
+  duration_ms: 0.405791
+  type: 'test'
+  ...
+# Subtest: fixed and incomplete greetings do not break clock
+ok 17 - fixed and incomplete greetings do not break clock
+  ---
+  duration_ms: 0.653042
+  type: 'test'
+  ...
+# Subtest: static device clock initializes in an initially hidden tab without recurring work
+ok 18 - static device clock initializes in an initially hidden tab without recurring work
+  ---
+  duration_ms: 1.609625
+  type: 'test'
+  ...
+# Subtest: dynamic clock opened hidden waits for visibility and starts exactly one timer
+ok 19 - dynamic clock opened hidden waits for visibility and starts exactly one timer
+  ---
+  duration_ms: 0.714583
+  type: 'test'
+  ...
+# Subtest: mobile editor preserves focus and drafts when save outcome is unknown
+ok 20 - mobile editor preserves focus and drafts when save outcome is unknown
+  ---
+  duration_ms: 2238.152625
+  type: 'test'
+  ...
+# Subtest: dirty state compares actual data and discard restores saved data
+ok 21 - dirty state compares actual data and discard restores saved data
+  ---
+  duration_ms: 0.557875
+  type: 'test'
+  ...
+# Subtest: session keys survive filtering, moves and undo but are not persisted
+ok 22 - session keys survive filtering, moves and undo but are not persisted
+  ---
+  duration_ms: 0.594459
+  type: 'test'
+  ...
+# Subtest: category IDs remain independent from labels and snapshots do not alias
+ok 23 - category IDs remain independent from labels and snapshots do not alias
+  ---
+  duration_ms: 5.357875
+  type: 'test'
+  ...
+# Subtest: application placement cannot collide with a legacy category ID named apps
+ok 24 - application placement cannot collide with a legacy category ID named apps
+  ---
+  duration_ms: 0.567083
+  type: 'test'
+  ...
+# Subtest: implicit default group remains a bookmark with or without named categories
+ok 25 - implicit default group remains a bookmark with or without named categories
+  ---
+  duration_ms: 0.10075
+  type: 'test'
+  ...
+# Subtest: large draft exports remain importable and preserve hidden fields
+ok 26 - large draft exports remain importable and preserve hidden fields
+  ---
+  duration_ms: 218.789542
+  type: 'test'
+  ...
+# Subtest: dirty checks cache serialization until an actual mutation, and remain reversible
+ok 27 - dirty checks cache serialization until an actual mutation, and remain reversible
+  ---
+  duration_ms: 3.6795
+  type: 'test'
+  ...
+# Subtest: display entries cannot mutate stored data or dirty tracking
+ok 28 - display entries cannot mutate stored data or dirty tracking
+  ---
+  duration_ms: 0.155042
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2436.83075
