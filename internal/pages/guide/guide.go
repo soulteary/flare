@@ -9,28 +9,15 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/internal/resources/assets"
-	memfs "github.com/soulteary/memfs-kit"
 
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/fn"
 )
 
-var MemFs *memfs.FS
-
-const _ASSETS_BASE_DIR = "assets/guide"
-const _ASSETS_WEB_URI = "/" + _ASSETS_BASE_DIR
+const _ASSETS_WEB_URI = "/assets/guide"
 
 //go:embed guide-assets
 var IntroAssets embed.FS
-
-func Init() error {
-	MemFs = memfs.New()
-	err := MemFs.MkdirAll(_ASSETS_BASE_DIR, 0777)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 func RegisterRouting(e *fiber.App) {
 	if introAssets, err := fs.Sub(IntroAssets, "guide-assets"); err == nil {

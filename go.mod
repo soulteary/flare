@@ -7,7 +7,6 @@ require (
 	github.com/fatih/color v1.19.0
 	github.com/gofiber/fiber/v3 v3.6.1
 	github.com/gorilla/sessions v1.4.0
-	github.com/jszwec/csvutil v1.10.0
 	github.com/soulteary/cli-kit v1.9.2
 	github.com/soulteary/funny-china-weather v0.4.0
 	github.com/soulteary/memfs-kit v1.1.1

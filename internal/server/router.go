@@ -57,7 +57,7 @@ func fiberErrorHandler(c fiber.Ctx, err error) error {
 }
 
 // NewFiberApp builds the native Fiber app.
-// It returns an error if any required initialization (templates, mdi, guide, editor) fails.
+// It returns an error if any required initialization (templates, mdi, editor) fails.
 // The given appFlags are synced to define.AppFlags and receive the effective cookie signing key.
 func NewFiberApp(appFlags *model.Flags) (*fiber.App, error) {
 	define.Init()
@@ -113,9 +113,6 @@ func NewFiberApp(appFlags *model.Flags) (*fiber.App, error) {
 	mdi.RegisterRouting(e)
 	redir.RegisterRouting(e)
 	if define.AppFlags.EnableGuide {
-		if err := guide.Init(); err != nil {
-			return nil, fmt.Errorf("初始化引导页: %w", err)
-		}
 		guide.RegisterRouting(e)
 	}
 	if define.AppFlags.EnableEditor {
