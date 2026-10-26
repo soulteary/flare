@@ -27,8 +27,7 @@
    status.textContent=result.total ? t('editor.icon_result_count',{total:result.total,start:offset+1,end:offset+result.names.length}):t('editor.no_icons_found_try_another_english_keyword');
    for(const name of result.names){
     const button=make('button');button.type='button';button.className='icon-choice';button.setAttribute('aria-label',t('editor.choose_named_icon',{name}));button.setAttribute('aria-pressed',String(input.value.toLowerCase()===name));
-    const image=make('img');image.alt='';image.loading='lazy';image.src='/editor/icon?name='+encodeURIComponent(name);
-    image.onerror=()=>{image.remove();button.append(make('span',t('editor.preview_unavailable')));};
+    const image=window.FlareEditorIcons.create(name,icon=>{icon.remove();button.append(make('span',t('editor.preview_unavailable')));});
     button.append(image,make('span',name));button.onclick=()=>{input.value=name;input.dispatchEvent(new Event('input',{bubbles:true}));dismiss();input.focus();};grid.append(button);
    }
    prev.disabled=offset===0;next.disabled=offset+result.names.length>=result.total;
