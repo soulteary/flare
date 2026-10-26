@@ -81,7 +81,8 @@
 }
 /* Four is the default upper bound, rather than a fixed count on narrow tablets. */
 @media (min-width: 600px) {
- #container-bookmakrs .bookmark-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, max(11.25rem, calc((100% - 48px) / 4))), 1fr)); gap: 16px; align-items: start; }
+ body { --desktop-column-width: max(11.25rem, calc((100% - 48px) / 4)); }
+ #container-bookmakrs .bookmark-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--desktop-column-width)), 1fr)); gap: 16px; align-items: start; }
  #container-bookmakrs .bookmark-group-container { width: auto; min-width: 0; float: none; }
  .bookmark-category-nav { grid-column: 1 / -1; }
 }
@@ -101,9 +102,17 @@
  .desktop-columns-5 { --desktop-column-width: max(11.25rem, calc((100% - 64px) / 5)); }
  .desktop-columns-6 { --desktop-column-width: max(11.25rem, calc((100% - 80px) / 6)); }
  .desktop-columns-8 { --desktop-column-width: max(11.25rem, calc((100% - 112px) / 8)); }
- body[class*="desktop-columns-"] #container-bookmakrs .bookmark-groups,
+ body[class*="desktop-columns-"]:not(.bookmark-layout-sections) #container-bookmakrs .bookmark-groups,
  body[class*="desktop-columns-"] #container-apps .apps-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--desktop-column-width)),1fr)); gap:16px; }
- body[class*="desktop-columns-"] #container-bookmakrs .bookmark-group-container,
+ body[class*="desktop-columns-"]:not(.bookmark-layout-sections) #container-bookmakrs .bookmark-group-container,
  body[class*="desktop-columns-"] #container-apps .apps-container .app-container { width:auto; min-width:0; float:none; }
  body[class*="desktop-columns-"] .bookmark-category-nav { grid-column:1 / -1; }
+}
+
+/* Each category uses the full width; bookmarks retain row-major DOM order. */
+@media (min-width: 600px) {
+ .bookmark-layout-sections #container-bookmakrs .bookmark-groups { display: block; }
+ .bookmark-layout-sections #container-bookmakrs .bookmark-group-container { display: block; width: 100%; min-width: 0; float: none; margin-bottom: 24px; }
+ .bookmark-layout-sections #container-bookmakrs .bookmark-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--desktop-column-width)), 1fr)); gap: 0 16px; }
+ .bookmark-layout-sections #container-bookmakrs .bookmark-list > li { min-width: 0; }
 }

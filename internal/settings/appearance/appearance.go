@@ -86,7 +86,7 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		update.Homepage = &homepage
 	}
 
-	if mode, columns := formvalue.Get(c, "category-navigation"), formvalue.Get(c, "desktop-columns"); mode != "" || columns != "" {
+	if mode, columns, bookmarkLayout := formvalue.Get(c, "category-navigation"), formvalue.Get(c, "desktop-columns"), formvalue.Get(c, "bookmark-layout"); mode != "" || columns != "" || bookmarkLayout != "" {
 		existing, err := data.GetAllSettingsOptions()
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).SendString("config error")
@@ -97,6 +97,9 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		}
 		if update.Homepage != nil {
 			homepage = *update.Homepage
+		}
+		if bookmarkLayout != "" {
+			homepage.BookmarkLayout = bookmarkLayout
 		}
 		if mode != "" {
 			homepage.CategoryNavigation = mode
@@ -212,6 +215,10 @@ func pageAppearance(c fiber.Ctx) error {
 		c.Set("Content-Security-Policy", clock.SettingsPolicy())
 	}
 	m["OptionLocale"] = options.Locale
+	m["BookmarkLayout"] = "groups"
+	if options.Homepage != nil && options.Homepage.BookmarkLayout == "sections" {
+		m["BookmarkLayout"] = "sections"
+	}
 	m["DesktopColumnChoices"] = []string{"4", "5", "6", "8"}
 	m["DesktopColumns"] = ""
 	if options.Homepage != nil {

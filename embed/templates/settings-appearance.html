@@ -266,6 +266,13 @@
  <p class="help-text">{{ T .Locale "category_navigation_help" }}</p>
  </div>
  <div class="form-group">
+ <label for="bookmark-layout">{{ T .Locale "bookmark_layout" }}</label>
+ <select id="bookmark-layout" name="bookmark-layout">
+ <option value="groups" {{if eq .BookmarkLayout "groups"}}selected{{end}}>{{ T .Locale "bookmark_layout_groups" }}</option>
+ <option value="sections" {{if eq .BookmarkLayout "sections"}}selected{{end}}>{{ T .Locale "bookmark_layout_sections" }}</option>
+ </select><p class="help-text">{{ T .Locale "bookmark_layout_help" }}</p>
+ </div>
+ <div class="form-group">
  <label for="desktop-columns">{{ T .Locale "desktop_columns" }}</label>
  <select id="desktop-columns" name="desktop-columns">
  <option value="legacy" {{if eq .DesktopColumns ""}}selected{{end}}>{{ T .Locale "desktop_columns_default" }}</option>

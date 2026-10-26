@@ -9,6 +9,7 @@ go build -o /tmp/flare-mobile .
 npm ci --ignore-scripts --prefix tests/clock
 tests/clock/node_modules/.bin/playwright install chromium
 node tests/mobile/bookmark-columns.browser.cjs
+FLARE_BINARY=/tmp/flare-mobile node tests/mobile/bookmark-sections.browser.cjs
 FLARE_BINARY=/tmp/flare-mobile node tests/mobile/browser.cjs
 FLARE_BINARY=/tmp/flare-mobile node tests/editor/browser.cjs
 ```
@@ -49,3 +50,7 @@ scripts; desktop-agent tablets can use the existing autofocus setting.
 Follow [the physical device checklist](../../docs/mobile-device-acceptance.md)
 before declaring Safari/Via, keyboard and safe-area issues resolved. The checklist
 starts as Not verified and requires device/version evidence for each real run.
+
+The sections suite checks generated production resources, per-category columns,
+column choices, long names, enlarged fonts, constrained parents, category/search
+combinations, collapse visibility, and uncategorized lists. It also runs in CI.

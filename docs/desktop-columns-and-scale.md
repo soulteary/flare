@@ -76,3 +76,36 @@ See [the client measurement report](../metrics-reports/editor-client-2026-10-26.
 for alternating-order observations and their limits. No timing threshold is used
 as a CI assertion; functional ownership, dirty-state, data-count, focus and node
 reuse checks remain mandatory.
+
+## Columns within bookmark categories (unreleased)
+
+Appearance settings now offer `Homepage.BookmarkLayout: sections`. The default
+(empty or `groups`) retains categories side by side. In `sections` each category
+spans the content width and its bookmarks fill rows left to right in stored order.
+This shortens large categories without JavaScript, changing saved data, or moving
+DOM nodes. It is not a masonry layout.
+
+At 600–768 CSS pixels the list adapts to the available width with a default maximum
+of four columns. From 769px `DesktopColumns` limits columns within each category;
+it continues to control application card columns as before. Below 600px existing
+single/compact phone preferences remain independent. Category links, collapsible
+groups, search expansion, and uncategorized lists retain their existing behavior.
+
+Column counts depend on content width, not screenshot resolution. The desktop
+container currently has 250px padding on each side above 1200px; together with its
+90% width this can substantially reduce available space. At the default root font
+size six columns need roughly 1160px of content and eight need 1552px. Fewer entries
+can also yield fewer occupied columns. Browser zoom and root font size affect fit.
+
+After regenerating resources and building the service, verify with:
+
+```sh
+FLARE_BINARY=/tmp/flare-layout node tests/mobile/bookmark-sections.browser.cjs
+node tests/mobile/desktop-columns.browser.cjs
+node tests/mobile/bookmark-columns.browser.cjs
+```
+
+The sections suite uses the real service and generated styles with 100 bookmarks
+in one category and small neighboring categories. It checks both navigation pages,
+six columns when space permits, phone boundaries, stored order, category selection,
+search, settings selection, and collapsed/expanded visibility.

@@ -5,6 +5,7 @@ import "fmt"
 // HomepageOptions controls presentation without changing stored bookmark order.
 // Encode zero values explicitly so a settings merge can reset previous choices.
 type HomepageOptions struct {
+	BookmarkLayout       string `yaml:"BookmarkLayout"`
 	DesktopColumns       string `yaml:"DesktopColumns"`
 	CategoryNavigation   string `yaml:"CategoryNavigation"`
 	MobileBookmarkLayout string `yaml:"MobileBookmarkLayout"`
@@ -15,6 +16,11 @@ type HomepageOptions struct {
 
 // Validate rejects unsupported choices instead of accepting arbitrary CSS values.
 func (o HomepageOptions) Validate() error {
+	switch o.BookmarkLayout {
+	case "", "groups", "sections":
+	default:
+		return fmt.Errorf("invalid bookmark layout: %q", o.BookmarkLayout)
+	}
 	switch o.DesktopColumns {
 	case "", "auto", "4", "5", "6", "8":
 	default:
@@ -49,6 +55,9 @@ func (o *HomepageOptions) Classes() string {
 		return ""
 	}
 	classes := ""
+	if o.BookmarkLayout == "sections" {
+		classes += "bookmark-layout-sections "
+	}
 	switch o.DesktopColumns {
 	case "auto", "4", "5", "6", "8":
 		classes += "desktop-columns-" + o.DesktopColumns + " "
