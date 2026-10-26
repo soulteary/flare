@@ -4,7 +4,10 @@ Runtime switches use command-line flags > the application's working-directory
 `.env` > process environment > defaults. Compose's project `.env` is interpolation
 input and is not automatically forwarded into the container: use `environment`
 or `env_file`. UI/YAML appearance and search preferences live in `config.yml`.
-Restart after editing YAML externally; UI saves apply to subsequent requests.
+UI saves apply to subsequent requests. Stop writers before external YAML edits.
+Restart after changing `apps.yml` or `bookmarks.yml`. Stable 0.6.5 also caches
+`config.yml`; the unpublished 0.6.6 candidate checks that file on each configuration
+read. See [cache boundaries](navigation-cache.md).
 Recreate a container after changing its image, Compose environment, or log driver.
 
 ## Runtime switches
@@ -73,8 +76,8 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 | --- | --- | --- |
 | `apps.yml` / `bookmarks.yml` | Navigation entries and categories | [Editor](editor.md), [transfer](bookmark-transfer.md) |
 | `config.yml` `Clock` | Display time, seconds, zone; since 0.6.3 | [Clock](clock.md) |
-| `config.yml` `Search` | Engine and hybrid options; since 0.6.5 | [Search](search.md) |
-| `config.yml` `Homepage` | Columns, tabs/collapse, text sizes; since 0.6.5 | [Mobile](mobile-layout.md), [desktop](desktop-columns-and-scale.md) |
+| `config.yml` `Search` | Engines/hybrid since 0.6.5; additional modes and save protections in the 0.6.6 candidate | [Search](search.md) |
+| `config.yml` `Homepage` | Layout controls since 0.6.5; adaptive tablet columns in the 0.6.6 candidate | [Mobile](mobile-layout.md), [desktop](desktop-columns-and-scale.md) |
 | `config.yml` `Footer` | Administrator-controlled HTML | Treat it as trusted site content, unlike ordinary bookmark text |
 
 Search settings are not included in bookmark exports. Multiple processes sharing

@@ -46,12 +46,15 @@ environment:
   TZ: Asia/Shanghai
 ```
 
-Restart after changing `TZ` or editing `config.yml` externally (configuration is
-cached in memory). Web settings take effect on the next page load. Page settings
-never modify `TZ`, `time.Local`, the host clock, or the weather location.
+Restart after changing `TZ`. Stop writers before externally editing `config.yml`;
+0.6.5 requires a restart to observe those edits, while the unpublished 0.6.6
+candidate checks the file on each configuration read. Web settings take effect
+on the next page load. Page settings never modify `TZ`, `time.Local`, the host
+clock, or the weather location.
 
-修改 `TZ` 或手动编辑配置文件后请重启，网页保存的设置在下次加载页面时生效。
-显示时区设置不会修改进程全局时区、主机时间或天气城市。
+修改 `TZ` 后请重启。手动编辑 `config.yml` 前请停止写入：0.6.5 需要重启后读取修改，
+未发布的 0.6.6 候选版会在下次读取配置时检查文件变化。网页保存的设置在下次加载页面时
+生效。显示时区设置不会修改进程全局时区、主机时间或天气城市。
 
 ## Time source and fallback / 时间来源与降级
 

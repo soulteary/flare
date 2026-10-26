@@ -30,8 +30,11 @@ Keep normal filesystem backups and do not edit files concurrently during saves.
 `go test ./... -count=1` covers validation, stale/external revision conflicts,
 stable IDs, preserved private flags, empty documents, prepared-write failure and
 second-file failure with recovery. `node --test tests/editor/state.test.cjs` tests
-the shared working state. The mobile browser acceptance test exercises the legacy
-table UI against the versioned document interface.
+the shared working state. `tests/editor/browser.cjs` exercises the integrated
+list, forms and batch table against the versioned document interface;
+`tests/editor/legacy.browser.cjs` checks legacy placement compatibility.
+`tests/mobile/browser.cjs` covers responsive layout, form reachability and
+failed-connection retry. See [browser checks](development.md#browser-checks).
 
 The integrated editor shares one working document across persistence, list/forms
 and the optional batch view.

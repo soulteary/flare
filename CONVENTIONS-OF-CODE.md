@@ -1,10 +1,17 @@
-# Additional Code Conventions
+# Additional code conventions
 
-Notice: The following rules may change as the project develops.
+Flare targets lightweight self-hosted deployments. Keep implementation and
+operational requirements simple, and measure changes on representative data.
 
-The main function of Flare is very simple, and the operating scenarios it is designed for are relatively harsh, so we are **very concerned about performance**.
+- Prefer straightforward functions and small, cohesive packages.
+- Choose pointer or value receivers according to ownership and mutation needs;
+  neither choice alone establishes concurrency safety.
+- Avoid unnecessary allocations, but preserve request-data ownership and
+  concurrency guarantees. Use profiles before adding caches or pooling.
+- Define data invariants and cover meaningful behavior changes with regression
+  tests. Do not change unrelated code solely to enforce a stylistic preference.
+- Report performance with the source commit, workload, environment and measurement
+  scope. Allocated bytes, retained heap and RSS are different metrics.
 
-- Comparing receivers and object orientation, use simple function and procedure orientation.
-- Avoid using golang receiver pointer, consider concurrency safety.
-- Minimize unnecessary memory reallocation.
-- First define the model, and then submit the code; first define the test, and then implement the function.
+See [contributing](CONTRIBUTING.md) for required checks and
+[measurement methods](docs/baseline-metrics.md) for performance experiments.

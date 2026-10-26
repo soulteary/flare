@@ -1,6 +1,9 @@
 # Search targets
 
-> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
+> Availability: external engines, the selector and hybrid suggestions shipped in
+> 0.6.5. Revision-protected settings writes and retirement of keyword shortcuts
+> belong to the unpublished 0.6.6 candidate. Use the documentation at your release
+> tag for 0.6.5 behavior. See [search modes and upgrade safety](search-hybrid.md).
 
 The home page retains one search field. Existing installations and legacy POST
 requests continue to search local bookmarks and applications. Add engines under
@@ -50,9 +53,14 @@ keep the original Host (including a nondefault public port) and configure `FLARE
 cookies in that deployment. Token-bearing clients without browser metadata remain
 supported. Form responses use `Cache-Control: no-store`.
 
-This protection covers the search settings endpoint, not every administrative
-endpoint. Concurrent edits to the same search section still use last-writer-wins
-behavior; separate processes writing the same configuration are not coordinated.
+The signed form token protects the search settings endpoint. In the 0.6.6
+candidate, forms also carry `config-revision`: a stale revision is rejected and
+submitted values are retained. Preserve those values, reload the current settings
+and review the differences before saving again. Programmatic clients should
+submit both hidden fields. Legacy clients without a revision remain accepted and
+cannot rely on stale-form detection. In 0.6.5, same-section saves use
+last-writer-wins behavior. Separate processes writing the same configuration are
+not coordinated; use one writer. See [configuration save protections](search-hybrid.md#save-path-audit-protections).
 
 ## Configuration example
 
@@ -78,7 +86,10 @@ Search:
       Enabled: true
 ```
 
-Restart after editing YAML directly: the running process caches configuration.
+In the 0.6.6 candidate, `config.yml` is checked on each configuration read, so
+external search-setting edits are observed without a restart. Stop the process
+before external edits to avoid racing a settings save. On 0.6.5, restart after
+editing YAML directly.
 Only enabled homepage modules participate in local suggestions; a malformed file
 for a hidden module does not disable matches from a visible module. Independent
 settings sections are serialized within one Flare process so an appearance or

@@ -1,14 +1,21 @@
 # Mobile bookmark layout
 
-> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
+> Availability: layout and readability controls shipped in 0.6.5. Adaptive
+> tablet columns and the 599/600px breakpoint below belong to the unpublished
+> 0.6.6 candidate.
+
+In 0.6.5, sequential single-column layout is the default through 768 CSS pixels;
+opt-in compact columns apply from 360 through 768px. Desktop columns start at
+769px. Below 360px both choices use a single column.
+
+## 0.6.6 candidate layout
 
 Appearance settings offer a sequential single-column layout (the default) and
 opt-in compact columns on 360–599 CSS-pixel phone viewports. Compact columns read down
 the first column and then down the second; a bookmark group is kept together.
 Below 360px the layout falls back to a single column. Neither option changes the
 saved category order. At 600 CSS pixels and above, bookmark groups automatically
-form multiple columns
-with a preferred minimum width of 11.25rem and a default maximum of four columns.
+form multiple columns with a preferred minimum width of 11.25rem and a default maximum of four columns.
 The 768px boundary no longer switches bookmarks to a single column. Mobile layout
 choices only affect phones; desktop column limits still apply from 769px.
 

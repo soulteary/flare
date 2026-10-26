@@ -1,8 +1,9 @@
 # Flare documentation
 
 The latest published stable release at this documentation update is **0.6.5**.
-The editor, search and layout guides below describe features shipped in 0.6.5.
-Later changes on `main` may describe development code.
+The guides distinguish features shipped in 0.6.5 from the unpublished 0.6.6
+candidate. New search save protections, weather location selection and adaptive
+tablet columns are development features until 0.6.6 is published.
 Use the release-tagged documentation when deploying a pinned image; merging a
 feature does not publish an image or move `latest`.
 
@@ -16,15 +17,15 @@ feature does not publish an image or move `latest`.
 | Configure clocks and zones | [Clock](clock.md) | Since 0.6.3 |
 | Control access logs | [Logging](logging.md) | Since 0.6.4 |
 | Use list/forms/batch editor | [Editor](editor.md), [screenshots](screenshots/README.md), [icons](editor-icons.md) | Since 0.6.5 |
-| Configure external/hybrid search | [Search](search.md), [suggestions](search-hybrid.md) | Since 0.6.5 |
+| Configure external/hybrid search | [Search](search.md), [suggestions](search-hybrid.md) | Engines/hybrid since 0.6.5; additional modes and save protections in 0.6.6 candidate |
 | Choose category tabs/collapse | [Category navigation](category-navigation.md) | Since 0.6.5 |
-| Change mobile layout/text size | [Mobile layout](mobile-layout.md) | Since 0.6.5 |
+| Change mobile layout/text size | [Mobile layout](mobile-layout.md) | Controls since 0.6.5; adaptive tablet columns in 0.6.6 candidate |
 | Configure desktop columns | [Columns and scale](desktop-columns-and-scale.md) | Since 0.6.5 |
 
 ## Operations and development
 
 - [Configuration reference and precedence](configuration.md)
-- [Weather refresh, stale data and retry behavior](weather.md) (since 0.6.5)
+- [Weather refresh and retries](weather.md) (since 0.6.5); location picker and migration in the 0.6.6 candidate
 - [Backups and restore](backup-restore.md), [editor save recovery](editor-recovery.md)
 - [Reverse proxies and deployment boundaries](reverse-proxy.md)
 - [Troubleshooting and evidence collection](troubleshooting.md)
@@ -34,7 +35,6 @@ feature does not publish an image or move `latest`.
 - [Physical mobile acceptance](mobile-device-acceptance.md)
 - [0.6.5 artifact verification and limitations](release-0.6.5-verification.md)
 - [Unpublished 0.6.6 draft](release-0.6.6-draft.md), [candidate acceptance and remaining gates](release-0.6.6-preflight.md)
-- [Release preparation checklist and limitations](release-readiness.md)
 - [Historical feedback disposition](issue-triage.md)
 
 The server-side offline switch does not prevent the browser from opening external

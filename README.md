@@ -2,15 +2,16 @@
 
 # Flare
 
-[![Go Test Coverage](./.github/coverage.svg)](./.github/go-test-report.md) [![Go Report Card](./.github/goreportcard.svg)](./.github/goreportcard-report.md)
+[CI results](https://github.com/soulteary/flare/actions/workflows/ci.yml) ·
+[Go quality reports and source verification](.github/GO-REPORTS.md)
 
-Challenge all bookmarking apps and websites directories, Aim to Be a best performance monster.
+A lightweight self-hosted bookmark dashboard and start page, written in Go.
 
 The latest stable release is [**0.6.5**](https://github.com/soulteary/flare/releases/tag/0.6.5),
 including the search, navigation editor and layout controls described in the
 [documentation index](docs/README.md).
 
-## Feature
+## Features
 
 **Simple**, **Fast**, **Lightweight** and super **Easy** to install and use.
 
@@ -48,9 +49,10 @@ go build -o /tmp/flare .
 Generate resources after a clean checkout or changes under `embed/`; see
 [build and test instructions](docs/development.md).
 
-All normal builds, container builds and tests use Fiber on its native fasthttp
-listener. The migration keeps Gorilla signed session cookies, direct TLS and
-explicit proxy Secure-cookie behavior, `Immutable` request ownership, and the
+Production and container builds use Fiber on its native fasthttp listener.
+Native-listener regressions exercise that path; existing HTTP integration tests
+also use a `net/http` compatibility adapter. The migration keeps Gorilla signed
+session cookies, direct TLS and explicit proxy Secure-cookie behavior, `Immutable` request ownership, and the
 existing editor upload limits. The 64 KiB reader limits request lines and
 headers; requests exceeding its capacity can receive HTTP 431. Bodies have a
 32 MiB global limit. Embedded favicon and SVG resources retain
@@ -163,32 +165,25 @@ The optional live clock supports server, visitor-device and custom IANA time zon
 with a static no-JavaScript fallback. Existing configurations keep their original
 static display. See [clock configuration and behavior / 日期时间配置说明](docs/clock.md).
 
-## Directory
+## Project layout
 
-```bash
-├── build                   build script
-├── cmd                     user cli/env parser
-├── config                  config for app
-│   ├── data                    data for app running
-│   ├── define                  define for app launch
-│   └── model                   data model for app
-├── docker                  docker
-├── embed                   resource (assets, template) for web
-├── internal
-│   ├── auth                user login
-│   ├── fn                  fn utils
-│   ├── logger              logger
-│   ├── misc
-│   │   ├── deprecated
-│   │   ├── health
-│   │   └── redir
-│   ├── pages
-│   │   ├── editor
-│   │   ├── guide
-│   │   └── home
-│   ├── resources           static resource after minify
-│   ├── server
-│   ├── settings
-│   └── version
-└── main.go
+```text
+build/                Resource generation
+cmd/                  Command-line and environment configuration
+config/               Runtime models and configuration persistence
+embed/                Web assets, templates and translations
+internal/auth/        Authentication and session cookies
+internal/bookmarks/   Bookmark import and export
+internal/clock/       Clock rendering and time zones
+internal/pages/       Homepage, editor and guide handlers
+internal/resources/   Embedded assets, icons and templates
+internal/search/      Search validation and local matching
+internal/searchui/    Search presentation
+internal/server/      HTTP routing and request protections
+internal/settings/    Settings handlers
+scripts/              Performance and release verification tools
+tests/                Browser, container and release acceptance
+docs/                 User, operator and development guides
+metrics-reports/      Historical measurements and release evidence
+main.go               Application entry point
 ```
