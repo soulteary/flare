@@ -30,18 +30,21 @@ func TestWeatherDependencyConsumerCompatibility(t *testing.T) {
 		if request.URL.Host != "wis.qq.com" {
 			return nil, fmt.Errorf("unexpected weather provider: %s", request.URL.Host)
 		}
+		if request.URL.Query().Get("province") != "北京" || request.URL.Query().Get("city") != "北京" {
+			return nil, fmt.Errorf("wrong selected location: %s", request.URL)
+		}
 		body := fmt.Sprintf(`{"status":200,"data":{"observe":{"weather_code":"%d","degree":"20","humidity":"50","update_time":"202610260800"}}}`, code)
 		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 	})
 	view := template.Must(template.New("weather").Parse(`<div>{{.Icon}}</div><span>{{.Degree}}°C {{.Humidity}}%</span>`))
-	codes := []int{-1, 53, 301, 302, 999}
+	codes := []int{-1, 49, 53, 54, 55, 56, 57, 58, 301, 302, 999}
 	for value := 0; value <= 32; value++ {
 		codes = append(codes, value)
 	}
 	for _, value := range codes {
 		t.Run(fmt.Sprint(value), func(t *testing.T) {
 			code = value
-			result, _, err := consumer.GetWeatherInfo("北京市")
+			result, _, err := consumer.GetWeatherInfo("北京, 北京")
 			require.NoError(t, err)
 			require.Equal(t, 20, result.Degree)
 			require.Equal(t, 50, result.Humidity)
