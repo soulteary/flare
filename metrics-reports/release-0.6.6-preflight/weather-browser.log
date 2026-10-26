@@ -16,7 +16,7 @@ INFO Total process count: 	1
 2026/10/26 13:55:03 WARN weather location request failed keyword=失败 kind=upstream error="fixture unavailable"
 2026/10/26 13:55:06 WARN weather location request failed keyword=失败 kind=upstream error="fixture unavailable"
     browser_test.go:77: Weather browser checks passed: desktop/mobile, duplicate names, county save/reload, empty/error, stale responses, IP confirmation.
-        
+
 --- PASS: TestWeatherBrowser (6.73s)
 PASS
 ok  	github.com/soulteary/flare/internal/settings/weather	7.315s

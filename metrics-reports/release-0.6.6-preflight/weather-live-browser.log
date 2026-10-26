@@ -61,7 +61,7 @@ INFO Total process count: 	1
         多云
         湿度 68%
         湖南, 常德, 津市 · 2026-10-26 13:45
-        
+
 --- PASS: TestLiveWeatherBrowser (7.22s)
 PASS
 ok  	github.com/soulteary/flare/internal/settings/weather	8.022s

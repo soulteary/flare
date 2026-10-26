@@ -98,14 +98,17 @@
   ],
   "publication_performed": false,
   "log_sha256": {
-    "flare-066-tests.log": "7c2141a0fb220e13dc8a2853021e7c2958cae4b8b1a9f604cf9aa8368a26d2a4",
-    "flare-066-js.log": "4a509b19e7bb7d0e8950c02e69f7cf5e831c99a942450fc61d1029374cceea6e",
-    "flare-066-weather-browser.log": "71c63b746ef42e561cb1624211afaf7a926ffcca20bb27810aba4788f5229aba",
-    "flare-066-live-weather.log": "1189c577dd2edbb87f3721a3c3fe904ff923fff95efeed41d05925270dd20611",
-    "flare-066-weather-live-browser.log": "56fc5ace614748c74b1a45b6542b1a23052b95c3dde565b89cd512e16860ab5a",
-    "flare-066-actionlint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "flare-066-goreleaser-check.log": "c446d4898a1d95f9208f999292b0edac3a1966d6bfea3ba16d0d1d422890507d",
-    "flare-066-goreleaser-snapshot.log": "8591bd8f92553bb9fe36a9cb22f6a65506ff1ed29a81bf7e15bd8d9ca3e8c5a1",
-    "flare-066-lint.log": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47"
-  }
+    "live-weather.log": "1189c577dd2edbb87f3721a3c3fe904ff923fff95efeed41d05925270dd20611",
+    "weather-live-browser.log": "5a1291ef70d3072fb172cb053d16796470fa9aa9a2c3feefb2687a4d50a2cb96",
+    "goreleaser-snapshot.log": "8591bd8f92553bb9fe36a9cb22f6a65506ff1ed29a81bf7e15bd8d9ca3e8c5a1",
+    "lint.log": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47",
+    "linux_armv7-container-build.log": "5e44240f2cf25fc467720a230a8a6e80a1cfbf9ad3629f4b006990b9b8b55f34",
+    "linux_armv6-container-build.log": "02ebe740831c8ba4662ad62f536e7e0bc900f07974f9ca318a3f50da6b102146",
+    "js.log": "4a509b19e7bb7d0e8950c02e69f7cf5e831c99a942450fc61d1029374cceea6e",
+    "weather-browser.log": "3dd0db86c79673255722f5482784676a70ba97fb22b0ab7ac737073828e63463",
+    "tests.log": "7c2141a0fb220e13dc8a2853021e7c2958cae4b8b1a9f604cf9aa8368a26d2a4",
+    "actionlint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "goreleaser-check.log": "c446d4898a1d95f9208f999292b0edac3a1966d6bfea3ba16d0d1d422890507d"
+  },
+  "log_storage": "Text logs have trailing whitespace and terminal carriage returns normalized."
 }

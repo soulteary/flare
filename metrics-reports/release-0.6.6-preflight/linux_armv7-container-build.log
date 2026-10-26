@@ -2,7 +2,8 @@ DEPRECATED: The legacy builder is deprecated and will be removed in a future rel
             Install the buildx component to build images with BuildKit:
             https://docs.docker.com/go/buildx/
 
-Sending build context to Docker daemon  20.84MB
+Sending build context to Docker daemon  20.84MB
+
 [1/2] STEP 1/6: FROM alpine:3.11 AS Builder
 Resolving %!q(<nil>) to docker.io (enforced by caller)
 Trying to pull docker.io/library/alpine:3.11...
@@ -17,4 +18,3 @@ Writing manifest to image destination
 [1/2] STEP 4/6: RUN ls -al
 exec container process `/bin/sh`: Exec format error
 building at STEP "RUN ls -al": while running runtime: exit status 1
-
