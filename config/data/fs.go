@@ -42,7 +42,7 @@ func checkReadableConfig(path string) error {
 	if !info.Mode().IsRegular() {
 		return fmt.Errorf("existing configuration %s is not a regular file", path)
 	}
-	f, err := os.Open(path)
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return fmt.Errorf("open existing configuration %s: %w", path, err)
 	}
