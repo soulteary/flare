@@ -43,6 +43,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=req
   progress('submit verification');
   const [verified]=await Promise.all([
    account.waitForResponse(r=>r.request().method()==='POST'&&r.url()===base+'/account/reauthenticate'),
+   // Both documents have the same URL; wait for a new main-document navigation.
+   account.waitForEvent('framenavigated',{predicate:frame=>frame===account.mainFrame()&&frame.url()===base+'/settings/application'})
+    .then(()=>account.waitForLoadState('domcontentloaded')),
    verifyForm.locator('button').click(),
   ]);
   assert.equal(verified.status(),303);
