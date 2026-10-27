@@ -8,7 +8,7 @@ on:
       candidate_version:
         description: Candidate version to verify without publication
         type: string
-        default: '0.6.6'
+        default: '0.6.8'
 
 permissions:
   contents: read
@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  CANDIDATE_VERSION: ${{ inputs.candidate_version || '0.6.6' }}
+  CANDIDATE_VERSION: ${{ inputs.candidate_version || '0.6.8' }}
 
 jobs:
   source:
