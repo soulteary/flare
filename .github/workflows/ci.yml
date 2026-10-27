@@ -89,7 +89,7 @@ jobs:
   test:
     name: Test & Coverage
     env:
-      COVERAGE_THRESHOLD: "85"
+      COVERAGE_THRESHOLD: "90"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
