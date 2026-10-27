@@ -43,6 +43,7 @@
   "show_apps": "展示应用模块",
   "show_bookmarks": "展示书签模块",
   "hide_settings_button": "隐藏首页设置按钮",
+  "hide_version": "隐藏版本信息（版本号、提交号和构建日期）",
   "hide_help_button": "隐藏首页帮助按钮",
   "save_changes": "保存修改",
   "page_appearance": "界面",

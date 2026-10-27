@@ -43,6 +43,7 @@
   "show_apps": "Show apps module",
   "show_bookmarks": "Show bookmarks module",
   "hide_settings_button": "Hide settings button",
+  "hide_version": "Hide version information (version, commit and build date)",
   "hide_help_button": "Hide help button",
   "save_changes": "Save",
   "page_appearance": "Appearance",

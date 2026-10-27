@@ -48,9 +48,12 @@ func pageOthers(c fiber.Ctx) error {
 	m["PageName"] = "Others"
 	m["SettingPages"] = define.SettingPages
 	m["OptionTitle"] = options.Title
-	m["Version"] = version.Version
-	m["BuildDate"] = version.BuildDate
-	m["COMMIT"] = version.Commit
+	m["OptionHideVersion"] = options.HideVersion
+	if !options.HideVersion {
+		m["Version"] = version.Version
+		m["BuildDate"] = version.BuildDate
+		m["COMMIT"] = version.Commit
+	}
 	m["OptionFooter"] = template.HTML(options.Footer)
 	return c.Status(http.StatusOK).Render("settings.html", m)
 }
