@@ -187,6 +187,7 @@ func RawBookmarkSnapshot(name string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// #nosec G304 -- bookmarkCollectionPaths accepts only the fixed apps/bookmarks collections.
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err

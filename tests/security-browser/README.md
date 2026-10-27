@@ -48,3 +48,7 @@ node tests/security-browser/outbound.cjs
 5. 私有目标在显式点击前没有请求；授权点击同源不透明句柄后，目的 sink 捕获实际请求且没有 Referer。
 
 本组不声称覆盖服务端 SSRF/DNS 重绑定、全部协议/CDN、手机实机或“公开后变私有并重启”的全部历史变化；旧跳转权限及重排句柄的其他回归测试见 Go/HTTP 验收记录。它补的是原来缺少的真实浏览器网络与 Referer 证据。
+
+## 编辑器与导入 JavaScript 回归
+
+`editor-transfer.cjs` 使用真实 Chromium、隔离数据和生产模板，开启 JavaScript。覆盖编辑器初始化、默认私有选项、隐私提示翻译、分类继承和保存，以及默认私有导入预览、公开选项变更使旧预览失效、重新预览及提交。Clock acceptance CI 执行本组；可用上面的 `FLARE_BINARY` 和 `FLARE_PLAYWRIGHT_MODULE` 环境变量单独运行。

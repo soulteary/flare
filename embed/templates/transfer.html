@@ -28,6 +28,8 @@
 <label><input type="checkbox" id="flatten">{{ T .Locale "transfer.flatten" }}</label>
 <label><input type="checkbox" id="stripRoot">{{ T .Locale "transfer.strip_root" }}</label>
 <label><input type="checkbox" id="allowOther">{{ T .Locale "transfer.allow_other" }}</label>
+<label><input type="checkbox" id="import-public">{{ T .Locale "privacy.import_public" }}</label>
+<p class="hint">{{ T .Locale "privacy.import_default" }}</p>
 <p class="hint">{{ T .Locale "transfer.import_hint" }}</p>
 <button class="primary" id="preview-button" type="submit">{{ T .Locale "transfer.preview" }}</button>
 </form>
@@ -46,7 +48,7 @@ const format=(message,...args)=>message.replace(/\{(\d+)\}/g,(_,i)=>String(args[
 const $=id=>document.getElementById(id);
 const labels={add:'{{ T .Locale "transfer.add" }}',update:'{{ T .Locale "transfer.update" }}',skip:'{{ T .Locale "transfer.skip" }}',invalid:'{{ T .Locale "transfer.invalid" }}'};
 let token='',plan=null,page=0,busy=false;
-const inputs=['collection','file','format','strategy','folder','flatten','stripRoot','allowOther'];
+const inputs=['collection','file','format','strategy','folder','flatten','stripRoot','allowOther','import-public'];
 function status(text,error=false){$('status').textContent=text;$('status').dataset.error=String(error);}
 function invalidate(){token='';plan=null;$('preview').hidden=true;status('{{ T .Locale "transfer.options_changed" }}');}
 function setBusy(value){busy=value;for(const id of inputs)$(id).disabled=value;$('preview-button').disabled=value;$('commit').disabled=value||!token;}
@@ -71,7 +73,7 @@ $('import-form').onsubmit=async event=>{
  event.preventDefault();if(busy)return;
  const file=$('file').files[0];if(!file){status('{{ T .Locale "transfer.choose_file" }}',true);return;}if(file.size>8*1024*1024){status('{{ T .Locale "transfer.file_too_large" }}',true);return;}
  token='';$('preview').hidden=true;
- const form=new FormData();if($('import-public').checked)form.append('public','1');form.append('file',file);for(const id of inputs.filter(id=>id!=='file'))form.append(id,$(id).type==='checkbox'?($(id).checked?'1':'0'):$(id).value);
+ const form=new FormData();if($('import-public').checked)form.append('public','1');form.append('file',file);for(const id of inputs.filter(id=>id!=='file'&&id!=='import-public'))form.append(id,$(id).type==='checkbox'?($(id).checked?'1':'0'):$(id).value);
  setBusy(true);status('{{ T .Locale "transfer.preparing_preview" }}');
  try{const result=await request('preview',{method:'POST',body:form});plan=result.plan;token=result.token;showPlan();status('{{ T .Locale "transfer.review_hint" }}');}catch(error){status(error.message,true);}finally{setBusy(false);if(plan)$('commit').disabled=!token||plan.added+plan.updated===0;}
 };

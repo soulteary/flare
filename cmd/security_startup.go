@@ -73,6 +73,7 @@ func inspectContent() (map[string][]byte, int, bool, error) {
 		if !info.Mode().IsRegular() {
 			return nil, 0, false, fmt.Errorf("%s must be a regular file", name)
 		}
+		// #nosec G304 -- Local operator-selected paths and internally controlled filenames; not HTTP request input.
 		raw, err := os.ReadFile(name)
 		if err != nil {
 			return nil, 0, false, fmt.Errorf("cannot read %s", name)
@@ -150,14 +151,14 @@ func explicitLegacy(f *model.Flags, files map[string][]byte) bool {
 // regular file. Nonblocking open prevents a mistaken FIFO from hanging startup
 // or a maintenance command indefinitely.
 func openPasswordFile(path string) (*os.File, error) {
+	// #nosec G304 -- Local operator-selected paths and internally controlled filenames; not HTTP request input.
 	fp, err := os.OpenFile(path, os.O_RDONLY|unix.O_NONBLOCK, 0)
 	if err != nil {
 		return nil, err
 	}
 	info, err := fp.Stat()
 	if err != nil || !info.Mode().IsRegular() {
-		fp.Close()
-		return nil, errors.New("password source must be a regular file")
+		return nil, errors.Join(errors.New("password source must be a regular file"), fp.Close())
 	}
 	return fp, nil
 }
@@ -208,6 +209,7 @@ func readCredential(f *model.Flags) (string, string, error) {
 }
 func readInstallation(dir string) (installation, bool, error) {
 	var m installation
+	// #nosec G304 -- Local operator-selected paths and internally controlled filenames; not HTTP request input.
 	fp, err := os.OpenFile(filepath.Join(dir, "installation.json"), os.O_RDONLY|unix.O_NOFOLLOW|unix.O_NONBLOCK, 0)
 	if os.IsNotExist(err) {
 		return m, false, nil
@@ -286,6 +288,7 @@ func migrationSnapshot(dir string, files map[string][]byte) error {
 	changed := false
 	// A completed backup is immutable, including its file set. Removing or
 	// adding a source on a retry must not rewrite the original manifest.
+	// #nosec G304 -- Local operator-selected paths and internally controlled filenames; not HTTP request input.
 	if raw, e := os.ReadFile(filepath.Join(path, "manifest.json")); e == nil {
 		var previous map[string]string
 		if json.Unmarshal(raw, &previous) != nil {
@@ -304,6 +307,7 @@ func migrationSnapshot(dir string, files map[string][]byte) error {
 	}
 	for _, name := range names {
 		fingerprint.WriteString(name + ":" + sum(files[name]) + "\n")
+		// #nosec G304 -- Local operator-selected paths and internally controlled filenames; not HTTP request input.
 		if previous, e := os.ReadFile(filepath.Join(path, name)); e == nil && sum(previous) != sum(files[name]) {
 			changed = true
 		}
@@ -317,6 +321,7 @@ func migrationSnapshot(dir string, files map[string][]byte) error {
 	for name, raw := range files {
 		manifest[name] = sum(raw)
 		dest := filepath.Join(path, name)
+		// #nosec G304 -- Local operator-selected paths and internally controlled filenames; not HTTP request input.
 		if prior, err := os.ReadFile(dest); err == nil {
 			if sum(prior) != sum(raw) {
 				return errors.New("migration snapshot differs; preserve original backup and resolve changed source")
@@ -325,6 +330,7 @@ func migrationSnapshot(dir string, files map[string][]byte) error {
 		} else if !os.IsNotExist(err) {
 			return err
 		}
+		// #nosec G304 -- Local operator-selected paths and internally controlled filenames; not HTTP request input.
 		fp, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 		if err != nil {
 			return err
@@ -348,6 +354,7 @@ func migrationSnapshot(dir string, files map[string][]byte) error {
 	// transaction can be committed. Syncing files and the leaf alone does not
 	// make a newly-created parent directory durable across a power failure.
 	for _, parent := range []string{filepath.Join(dir, "migration-backups"), dir} {
+		// #nosec G304 -- Local operator-selected paths and internally controlled filenames; not HTTP request input.
 		fp, err := os.Open(parent)
 		if err != nil {
 			return err
@@ -362,6 +369,7 @@ func migrationSnapshot(dir string, files map[string][]byte) error {
 		}
 	}
 	for name, raw := range files {
+		// #nosec G304 -- Local operator-selected paths and internally controlled filenames; not HTTP request input.
 		now, err := os.ReadFile(name)
 		if err != nil || sum(now) != sum(raw) {
 			return errors.New("source files changed during migration")

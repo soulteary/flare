@@ -138,24 +138,24 @@ func Open(dir string) (*Store, error) {
 	if e := os.MkdirAll(dir, 0700); e != nil {
 		return nil, e
 	}
+	// #nosec G302 -- This is a private directory; owner traversal requires the execute bit.
 	if e := os.Chmod(dir, 0700); e != nil {
 		return nil, e
 	}
+	// #nosec G304 -- Operator-selected state directory and a fixed filename; reject symlinks and non-regular files below.
 	f, e := os.OpenFile(filepath.Join(dir, "instance.lock"), os.O_CREATE|os.O_RDWR|unix.O_NOFOLLOW|unix.O_NONBLOCK, 0600)
 	if e != nil {
 		return nil, e
 	}
 	if info, statErr := f.Stat(); statErr != nil || !info.Mode().IsRegular() {
-		f.Close()
-		return nil, ErrFaulted
+		return nil, errors.Join(ErrFaulted, f.Close())
 	}
 	if e = unix.Flock(int(f.Fd()), unix.LOCK_EX|unix.LOCK_NB); e != nil {
-		f.Close()
-		return nil, ErrLocked
+		return nil, errors.Join(ErrLocked, f.Close())
 	}
 	s := &Store{dir: dir, lock: f, now: time.Now}
 	s.write = s.atomicWrite
-	fail := func() (*Store, error) { s.Close(); return nil, ErrFaulted }
+	fail := func() (*Store, error) { return nil, errors.Join(ErrFaulted, s.Close()) }
 	marker, me := readStateFile(filepath.Join(dir, "complete"))
 	raw, re := readStateFile(filepath.Join(dir, "state.json"))
 	journal, je := readStateFile(filepath.Join(dir, "commit.json"))
@@ -243,8 +243,7 @@ func (s *Store) atomicWrite(name string, b []byte) error {
 		var d *os.File
 		d, e = os.Open(s.dir)
 		if e == nil {
-			e = d.Sync()
-			d.Close()
+			e = errors.Join(d.Sync(), d.Close())
 		}
 	}
 	return e
@@ -293,8 +292,7 @@ func (s *Store) commit(next state) error {
 	}
 	d, e := os.Open(s.dir)
 	if e == nil {
-		e = d.Sync()
-		d.Close()
+		e = errors.Join(d.Sync(), d.Close())
 	}
 	if e != nil {
 		s.faulted = true
@@ -536,15 +534,15 @@ func (s *Store) Session(token string, touch bool) (Session, error) {
 
 // SessionProof belongs to one HTTP request and one Store. It is not a reusable
 // authentication credential. Callers must obtain a new proof for every request.
-// The wall clock is observed and persisted by SessionSnapshot; guards only use
-// that authorization point and any newer already-durable store observation.
-// A short monotonic lifetime bounds long requests without sampling an
-// unpersisted wall clock.
+// Ordinary proofs have a durable SessionSnapshot authorization point and a
+// bounded monotonic lifetime. Tentative buffered-read proofs have no new clock
+// observation and require a final durable Session decision before any output.
 type SessionProof struct {
 	owner      *Store
 	token      string
 	generation uint64
 	started    time.Time
+	tentative  bool
 }
 
 const sessionProofLifetime = time.Second
@@ -559,10 +557,36 @@ func (s *Store) SessionSnapshot(token string, touch bool) (Session, *SessionProo
 	return value, &SessionProof{owner: s, token: token, generation: s.data.Generation, started: time.Now()}, err
 }
 
+// BeginBufferedRead creates a tentative identity using only already-durable
+// time and live store state. It does not observe a new calendar time or grant
+// permission to release output. Only explicitly whitelisted, buffered views
+// without external side effects may use it. Before releasing ANY outcome the
+// caller must call Session with a fresh clock observation; only a successful
+// foreground GET may touch idle activity. Writes, exports and online weather
+// views must keep the ordinary durable entry authorization.
+// Invalid identities have no tentative proof: callers retain their ordinary
+// durable anonymous/error path. A tentative proof is request-local and never a
+// reusable authentication credential.
+func (s *Store) BeginBufferedRead(token string) (Session, *SessionProof, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.faulted || s.lock == nil {
+		return Session{}, nil, ErrFaulted
+	}
+	value, ok := s.data.Sessions[digest(token)]
+	now := s.data.HighWater
+	if !ok || value.Generation != s.data.Generation || !now.Before(value.ExpiresAt) || now.Sub(value.LastActive) >= IdleTimeout {
+		return Session{}, nil, ErrInvalidSession
+	}
+	return value, &SessionProof{owner: s, token: token, generation: s.data.Generation, tentative: true}, nil
+}
+
 // GuardSession rechecks revocation, expiry and store health for a request's
 // durable authorization point without another disk transaction. It never reads
 // the wall clock. Once its monotonic lifetime is exhausted, it observes the wall
 // clock through the ordinary durable session path before refreshing the proof.
+// Tentative buffered-read proofs never sample the clock or perform this refresh;
+// they require the caller's final durable Session decision before any output.
 // Writes and exports must continue to use fresh Session/WithAuthorizedWrite.
 func (s *Store) GuardSession(proof *SessionProof) (Session, error) {
 	s.mu.Lock()
@@ -573,7 +597,7 @@ func (s *Store) GuardSession(proof *SessionProof) (Session, error) {
 	if proof == nil || proof.owner != s {
 		return Session{}, ErrInvalidSession
 	}
-	if time.Since(proof.started) >= sessionProofLifetime {
+	if !proof.tentative && time.Since(proof.started) >= sessionProofLifetime {
 		value, err := s.sessionLocked(proof.token, false)
 		if err == nil || errors.Is(err, ErrInvalidSession) {
 			proof.started = time.Now()
@@ -587,6 +611,9 @@ func (s *Store) GuardSession(proof *SessionProof) (Session, error) {
 	}
 	now := s.data.HighWater
 	if !now.Before(value.ExpiresAt) || now.Sub(value.LastActive) >= IdleTimeout {
+		if proof.tentative {
+			return Session{}, ErrInvalidSession
+		}
 		next := s.clone()
 		delete(next.Sessions, digest(proof.token))
 		if err := s.commit(next); err != nil {
@@ -742,6 +769,7 @@ func (s *Store) replaceCredentialsAndSessionLocked(token, current, next string) 
 }
 
 func readStateFile(path string) ([]byte, error) {
+	// #nosec G304 -- Internal state filenames in the operator-selected directory; NOFOLLOW and regular-file/size checks constrain reads.
 	f, e := os.OpenFile(path, os.O_RDONLY|unix.O_NOFOLLOW|unix.O_NONBLOCK, 0)
 	if e != nil {
 		return nil, e

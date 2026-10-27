@@ -172,6 +172,12 @@ func editorMessageJSON(locale string) string {
 
 // Composite messages keep parameters and punctuation in a single translation.
 var editorCompositeMessages = []string{
+	"privacy.save_confirm",
+	"privacy.verify_retry",
+	"privacy.private",
+	"privacy.inherited",
+	"privacy.admin_only",
+	"privacy.public_hint",
 	"editor.default_category",
 	"editor.missing_category",
 	"editor.entry_count",
