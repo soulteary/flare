@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
@@ -34,10 +35,11 @@ type requestIdentityKey struct{}
 // failure and expiry. Neither the Cookie token nor the proof is shared between
 // requests or stored on persistentAuth.
 type requestIdentity struct {
-	owner    *persistentAuth
-	token    string
-	username string
-	proof    *security.SessionProof
+	owner     *persistentAuth
+	token     string
+	username  string
+	proof     *security.SessionProof
+	tentative bool
 }
 type persistentAuth struct {
 	store   *security.Store
@@ -69,20 +71,72 @@ func RequestHandleWithSecurity(app *fiber.App, store *security.Store) error {
 	if _, err := rand.Read(a.csrfKey[:]); err != nil {
 		return err
 	}
-	app.Use(func(c fiber.Ctx) error {
+	app.Use(func(c fiber.Ctx) (result error) {
 		c.Locals(persistentKey{}, a)
 		c.Set("Cache-Control", "private, no-store")
 		// Native same-origin form POSTs must retain a non-opaque Origin.
 		// no-referrer makes Chromium/WebKit send Origin:null even on local forms.
 		// same-origin still suppresses Referer when navigating to other origins.
 		c.Set("Referrer-Policy", "same-origin")
-		_, initialSessionError := a.session(c, false)
-		initiallyAuthenticated := initialSessionError == nil
+		// These handlers only prepare a buffered response. Their entry check
+		// uses the already-durable clock point; authorization is not complete
+		// until the final gate has observed and durably recorded the real clock.
+		deferredRead := false
+		if bufferedReadEligible(c) {
+			_, proof, beginErr := a.store.BeginBufferedRead(a.token(c))
+			if beginErr == nil {
+				identity := a.identity(c)
+				identity.proof = proof
+				identity.tentative = true
+				identity.username = a.store.Info().Username
+				deferredRead = true
+				defer func() {
+					recovered := recover()
+					streamed := c.Response().IsBodyStream()
+					// Context.Err covers cancellation and standard deadline
+					// expiry without an extra authorization wall-clock sample.
+					canceled := c.Context().Err()
+					if canceled == nil {
+						switch {
+						case errors.Is(result, context.Canceled):
+							canceled = context.Canceled
+						case errors.Is(result, context.DeadlineExceeded):
+							canceled = context.DeadlineExceeded
+						}
+					}
+					successful := recovered == nil && result == nil && canceled == nil && c.Response().StatusCode() < 400 && !streamed
+					touch := successful && c.Method() == http.MethodGet
+					if _, finalErr := a.store.Session(a.token(c), touch); finalErr != nil {
+						result = rejectBufferedRead(c, finalErr)
+						return
+					}
+					if canceled != nil {
+						resetBufferedResponse(c)
+						result = canceled
+						return
+					}
+					if streamed {
+						resetBufferedResponse(c)
+						result = securityResponse(c, 500, "BUFFERED_READ_REQUIRED")
+						return
+					}
+					if recovered != nil {
+						panic(recovered)
+					}
+				}()
+			} else if !errors.Is(beginErr, security.ErrInvalidSession) {
+				return securityError(c, beginErr)
+			}
+		}
+		var initialSessionError error
+		if !deferredRead {
+			_, initialSessionError = a.session(c, false)
+		}
+		initiallyAuthenticated := deferredRead || initialSessionError == nil
 		if initialSessionError != nil && !errors.Is(initialSessionError, security.ErrInvalidSession) {
 			return securityError(c, initialSessionError)
 		}
 
-		var result error
 		if c.Method() == http.MethodGet && c.Path() == "/account/cookie-check" {
 			if define.AppFlags.DisableLoginMode {
 				return securityResponse(c, 403, "FORBIDDEN")
@@ -102,13 +156,16 @@ func RequestHandleWithSecurity(app *fiber.App, store *security.Store) error {
 		}
 		foreground := foregroundActivity(c)
 		headView := c.Method() == http.MethodHead && safeReturn(c.Path()) == c.Path()
-		if result == nil && c.Response().StatusCode() < 400 && (foreground || headView) && a.token(c) != "" {
+		if !deferredRead && result == nil && c.Response().StatusCode() < 400 && (foreground || headView) && a.token(c) != "" {
 			// Observe and durably record the real clock again before releasing a
 			// successful view. Request proofs never hide a revoke or rollback
 			// discovered after rendering. HEAD validates without extending idle.
 			if _, err := a.store.Session(a.token(c), foreground); err != nil {
 				read := c.Method() == http.MethodGet || c.Method() == http.MethodHead
 				if !errors.Is(err, security.ErrInvalidSession) || initiallyAuthenticated && read {
+					if read {
+						return rejectBufferedRead(c, err)
+					}
 					return securityError(c, err)
 				}
 				// Logout and credential rotation intentionally revoke the POST's
@@ -127,6 +184,51 @@ func RequestHandleWithSecurity(app *fiber.App, store *security.Store) error {
 	}
 	return nil
 }
+
+// Do not add weather, authentication, exports or mutating endpoints here. Online
+// home rendering can fetch weather before returning, so only the immutable
+// process-wide offline mode makes home/search eligible for deferred release.
+func bufferedReadEligible(c fiber.Ctx) bool {
+	if define.AppFlags.DisableLoginMode {
+		return false
+	}
+	if c.Method() != http.MethodGet && c.Method() != http.MethodHead {
+		return false
+	}
+	switch c.Path() {
+	case "/applications", "/bookmarks":
+		return true
+	case "/":
+		return define.AppFlags.EnableOfflineMode
+	default:
+		return false
+	}
+}
+
+// BufferedReadTentative marks the request-scoped deferred read pipeline. Data
+// readers on this path must never create or repair missing files. It remains
+// set until the request ends, including while the final response is released.
+func BufferedReadTentative(c fiber.Ctx) bool {
+	a := persistent(c)
+	if a == nil {
+		return false
+	}
+	identity, ok := c.Locals(requestIdentityKey{}).(*requestIdentity)
+	return ok && identity != nil && identity.owner == a && identity.tentative
+}
+
+func resetBufferedResponse(c fiber.Ctx) {
+	// Reset closes a registered body stream as well as removing buffered content
+	// and all private metadata (Location, Link, cookies and custom headers).
+	c.Response().Reset()
+	c.Set("Cache-Control", "private, no-store")
+	c.Set("Referrer-Policy", "same-origin")
+}
+func rejectBufferedRead(c fiber.Ctx, err error) error {
+	resetBufferedResponse(c)
+	return securityError(c, err)
+}
+
 func persistent(c fiber.Ctx) *persistentAuth {
 	a, ok := c.Locals(persistentKey{}).(*persistentAuth)
 	if !ok {

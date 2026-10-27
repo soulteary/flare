@@ -65,7 +65,7 @@ func pageHome(c fiber.Ctx) error {
 }
 
 func renderHelp(c fiber.Ctx) error {
-	options, err := data.GetAllSettingsOptions()
+	options, err := requestSettings(c)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
@@ -119,7 +119,7 @@ func renderHelp(c fiber.Ctx) error {
 }
 
 func pageSearch(c fiber.Ctx) error {
-	options, err := data.GetAllSettingsOptions()
+	options, err := requestSettings(c)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
@@ -152,11 +152,11 @@ func pageSearch(c fiber.Ctx) error {
 }
 
 func pageBookmark(c fiber.Ctx) error {
-	if selected := c.Query("category"); selected != "" && !readableCategory(selected, auth.CheckUserIsLogin(c)) {
+	if selected := c.Query("category"); selected != "" && !requestReadableCategory(c, selected, auth.CheckUserIsLogin(c)) {
 		return fiber.ErrNotFound
 	}
 	setCSPHeader(c)
-	options, err := data.GetAllSettingsOptions()
+	options, err := requestSettings(c)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
@@ -179,7 +179,10 @@ func pageBookmark(c fiber.Ctx) error {
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	if options.ShowBookmarks {
-		m["Bookmarks"], m["BookmarksError"] = generateBookmarkNavigationFor(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options, auth.CheckUserIsLogin(c), &requestURL)
+		m["Bookmarks"], m["BookmarksError"] = generateBookmarkNavigationForRead(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options, auth.CheckUserIsLogin(c), auth.BufferedReadTentative(c), &requestURL)
+		if auth.BufferedReadTentative(c) && m["BookmarksError"] != "" {
+			return c.Status(http.StatusInternalServerError).SendString("navigation unavailable")
+		}
 	}
 	m["OptionTitle"] = options.Title
 	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
@@ -190,7 +193,7 @@ func pageBookmark(c fiber.Ctx) error {
 }
 
 func pageApplication(c fiber.Ctx) error {
-	options, err := data.GetAllSettingsOptions()
+	options, err := requestSettings(c)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
@@ -208,7 +211,10 @@ func pageApplication(c fiber.Ctx) error {
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	if options.ShowApps {
-		m["Applications"], m["ApplicationsError"] = generateApplicationsFor("", &options, auth.CheckUserIsLogin(c), &requestURL)
+		m["Applications"], m["ApplicationsError"] = generateApplicationsForRead("", &options, auth.CheckUserIsLogin(c), auth.BufferedReadTentative(c), &requestURL)
+		if auth.BufferedReadTentative(c) && m["ApplicationsError"] != "" {
+			return c.Status(http.StatusInternalServerError).SendString("navigation unavailable")
+		}
 	}
 	m["PageName"] = i18n.T(locale, "page_apps")
 	m["SubPage"] = true
@@ -231,15 +237,22 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	if c.Method() == http.MethodPost {
 		requested = c.FormValue("category")
 	}
-	if requested != "" && !readableCategory(requested, auth.CheckUserIsLogin(c)) {
+	if requested != "" && !requestReadableCategory(c, requested, auth.CheckUserIsLogin(c)) {
 		return fiber.ErrNotFound
 	}
-	options, err := data.GetAllSettingsOptions()
+	options, err := requestSettings(c)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	administrator := auth.CheckUserIsLogin(c)
-	appsView, bookmarksView, viewErr := data.LoadVisibleNavigationPair(options.ShowApps, options.ShowBookmarks, administrator)
+	loadNavigation := data.LoadVisibleNavigationPair
+	if auth.BufferedReadTentative(c) {
+		loadNavigation = data.ReadExistingVisibleNavigationPair
+	}
+	appsView, bookmarksView, viewErr := loadNavigation(options.ShowApps, options.ShowBookmarks, administrator)
+	if auth.BufferedReadTentative(c) && viewErr != nil {
+		return c.Status(http.StatusInternalServerError).SendString("navigation unavailable")
+	}
 	requestURL := parseRequestURL(c)
 	locale := options.Locale
 	if locale == "" {

@@ -1,0 +1,43 @@
+{
+  "baseline": "git tag 0.6.7 (2f1a924f40202210bce0531d43e16e5ac8acd4fb), stamped 0.6.7",
+  "candidate": "workspace final candidate, stamped 0.6.8-dev",
+  "baseline_sha256": "5eef4045d6cdac41a6ad6a9a164d050259b97ceea90f0f4df199fad552692cfc",
+  "candidate_sha256": "f4b4de507c70bcd8b6b32c3a33aa973c24565ae1dbcd677ba1c7740fd215770d",
+  "cases": [
+    {
+      "case": "old-to-new-default-weak-password-full-rollback",
+      "status": "pass",
+      "seconds": 1.188
+    },
+    {
+      "case": "old-to-new-private-weak-password-full-rollback",
+      "status": "pass",
+      "seconds": 0.874
+    },
+    {
+      "case": "trusted-old-to-new-restart",
+      "status": "pass",
+      "seconds": 1.061
+    },
+    {
+      "case": "missing-password-fails-closed",
+      "status": "pass",
+      "seconds": 0.085
+    },
+    {
+      "case": "trusted-private-conflict-fails-closed",
+      "status": "pass",
+      "seconds": 0.121
+    },
+    {
+      "case": "local-reset-corruption-full-restore-offline-revoke-and-ipv6",
+      "status": "pass",
+      "seconds": 2.106
+    },
+    {
+      "case": "deployment-secret-file-empty-missing-restore-and-live-lock",
+      "status": "pass",
+      "seconds": 0.814
+    }
+  ]
+}

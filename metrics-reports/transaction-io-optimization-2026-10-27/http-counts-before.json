@@ -1,0 +1,501 @@
+{
+  "started_utc": "2026-10-27T03:58:57Z",
+  "binary_sha256": "cc7c334fdc500338891613c71b78c615f2dd6189cba9f8d79458fda47cc3848b",
+  "fixture": {
+    "resources": 20000,
+    "private": 10000,
+    "categories": 100,
+    "sha256": "9537f2d51a70b2944ccbe6945eabdef698d6900326e2ee4d0c444d14c310214b"
+  },
+  "scope": "Go commit/atomicWrite/os.File.Sync invocation counts in security Store only; not kernel syscalls; timing excluded",
+  "requests": [
+    {
+      "authenticated": true,
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "body_bytes": 2700876,
+      "body_sha256": "1530ea3e501d4450a14d83d949df805668b5211fe37791620d17bd6b4406b69e",
+      "private_card_present": true,
+      "counts": {
+        "atomic_write_calls": 4,
+        "commit_calls": 2,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 6,
+        "file_sync_calls": 4,
+        "journal_write_calls": 2,
+        "state_write_calls": 2,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "HEAD",
+      "path": "/",
+      "status": 200,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 4,
+        "commit_calls": 2,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 6,
+        "file_sync_calls": 4,
+        "journal_write_calls": 2,
+        "state_write_calls": 2,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "GET",
+      "path": "/?search=PRIVATE%20Entry%2019999",
+      "status": 200,
+      "body_bytes": 37735,
+      "body_sha256": "16b899833ae32698021a45a1065b29d833f4112573a9aa10d058b4147ff05db2",
+      "private_card_present": true,
+      "counts": {
+        "atomic_write_calls": 4,
+        "commit_calls": 2,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 6,
+        "file_sync_calls": 4,
+        "journal_write_calls": 2,
+        "state_write_calls": 2,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "HEAD",
+      "path": "/?search=PRIVATE%20Entry%2019999",
+      "status": 200,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 4,
+        "commit_calls": 2,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 6,
+        "file_sync_calls": 4,
+        "journal_write_calls": 2,
+        "state_write_calls": 2,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "GET",
+      "path": "/applications",
+      "status": 200,
+      "body_bytes": 36428,
+      "body_sha256": "8e7b6cb417e9d4c21871cf183849596cc1ed3e3b49af533bc695ef00ae2989fe",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 4,
+        "commit_calls": 2,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 6,
+        "file_sync_calls": 4,
+        "journal_write_calls": 2,
+        "state_write_calls": 2,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "HEAD",
+      "path": "/applications",
+      "status": 200,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 4,
+        "commit_calls": 2,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 6,
+        "file_sync_calls": 4,
+        "journal_write_calls": 2,
+        "state_write_calls": 2,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "GET",
+      "path": "/bookmarks",
+      "status": 200,
+      "body_bytes": 2699931,
+      "body_sha256": "108bea07d5409243d044969c322450e1ad2ca2eec5d2193722c3caf2d8985299",
+      "private_card_present": true,
+      "counts": {
+        "atomic_write_calls": 4,
+        "commit_calls": 2,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 6,
+        "file_sync_calls": 4,
+        "journal_write_calls": 2,
+        "state_write_calls": 2,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "HEAD",
+      "path": "/bookmarks",
+      "status": 200,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 4,
+        "commit_calls": 2,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 6,
+        "file_sync_calls": 4,
+        "journal_write_calls": 2,
+        "state_write_calls": 2,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "GET",
+      "path": "/bookmarks?category=c099",
+      "status": 200,
+      "body_bytes": 2699931,
+      "body_sha256": "108bea07d5409243d044969c322450e1ad2ca2eec5d2193722c3caf2d8985299",
+      "private_card_present": true,
+      "counts": {
+        "atomic_write_calls": 4,
+        "commit_calls": 2,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 6,
+        "file_sync_calls": 4,
+        "journal_write_calls": 2,
+        "state_write_calls": 2,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "HEAD",
+      "path": "/bookmarks?category=c099",
+      "status": 200,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 4,
+        "commit_calls": 2,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 6,
+        "file_sync_calls": 4,
+        "journal_write_calls": 2,
+        "state_write_calls": 2,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "GET",
+      "path": "/bookmarks?category=nonexistent",
+      "status": 404,
+      "body_bytes": 23,
+      "body_sha256": "8fd54eee4277f1327015cc0bcaed8a878bf44d1804364cd5d93dfab9e2d1a5af",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 2,
+        "commit_calls": 1,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 3,
+        "file_sync_calls": 2,
+        "journal_write_calls": 1,
+        "state_write_calls": 1,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": true,
+      "method": "HEAD",
+      "path": "/bookmarks?category=nonexistent",
+      "status": 404,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 2,
+        "commit_calls": 1,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 3,
+        "file_sync_calls": 2,
+        "journal_write_calls": 1,
+        "state_write_calls": 1,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "body_bytes": 1364126,
+      "body_sha256": "1016992c4d6554ff10249a2fa97e4a53532927f8ee993811752949ff19481c06",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "HEAD",
+      "path": "/",
+      "status": 200,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "GET",
+      "path": "/?search=PRIVATE%20Entry%2019999",
+      "status": 200,
+      "body_bytes": 37544,
+      "body_sha256": "57805f705e955502ee4a639612b6d0170efb859d79e0bc7832b69b7c7d03cd17",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "HEAD",
+      "path": "/?search=PRIVATE%20Entry%2019999",
+      "status": 200,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "GET",
+      "path": "/applications",
+      "status": 200,
+      "body_bytes": 36428,
+      "body_sha256": "8e7b6cb417e9d4c21871cf183849596cc1ed3e3b49af533bc695ef00ae2989fe",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "HEAD",
+      "path": "/applications",
+      "status": 200,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "GET",
+      "path": "/bookmarks",
+      "status": 200,
+      "body_bytes": 1363181,
+      "body_sha256": "06404478d57a49bd9af2f15c052915b63c96fc9898867a4fc78cb2e0c672c04f",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "HEAD",
+      "path": "/bookmarks",
+      "status": 200,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "GET",
+      "path": "/bookmarks?category=c099",
+      "status": 200,
+      "body_bytes": 1363181,
+      "body_sha256": "06404478d57a49bd9af2f15c052915b63c96fc9898867a4fc78cb2e0c672c04f",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "HEAD",
+      "path": "/bookmarks?category=c099",
+      "status": 200,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "GET",
+      "path": "/bookmarks?category=nonexistent",
+      "status": 404,
+      "body_bytes": 23,
+      "body_sha256": "8fd54eee4277f1327015cc0bcaed8a878bf44d1804364cd5d93dfab9e2d1a5af",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    },
+    {
+      "authenticated": false,
+      "method": "HEAD",
+      "path": "/bookmarks?category=nonexistent",
+      "status": 404,
+      "body_bytes": 0,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_card_present": false,
+      "counts": {
+        "atomic_write_calls": 0,
+        "commit_calls": 0,
+        "complete_write_calls": 0,
+        "directory_sync_calls": 0,
+        "file_sync_calls": 0,
+        "journal_write_calls": 0,
+        "state_write_calls": 0,
+        "sync_errors": 0
+      }
+    }
+  ],
+  "login_sequence_counts": {
+    "atomic_write_calls": 2,
+    "commit_calls": 1,
+    "complete_write_calls": 0,
+    "directory_sync_calls": 3,
+    "file_sync_calls": 2,
+    "journal_write_calls": 1,
+    "state_write_calls": 1,
+    "sync_errors": 0
+  },
+  "logout_counts": {
+    "atomic_write_calls": 4,
+    "commit_calls": 2,
+    "complete_write_calls": 0,
+    "directory_sync_calls": 6,
+    "file_sync_calls": 4,
+    "journal_write_calls": 2,
+    "state_write_calls": 2,
+    "sync_errors": 0
+  },
+  "revoked_replay_counts": {
+    "atomic_write_calls": 0,
+    "commit_calls": 0,
+    "complete_write_calls": 0,
+    "directory_sync_calls": 0,
+    "file_sync_calls": 0,
+    "journal_write_calls": 0,
+    "state_write_calls": 0,
+    "sync_errors": 0
+  },
+  "all_assertions_pass": true,
+  "completed_utc": "2026-10-27T03:58:59Z"
+}

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	fibrecover "github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/security"
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,7 @@ func identityFixture(t *testing.T) (*security.Store, *persistentBrowser, string)
 	define.AppFlags.CookieName = "identity"
 	define.AppFlags.Port = 5005
 	define.AppFlags.CookieSecure = false
+	define.AppFlags.EnableOfflineMode = true
 	define.AppFlags.ExternalURL = ""
 	define.AppFlags.AllowedHosts = ""
 	define.AppFlags.TrustedProxies = ""
@@ -34,6 +36,7 @@ func identityFixture(t *testing.T) (*security.Store, *persistentBrowser, string)
 	token, err := store.Authenticate("identity-admin", "short")
 	require.NoError(t, err)
 	app := fiber.New()
+	app.Use(fibrecover.New())
 	require.NoError(t, RequestHandleWithSecurity(app, store))
 	name := RequestHandleSessionName(define.AppFlags.CookieName, define.AppFlags.Port) + "_" + store.Info().InstanceID
 	browser := &persistentBrowser{t, app, map[string]*http.Cookie{name: {Name: name, Value: token}}}
@@ -41,29 +44,41 @@ func identityFixture(t *testing.T) (*security.Store, *persistentBrowser, string)
 }
 
 func TestRequestIdentityReusesDurableAuthorizationOnlyWithinRequest(t *testing.T) {
-	_, browser, statePath := identityFixture(t)
-	var proofs []*security.SessionProof
-	browser.app.Get("/", AuthRequired, func(c fiber.Ctx) error {
-		before, err := os.ReadFile(statePath)
-		require.NoError(t, err)
-		identity := persistent(c).identity(c)
-		require.NotNil(t, identity.proof)
-		proofs = append(proofs, identity.proof)
-		for i := 0; i < 25; i++ {
-			require.True(t, CheckUserIsLogin(c))
-			require.Equal(t, "identity-admin", GetUserName(c))
-			require.NotEmpty(t, GetUserLoginDate(c))
-			require.Same(t, identity, persistent(c).identity(c))
+	for _, offline := range []bool{false, true} {
+		name := "online-durable-entry"
+		if offline {
+			name = "offline-deferred-entry"
 		}
-		after, err := os.ReadFile(statePath)
-		require.NoError(t, err)
-		require.Equal(t, before, after, "repeated read helpers must not advance durable authorization time or fsync state")
-		return c.SendString("authorized")
-	})
-	require.Equal(t, 200, browser.request("GET", "/", nil, nil).StatusCode)
-	require.Equal(t, 200, browser.request("GET", "/", nil, nil).StatusCode)
-	require.Len(t, proofs, 2)
-	require.NotSame(t, proofs[0], proofs[1], "a new HTTP request must durably authorize again")
+		t.Run(name, func(t *testing.T) {
+
+			_, browser, statePath := identityFixture(t)
+			define.AppFlags.EnableOfflineMode = offline
+			var proofs []*security.SessionProof
+			browser.app.Get("/", AuthRequired, func(c fiber.Ctx) error {
+				before, err := os.ReadFile(statePath)
+				require.NoError(t, err)
+				require.Equal(t, offline, BufferedReadTentative(c))
+				identity := persistent(c).identity(c)
+				require.NotNil(t, identity.proof)
+				proofs = append(proofs, identity.proof)
+				for i := 0; i < 25; i++ {
+					require.True(t, CheckUserIsLogin(c))
+					require.Equal(t, "identity-admin", GetUserName(c))
+					require.NotEmpty(t, GetUserLoginDate(c))
+					require.Same(t, identity, persistent(c).identity(c))
+				}
+				after, err := os.ReadFile(statePath)
+				require.NoError(t, err)
+				require.Equal(t, before, after, "repeated read helpers must not advance durable authorization time or fsync state")
+				return c.SendString("authorized")
+			})
+			require.Equal(t, 200, browser.request("GET", "/", nil, nil).StatusCode)
+			require.Equal(t, 200, browser.request("GET", "/", nil, nil).StatusCode)
+			require.Len(t, proofs, 2)
+			require.NotSame(t, proofs[0], proofs[1], "a new HTTP request must obtain a fresh authorization proof")
+
+		})
+	}
 }
 
 func TestRequestIdentityImmediatelyLosesAuthorityAfterRevocation(t *testing.T) {
@@ -162,4 +177,26 @@ func TestRequestIdentityFinalHeadUsesFreshDurableAuthorization(t *testing.T) {
 	after := readState()
 	require.True(t, after.State.HighWater.After(before.State.HighWater), "the final HEAD check must observe and durably record a fresh clock point, not reuse the request proof")
 	require.Equal(t, before.State.Sessions, after.State.Sessions, "HEAD validation must not extend idle activity")
+}
+
+func TestOrdinaryRequestProofRefreshesDurablyAfterLifetime(t *testing.T) {
+	_, browser, statePath := identityFixture(t)
+	define.AppFlags.EnableOfflineMode = false
+	browser.app.Get("/", AuthRequired, func(c fiber.Ctx) error {
+		require.False(t, BufferedReadTentative(c))
+		identity := persistent(c).identity(c)
+		proof := identity.proof
+		before, err := os.ReadFile(statePath)
+		require.NoError(t, err)
+		// Ordinary endpoint proofs have a short monotonic lifetime; their next
+		// check must observe the real clock through a new durable authorization.
+		time.Sleep(1100 * time.Millisecond)
+		require.True(t, CheckUserIsLogin(c))
+		require.Same(t, proof, identity.proof)
+		after, err := os.ReadFile(statePath)
+		require.NoError(t, err)
+		require.NotEqual(t, before, after, "ordinary proof refresh must advance the durable clock, unlike a tentative buffered read")
+		return c.SendStatus(204)
+	})
+	require.Equal(t, 204, browser.request("GET", "/", nil, nil).StatusCode)
 }

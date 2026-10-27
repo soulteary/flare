@@ -1,0 +1,8 @@
+{
+  "scope": "diagnostic copied-source only; Go invocations, not OS syscalls",
+  "sync_callsites_wrapped": 4,
+  "store_original_sha256": "167f5d1897e049f3c62f4fc6f5a0598eda8ed2e010062a6940f01a321c6b1f9d",
+  "store_instrumented_sha256": "5c92099c3cc057ece7a6846a6c2aee9a0386916fb1873a143f7e2177a1d62d45",
+  "wrapper_original_sha256": "4b5c057b99c8d8f39f5d991291727ebbb4325c3acd8b2de7d188d0d320cb1344",
+  "helper_sha256": "53998a13ae247756fbb73b844128a35a9c9ed0932dfb15e73c64d57bdbe90edd"
+}

@@ -136,6 +136,13 @@ func loadAppConfigFromYaml(name string) (model.Application, error) {
 		}
 		return result, nil
 	}
+	return loadExistingAppConfigFromYaml(name)
+}
+
+// This path never creates a missing file, including after a concurrent removal.
+func loadExistingAppConfigFromYaml(name string) (model.Application, error) {
+	var result model.Application
+	filePath := getConfigPath(name)
 	// Configuration/version checks must observe external edits, especially downgrades.
 	configFile, err := readFreshAppConfig(filePath)
 	if err != nil {

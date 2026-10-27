@@ -1,0 +1,48 @@
+{
+  "all_gates_pass": true,
+  "gates": {
+    "before_fixed_540_90_no_drops_errors": true,
+    "before_fixed_read_status": true,
+    "after_fixed_540_90_no_drops_errors": true,
+    "after_fixed_read_status": true,
+    "before_saturated_180_success": true,
+    "after_saturated_180_success": true,
+    "before_fixed_budget": true,
+    "after_fixed_budget": true,
+    "before_saturated_budget": true,
+    "after_saturated_budget": true,
+    "fixed_fixture_harness_payload_equal": true,
+    "saturated_fixture_harness_equal": true,
+    "diagnostic_24_cases_pass": true,
+    "successful_admin_read_commit_sync_halved": true,
+    "diagnostic_same_body_lengths": true,
+    "integrated_fixed_540_90_success": true,
+    "integrated_fixed_expected_88_byte_csrf_growth": true,
+    "integrated_saturated_180_success": true,
+    "integrated_count_24cases_one_transaction": true,
+    "integrated_fixed_budget": true,
+    "integrated_saturated_budget": true,
+    "integrated_runtime_go_source_hashes_match": true
+  },
+  "changes_percent": {
+    "fixed_cpu_percent": -3.2125205930807255,
+    "fixed_rss_percent": 2.8536119537130755,
+    "sat_qps_percent": 102.65894555107326,
+    "sat_rss_percent": -1.4550150667240636
+  },
+  "limits": [
+    "one paired observation per native mode; no confidence interval",
+    "saturation probe counts differ61vs72; do not infer equal-completed-work CPU",
+    "Sync counts are actual Go os.File.Sync invocations in Store only, not kernel syscall tracing",
+    "concurrent nonperformance fixes disclosed; no lowendNAS/physicalpowerlossclaim"
+  ],
+  "integrated_supplement": {
+    "binary_sha256": "64664d29ac73739ce50af8c1a328afc27a948396cdeb70e7ca865596f16054a7",
+    "fixed_expected_extra_response_bytes_per_read": 88,
+    "status": "supplemental integration measurement, not byte-identical frozen causal pair",
+    "cpu_seconds": 10.48,
+    "fixed_rss_mib": 136.421875,
+    "saturated_qps": 37.094456670299785,
+    "saturated_rss_mib": 174.15625
+  }
+}
