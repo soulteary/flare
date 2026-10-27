@@ -1,0 +1,208 @@
+name: "GTR - Go Test Report"
+description: "Run Go tests, collect coverage, and generate a deterministic Markdown report, SVG badge, and JSON with coverage gates."
+author: "soulteary"
+branding:
+  icon: "check-circle"
+  color: "blue"
+
+inputs:
+  directory:
+    description: "Go project root directory, relative to GITHUB_WORKSPACE."
+    required: false
+    default: "."
+  go_version_file:
+    description: "Go version file passed to actions/setup-go, relative to the repo root."
+    required: false
+    default: "go.mod"
+  packages:
+    description: "Package patterns to test (space/comma/newline separated)."
+    required: false
+    default: "./..."
+  exclude:
+    description: "Go regular expressions matched against import path to exclude, one per line."
+    required: false
+    default: ""
+  race:
+    description: "Enable the race detector (requires cover_mode=atomic)."
+    required: false
+    default: "false"
+  cover_mode:
+    description: "Coverage mode: set, count, or atomic."
+    required: false
+    default: "atomic"
+  cover_pkg:
+    description: "Patterns passed to go test -coverpkg."
+    required: false
+    default: ""
+  timeout:
+    description: "go test -timeout value."
+    required: false
+    default: "10m"
+  test_args:
+    description: "Extra arguments appended to go test (safely tokenized, never shell-evaluated)."
+    required: false
+    default: ""
+  coverage_threshold:
+    description: "Minimum total coverage percentage; 0 disables."
+    required: false
+    default: "0"
+  package_threshold:
+    description: "Minimum per-package coverage percentage; 0 disables."
+    required: false
+    default: "0"
+  report_output:
+    description: "Path to the stable Markdown report."
+    required: false
+    default: ".github/go-test-report.md"
+  badge_output:
+    description: "Path to the self-contained SVG badge."
+    required: false
+    default: ".github/coverage.svg"
+  json_output:
+    description: "Path to the stable machine-readable JSON report."
+    required: false
+    default: ".github/go-test-report.json"
+  raw_output:
+    description: "Directory for raw results (test.jsonl, coverage.out); for artifacts, not committed."
+    required: false
+    default: ".github/test-results"
+  commit:
+    description: "Commit the stable reports back to the repository (default-branch/dispatch only)."
+    required: false
+    default: "false"
+  commit_on_failure:
+    description: "Commit reports even when tests fail."
+    required: false
+    default: "false"
+  commit_message:
+    description: "Commit message used when writing back reports."
+    required: false
+    default: "chore: update Go test report [skip ci]"
+  version:
+    description: "Pinned pre-built CLI release; source builds are disabled."
+    required: false
+    default: "latest"
+
+outputs:
+  status:
+    description: "One of passed, test_failed, coverage_failed, error."
+    value: ${{ steps.run.outputs.status }}
+  coverage:
+    description: "Total coverage percentage, e.g. 84.10."
+    value: ${{ steps.run.outputs.coverage }}
+  tests:
+    description: "Total number of tests."
+    value: ${{ steps.run.outputs.tests }}
+  passed:
+    description: "Number of passing tests."
+    value: ${{ steps.run.outputs.passed }}
+  failed:
+    description: "Number of failing tests."
+    value: ${{ steps.run.outputs.failed }}
+  skipped:
+    description: "Number of skipped tests."
+    value: ${{ steps.run.outputs.skipped }}
+  report:
+    description: "Path to the Markdown report."
+    value: ${{ steps.run.outputs.report }}
+  badge:
+    description: "Path to the SVG badge."
+    value: ${{ steps.run.outputs.badge }}
+  json:
+    description: "Path to the JSON report."
+    value: ${{ steps.run.outputs.json }}
+  coverage_profile:
+    description: "Path to the raw cover profile."
+    value: ${{ steps.run.outputs.coverage_profile }}
+  exit_code:
+    description: "Semantic CLI exit code."
+    value: ${{ steps.run.outputs.exit_code }}
+  committed:
+    description: "Whether a report commit was produced."
+    value: ${{ steps.commit.outputs.committed || 'false' }}
+  commit_sha:
+    description: "SHA of the produced commit, or empty."
+    value: ${{ steps.commit.outputs.commit_sha }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install gtr
+      id: install
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        BIN_DIR="${RUNNER_TEMP}/gtr-bin"
+        python3 "${GITHUB_ACTION_PATH}/../../scripts/install-report-tool.py" gtr "${INPUT_VERSION}" "${BIN_DIR}"
+        BIN="${BIN_DIR}/gtr"
+        echo "bin=${BIN}" >> "${GITHUB_OUTPUT}"
+
+    - name: Validate inputs and paths
+      shell: bash
+      env:
+        GTR_BIN: ${{ steps.install.outputs.bin }}
+        INPUT_DIRECTORY: ${{ inputs.directory }}
+        INPUT_REPORT_OUTPUT: ${{ inputs.report_output }}
+        INPUT_BADGE_OUTPUT: ${{ inputs.badge_output }}
+        INPUT_JSON_OUTPUT: ${{ inputs.json_output }}
+        INPUT_RAW_OUTPUT: ${{ inputs.raw_output }}
+      run: |
+        bash "${GITHUB_ACTION_PATH}/scripts/validate-inputs.sh"
+
+    - name: Run tests and generate reports
+      id: run
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        GTR_BIN: ${{ steps.install.outputs.bin }}
+        GTR_EXITCODE_FILE: ${{ runner.temp }}/gtr.exit
+        INPUT_DIRECTORY: ${{ inputs.directory }}
+        INPUT_PACKAGES: ${{ inputs.packages }}
+        INPUT_EXCLUDE: ${{ inputs.exclude }}
+        INPUT_RACE: ${{ inputs.race }}
+        INPUT_COVER_MODE: ${{ inputs.cover_mode }}
+        INPUT_COVER_PKG: ${{ inputs.cover_pkg }}
+        INPUT_TIMEOUT: ${{ inputs.timeout }}
+        INPUT_TEST_ARGS: ${{ inputs.test_args }}
+        INPUT_COVERAGE_THRESHOLD: ${{ inputs.coverage_threshold }}
+        INPUT_PACKAGE_THRESHOLD: ${{ inputs.package_threshold }}
+        INPUT_REPORT_OUTPUT: ${{ inputs.report_output }}
+        INPUT_BADGE_OUTPUT: ${{ inputs.badge_output }}
+        INPUT_JSON_OUTPUT: ${{ inputs.json_output }}
+        INPUT_RAW_OUTPUT: ${{ inputs.raw_output }}
+      run: |
+        bash "${GITHUB_ACTION_PATH}/scripts/run-report.sh"
+
+    - name: Write GitHub job summary
+      shell: bash
+      run: |
+        SUMMARY_FILE="${RUNNER_TEMP}/gtr-summary.md"
+        if [ -f "${SUMMARY_FILE}" ]; then
+          cat "${SUMMARY_FILE}" >> "${GITHUB_STEP_SUMMARY}"
+        fi
+
+    - name: Commit stable reports
+      id: commit
+      if: ${{ inputs.commit == 'true' }}
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        GTR_EXITCODE_FILE: ${{ runner.temp }}/gtr.exit
+        GTR_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        INPUT_COMMIT: ${{ inputs.commit }}
+        INPUT_COMMIT_ON_FAILURE: ${{ inputs.commit_on_failure }}
+        INPUT_COMMIT_MESSAGE: ${{ inputs.commit_message }}
+        INPUT_REPORT_OUTPUT: ${{ inputs.report_output }}
+        INPUT_BADGE_OUTPUT: ${{ inputs.badge_output }}
+        INPUT_JSON_OUTPUT: ${{ inputs.json_output }}
+      run: |
+        bash "${GITHUB_ACTION_PATH}/scripts/commit-report.sh"
+
+    - name: Enforce result
+      shell: bash
+      env:
+        GTR_EXITCODE_FILE: ${{ runner.temp }}/gtr.exit
+      run: |
+        bash "${GITHUB_ACTION_PATH}/scripts/enforce-result.sh"

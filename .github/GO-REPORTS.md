@@ -1,7 +1,13 @@
 # Go report workflow
 
-The PR job runs both owned Actions with `commit: false` and released CLIs
-(`go-test-report-action v1.1.2`, `goreportcard-action v1.1.3`, pinned wrapper SHAs).
+The PR job runs local wrappers with `commit: false` and the same released CLIs
+(`go-test-report-action v1.1.2`, `goreportcard-action v1.1.3`). The wrappers and
+execution scripts derive from the previously pinned upstream SHAs; provenance
+and licensing are recorded in [actions/NOTICE.md](actions/NOTICE.md). The project
+sets Go once and owns the module/build caches. Report wrappers neither change
+toolchains nor restore caches. Installers require the pinned release and a valid
+SHA256 manifest; unavailable releases fail instead of compiling action sources.
+Path validation reuses the installed GTR CLI, preserving its validation rules.
 It replaces the primary Linux Go test/coverage invocation and reuses its profile
 for existing coverage artifacts/gates. Release verification, integration,
 benchmark and fuzz checks retain their distinct scopes.
@@ -29,7 +35,11 @@ The producing reports job outputs its artifact name. Writeback uses that output 
 
 Report concurrency includes the source ref and unique run ID, so pending reports cannot replace each other. Writeback concurrency includes the tested SHA, so historical releases cannot replace the current source's pending writer. Only the unchanged default-branch source can publish; identical-source writers serialize and a successful report commit makes later writers stale. Artifacts remain available when writeback is skipped or blocked by branch protection.
 
-Cleanup runs even after preceding steps fail. Stable and raw evidence is uploaded after gate failures, and failed report jobs cannot publish repository changes. Report commits have no CI skip annotation: the normal workflow token prevents recursive push triggers. Production Actions and CLI versions remain pinned to formal releases; PR report calls remain read-only.
+Cleanup runs even after preceding steps fail. Stable and raw evidence is uploaded after gate failures, and failed report jobs cannot publish repository changes. Report commits have no CI skip annotation: the normal workflow token prevents recursive push triggers. Report CLI versions remain pinned to formal releases; PR report calls remain read-only.
+Historical reporting checks out tooling from `github.workflow_sha` under
+`.ci-tooling`, while the tested source remains the selected SHA in the workspace
+root. This allows reporting on tags that predate the local wrappers. Production
+assets are generated for that tested source before reports run.
 
 Successful token-published releases explicitly dispatch the current default-branch report workflow for their released tag, since token-generated release events do not start another workflow. Branch snapshots and PR release checks do not dispatch report publishers. Historical tags can also be reported manually from the default-branch workflow using `source_ref`.
 

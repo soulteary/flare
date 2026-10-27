@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   clock:
     name: Clock unit and browser acceptance
@@ -16,9 +20,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
+      - uses: ./.github/actions/setup-go
         with:
-          go-version-file: go.mod
+          profile: browser
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
@@ -32,7 +36,7 @@ jobs:
         working-directory: tests/clock
         run: |
           npm ci --ignore-scripts
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps --only-shell chromium
       - name: Adaptive phone and tablet bookmark columns
         run: node tests/mobile/bookmark-columns.browser.cjs
       - name: Compact mobile layout acceptance

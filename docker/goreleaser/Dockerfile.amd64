@@ -1,18 +1,16 @@
-FROM alpine:3.16 as Builder
+FROM alpine:3.16 AS Builder
 WORKDIR /app
+RUN apk add --no-cache upx
 COPY flare ./
-RUN ls -al
-RUN apk add upx && \
-    upx -9 -o flare.minify flare && \
+RUN upx -9 -o flare.minify flare && \
     mv flare.minify flare
-RUN ls -al
 
 FROM alpine:3.16
-COPY --from=Builder /app/flare /bin/flare
 ENV TZ=Asia/Shanghai
 RUN apk add tzdata && \
     cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     rm -rf /var/cache/apk/*
+COPY --from=Builder /app/flare /bin/flare
 EXPOSE 5005
 WORKDIR /app
 CMD ["flare"]

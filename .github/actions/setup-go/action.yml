@@ -1,0 +1,36 @@
+name: Project Go toolchain and cache
+description: One cache owner per job, with isolated task families and rolling build snapshots.
+inputs:
+  profile:
+    description: Stable task family; keep race and cross-build caches separate.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v6
+      id: go
+      with:
+        go-version-file: go.mod
+        cache: false
+    - name: Locate project cache directories
+      id: paths
+      shell: bash
+      run: |
+        echo "modules=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+        echo "build=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+    - name: Restore dependency downloads
+      uses: actions/cache@v5
+      with:
+        path: ${{ steps.paths.outputs.modules }}
+        key: flare-modules-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.go.outputs.go-version }}-${{ hashFiles('go.mod', 'go.sum') }}
+    - name: Populate the complete module cache
+      shell: bash
+      run: go mod download
+    - name: Restore compiled packages for this task
+      uses: actions/cache@v5
+      with:
+        path: ${{ steps.paths.outputs.build }}
+        key: flare-go-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.go.outputs.go-version }}-${{ inputs.profile }}-${{ hashFiles('go.mod', 'go.sum') }}-${{ github.sha }}
+        restore-keys: |
+          flare-go-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.go.outputs.go-version }}-${{ inputs.profile }}-${{ hashFiles('go.mod', 'go.sum') }}-
+          flare-go-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.go.outputs.go-version }}-${{ inputs.profile }}-
