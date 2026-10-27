@@ -48,16 +48,6 @@ func generateBookmarkNavigationForRead(filter, selected, path string, options *m
 	return navigationFragment(view, options, false, filter, selected, path, firstRequestInfo(requestInfo)), ""
 }
 func generateBookmarkSnapshot(filter, selected, path string, options *model.Application, bookmarksData model.Bookmarks, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
-	privateCategories := make(map[string]bool, len(bookmarksData.Categories))
-	for _, c := range bookmarksData.Categories {
-		privateCategories[c.ID] = c.Private
-	}
-	b, ok := builderPool.Get().(*strings.Builder)
-	if !ok {
-		b = &strings.Builder{}
-	}
-	b.Reset()
-	defer releaseNavigationBuilder(b)
 	info := firstRequestInfo(requestInfo)
 	matches := make([]int, 0, len(bookmarksData.Items))
 	filterLower := strings.ToLower(filter)
@@ -67,33 +57,38 @@ func generateBookmarkSnapshot(filter, selected, path string, options *model.Appl
 		}
 		matches = append(matches, i)
 	}
+	return renderBookmarkSelection(filter, selected, path, options, bookmarksData.Categories, func(i int) model.Bookmark { return bookmarksData.Items[i] }, matches, info)
+}
+
+func renderBookmarkSelection(filter, selected, path string, options *model.Application, categories []model.Category, item func(int) model.Bookmark, matches []int, info *fn.DynamicURL) (template.HTML, string) {
+	privateCategories := make(map[string]bool, len(categories))
+	for _, c := range categories {
+		privateCategories[c.ID] = c.Private
+	}
+	b, ok := builderPool.Get().(*strings.Builder)
+	if !ok {
+		b = &strings.Builder{}
+	}
+	b.Reset()
+	defer releaseNavigationBuilder(b)
 	writeItem := func(index int) {
-		bookmark := bookmarksData.Items[index]
+		bookmark := item(index)
 		bookmark.URL = expandNavigationURL(bookmark.URL, info)
 		bookmark.Private = bookmark.Private || privateCategories[bookmark.Category]
 		writeBookmarkItem(b, bookmark, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, info)
 	}
-	if len(bookmarksData.Categories) == 0 {
-		growNavigationBuilder(b, bookmarkRenderEstimate(bookmarksData.Items, matches))
+	if len(categories) == 0 {
+		growNavigationBuilder(b, bookmarkSelectionEstimate(item, matches))
 		b.WriteString(`<div class="bookmark-group-container pull-left"><ul class="bookmark-list">`)
 		for _, index := range matches {
 			writeItem(index)
 		}
 		b.WriteString(`</ul></div>`)
 	} else {
-		renderBookmarkIndexGroups(b, bookmarksData.Categories, bookmarksData.Items, matches, selected, filter, path, options, writeItem)
+		renderBookmarkIndexGroupsRead(b, categories, item, matches, selected, filter, path, options, writeItem)
 	}
 	// #nosec G203 -- Names/categories are escaped and URL/icon policies are enforced at item emission.
 	return template.HTML(b.String()), ""
-}
-
-func bookmarkRenderEstimate(items []model.Bookmark, indexes []int) int {
-	estimate := 0
-	for _, index := range indexes {
-		item := items[index]
-		estimate = boundedNavigationEstimate(estimate, 128+len(item.Name)+len(item.URL)+len(item.Icon))
-	}
-	return estimate
 }
 
 func writeBookmarkItem(b *strings.Builder, bookmark model.Bookmark, newTab, encoded bool, iconMode string, info *fn.DynamicURL) {
@@ -131,7 +126,7 @@ func writeBookmarkGroupEnd(b *strings.Builder, collapse bool) {
 	}
 }
 
-func renderBookmarkIndexGroups(b *strings.Builder, categories []model.Category, items []model.Bookmark, matches []int, selected, filter, path string, options *model.Application, writeItem func(int)) {
+func renderBookmarkIndexGroupsRead(b *strings.Builder, categories []model.Category, item func(int) model.Bookmark, matches []int, selected, filter, path string, options *model.Application, writeItem func(int)) {
 	mode := "all"
 	if options.Homepage != nil && options.Homepage.CategoryNavigation != "" {
 		mode = options.Homepage.CategoryNavigation
@@ -146,9 +141,47 @@ func renderBookmarkIndexGroups(b *strings.Builder, categories []model.Category, 
 		selected = ""
 	}
 	defaultID := categories[0].ID
+	// A selected tab needs neither counts nor buckets for other categories.
+	if selected != "" {
+		var chosen model.Category
+		for _, category := range categories {
+			if category.ID == selected {
+				chosen = category
+				break
+			}
+		}
+		belongs := func(index int) bool {
+			id := item(index).Category
+			if id == "" {
+				id = defaultID
+			}
+			return id == selected
+		}
+		estimate := 0
+		count := 0
+		for _, index := range matches {
+			if belongs(index) {
+				value := item(index)
+				estimate = boundedNavigationEstimate(estimate, 128+len(value.Name)+len(value.URL)+len(value.Icon))
+				count++
+			}
+		}
+		growNavigationBuilder(b, boundedNavigationEstimate(estimate, 128+len(chosen.Name)))
+		renderCategoryNavigation(b, categories, selected, filter, path, options.Locale)
+		if count > 0 {
+			writeBookmarkGroupStart(b, chosen, false)
+			for _, index := range matches {
+				if belongs(index) {
+					writeItem(index)
+				}
+			}
+			writeBookmarkGroupEnd(b, false)
+		}
+		return
+	}
 	counts := make(map[string]int, len(categories))
 	for _, index := range matches {
-		id := items[index].Category
+		id := item(index).Category
 		if id == "" {
 			id = defaultID
 		}
@@ -164,7 +197,7 @@ func renderBookmarkIndexGroups(b *strings.Builder, categories []model.Category, 
 		}
 	}
 	for _, index := range matches {
-		id := items[index].Category
+		id := item(index).Category
 		if id == "" {
 			id = defaultID
 		}
@@ -175,7 +208,7 @@ func renderBookmarkIndexGroups(b *strings.Builder, categories []model.Category, 
 	estimate := 0
 	for _, category := range categories {
 		if (selected == "" || category.ID == selected) && len(groups[category.ID]) > 0 {
-			estimate = boundedNavigationEstimate(estimate, bookmarkRenderEstimate(items, groups[category.ID])+128+len(category.Name))
+			estimate = boundedNavigationEstimate(estimate, bookmarkSelectionEstimate(item, groups[category.ID])+128+len(category.Name))
 		}
 		if mode == "tabs" {
 			estimate = boundedNavigationEstimate(estimate, 128+len(category.Name)+len(category.ID)+len(filter))
@@ -258,4 +291,13 @@ func renderCategoryNavigation(b *strings.Builder, categories []model.Category, s
 		b.WriteString(`</a>`)
 	}
 	b.WriteString(`</nav>`)
+}
+
+func bookmarkSelectionEstimate(item func(int) model.Bookmark, indexes []int) int {
+	estimate := 0
+	for _, index := range indexes {
+		value := item(index)
+		estimate = boundedNavigationEstimate(estimate, 128+len(value.Name)+len(value.URL)+len(value.Icon))
+	}
+	return estimate
 }

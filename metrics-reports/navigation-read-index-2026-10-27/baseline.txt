@@ -1,0 +1,42 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/soulteary/flare/internal/pages/home
+cpu: Apple M5
+BenchmarkNavigationReadIndex/1000/apps-miss-10         	   13777	     43984 ns/op	  114748 B/op	       2 allocs/op
+BenchmarkNavigationReadIndex/1000/apps-miss-10         	   13754	     46006 ns/op	  114750 B/op	       2 allocs/op
+BenchmarkNavigationReadIndex/1000/apps-miss-10         	   13432	     45223 ns/op	  114751 B/op	       2 allocs/op
+BenchmarkNavigationReadIndex/1000/apps-hit-10          	   10000	     52362 ns/op	  120429 B/op	      14 allocs/op
+BenchmarkNavigationReadIndex/1000/apps-hit-10          	   10000	     51926 ns/op	  120430 B/op	      14 allocs/op
+BenchmarkNavigationReadIndex/1000/apps-hit-10          	   10000	     51655 ns/op	  120429 B/op	      14 allocs/op
+BenchmarkNavigationReadIndex/1000/bookmarks-miss-10    	   13950	     43217 ns/op	  115774 B/op	      19 allocs/op
+BenchmarkNavigationReadIndex/1000/bookmarks-miss-10    	   13656	     43735 ns/op	  115773 B/op	      19 allocs/op
+BenchmarkNavigationReadIndex/1000/bookmarks-miss-10    	   13582	     42072 ns/op	  115773 B/op	      19 allocs/op
+BenchmarkNavigationReadIndex/1000/bookmarks-hit-10     	   10000	     50643 ns/op	  119209 B/op	      29 allocs/op
+BenchmarkNavigationReadIndex/1000/bookmarks-hit-10     	   10000	     51402 ns/op	  119208 B/op	      29 allocs/op
+BenchmarkNavigationReadIndex/1000/bookmarks-hit-10     	   10000	     51496 ns/op	  119208 B/op	      29 allocs/op
+BenchmarkNavigationReadIndex/1000/category-10          	    2971	    198034 ns/op	  431165 B/op	    1010 allocs/op
+BenchmarkNavigationReadIndex/1000/category-10          	    3054	    195294 ns/op	  431166 B/op	    1010 allocs/op
+BenchmarkNavigationReadIndex/1000/category-10          	    3033	    196923 ns/op	  431165 B/op	    1010 allocs/op
+BenchmarkNavigationReadIndex/1000/category-sparse-10   	   14913	     38218 ns/op	  141539 B/op	     145 allocs/op
+BenchmarkNavigationReadIndex/1000/category-sparse-10   	   15355	     38491 ns/op	  141539 B/op	     145 allocs/op
+BenchmarkNavigationReadIndex/1000/category-sparse-10   	   15283	     38807 ns/op	  141539 B/op	     145 allocs/op
+BenchmarkNavigationReadIndex/10000/apps-miss-10        	    1383	    423044 ns/op	 1122462 B/op	       2 allocs/op
+BenchmarkNavigationReadIndex/10000/apps-miss-10        	    1386	    443249 ns/op	 1122463 B/op	       2 allocs/op
+BenchmarkNavigationReadIndex/10000/apps-miss-10        	    1359	    421063 ns/op	 1122463 B/op	       2 allocs/op
+BenchmarkNavigationReadIndex/10000/apps-hit-10         	    1161	    514688 ns/op	 1179427 B/op	     114 allocs/op
+BenchmarkNavigationReadIndex/10000/apps-hit-10         	    1279	    516169 ns/op	 1179425 B/op	     114 allocs/op
+BenchmarkNavigationReadIndex/10000/apps-hit-10         	    1208	    497172 ns/op	 1179426 B/op	     114 allocs/op
+BenchmarkNavigationReadIndex/10000/bookmarks-miss-10   	    1432	    421962 ns/op	 1123487 B/op	      19 allocs/op
+BenchmarkNavigationReadIndex/10000/bookmarks-miss-10   	    1414	    418071 ns/op	 1123487 B/op	      19 allocs/op
+BenchmarkNavigationReadIndex/10000/bookmarks-miss-10   	    1670	    430477 ns/op	 1123488 B/op	      19 allocs/op
+BenchmarkNavigationReadIndex/10000/bookmarks-hit-10    	    1268	    475828 ns/op	 1158265 B/op	     129 allocs/op
+BenchmarkNavigationReadIndex/10000/bookmarks-hit-10    	    1244	    492646 ns/op	 1158263 B/op	     129 allocs/op
+BenchmarkNavigationReadIndex/10000/bookmarks-hit-10    	    1222	    483303 ns/op	 1158266 B/op	     129 allocs/op
+BenchmarkNavigationReadIndex/10000/category-10         	     315	   1896208 ns/op	 4275148 B/op	   10010 allocs/op
+BenchmarkNavigationReadIndex/10000/category-10         	     310	   1923878 ns/op	 4275146 B/op	   10010 allocs/op
+BenchmarkNavigationReadIndex/10000/category-10         	     316	   1900929 ns/op	 4275147 B/op	   10010 allocs/op
+BenchmarkNavigationReadIndex/10000/category-sparse-10  	    1957	    311774 ns/op	 1295571 B/op	     595 allocs/op
+BenchmarkNavigationReadIndex/10000/category-sparse-10  	    1962	    309568 ns/op	 1295570 B/op	     595 allocs/op
+BenchmarkNavigationReadIndex/10000/category-sparse-10  	    1828	    310440 ns/op	 1295573 B/op	     595 allocs/op
+PASS
+ok  	github.com/soulteary/flare/internal/pages/home	32.573s

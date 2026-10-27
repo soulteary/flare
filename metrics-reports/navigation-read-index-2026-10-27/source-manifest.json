@@ -1,0 +1,11 @@
+{
+  "baseline_revision": "e9cadb6245cc8bc28bf5cda06a55cf5af79dd00f",
+  "candidate_sha256": {
+    "config/data/navigation_view.go": "3a4d8c8ae62f8d229b49e654f7282b4a025257d45dfa6c5ee056e8929dc66e51",
+    "config/data/parsed_cache.go": "a455be618584cca835ca9d817b7a8c0507c76d8bc4220e6f267fe036b05f1997",
+    "internal/pages/home/application.go": "265167644e5e3016a3a8dc3e776482c39db89ed9cdb5d1c309d0dc6b59145b98",
+    "internal/pages/home/bookmark.go": "566b99fe393fbe71a7a4f88f33633e9c0a5b1b7aa345deac22b8e37e6fd1b9c2",
+    "internal/pages/home/navigation_cache.go": "ffd317d8d449de8e619a7736ff14f2d18e21ac0700531b7949b2116c624fe58f",
+    "internal/pages/home/read_index_benchmark_test.go": "b657ece21413c4cac97184d254f60cd49aed39d02fe85f815923174a8508922c"
+  }
+}

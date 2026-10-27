@@ -15,6 +15,8 @@ type parsedApplication struct {
 	err   error
 }
 type parsedBookmarks struct {
+	categoryOnce      sync.Once
+	categoryIndexes   map[string][]int
 	renderOnce        sync.Once
 	renderVersion     uint64
 	renderIndependent bool
