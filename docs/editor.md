@@ -1,6 +1,7 @@
 # Navigation editor
 
-> Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
+> Availability: the editor shipped in 0.6.5. Privacy, unified CSRF and recent-
+> authentication behavior below describe current main development, after 0.6.7.
 
 ## State and persistence
 
@@ -24,6 +25,36 @@ This is not a cross-file atomic transaction. Process/power loss and external fil
 writers are not coordinated by an OS-wide lock; compare-before-replace protects
 observed external edits but cannot eliminate the final filesystem race window.
 Keep normal filesystem backups and do not edit files concurrently during saves.
+
+## Privacy and authenticated saves (current main)
+
+New entries/categories in the authenticated editor default to private. A private
+category keeps its children private even when an individual entry is unchecked.
+The form explains inherited visibility; changing a presentation filter never
+changes permissions. Trusted-network mode cannot save private resources.
+
+Saving requires the current session/browser-bound CSRF token in addition to
+`X-Flare-Editor: 1` and the document revision. Programmatic clients can GET
+`/editor/csrf` with their authenticated cookies and send `X-CSRF-Token` on saves.
+Do not use a token from another session or put it in a URL.
+
+Making resources public requires password verification within the last 10 minutes
+and explicit confirmation. The UI guides this flow; programmatic saves also need
+`X-Flare-Confirm-Public: 1`. Authorization is checked again at commit time. A stale
+revision still returns 409; not every 409 means a revision conflict, so inspect the
+message/code (for example `PUBLIC_CONFIRMATION_REQUIRED`).
+
+If authentication, CSRF or source checks fail, keep the working document and
+export a JSON draft before reloading. Reauthenticate through the account page,
+then restore/review the draft against the current server document and save
+explicitly. Correct proxy source failures using [the proxy guide](reverse-proxy.md),
+rather than changing the password. See [accounts](accounts.md) for expiry and ownership.
+
+YAML anchors, aliases and merge keys remain readable with inherited privacy, but
+files containing them are read-only for web edits/merge imports. Unknown fields
+remain preserved in supported ordinary mappings. Back up and manually expand
+shared YAML nodes before using web writes; the editor does not silently flatten
+or rewrite them. See [upgrade compatibility](login-private-upgrade.md).
 
 ## Verification
 

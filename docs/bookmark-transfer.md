@@ -1,5 +1,8 @@
 # Bookmark import and export
 
+> Scope: transfer is available since 0.6.2. The privacy and persistent-session
+> requirements marked below apply to current main development, after 0.6.7.
+
 Enable the existing editor (`--enable_editor`, enabled by default), open `/editor`,
 and select **导入 / 导出浏览器书签与 Flare YAML**. Save any pending editor changes
 before opening the tool; return to a fresh editor page after importing.
@@ -39,6 +42,20 @@ ignored. Flare does not fetch links or icons during import.
 Limits: **8 MiB per input file, 20,000 bookmarks/categories after merging, 32
 folder levels**. A preview expires after 15 minutes or a server restart.
 
+## Privacy choices (current main)
+
+Authenticated imports default new resources to private. Review the preview's
+visibility and inherited category restrictions. Choosing public import requires
+recent password verification; changing the public option invalidates the old
+preview and requires a fresh preview before confirmation. The server rechecks
+recent authentication on public commit. Existing private flags are not erased by
+duplicate updates. Trusted anonymous mode rejects private input/results.
+
+A private category cannot be made public by importing a child with `private: false`.
+YAML containing anchors/aliases can be read and exported as exact original YAML,
+but web edits and merge imports into such documents are refused. See [accounts](accounts.md)
+and [YAML upgrade boundaries](login-private-upgrade.md).
+
 ## Export and recovery
 
 - **Browser HTML** exports names, URLs and categories, without Flare-only fields.
@@ -60,16 +77,25 @@ backup retention policy. These exports/backups contain **bookmark data only**,
 not account credentials or system settings. Bookmark URLs themselves may contain
 sensitive information; protect exported files accordingly.
 
+For current-main login-enabled deployments, both export and backup downloads
+require password verification within 10 minutes and explicit download confirmation.
+HTML exports do not retain Flare privacy fields; importing that HTML elsewhere
+cannot preserve access rules. Treat every downloaded file as potentially private,
+including backups of earlier versions of the collection.
+
 ## Consistency and access
 
 All transfer routes reuse editor authentication and exist only when the editor
 is enabled. If login is disabled, they follow the editor's existing public-access
-behavior. POST requests require a custom same-origin header, and preview
-credentials are signed, user-bound and expire after 15 minutes. Downloads are
+behavior. POST requests require a custom same-origin header; current main also requires
+a session/browser-bound CSRF token (`X-CSRF-Token` or the form field). Preview
+credentials are signed and expire after 15 minutes; current-main tickets bind to
+the active session/browser, so reauthentication can require a fresh preview. Downloads are
 attachments and all data responses disable caching.
 
-Preview never writes bookmark data (a missing collection is initialized using
-Flare's normal defaults). Confirmation checks the on-disk SHA-256 version again
+Preview does not commit imported data. Ordinary missing-file initialization is
+subject to recovery and authorization guards; it must not repair a missing file
+during tentative authenticated reads or when retained recovery copies exist. Confirmation checks the on-disk SHA-256 version again
 under the shared in-process writer lock. An editor save or manual file change
 invalidates the preview. The backup must succeed before the original file is
 replaced using a same-directory staged write, file sync and atomic rename. A

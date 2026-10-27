@@ -1,4 +1,8 @@
-# Parsed navigation snapshots
+# Navigation snapshots and HTML fragment cache
+
+> Parsed data caches shipped in stable releases; request settings snapshots and
+> the HTML fragment cache below describe current main development after 0.6.7.
+> See the [recorded measurements](../metrics-reports/html-fragment-cache-2026-10-27/report.md).
 
 ## Request settings and rendered fragments
 

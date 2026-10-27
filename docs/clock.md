@@ -53,7 +53,7 @@ on the next page load. Page settings never modify `TZ`, `time.Local`, the host
 clock, or the weather location.
 
 修改 `TZ` 后请重启。手动编辑 `config.yml` 前请停止写入：0.6.5 需要重启后读取修改，
-未发布的 0.6.6 候选版会在下次读取配置时检查文件变化。网页保存的设置在下次加载页面时
+0.6.6 及后续版本会在下次读取配置时检查文件变化。网页保存的设置在下次加载页面时
 生效。显示时区设置不会修改进程全局时区、主机时间或天气城市。
 
 ## Time source and fallback / 时间来源与降级

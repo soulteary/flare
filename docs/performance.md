@@ -1,4 +1,19 @@
-# Fiber 迁移：性能记录与决策
+# 性能决策与测量索引
+
+## 当前源码开发记录（0.6.7 之后）
+
+- [管理员读取鉴权复用](requirements/admin-performance-optimization.md)：请求内证明与持久化边界。
+- [管理员 CPU/内存归因](requirements/admin-resource-analysis.md)：相同到达率、profile 与缓存保留成本。
+- [会话事务 I/O 合并](requirements/transaction-io-optimization.md)：响应释放前持久化及完整 HTTP 计数。
+- [导航 HTML 片段缓存](../metrics-reports/html-fragment-cache-2026-10-27/report.md)：身份隔离、容量限制、冷/热与原生 HTTP 测量；[当前机制与复现](navigation-cache.md)。
+- [CI 审计](../metrics-reports/ci-audit-2026-10-27.md)、[同提交冷/热缓存对照](../metrics-reports/ci-cache-comparison-2026-10-27.md)及[CI 设计](../.github/CI-OPTIMIZATION.md)。
+
+以上分别针对各自冻结的候选与环境，不代表当前 HEAD 已重新测量，百分比不可相加。
+认证持久化协议已在后续优化中变化；以事务专项和当前代码为准。
+
+## 历史 Fiber 迁移与稳定版优化
+
+以下保留迁移时的配置、会话兼容和热点分析，不将当时的 Gorilla 会话或 YAML 热点描述当作当前认证实现。
 
 默认服务已从 Echo 切换为原生 Fiber v3，读取缓冲保留 **64 KiB**。正常构建、容器和测试不再需要构建标签，生产依赖中移除 Echo。这里汇总迁移前的全部性能实验、取舍和复现入口；各轮原始数据与当时结论继续保留，不以最终选择回写历史数字。
 
@@ -21,7 +36,7 @@
 
 ## 可复现的源码与历史边界
 
-实验阶段源码、双栈实现和依赖冻结在提交 **`92a9c47771b1083ec5c46e1ea6104ea061c14d42`**。该提交位于本次 PR 历史中；随后接入主分支的移动端/编辑器更新，再提升 Fiber 为唯一实现。原 JSON 中的 revision、源码/二进制哈希和路径描述测量当时的工作区，不应要求它们与重命名后的当前文件一致。
+实验阶段源码、双栈实现和依赖冻结在提交 **`92a9c47771b1083ec5c46e1ea6104ea061c14d42`**。该提交保留了迁移实验源码；后续集成主分支的移动端/编辑器更新，并将 Fiber 设为唯一实现。原 JSON 中的 revision、源码/二进制哈希和路径描述测量当时的工作区，不应要求它们与重命名后的当前文件一致。
 
 `python3 scripts/compare-http-stacks.py --compare-read-buffers` 会从该固定提交提取临时源码，在隔离的源码目录重放 Echo/Fiber 比较，避免生产模块继续携带 Echo。可用 `--reference-revision` 明确指定另一份兼容的实验提交。它衡量固定实验源码，不是当前主分支产品；当前产品单独测量见 [基线方法](baseline-metrics.md)。浅克隆若没有该提交，需先取回包含它的 PR 分支/提交。
 

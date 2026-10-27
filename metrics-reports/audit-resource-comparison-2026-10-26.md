@@ -84,7 +84,7 @@ eight-CPU cgroup quota (`800000 100000`). Client and target each use GOMAXPROCS=
 concurrency and idle connection pool are eight. Go 1.27.3, default data, offline
 mode, disabled login/request logs, and unset GOGC/GOMEMLIMIT/GODEBUG were used.
 `TZ=Asia/Tokyo` is the recorded host test environment; report timestamps use +08:00.
-No other agent benchmarks/full suites ran during either formal capture.
+No other benchmark or full test suite ran during either formal capture.
 
 CPU/allocation/GC counters cover the server process, with small control-endpoint
 overhead; the client is a separate fixed binary. Live heap uses exact HeapAlloc

@@ -77,7 +77,7 @@ for alternating-order observations and their limits. No timing threshold is used
 as a CI assertion; functional ownership, dirty-state, data-count, focus and node
 reuse checks remain mandatory.
 
-## Columns within bookmark categories (unreleased)
+## Columns within bookmark categories (since 0.6.7)
 
 Appearance settings now offer `Homepage.BookmarkLayout: sections`. The default
 (empty or `groups`) retains categories side by side. In `sections` each category
