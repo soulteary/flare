@@ -45,6 +45,13 @@ retained for seven days, matching the final verified archives. Producer-owned
 artifact names use overwrite on retry so full or partial reruns do not collide. Artifact transfer disables redundant ZIP compression for tar.gz.
 These artifacts are never used by the publication workflow.
 
+Snapshot generation and target builds use `-trimpath` so random extraction
+directories do not invalidate otherwise reusable compiled packages. Candidate
+executables embed the source commit date, while evidence separately records the
+actual build time. This makes same-source executables reproducible and allows
+BuildKit to reuse their compression layer. Formal GoReleaser release dates are
+unchanged.
+
 The existing `Seven candidate archives` and `Local image linux/...` check names
 are preserved. The archive aggregate runs after failed dependencies too and
 explicitly fails unless all target jobs succeeded, preventing a failed build

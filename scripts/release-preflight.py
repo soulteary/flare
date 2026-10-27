@@ -51,7 +51,7 @@ def prepare_source(bundle, version, commit):
         generation_env = dict(os.environ)
         for key in ('GOOS', 'GOARCH', 'GOARM'):
             generation_env.pop(key, None)
-        subprocess.run(['go', 'run', 'build/build.go'], cwd=source, env=generation_env, check=True)
+        subprocess.run(['go', 'run', '-trimpath', 'build/build.go'], cwd=source, env=generation_env, check=True)
         # git diff cannot see ignored generated assets, which are included below.
         tracked = subprocess.check_output(['git', 'ls-files', '-z'], cwd=ROOT).decode().split('\0')
         for name in filter(None, tracked):
@@ -60,6 +60,7 @@ def prepare_source(bundle, version, commit):
                 raise RuntimeError(f'Generated tracked asset is stale: {name}')
         metadata = {'version': version, 'commit': commit,
                     'built_at': datetime.now(timezone.utc).isoformat(),
+                    'build_date': run(['git', 'show', '-s', '--format=%cI', commit]),
                     'production_assets_generated_in_snapshot': True}
         (source / '.flare-preflight-source.json').write_text(json.dumps(metadata) + '\n')
         bundle.parent.mkdir(parents=True, exist_ok=True)
@@ -96,10 +97,12 @@ def build_target(target, source, output, metadata):
     directory = output / target
     directory.mkdir()
     binary = directory / 'flare'
-    version, commit, date = metadata['version'], metadata['commit'], metadata['built_at']
+    version, commit = metadata['version'], metadata['commit']
+    # Repeated checks of one commit must produce the same executable for layer reuse.
+    date = metadata.get('build_date', metadata['built_at'])
     ldflags = f'-w -s -X github.com/soulteary/version-kit/v4.Version={version} -X github.com/soulteary/version-kit/v4.Commit={commit} -X github.com/soulteary/version-kit/v4.BuildDate={date}'
     env = {**os.environ, 'CGO_ENABLED': '0', 'GOOS': goos, 'GOARCH': arch, 'GOARM': arm}
-    subprocess.run(['go', 'build', '-buildvcs=false', '-ldflags', ldflags, '-o', str(binary), '.'], cwd=source, env=env, check=True)
+    subprocess.run(['go', 'build', '-trimpath', '-buildvcs=false', '-ldflags', ldflags, '-o', str(binary), '.'], cwd=source, env=env, check=True)
     archive = output / f'flare_{version}_{target}.tar.gz'
     with tarfile.open(archive, 'w:gz') as tar:
         for path in (binary, source / 'LICENSE', source / 'README.md'):

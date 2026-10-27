@@ -149,7 +149,11 @@ class ArchiveTests(unittest.TestCase):
                 preflight.prepare_source(bundle, self.version, commit)
                 with tarfile.open(bundle) as tar:
                     self.assertEqual(tar.extractfile('ignored.txt').read(), b'generated')
-                    self.assertEqual(json.load(tar.extractfile('.flare-preflight-source.json'))['commit'], commit)
+                    metadata = json.load(tar.extractfile('.flare-preflight-source.json'))
+                    self.assertEqual(metadata['commit'], commit)
+                    expected_date = subprocess.check_output(['git', '-C', str(root), 'show', '-s', '--format=%cI', commit], text=True).strip()
+                    self.assertEqual(metadata['build_date'], expected_date)
+                    self.assertIn('built_at', metadata)
 
 
 if __name__ == '__main__':
