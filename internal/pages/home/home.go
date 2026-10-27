@@ -336,8 +336,9 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 }
 
 func renderClockPage(c fiber.Ctx, m map[string]any, options model.Application, greeting bool) error {
-	// Only the visible search form consumes a CSRF token on this page.
-	if options.ShowSearchComponent {
+	// Trusted-mode navigation and search are read-only. Management forms
+	// obtain their own CSRF tokens independently of this renderer.
+	if options.ShowSearchComponent && !define.AppFlags.DisableLoginMode {
 		m["SecurityCSRFToken"] = auth.CSRFToken(c)
 	}
 	if options.Locale == "" {

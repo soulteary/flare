@@ -36,11 +36,13 @@ browser-bound CSRF token and accepted request origin. Disabling login does not
 turn off those checks. A read-only navigation request does not need to submit a
 token merely because its visitor is anonymous.
 
-The homepage creates a token only while its search form is visible. With
-`ShowSearchComponent: false`, homepage rendering does not issue or renew a
-preauth cookie. Settings and editor forms obtain their own tokens independently,
-so hiding search does not affect their write protection. A browser may still
-send an existing cookie on later navigation requests.
+In trusted mode (`FLARE_DISABLE_LOGIN=true`), the homepage and read-only GET/POST
+search do not create CSRF tokens or issue/renew preauth cookies, even when the
+search form is visible. When login is enabled, a visible search form still gets
+its token for the protected POST route; hiding search skips token generation.
+Settings and editor forms obtain their own tokens independently, so these read
+optimizations do not affect management write protection. A browser may still
+send an existing cookie on navigation requests.
 
 ### 从源码运行
 
