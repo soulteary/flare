@@ -1,51 +1,49 @@
 # Flare documentation
 
-The latest published stable release is **0.6.6**. Search configuration protections,
-weather location selection, adaptive tablet columns, updated MDI icons with legacy
-compatibility and themed favicons are included in 0.6.6.
-Use the release-tagged documentation when deploying a pinned image; merging a
-feature does not publish an image or move `latest`.
+## Choose your version
 
-## Users
+The latest published stable release is [0.6.7](https://github.com/soulteary/flare/releases/tag/0.6.7)
+(verified 2026-10-27, Asia/Shanghai). It includes Chinese/English interfaces,
+columns within bookmark categories, icon improvements and clearer write-source
+errors. Use [release-tagged documentation](https://github.com/soulteary/flare/tree/0.6.7/docs)
+when deploying that image. Merging a feature does not publish an image or move `latest`.
 
-| Task | Guide | Availability |
-| --- | --- | --- |
-| Install or upgrade Docker | [Deployment repository](https://github.com/soulteary/docker-flare#快速上手) | Stable 0.6.6 |
-| Set login and private access | [Configuration reference](configuration.md#access-models) | Stable; parser and request validation hardened in 0.6.5 |
-| Import/export bookmarks | [Bookmark transfer](bookmark-transfer.md) | Since 0.6.2 |
-| Configure clocks and zones | [Clock](clock.md) | Since 0.6.3 |
-| Control access logs | [Logging](logging.md) | Since 0.6.4 |
-| Use list/forms/batch editor | [Editor](editor.md), [screenshots](screenshots/README.md), [icons](editor-icons.md) | Since 0.6.5 |
-| Configure external/hybrid search | [Search](search.md), [suggestions](search-hybrid.md) | Engines/hybrid since 0.6.5; additional modes and save protections in 0.6.6 |
-| Choose category tabs/collapse | [Category navigation](category-navigation.md) | Since 0.6.5 |
-| Change mobile layout/text size | [Mobile layout](mobile-layout.md) | Controls since 0.6.5; adaptive tablet columns in 0.6.6 |
-| Configure desktop columns | [Columns and scale](desktop-columns-and-scale.md) | Since 0.6.5 |
+This working-tree documentation also describes **current main development**:
+persistent single-administrator accounts/sessions, enforced per-entry/category
+privacy and HTML fragment caching. These changes are not included in 0.6.7 and
+have not received a new stable release or complete physical-device acceptance.
+Guides below explicitly distinguish the two access models.
 
-## Operations and development
+## Install and operate
 
-- [Configuration reference and precedence](configuration.md)
-- [Weather refresh and retries](weather.md) (since 0.6.5); location picker and migration in 0.6.6
-- [Backups and restore](backup-restore.md), [editor save recovery](editor-recovery.md)
+- [Deployment examples](https://github.com/soulteary/docker-flare#快速上手) and [0.6.7 release notes](release-0.6.7.md)
+- [Configuration, precedence and access models](configuration.md)
+- [Accounts, initialization and private resources](accounts.md) — current main; includes stable-version differences
+- [Development-version upgrade and rollback](login-private-upgrade.md)
+- [Backups and restore](backup-restore.md), [editor recovery](editor-recovery.md)
 - [Reverse proxies and deployment boundaries](reverse-proxy.md)
-- [Troubleshooting and evidence collection](troubleshooting.md)
-- [Build and test from a clean checkout](development.md)
-- [Interface language and translation development](i18n.md)
-- [Navigation cache and invalidation](navigation-cache.md) (since 0.6.5)
-- [Performance decisions and current observation index](performance.md), [measurement methods](baseline-metrics.md)
-- [Physical mobile acceptance](mobile-device-acceptance.md)
-- [0.6.5 artifact verification and limitations](release-0.6.5-verification.md)
-- [0.6.6 release notes](release-0.6.6.md), [published artifact verification](release-0.6.6-verification.md)
-- [Historical feedback disposition](issue-triage.md)
+- [Troubleshooting](troubleshooting.md), [access logs and Docker log rotation](logging.md)
 
-The server-side offline switch does not prevent the browser from opening external
-bookmarks or fetching configured remote images. Encoded links are not encryption,
-a password, or per-bookmark authorization. Category tabs are presentation filters.
+## Use and customize
 
+- [Editor](editor.md), [icons](editor-icons.md), [versioned screenshots](screenshots/README.md)
+- [Bookmark import/export](bookmark-transfer.md)
+- [Search engines](search.md), [search modes and suggestions](search-hybrid.md)
+- [Clock and time zones](clock.md), [weather and location selection](weather.md)
+- [Category navigation](category-navigation.md), [mobile layout](mobile-layout.md), [desktop and category columns](desktop-columns-and-scale.md)
+- [Interface language](i18n.md)
 
-[登录与私有访问：开发分支升级及回滚](login-private-upgrade.md)。该文档针对阶段一开发实现，不代表已发布稳定版。
+## Develop and verify
 
-[管理员读取性能优化与两轮三分钟配对验收](requirements/admin-performance-optimization.md)：请求内鉴权证据复用、持久化与撤销边界、同机延迟/吞吐及 CPU/RSS 对比。
+- [Build and test](development.md), [contributing](../CONTRIBUTING.md)
+- [Navigation snapshots and HTML fragment cache](navigation-cache.md)
+- [Performance decisions and reports](performance.md), [measurement methods](baseline-metrics.md)
+- [Current security requirements, architecture and acceptance index](requirements/README.md)
+- [CI ownership and cache design](../.github/CI-OPTIMIZATION.md), [Go report scopes](../.github/GO-REPORTS.md), [container publishing](../.github/CONTAINER-RELEASES.md)
+- [Physical mobile acceptance](mobile-device-acceptance.md), [mobile test notes](../tests/mobile/README.md)
+- [Historical releases, implementation records and feedback](archive/README.md)
 
-[管理员 CPU/内存归因与热点优化验收](requirements/admin-resource-analysis.md)：相同到达率、pprof 差分、缓存保留成本及最终四轮三分钟结果。
-
-[会话事务 I/O 合并验收](requirements/transaction-io-optimization.md)：完整 HTTP 事务/Sync 调用计数、安全释放边界及四轮三分钟原生对比。
+The server-side offline switch does not prevent browser visits to external
+bookmarks or remote images. Encoded links are not encryption or authorization.
+Category tabs filter presentation; current-main resource privacy is enforced
+separately by authentication and visibility checks.

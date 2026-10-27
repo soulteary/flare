@@ -35,7 +35,7 @@
 - 免登录、DEFAULT：旧可信部署可继续使用，访问网络即具有内容管理信任；明确提示匿名可修改。
 - 免登录、PRIVATE 或 Visibility 非法：停止业务服务并给出修复项，不推断为私有、不回落公开。
 
-界面使用“公开导航／登录后访问”“管理需要登录／可信网络免登录”说明有效配置；环境或 CLI 固定的选项显示来源和修改方式，网页不假装保存一个会被启动参数覆盖的值。
+界面使用“公开导航／登录后访问”“管理需要登录／可信网络免登录”说明有效配置；环境或 CLI 固定的选项显示来源和修改方式，网页只展示由启动参数固定的值及其修改方式。
 
 ### REQ-MODE-02 免登录的兼容边界
 
@@ -189,7 +189,7 @@
 
 ### REQ-NFR-04 不可信输入
 
-书签与导入文本按上下文转义，链接和图标执行允许协议规则，不能因 private 字段升级放松原有 XSS 防护。private 仅接受布尔值，非法值拒绝；悬空/重复分类引用不得意外扩大可见范围。未知扩展字段兼容保留，不能因为首阶段没有使用就擦除；已知安全字段拼写错误应告警，不能假装启用了保护。
+书签与导入文本按上下文转义，链接和图标执行允许协议规则，不能因 private 字段升级放松原有 XSS 防护。private 仅接受布尔值，非法值拒绝；悬空/重复分类引用不得意外扩大可见范围。未知扩展字段兼容保留，不能因为首阶段没有使用就擦除；已知安全字段拼写错误应告警，避免将拼写错误的字段显示为保护已启用。
 
 ## 9. YAML、导入导出与备份
 
@@ -247,7 +247,7 @@ apps.yml、bookmarks.yml、config.yml 继续为内容和设置事实来源；手
 
 ### REQ-NFR-01 轻量
 
-普通页面不做密码哈希、不逐条访问身份库；以 20,000 条资源测首页、搜索、导入和登录，记录同硬件 0.6.7 对比。哈希并发有界，低配 ARM 不自动改快速散列。性能预算在基准阶段固定，不冒称已测容量。
+普通页面不做密码哈希、不逐条访问身份库；以 20,000 条资源测首页、搜索、导入和登录，记录同硬件 0.6.7 对比。哈希并发有界，低配 ARM 不自动改快速散列。性能预算在基准阶段固定；容量结论须有对应测量结果。
 
 ### REQ-NFR-02 故障安全
 
@@ -267,4 +267,4 @@ REQ-SHARE-01、REQ-SHARE-02、REQ-SHARE-03（分类密码和只读分享），RE
 
 历史反馈索引保留：docker-flare #183/#60/#56/#34/#23/#142（模式）、#5 与 flare #35/#8（部署）、docker-flare #181/#174/#125/#92/#68/#195/#137 与 flare #121/#99（会话/凭据）、docker-flare #57/#16/#63（私有语义）、#84/#64/#178/#155（后续分享/多人）、#156/#77（登录页）、#54（子路径后置）、#170 与 flare #62（Referer 边界）、#118（排除密码保险库）、flare #47（后续 API Token）。docker-flare #179 为 Flame 报告，不能作为 Flare 缺陷证据。本次未重查 issue 正文及关闭原因，未提供的需求汇总表不作为已核验证据。
 
-现状依据为当前仓库配置、认证、数据模型及导入导出文档；原稿基线链接为 [0.6.7](https://github.com/soulteary/flare/releases/tag/0.6.7)。安全原则参考 [OWASP 密码存储](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)和[会话管理](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)；数值与兼容决策是产品选择，不是已验证结果。本次仅修改文档，未实现或测试目标功能。
+现状依据为当前仓库配置、认证、数据模型及导入导出文档；原稿基线链接为 [0.6.7](https://github.com/soulteary/flare/releases/tag/0.6.7)。安全原则参考 [OWASP 密码存储](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)和[会话管理](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)；数值与兼容决策是产品选择，不是已验证结果。实现与测试状态见[综合验收记录](login-private-access-acceptance.md)。

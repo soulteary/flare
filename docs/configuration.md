@@ -1,5 +1,9 @@
 # Configuration reference
 
+> Scope: current main development. Stable 0.6.7 differences are explicit below;
+> use [tagged docs](https://github.com/soulteary/flare/tree/0.6.7/docs) for an unchanged
+> stable deployment. See [accounts](accounts.md) before initializing or migrating.
+
 Runtime switches use command-line flags > the application's working-directory
 `.env` > process environment > defaults. Compose's project `.env` is interpolation
 input and is not automatically forwarded into the container: use `environment`
@@ -14,22 +18,33 @@ Recreate a container after changing its image, Compose environment, or log drive
 
 All rows require a process restart; CLI changes require recreating a container's
 command. The default data working directory in published images is `/app`.
+The two access defaults below describe the effective result of the new-install
+startup gate, not just parser constants. Existing installations retain valid
+access settings; ambiguous legacy-default cases need explicit adoption. Stable
+0.6.7 uses the legacy baseline and generated-password behavior. Current main
+requires persistent credentials or initialization and blocks invalid security inputs.
 
 | Environment | CLI | Default | Values and meaning |
 | --- | --- | --- | --- |
 | `FLARE_PORT` | `--port`, `-p` | `5005` | Integer 1–65535; configure the container port and published mapping consistently |
-| `FLARE_DISABLE_LOGIN` | `--disable_login`, `-l` | `true` | Boolean; false enables authentication for administration |
-| `FLARE_VISIBILITY` | `--visibility`, `-s` | `DEFAULT` | `DEFAULT` (public navigation) or `PRIVATE` (authentication required); never use `0`/`1` |
+| `FLARE_DISABLE_LOGIN` | `--disable_login`, `-l` | New install: `false`; legacy baseline: `true` | Boolean; startup resolves installation history; false requires administrator authentication |
+| `FLARE_VISIBILITY` | `--visibility`, `-s` | New install: `PRIVATE`; legacy baseline: `DEFAULT` | `DEFAULT` (public visible resources) or `PRIVATE` (whole-site authentication); never use `0`/`1` |
 | `FLARE_USER` | — | `flare` | Login username |
-| `FLARE_PASS` | — | Generated | Login password; absent password is generated and shown in startup logs |
+| `FLARE_PASS` | — | No persistent password supplied | Initial/deployment password; current startup does not print a generated password; local mode retains stored credentials |
+| `FLARE_PASS_FILE` | — | Unset | Current main: password file, conflicts with nonempty effective `FLARE_PASS`; see format below |
+| `FLARE_STATE_DIR` | — | `.flare-security` | Current main: writable persistent security directory, relative to working directory unless absolute |
+| `FLARE_CREDENTIAL_MODE` | — | New install: `local`; migrated credentials: `deployment` | Current main: `local` or `deployment`; existing mode changes require explicit account/maintenance action |
+| `FLARE_EXTERNAL_URL` | — | Unset | Current main: canonical HTTP(S) origin without credentials, query or application subpath |
+| `FLARE_ALLOWED_HOSTS` | — | Unset | Current main: comma-separated allowed host/port authorities |
+| `FLARE_TRUSTED_PROXIES` | — | Unset | Current main: comma-separated peer IPs/CIDRs allowed to supply supported forwarding headers |
 | `FLARE_EDITOR` | `--enable_editor`, `-e` | `true` | Boolean; expose editor and transfer routes |
 | `FLARE_GUIDE` | `--guide`, `-g` | `true` | Boolean; expose guide |
 | `FLARE_OFFLINE` | `--offline`, `-o` | `false` | Boolean; disable server-side weather/location activity |
 | `FLARE_MINI_REQUEST` | `--mini_request`, `-m` | `false` | Boolean; inline icon SVGs, trade fewer HTTP requests for larger HTML |
 | `FLARE_DEPRECATED_NOTICE` | `--enable_notice`, `-n` | `true` | Boolean; deprecated-feature notices |
 | `FLARE_DISABLE_CSP` | `--disable_csp`, `-c` | `false` | Boolean; disabling the page script policy reduces browser protection |
-| `FLARE_COOKIE_NAME` | `--cookie_name`, `-k` | `flare` | Session cookie prefix; includes internal listen port |
-| `FLARE_COOKIE_SECRET` | `--cookie_secret`, `-r` | Secure initialized key | At least 32 bytes; persist automatically created `.flare-cookie-secret` |
+| `FLARE_COOKIE_NAME` | `--cookie_name`, `-k` | `flare` | Session cookie prefix; current main also includes the instance identity |
+| `FLARE_COOKIE_SECRET` | `--cookie_secret`, `-r` | Legacy: secure initialized key | Stable/legacy signed-cookie setting (at least 32 bytes); does not replace current-main security state |
 | `FLARE_COOKIE_SECURE` | `--cookie_secure` | `false` | Boolean; force HTTPS-only cookies behind TLS termination; direct TLS is secure automatically |
 | `FLARE_DEBUG` | — | Unset | Environment-only application log level; literal `on` enables DEBUG; independent of development assets |
 | `FLARE_ACCESS_LOG` | `--access_log` | `errors` | `errors`, `all`, `off`; since 0.6.4; invalid mode warns and uses errors |
@@ -64,9 +79,13 @@ environment:
   FLARE_COOKIE_SECURE: "true"
 ```
 
-Use both privacy settings together. `PRIVATE` cannot authenticate a visitor when
-login has been disabled. Hiding the settings button only changes presentation.
-Encoding a link is Base64 plus redirect matching, not encryption or access control.
+Use both privacy settings together. Current main rejects `PRIVATE` with disabled
+login, and rejects private entries/categories in trusted anonymous mode. It does
+not clear private flags or fall back to public access. Stable 0.6.7 does not enforce
+per-resource flags: use whole-site PRIVATE to protect all resources. Hiding the
+settings button only changes presentation. Encoded redirects are not encryption
+or authorization; current main uses opaque handles and rechecks resource access
+for both new and legacy redirects.
 After changing access settings, test navigation and editor access in a fresh,
 unauthenticated browser; do not infer protection from the settings UI alone.
 
@@ -78,7 +97,8 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 | `config.yml` `Clock` | Display time, seconds, zone; since 0.6.3 | [Clock](clock.md) |
 | `config.yml` `Search` | Engines/hybrid since 0.6.5; additional modes and save protections in 0.6.6 | [Search](search.md) |
 | `config.yml` `Homepage` | Layout controls since 0.6.5; adaptive tablet columns in 0.6.6 | [Mobile](mobile-layout.md), [desktop](desktop-columns-and-scale.md) |
-| `config.yml` `Footer` | Administrator-controlled HTML | Treat it as trusted site content, unlike ordinary bookmark text |
+| `config.yml` `Footer` | Administrator-controlled internal HTML | Treat it as trusted site content, unlike ordinary bookmark text |
+| `config.yml` `LoginFooter` | Current main: public login-page text/filtered HTTP(S) links | [Accounts](accounts.md); separate from internal Footer |
 
 Search settings are not included in bookmark exports. Multiple processes sharing
 YAML do not share in-process locks. Use one writer and normal filesystem backups.
@@ -117,24 +137,24 @@ a general trusted-proxy feature or a two-address network-switching configuration
 Since 0.6.5, encoded redirects carry validated relative source context so path
 placeholders continue to refer to the originating navigation page.
 
-On the phase-one development branch, `private: true` on an item or bookmark
-category restricts it to the single authenticated administrator. A category's
-restriction cannot be relaxed by an item with `private: false`. Missing/false
-fields retain their existing meaning; the files remain the source of truth.
-Login-disabled trusted deployments cannot contain private resources. See the
-[upgrade and rollback guide](login-private-upgrade.md) before upgrading: released
-0.6.7 does not enforce these per-entry/category rules.
+## Private resources and persistent state (current main)
 
+`private: true` on an entry or bookmark category restricts it to the single
+administrator; category restrictions cannot be relaxed by child `private: false`.
+Missing/false fields retain existing meaning. See [accounts](accounts.md) for
+sessions, password ownership and maintenance, and [upgrade/rollback](login-private-upgrade.md)
+for migration and YAML anchor/alias read-only boundaries.
 
-Deprecated boolean alias resolution (`--nologin` and `--mr`) was repaired in
-0.6.5. Both spellings now use normal last-occurrence precedence. Prefer canonical
-`--disable_login` and `--mini_request`; do not assume legacy spellings enforce
-access settings when running 0.6.4.
+`FLARE_PASS_FILE` is a regular UTF-8 file (projected Secret symlinks are accepted).
+Input is limited to 514 bytes; remove one terminal LF/CRLF only, preserving other
+whitespace, with at most 512 password bytes after removal. A nonempty effective
+`FLARE_PASS` cannot be combined with it. New-password strength rules and old
+credential compatibility are described in the account guide.
 
-## Phase-one development branch
+Security state must remain writable and persistent even with read-only YAML.
+Persist custom state directories and external password files separately if they
+are outside the data volume. Only one local-filesystem writer is supported;
+shared cookie secrets do not provide multi-replica support. See [backup/restore](backup-restore.md).
 
-The runtime table above documents the legacy configuration baseline. New installation
-safety defaults, persistent account/session state, password-source handling, and the
-extra security-directory mount are described in the [upgrade guide](login-private-upgrade.md).
-Normal existing deployments keep their YAML and access settings; the new startup
-gate prevents invalid/private-plus-anonymous configurations from becoming public.
+Deprecated boolean aliases `--nologin` and `--mr` use last-occurrence precedence
+since 0.6.5. Prefer canonical `--disable_login` and `--mini_request`.

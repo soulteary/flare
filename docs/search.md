@@ -39,21 +39,29 @@ network access determines whether an external or internal target is reachable.
 
 ## Search settings request protection
 
-Search settings forms now carry an eight-hour, instance-signed token paired with
-an HttpOnly, host-only, SameSite=Strict cookie with an instance-specific name. Refresh any form opened before an
-upgrade or application restart before saving. Programmatic clients must first GET
-`/settings/search`, retain its cookie, and submit the hidden `csrf-token` field.
-The compatibility handling for older search fields does not bypass this token.
+In stable 0.6.7, search settings use an eight-hour instance-signed token paired
+with an HttpOnly, host-only, SameSite=Strict cookie. Current main development uses
+the unified account-session/preauthentication-browser-bound CSRF mechanism instead;
+the old dedicated cookie's lifetime is not the current authentication lifetime.
+See [accounts](accounts.md) and [proxy trust](reverse-proxy.md).
 
-The guard rejects cross-site and same-site sibling browser requests, opaque or
-foreign Origin values, and foreign Referer values when present. It does not use
-Forwarded or X-Forwarded headers to decide whether a request is trusted. A valid
-token permits HTTPS termination at a reverse proxy while the backend uses HTTP;
-keep the original Host (including a nondefault public port) and configure `FLARE_COOKIE_SECURE=true` for HTTPS-only
-cookies in that deployment. Token-bearing clients without browser metadata remain
-supported. Form responses use `Cache-Control: no-store`.
+For programmatic settings writes:
 
-The signed form token protects the search settings endpoint. In 0.6.6, forms also
+1. Sign in when required and GET `/settings/search` with the same cookie jar.
+2. Retain cookies and submit that form's hidden `csrf-token` and `config-revision`
+   with the requested settings to the same origin. Do not put CSRF tokens in URLs.
+3. After restart, session rotation or reauthentication, GET a fresh form. Preserve
+   intended changes before refreshing. Treat 401/reauthentication requirements,
+   source/CSRF 403 responses and stale configuration conflicts separately; some
+   route-local 403 responses use a generic message rather than a machine code.
+
+Source checks reject cross-site/sibling requests and invalid Origin/Referer when
+present. Supported forwarding headers only affect current main when explicit
+trusted proxies are configured. Keep public Host/port and HTTPS cookie policy
+consistent. All form responses disable caching. Legacy search-field compatibility
+does not bypass authentication, source or CSRF protection.
+
+The applicable CSRF mechanism protects the search settings endpoint. Since 0.6.6, forms also
 carry `config-revision`: a stale revision is rejected and
 submitted values are retained. Preserve those values, reload the current settings
 and review the differences before saving again. Programmatic clients should

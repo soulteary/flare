@@ -7,9 +7,9 @@
 
 A lightweight self-hosted bookmark dashboard and start page, written in Go.
 
-The latest stable release is [**0.6.6**](https://github.com/soulteary/flare/releases/tag/0.6.6),
-including the search, navigation editor and layout controls described in the
-[documentation index](docs/README.md).
+The latest stable release is [**0.6.7**](https://github.com/soulteary/flare/releases/tag/0.6.7),
+including Chinese/English interfaces and columns within bookmark categories.
+See the [documentation index](docs/README.md) for version scope and usage.
 
 ## Features
 
@@ -50,11 +50,12 @@ Generate resources after a clean checkout or changes under `embed/`; see
 [build and test instructions](docs/development.md).
 
 Production and container builds use Fiber on its native fasthttp listener.
-Native-listener regressions exercise that path; existing HTTP integration tests
-also use a `net/http` compatibility adapter. The migration keeps Gorilla signed
-session cookies, direct TLS and explicit proxy Secure-cookie behavior, `Immutable` request ownership, and the
-existing editor upload limits. The 64 KiB reader limits request lines and
-headers; requests exceeding its capacity can receive HTTP 431. Bodies have a
+Native-listener regressions exercise that path; HTTP integration tests also use a
+`net/http` compatibility adapter. Current source uses persistent server-side
+authentication; the legacy Gorilla cookie adapter remains for compatibility tests
+and embedders. See [accounts and private access](docs/accounts.md) for version scope.
+Request ownership uses `Immutable`; editor upload limits remain enforced.
+The 64 KiB reader limits request lines and headers; requests exceeding its capacity can receive HTTP 431. Bodies have a
 32 MiB global limit. Embedded favicon and SVG resources retain
 `net/http.ServeContent` for conditional and range responses.
 
@@ -78,8 +79,8 @@ Echo is no longer part of the production dependency graph. See
 Published stable versions are available from both registries:
 
 ```sh
-docker pull soulteary/flare:0.6.6
-docker pull ghcr.io/soulteary/flare:0.6.6
+docker pull soulteary/flare:0.6.7
+docker pull ghcr.io/soulteary/flare:0.6.7
 ```
 
 Both images support `linux/amd64`, `linux/arm64`, `linux/arm/v7`, and
@@ -105,59 +106,24 @@ See [logging configuration and upgrade steps / 日志配置与升级说明](docs
 for the `local` driver with `10m` files and a limit of 3 files, configuration
 precedence, and rebuilding existing containers while preserving application data.
 
-### Login configuration
+### Accounts and private access
 
-Login is disabled by default. To enable it, set `FLARE_DISABLE_LOGIN=false`.
-You can configure `FLARE_COOKIE_SECRET` with a random value of at least 32 bytes,
-generated once with `openssl rand -hex 32`, in your environment or `.env` file.
-The `--cookie_secret` flag is also supported. Command-line flags override `.env`,
-which overrides environment variables. A suitable configured key takes precedence
-over an automatically saved key.
+**Version scope:** stable 0.6.7 retains the legacy login model. The persistent
+single-administrator account, session revocation and per-entry/category privacy
+features in current `main` are development features, not part of that release.
+Use [the documentation index](docs/README.md) to choose the matching instructions.
 
-If the configured key is empty, the legacy default `secret`, or shorter than 32
-bytes after trimming surrounding whitespace, Flare initializes a secure key and
-continues starting. It generates 32 random bytes, stores them as 64 hexadecimal
-characters in `.flare-cookie-secret` beside `config.yml`, and reuses the saved key
-on later starts. The file is readable and writable only by the application user.
-Keep this file in your persistent data volume along with the other configuration
-files. Flare does not rewrite your environment or `.env` file.
+For 0.6.7, use `FLARE_DISABLE_LOGIN=false` to protect administration and also
+`FLARE_VISIBILITY=PRIVATE` to protect the whole site. Per-entry `private` flags
+alone do not protect data in 0.6.7. Preserve `.flare-cookie-secret` and configure
+`FLARE_COOKIE_SECURE=true` when HTTPS terminates at a reverse proxy.
 
-Startup warnings explain the reason for initialization and whether a new key was
-saved or an existing key was reused. The key itself is never logged. Replacing a
-previous key invalidates existing session cookies, so users must log in again.
-Login-disabled deployments do not create or require a key file.
-
-If the saved key cannot be read or validated, or a new key cannot be saved, Flare
-uses a secure key for the current process and warns that it was not persisted.
-The service remains available, but users must log in again after a restart.
-If a key file has already been saved and can be read, Flare keeps using that key
-even when syncing its directory fails. A separate warning explains that the file
-may not survive a power loss; ordinary restarts and other instances reuse it.
-Multiple instances should use the same configured key or share the persistent
-key file so that their session cookies remain compatible.
-
-#### Session cookies and HTTPS proxies
-
-Session cookies use `HttpOnly`, `SameSite=Lax`, `Path=/`, and a 30-day lifetime.
-Plain HTTP deployments work by default. Requests received directly over TLS
-automatically use `Secure` cookies.
-
-**For HTTPS terminated by a reverse proxy, set `FLARE_COOKIE_SECURE=true`.**
-Flare's built-in server listens over HTTP, so this setting preserves the
-`Secure` attribute when the browser uses HTTPS but the proxy connects to Flare
-over HTTP. Clients must then access the application using HTTPS.
-
-```env
-FLARE_DISABLE_LOGIN=false
-FLARE_COOKIE_SECURE=true
-```
-
-`FLARE_COOKIE_SECURE` defaults to `false` and is supported in the environment,
-the `.env` file, and as `--cookie_secure=true` or `--cookie_secure=false`.
-The same precedence applies: command-line flags override `.env`, which
-overrides environment variables. A value of `false` still allows direct TLS
-requests to use `Secure`. Flare does not infer this policy from untrusted
-`X-Forwarded-Proto`, `Forwarded`, or similar request headers.
+For current source, new installations require administrator initialization and
+use private-site defaults unless explicitly configured otherwise. Persist the
+security directory as well as YAML. Read [accounts](docs/accounts.md),
+[configuration](docs/configuration.md), [upgrade/rollback](docs/login-private-upgrade.md),
+[backup/restore](docs/backup-restore.md) and [reverse proxies](docs/reverse-proxy.md)
+before changing an existing deployment.
 
 ## Date, time and time zones
 
@@ -172,7 +138,9 @@ build/                Resource generation
 cmd/                  Command-line and environment configuration
 config/               Runtime models and configuration persistence
 embed/                Web assets, templates and translations
-internal/auth/        Authentication and session cookies
+internal/auth/        Authentication, accounts and request authorization
+internal/security/    Persistent single-administrator security state
+internal/requestsource/ Explicit external-origin and trusted-proxy policy
 internal/bookmarks/   Bookmark import and export
 internal/clock/       Clock rendering and time zones
 internal/pages/       Homepage, editor and guide handlers

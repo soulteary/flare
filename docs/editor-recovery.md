@@ -17,7 +17,12 @@ Both replacement files are prepared before writes begin. Original bytes are
 retained in `.flare-editor-recovery/save-*` beneath the applications configuration
 directory. Each recovery directory contains `apps.yml` and `bookmarks.yml`.
 
-Authenticated save responses use these fields:
+The file-replacement responses below describe recovery outcomes. Current main
+also rejects expired authentication, invalid CSRF, private-content conflicts or
+unconfirmed public changes before replacement. Inspect the message/code rather
+than treating every 409 as stale revision; see [authenticated saves](editor.md#privacy-and-authenticated-saves-current-main).
+
+File-replacement responses use these fields:
 
 | HTTP status | `code` | Meaning | Next action |
 | --- | --- | --- | --- |

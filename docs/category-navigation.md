@@ -5,8 +5,10 @@
 Appearance settings offer three bookmark category modes. All groups remains the
 backward-compatible default. Category links filter the server-rendered response;
 All restores every group. Links preserve the current search query and category
-IDs are URL-encoded. Unknown IDs fall back to All. This is presentation only, not
-an authorization boundary.
+IDs are URL-encoded. Stable 0.6.7 falls back to All for unknown IDs. Current main development checks
+category visibility first: unknown or inaccessible requested categories return
+404. Category tabs are presentation controls; private-resource authorization is
+separate and also applies to search and redirects. See [accounts](accounts.md).
 
 Collapsible groups use native HTML details/summary controls and require no
 JavaScript. Groups start closed; search results expand rather than hiding matches.

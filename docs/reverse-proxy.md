@@ -1,23 +1,24 @@
 # Reverse proxies and support boundaries
 
-Use a dedicated host at the URL root, for example `https://flare.example.com/`.
-Full subpath mounting such as `/flare/` is not currently supported: routes,
-forms, asset URLs and cookies include root-relative paths. Rewriting only `/` or
-adding a proxy prefix does not implement complete subpath support. Serve at a
-separate host rather than claiming `/flare/` works after a partial rewrite.
+> Scope: stable 0.6.7 and current-main development. Explicit trusted-proxy and
+> canonical-origin settings below are current-main features, not part of 0.6.7.
 
-When the proxy terminates HTTPS and uses HTTP to the application:
+Use a dedicated hostname at the URL root, such as `https://flare.example.com/`.
+Full subpath mounting at `/flare/` is unsupported: routes, forms, assets and
+cookies contain root-relative paths. `FLARE_EXTERNAL_URL` does not add subpath support.
+Keep the backend isolated from direct public access and do not cache private HTML,
+account, editor or settings responses. Allow the documented 8 MiB import plus
+multipart overhead in proxy limits and timeouts.
 
-- Configure `FLARE_COOKIE_SECURE=true` and keep accessing the public service via HTTPS.
-- Preserve the original `Host`, including a nondefault public port. Do not blindly
-  trust client-supplied forwarding headers or expose the backend publicly.
-- Forwarding `X-Forwarded-Proto` does not change Flare's cookie trust policy.
-- Ensure upload body limits and timeouts allow the documented 8 MiB bookmark import.
-- Do not cache private HTML, editor documents, or settings responses at the proxy.
+## Preserve Host with HTTPS termination
 
-## Nginx
+For both versions, preserve the public Host including any nondefault port and
+set `FLARE_COOKIE_SECURE=true` when the browser uses HTTPS and the backend uses
+HTTP. Clients must use HTTPS after forcing Secure cookies. Direct TLS is secure
+automatically. A public HTTPS origin configured in current main also enforces
+Secure; failures do not downgrade cookie policy.
 
-Inside an existing TLS server for the dedicated hostname:
+Inside an existing TLS server for a dedicated hostname:
 
 ```nginx
 location / {
@@ -28,43 +29,77 @@ location / {
 }
 ```
 
-Configure TLS/certificates and backend network access separately. For Nginx Proxy
-Manager use the dedicated domain, HTTP upstream `flare:5005`, and preserve Host;
-do not configure a custom `/flare/` location. See the deployment repository's
-[Traefik example](https://github.com/soulteary/docker-flare/blob/main/example/traefik/docker-compose.yml)
-and adapt its public hostname, TLS resolver and network to your installation.
+```yaml
+environment:
+  FLARE_COOKIE_SECURE: "true"
+```
+
+Configure certificates and backend networking separately. Nginx Proxy Manager
+uses the dedicated domain and HTTP upstream `flare:5005`; preserve Host and avoid
+custom `/flare/` locations. See the deployment repository's
+[Traefik example](https://github.com/soulteary/docker-flare/blob/main/example/traefik/docker-compose.yml).
+
+In stable 0.6.7, forwarding headers do not establish cookie/source trust. Current
+main also ignores them by default; ordinary Host-preserving proxies do not need
+all advanced inputs below.
+
+## Canonical origin and trusted proxies (current main)
+
+- `FLARE_EXTERNAL_URL`: canonical HTTP(S) origin, for example
+  `https://flare.example.com:8443`. No credentials, query or application path.
+- `FLARE_ALLOWED_HOSTS`: comma-separated additional host/port authorities accepted
+  as request aliases. They do not replace the canonical diagnostic origin.
+- `FLARE_TRUSTED_PROXIES`: comma-separated IPs/CIDRs of actual trusted proxy peers.
+  Only peers matching this list may supply supported `X-Forwarded-Proto`,
+  `X-Forwarded-Host` and validated `X-Forwarded-For` information.
+
+Use narrow addresses matching the proxy peer seen by Flare; do not copy a broad
+network range merely to make validation pass. The final trusted proxy must
+normalize supported headers and overwrite client-supplied authority/scheme values.
+Multiple or comma-separated scheme/authority values are rejected. RFC `Forwarded`
+is not supported on this trusted path; normalize/remove it at the last proxy.
+
+If a trusted proxy rewrites Host to an internal name and sends no forwarded Host,
+a configured canonical external origin supplies the authority. Otherwise the
+effective origin must match the canonical origin or an allowed alias. Without a
+canonical origin, an explicit allowed-host list still constrains authorities.
+A configured HTTPS policy rejects a forwarded HTTP scheme instead of downgrading.
+Source checks compare scheme, hostname and effective port.
+
+These settings govern source/authentication policy. Dynamic bookmark placeholders
+still use the request context described in [configuration](configuration.md#dynamic-bookmark-placeholders);
+do not assume canonical-origin settings rewrite every generated bookmark URL.
 
 ## Write requests rejected even with login disabled
 
-Login and write-source protection are independent. Disabling login does not allow
-cross-origin writes. If settings or editor saves return HTTP 403 with code
-`write_source_rejected`, compare the browser's `Origin`/`Referer` host and port
-with the `Host` received by Flare. The proxy must preserve the public host and
-port, rather than replace them with an upstream name such as `flare:5005`.
-Sending only `X-Forwarded-Host` does not fix this: Flare does not trust it.
-For Nginx, use `proxy_set_header Host $http_host;` as above; `$host` can drop a
-nondefault public port. Direct Docker port publishing alone preserves Host.
+Login and write-source protection are independent. Preserve pending edits or
+export a JSON draft before reloading a rejected form. Disabling login does not
+permit cross-origin writes.
 
-In 0.6.6, the editor can mislabel this plain-text 403 as an expired login.
-Changing credentials or enabling/disabling login does not resolve a Host mismatch.
-Preserve/export pending edits before reloading, correct the proxy configuration,
-then retry. Set the environment variable using Compose's mapping syntax:
+In stable 0.6.7, `write_source_rejected` identifies the global source failure;
+0.6.6 can mislabel its plain-text 403 as an expired login. Preserve Host including
+the port (`$http_host`, since `$host` may omit a nondefault port). Sending only
+`X-Forwarded-Host` does not fix stable-version source validation.
 
-```yaml
-environment:
-  FLARE_DISABLE_LOGIN: "true"
-```
+In current main, `SOURCE_REJECTED` indicates source protection, `CSRF_INVALID`
+indicates an invalid browser/session-bound token, and `AUTH_REQUIRED`,
+`SESSION_EXPIRED` or `REAUTH_REQUIRED` indicate authentication requirements.
+Some route-local failures are generic HTTP 403 rather than a structured code.
+Use response status/code, request ID when supplied and terminal logs together.
+An invalid configured/request authority may return `INVALID_INPUT` with HTTP 400.
 
-The list item `- FLARE_DISABLE_LOGIN="true"` includes literal quotes in the
-environment value and triggers an invalid-boolean warning.
+Correct the public origin/proxy configuration, reopen the page on that origin and
+obtain fresh tokens. Never reuse tokens across sessions or put them in query URLs.
+Use Compose mapping syntax (`FLARE_DISABLE_LOGIN: "true"`); list syntax such as
+`- FLARE_DISABLE_LOGIN="true"` includes literal quotes and is invalid.
 
 ## Verify
 
-1. In a fresh browser confirm private routes redirect to login when configured.
-2. Sign in over public HTTPS, inspect the Secure/HttpOnly session cookie, reload,
-   open the editor, and sign out.
-3. Submit search settings and a small disposable import; check protection errors
-   do not come from a lost Host/port or a cached pre-restart form.
-4. Verify dynamic bookmark placeholders against the public URL. The backend's
-   direct HTTP scheme is distinct from the external TLS scheme; forwarded headers
-   are not a general trusted-proxy configuration.
+1. Check the actual binary version, public URL, Host/port and Secure policy.
+2. In a fresh browser, verify anonymous public/private navigation and management.
+3. Sign in over public HTTPS, inspect host-only Secure/HttpOnly cookies, reload,
+   submit settings and a disposable import, and sign out.
+4. For current main, verify private category/entry filtering, recent-auth flows,
+   aliases if configured, and rejection of untrusted forwarding headers.
+5. Check dynamic placeholders and cache isolation separately. Root-page success
+   alone does not validate private responses, writes or full proxy behavior.
