@@ -1,0 +1,43 @@
+{
+  "before": {
+    "revision": "7e91e8f9ed066cafd5f4c088002aa93e4354be90",
+    "binary_sha256": "2dbf03b8168e8230831aa2357b425506486be3fda273dde1173f1a677afdc570",
+    "bytes": 30692375
+  },
+  "after": {
+    "revision": "12ff92842acccd9be6de197037831a11243e30e4",
+    "binary_sha256": "11c8924ea653093f15f80229cbfa8ebb6527f9ec4d3812922159c48905c0ec62",
+    "bytes": 30692663
+  },
+  "runtime": {
+    "base": "docker.io/arm64v8/alpine@sha256:4bdb4ac63839546daabfe0a267a363b3effa17ce02ac5f42d222174484c5686c",
+    "go": "go1.27.3",
+    "os": "linux",
+    "arch": "arm64",
+    "cgo_enabled": false,
+    "trimpath": true,
+    "buildvcs": false,
+    "logical_cpus": 5,
+    "vm_memory_bytes": 5744103424,
+    "server_gomaxprocs": 2,
+    "client_gomaxprocs": 2,
+    "cgroup_version": 2,
+    "cpu_pinning": false
+  },
+  "collector": {
+    "binary_sha256": "a6f15f9659c5f23054d40744f9e265a292d522b1ad320bef650e00473f97f914",
+    "source_sha256": "11e17c015eb3d0c1f3e0db97394548ba14942fdf5f1c2c8a1d8a0f77de51dc74"
+  },
+  "fixtures": {
+    "20": {
+      "bookmarks.yml": "c1dcc230567b34b7a6c68d2d108dc497d188f8bf402d8a6b42837dec8a78b166",
+      "config.yml": "172275031e6659bfb8602f2b1c01d0b1b6d219a9b39069514804825c08297403",
+      "apps.yml": "8b20d70ff2db634ea2a4cbfdc6aa6c767bfee9e8a7190eabdc76cc6b3afc3ac9"
+    },
+    "1000": {
+      "bookmarks.yml": "7cee1d7209b200709595ac672c30a56c390a5c6b6b2d76f3f4fc1b86c1ae762c",
+      "config.yml": "172275031e6659bfb8602f2b1c01d0b1b6d219a9b39069514804825c08297403",
+      "apps.yml": "8b20d70ff2db634ea2a4cbfdc6aa6c767bfee9e8a7190eabdc76cc6b3afc3ac9"
+    }
+  }
+}

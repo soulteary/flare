@@ -8,6 +8,8 @@
 
 ## 当前源码开发记录（0.6.7 之后）
 
+- [免登录首页与只读搜索的 CSRF 开销](../metrics-reports/trusted-readonly-csrf-2026-10-27/report.md)：PR #214 前后固定提交、配对 HTTP 吞吐/延迟/CPU/RSS，含复用 Cookie 与不保存 Cookie 的独立场景。
+
 - [搜索与分类只读索引](../metrics-reports/navigation-read-index-2026-10-27/report.md)：取消整集合复制、复用搜索归一化与分类索引；另有[完整 HTTP 延迟/CPU/RSS 对照](../metrics-reports/navigation-read-index-2026-10-27/http-report.md)。
 
 - [管理员读取鉴权复用](requirements/admin-performance-optimization.md)：请求内证明与持久化边界。

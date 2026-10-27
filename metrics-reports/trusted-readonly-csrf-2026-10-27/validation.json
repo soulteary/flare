@@ -1,0 +1,16 @@
+{
+  "source_revision": "b46d2e87bfa40c1b3c6848c3e9a6e18ae8d0e0b2",
+  "source_tree_equals_benchmarked_after": true,
+  "resource_generation": "passed",
+  "native_build": "passed",
+  "go_test_race_count_1_all_packages": "passed",
+  "all_package_statement_coverage_percent": 91.2,
+  "go_vet_all_packages": "passed",
+  "golangci_lint_version": "2.15.0",
+  "golangci_lint": "passed (0 issues)",
+  "reproduced_before_after_binary_hashes": "identical",
+  "reproduced_collector_binary_hash": "identical",
+  "reproduced_fixture_hashes": "identical",
+  "response_and_summary_validation": "passed (88 windows)",
+  "privacy_scan": "passed"
+}

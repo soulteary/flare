@@ -1,0 +1,32 @@
+import os
+from pathlib import Path
+import hashlib,json
+ROOT=Path(os.environ["FLARE_BENCH_ROOT"])
+config='''Title: benchmark
+Footer: ""
+OpenAppNewTab: true
+OpenBookmarkNewTab: true
+ShowTitle: false
+Greetings: benchmark
+ShowSearchComponent: true
+DisabledSearchAutoFocus: true
+ShowDateTime: false
+ShowApps: true
+ShowBookmarks: true
+HideSettingButton: true
+HideHelpButton: true
+Theme: blackboard
+ShowWeather: false
+Location: 北京市
+EnableEncryptedLink: false
+IconMode: DEFAULT
+KeepLetterCase: true
+Locale: zh
+'''
+for size in [20,1000]:
+ d=ROOT/f'fixtures-{size}';d.mkdir(exist_ok=True)
+ def links(n,kind,cats):
+  s='categories:\n'+''.join(f'- id: c{i}\n  title: Category {i}\n' for i in range(4)) if cats else ''
+  return s+'links:\n'+''.join(f'- name: Entry {i:06d}\n  link: https://benchmark.invalid/{kind}/{i:06d}\n  icon: email\n  desc: Description {i:06d}\n'+(f'  category: c{i%4}\n' if cats else '') for i in range(n))
+ (d/'config.yml').write_text(config);(d/'apps.yml').write_text(links(8,'apps',False));(d/'bookmarks.yml').write_text(links(size,'bookmarks',True))
+ print(size,{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in d.iterdir()})
