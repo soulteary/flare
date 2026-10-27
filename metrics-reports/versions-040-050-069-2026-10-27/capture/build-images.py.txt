@@ -1,0 +1,15 @@
+import os
+from pathlib import Path
+import subprocess,json,hashlib
+ROOT=Path(os.environ["FLARE_BENCH_ROOT"]);OUT=Path(os.environ["FLARE_BENCH_OUTPUT"]);OUT.mkdir(exist_ok=True)
+result={}
+for version in ['0.4.0','0.5.0','0.6.9']:
+ p=ROOT/('built-'+version)
+ d=ROOT/('image-'+version);d.mkdir(exist_ok=True);(d/'flare').write_bytes(p.read_bytes());(d/'flare').chmod(0o755)
+ (d/'Dockerfile').write_text('FROM arm64v8/alpine:3.16\nCOPY flare /bin/flare\nWORKDIR /app\nENTRYPOINT ["/bin/flare"]\n')
+ name='flare-source-bench:'+version
+ subprocess.run(['docker','build','--network','none','-t',name,str(d)],check=True)
+ image=json.loads(subprocess.check_output(['docker','image','inspect',name]))[0]
+ result[version]={'revision':subprocess.check_output(['git','rev-parse',version+'^{commit}'],text=True).strip(),'image_id':image['Id'],'base':'arm64v8/alpine:3.16','binary_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size,'build_info':subprocess.check_output(['go','version','-m',str(p)],text=True),'image':image}
+(OUT/'builds.json').write_text(json.dumps(result,indent=2))
+print('READY',OUT)

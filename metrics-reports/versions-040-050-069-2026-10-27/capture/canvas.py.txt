@@ -1,0 +1,47 @@
+import os
+from pathlib import Path
+import json
+out=Path(os.environ["FLARE_BENCH_OUTPUT"])
+s=json.loads((out/'summary.json').read_text());assert s['complete']
+template='''import { useHostTheme, useCanvasState, H1, H2, Text, Button, Table, LineChart } from "cursor/canvas";
+const result = DATA;
+const versions = ["0.4.0", "0.5.0", "0.6.9"];
+const scenes: Record<string,string> = {home:"首页",bookmarks:"书签页","search-last":"选择性搜索","redirect-last":"末尾书签跳转"};
+const metrics: Record<string,{name:string,unit:string,digits:number}> = {qps:{name:"完成吞吐量",unit:"请求/秒",digits:0},p95_ms:{name:"请求完成 p95",unit:"ms",digits:3},server_cpu_us:{name:"服务端 CPU / 请求",unit:"µs/请求",digits:2},rss_peak_mib:{name:"窗口采样峰值 RSS",unit:"MiB",digits:2}};
+export default function VersionsComparison(){
+ const t=useHostTheme();
+ const [size,setSize]=useCanvasState<number>("size",20);
+ const [phase,setPhase]=useCanvasState<string>("phase","Load");
+ const [metric,setMetric]=useCanvasState<string>("metric","qps");
+ const [scene,setScene]=useCanvasState<string>("scene","home");
+ const key=metrics[metric]?metric:"qps",m=metrics[key];
+ const groups=result.groups.filter(g=>g.size===size&&g.phase===phase);
+ const shown=phase==="Fixed"?["home"]:Object.keys(scenes);
+ const pick=(sc:string,v:string)=>groups.find(g=>g.scene===sc&&g.version===v)!;
+ const active=phase==="Fixed"?"home":scene;
+ const fmt=(x:number)=>x.toLocaleString("zh-CN",{maximumFractionDigits:m.digits,minimumFractionDigits:m.digits});
+ const chart=versions.map(v=>({name:v,data:[...pick(active,v).round_values].sort((a,b)=>a.round-b.round).map(r=>Number((r as any)[key]))}));
+ const table=shown.map(sc=>{const p=result.paired_comparisons.find(p=>p.size===size&&p.scene===sc&&p.phase===phase&&p.old==="0.4.0"&&p.new==="0.6.9")!;const r=(p.ratios as any)[key];return [scenes[sc],...versions.map(v=>fmt(Number((pick(sc,v).median as any)[key]))),r?r.paired_median_ratio.toFixed(2)+"×":"—",r?r.paired_range.map((x:number)=>x.toFixed(2)).join("–")+"×":"—"]});
+ return <main style={{padding:28,maxWidth:1100,margin:"auto",color:t.text.primary,background:t.bg.editor,lineHeight:1.65}}>
+ <Text style={{color:t.text.secondary}}>Flare · 2026-10-27 · Linux ARM64 · 同工具链源码对照</Text>
+ <H1>0.4.0、0.5.0 与 0.6.9：速度、CPU 和内存</H1>
+ <Text>同一 Go 1.27.3、同一基础镜像、相同数据与成功访问日志策略。6 种版本顺序各执行一次；144 个独立服务进程窗口，共 {result.timed_requests.toLocaleString("zh-CN")} 次计时请求。</Text>
+ <div style={{display:"flex",gap:8,flexWrap:"wrap",margin:"24px 0 12px"}}>{[20,1000].map(n=><Button key={n} variant={size===n?"primary":"secondary"} onClick={()=>setSize(n)}>{n} 书签 + 8 应用</Button>)}</div>
+ <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}><Button variant={phase==="Load"?"primary":"secondary"} onClick={()=>setPhase("Load")}>8 并发闭环</Button><Button variant={phase==="Fixed"?"primary":"secondary"} onClick={()=>{setPhase("Fixed");setMetric("server_cpu_us");setScene("home")}}>相同到达率：首页</Button></div>
+ <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:24}}>{Object.entries(metrics).filter(([k])=>phase==="Load"||k!=="qps").map(([k,v])=><Button key={k} variant={key===k?"primary":"ghost"} onClick={()=>setMetric(k)}>{v.name}</Button>)}</div>
+ <H2>{m.name}（{m.unit}）</H2>
+ <Text style={{color:t.text.secondary}}>{phase==="Load"?"每版本每场景 5 秒，8 个并发 worker；每个表格值为六轮中位数。":"20 条数据 40 次/秒、1,000 条数据 10 次/秒；每窗口 5 秒，无等待队列。这里只比较相同到达率下的首页。"}</Text>
+ <Table headers={["场景",...versions,"0.6.9 / 0.4.0","六轮配对比值范围"]} rows={table} columnAlign={["left","right","right","right","right","right"]}/>
+ <Text style={{fontSize:12,color:t.text.tertiary}}>来源：本地受控实验 raw-windows.tar.gz 内 windows/*.json。吞吐越高越好；延迟与 CPU 通常越低越好。RSS 是进程驻留内存，不能等同分配流量。比值用同轮配对值计算，再取中位数，因此可能不同于表格中两个中位数相除。</Text>
+ <div style={{marginTop:28,display:"flex",gap:8,flexWrap:"wrap"}}>{shown.map(sc=><Button key={sc} variant={active===sc?"primary":"ghost"} onClick={()=>setScene(sc)}>{scenes[sc]}</Button>)}</div>
+ <H2>{scenes[active]}：六轮 {m.name} 变化</H2>
+ <Text style={{fontSize:12,color:t.text.secondary}}>横轴：轮次（6 种执行顺序）；纵轴：{m.name}（{m.unit}）。图例：0.4.0、0.5.0、0.6.9。</Text>
+ <LineChart categories={["1","2","3","4","5","6"]} series={chart} height={260} valueSuffix={" "+m.unit}/>
+ <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:28,marginTop:28}}><div><H2>读数应该怎样理解</H2><Text>低到达率与闭环负载分别呈现。新版处理更多请求时的 RSS 峰值，不能直接当作相同流量下的内存差距；判断内存成本时同时查看“相同到达率”。</Text><Text>0.6.9 的解析快照、索引和导航 HTML 缓存减少重复计算，也保留更多内容。搜索和部分动态路径绕过 HTML 缓存。</Text></div><div><H2>已核验与尚未覆盖</H2><Text>所有窗口状态正确、无在途丢弃；完整长度检查，每 256 次及首尾全文核验。仅归一化随机 CSRF 字段；有序导航和跳转目标一致。</Text><Text>无登录、离线、无压缩。不覆盖持久化认证、冷启动、网络、浏览器渲染和大于本次规模的集合。三版 HTML 不完全相同。</Text></div></section>
+ <H2>六轮也有边界</H2><Text>顺序轮换降低时间漂移，但不消除温度和后台负载。这里保留逐轮范围；小幅差异须谨慎。summary.json 另含六对窗口的 bootstrap 区间，它不代表跨机器、跨部署的置信范围。</Text>
+ <Text style={{fontSize:12,color:t.text.tertiary}}>服务与客户端各 GOMAXPROCS=2，在 5 CPU Linux VM 中共享主机；未绑核。CPU 来自独立 cgroup，RSS 每 50 ms 采样，可能漏过短暂峰值。固定到达率的发送延迟和客户端 CPU 单独记录。</Text>
+ </main>;
+}
+'''
+(Path(os.environ["FLARE_BENCH_ROOT"])/"release-performance.canvas.tsx").write_text(template.replace('DATA',json.dumps(s,ensure_ascii=False)))
+print('canvas source ready')

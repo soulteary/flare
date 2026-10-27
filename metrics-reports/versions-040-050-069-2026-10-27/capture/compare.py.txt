@@ -1,0 +1,88 @@
+import secrets
+import os
+import subprocess,json,pathlib,base64,time,datetime,itertools,hashlib,shutil,sys
+from html.parser import HTMLParser
+ROOT=pathlib.Path(os.environ["FLARE_BENCH_ROOT"]);OUT=pathlib.Path(os.environ["FLARE_BENCH_OUTPUT"]);OUT.mkdir(exist_ok=True)
+BUILDS=json.loads((OUT/'builds.json').read_text()) if (OUT/'builds.json').exists() else {}
+VERSIONS=['0.4.0','0.5.0','0.6.9'];ORDERS=list(itertools.permutations(VERSIONS))
+class Page(HTMLParser):
+ def __init__(self):super().__init__(convert_charrefs=True);self.current=None;self.items=[]
+ def handle_starttag(self,t,a):
+  if t=='a':self.current=[dict(a),[]]
+ def handle_data(self,s):
+  if self.current:self.current[1].append(s)
+ def handle_endtag(self,t):
+  if t=='a' and self.current:
+   a,b=self.current;href=a.get('href','')
+   if href.startswith('https://benchmark.invalid/'):
+    self.items.append({'href':href,'target':a.get('target'),'rel':a.get('rel'),'text':''.join(''.join(b).split())})
+   self.current=None
+
+def run(a,check=True):
+ r=subprocess.run(['docker',*a],text=True,capture_output=True)
+ if check and r.returncode:raise RuntimeError(f'{a[:3]} failed: {r.stderr[:1000]}')
+ return r.stdout.strip()
+def scenario_args(v,size,scene):
+ last=f'https://benchmark.invalid/bookmarks/{size-1:06d}'
+ if scene=='redirect-last':
+  enc=base64.b64encode(last.encode()).decode() if v=='0.4.0' else base64.urlsafe_b64encode(last.encode()).decode()
+  path='/redir/'+enc if v=='0.4.0' else '/redir/url?go='+enc
+  return ['-path',path,'-status','302','-location',last]
+ if scene=='search-last':return ['-path','/','-method','POST','-body',f'search={size-1:06d}']
+ return ['-path','/bookmarks' if scene=='bookmarks' else '/']
+def verify(data,size,scene):
+ if data['WarmSnapshot'].get('Error'):raise RuntimeError(data['WarmSnapshot']['Error'])
+ assert data['Pre']['NormalizedHash']==data['Post']['NormalizedHash'] if data['Post']['Hash'] else True
+ if scene!='redirect-last':
+  page=Page();page.feed(data['Pre']['Body']);expected=1 if scene=='search-last' else size if scene=='bookmarks' else size+8
+  if len(page.items)!=expected:raise RuntimeError(f'{scene}: expected {expected} nav links, found {len(page.items)}')
+  expected_urls=[f'https://benchmark.invalid/bookmarks/{size-1:06d}'] if scene=='search-last' else ([f'https://benchmark.invalid/apps/{i:06d}' for i in range(8)] if scene=='home' else [])+[f'https://benchmark.invalid/bookmarks/{i:06d}' for category in range(4) for i in range(size) if i%4==category]
+  if [x['href'] for x in page.items]!=expected_urls:raise RuntimeError('navigation order/targets differ')
+  return page.items
+ return [{'location':data['Pre']['Headers'].get('Location')}]
+
+def window(v,size,scene,roundno,probe=False):
+ name='flare-controlled-server';obs='flare-controlled-observer'
+ run(['rm','-f',obs,name],False)
+ start=time.monotonic()
+ try:
+  run(['create','--name',name,'--network','none','--log-driver','none','-e','GOMAXPROCS=2','-e','FLARE_OFFLINE=true','-e','FLARE_DISABLE_LOGIN=true','-e','FLARE_ACCESS_LOG=all','-e','FLARE_VISIBILITY=DEFAULT','-e','FLARE_USER=benchmark','-e','FLARE_PASS='+secrets.token_urlsafe(24),BUILDS[v]['image_id'],'--offline','--disable_login=true'])
+  for f in (ROOT/f'fixtures-{size}').iterdir():run(['cp',str(f),name+':/app/'+f.name])
+  run(['start',name])
+  args=['-scenario',scene,'-seconds','5','-warm','1','-concurrency','8']+scenario_args(v,size,scene)
+  if scene=='home' and not probe:args+=['-rate','40' if size==20 else '10','-fixed-seconds','5']
+  if probe:args+=['-probe']
+  run(['create','--name',obs,'--pid=container:'+name,'--network=container:'+name,'-e','GOMAXPROCS=2','flare-release-benchmark-runner:20261027',*args]);run(['start',obs]);code=run(['wait',obs]);logs=run(['logs',obs])
+  if code!='0':
+   (OUT/f'failed-{v}-{size}-{scene}-{roundno}.json').write_text(logs)
+   raise RuntimeError('runner exit '+code+': '+logs[-2000:])
+  data=json.loads(logs);data.update(version=v,size=size,scenario=scene,round=roundno,elapsed_total=time.monotonic()-start,recorded_at=datetime.datetime.now(datetime.timezone.utc).isoformat())
+  projection=verify(data,size,scene);data['navigation_projection']=projection
+  data['projection_sha256']=hashlib.sha256(json.dumps(projection,sort_keys=True).encode()).hexdigest()
+  if not probe:
+   for key in ['Load','Fixed']:
+    m=data.get(key)
+    if m and (m['Errors'] or m['Dropped']):raise RuntimeError(f'failed window {v} {scene} {key}: '+str(m['ErrorSamples']))
+  d=OUT/('preflight' if probe else 'windows');d.mkdir(exist_ok=True);(d/f'{size}-{scene}-{roundno}-{v}.json').write_text(json.dumps(data,indent=2))
+  for phase in ['Pre','Post']:
+   if data[phase]['Body']:(d/f'{size}-{scene}-{roundno}-{v}-{phase}.html').write_text(data[phase]['Body'])
+  if not probe:
+   cpu=(data['Load']['After']['CPU']['usage_usec']-data['Load']['Before']['CPU']['usage_usec'])/data['Load']['Requests']
+   print(f"{size} {roundno+1}/6 {scene} {v}: {data['Load']['QPS']:.1f} QPS; {cpu:.1f} us/req",flush=True)
+  else:print('PREFLIGHT',size,scene,v,data['Pre']['Bytes'],flush=True)
+  return data
+ finally:run(['rm','-f',obs,name],False)
+
+if __name__=='__main__':
+ if '--probe' in sys.argv:
+  for size in [20,1000]:
+   for scene in ['home','bookmarks','search-last','redirect-last']:
+    rows=[window(v,size,scene,0,True) for v in VERSIONS]
+    assert len(set(x['projection_sha256'] for x in rows))==1,(size,scene)
+ else:
+  for size in [20,1000]:
+   for r,order in enumerate(ORDERS):
+    for scene in ['home','bookmarks','search-last','redirect-last']:
+     rows=[window(v,size,scene,r) for v in order]
+     assert len(set(x['projection_sha256'] for x in rows))==1,(size,scene,r)
+  print('ALL DONE',flush=True)

@@ -1,0 +1,58 @@
+{
+  "runtime": {
+    "ServerVersion": "5.8.3",
+    "Architecture": "arm64",
+    "NCPU": 5,
+    "CgroupVersion": "2",
+    "Driver": "overlay",
+    "memory_gib": 5.35
+  },
+  "runner_sha256": "bfa867aea9f7e13e0e88e3b8c13f78c24dd6d907f0ad07a9596d6cc1c752f48b",
+  "protocol": {
+    "versions": [
+      "0.4.0",
+      "0.5.0",
+      "0.6.9"
+    ],
+    "go": "1.27.3",
+    "build_flags": [
+      "-trimpath",
+      "-buildvcs=false"
+    ],
+    "GOOS": "linux",
+    "GOARCH": "arm64",
+    "CGO_ENABLED": "0",
+    "server_GOMAXPROCS": 2,
+    "client_GOMAXPROCS": 2,
+    "concurrency": 8,
+    "connection_pool": 8,
+    "rounds": 6,
+    "order": "all six permutations, one each",
+    "sizes": [
+      20,
+      1000
+    ],
+    "apps": 8,
+    "categories": 4,
+    "warm_seconds": 1,
+    "closed_loop_seconds": 5,
+    "fixed_home_seconds": 5,
+    "fixed_home_rates": {
+      "20": 40,
+      "1000": 10
+    },
+    "encoding": "identity",
+    "logging": "all versions emit successful request logs; same none container log driver",
+    "auth": "disabled",
+    "network": "none target; client shares its loopback namespace",
+    "sampling_ms": 50,
+    "no_cpu_affinity": true,
+    "no_resource_limits": true,
+    "source_modified": false
+  },
+  "response_validation": "Recorded status, body length, normalized hashes and numerical metrics are retained. Archived responses mask CSRF values with equal-length placeholders and omit cookie/date headers; Hash is for the sanitized response. Only relative sample timestamps are published.",
+  "raw_archive_sha256": "7dceab9b1cb17018c39af99dbaa5d6b755db20779b5b7bbc2e3e0b8821b935c5",
+  "raw_archive_members": 408,
+  "raw_archive_bytes": 4773092,
+  "measurement_date": "2026-10-27"
+}
