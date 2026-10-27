@@ -103,6 +103,9 @@ func StaticFS(files fs.FS, prefix string) fiber.Handler {
 		}
 		reader := &lazyStaticReader{files: files, name: name, size: info.size}
 		defer reader.close()
+		// Only an existing public embedded resource can override the default
+		// private policy. Missing files continue to the next handler unchanged.
+		c.Set("Cache-Control", "public, max-age=0, must-revalidate")
 		return serveReader(c, path.Base(name), info.contentType, info.etag, reader)
 	}
 }
