@@ -28,6 +28,7 @@
       <div class="module-container" id="search-container">
         <form action="/" method="POST" id="search-form" rel="noopener" {{ if .SearchHybrid }}data-open-new-tab="{{.SearchOptions.OpenNewTab}}" data-match-count="{{ T .Locale "search_match_count" }}"{{ end }}>
           {{ if .BookmarkCategory }}<input type="hidden" name="category" value="{{.BookmarkCategory}}">{{ end }}
+          {{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{.SecurityCSRFToken}}">{{ end }}
           <label for="search" class="search-accessible-label">{{ T .Locale "search_placeholder" }}</label>
           <input type="text" name="search" id="search" value="{{.SearchQuery}}" autocomplete="off" placeholder="{{.SearchKeyword}}" {{ if not .DisabledSearchAutoFocus }}autofocus{{ end }}/>
           {{ if .SearchConfigured }}

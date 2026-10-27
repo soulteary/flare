@@ -327,6 +327,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 }
 
 func renderClockPage(c fiber.Ctx, m map[string]any, options model.Application, greeting bool) error {
+	m["SecurityCSRFToken"] = auth.CSRFToken(c)
 	if options.Locale == "" {
 		options.Locale = "zh"
 	}
