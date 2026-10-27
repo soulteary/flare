@@ -420,7 +420,9 @@ func PrepareSecurity(f *model.Flags) SecurityPreparation {
 	if hasMeta {
 		isNew = meta.NewInstall
 	}
-	if isNew {
+	// Preserve previously initialized private installations, while new instances
+	// retain the historical disabled-login/public-navigation defaults.
+	if hasMeta && meta.DefaultPrivate {
 		if _, ok := f.RuntimeInputs["FLARE_DISABLE_LOGIN"]; !ok {
 			f.DisableLoginMode = false
 		}
@@ -435,16 +437,10 @@ func PrepareSecurity(f *model.Flags) SecurityPreparation {
 		return fail("attention_required", "private content conflicts with disabled login; enable login or review private flags offline", store)
 	}
 	if !info.Initialized {
-		if f.DisableLoginMode {
-			if isNew {
-				if _, ok := f.RuntimeInputs["FLARE_DISABLE_LOGIN"]; !ok {
-					return fail("new", "Initialize Flare locally before browsing.", store)
-				}
-			}
-		} else {
+		if !f.DisableLoginMode {
 			if _, _, err = readCredential(f); err != nil {
 				if isNew {
-					return fail("new", "Initialize Flare locally or supply an initial password.", store)
+					return fail("new", "Login is enabled; initialize an administrator or supply an initial password.", store)
 				}
 				return fail("attention_required", err.Error(), store)
 			}
@@ -452,7 +448,7 @@ func PrepareSecurity(f *model.Flags) SecurityPreparation {
 		if err = migrationSnapshot(dir, files); err != nil {
 			return fail("faulted", "cannot create migration snapshot; original YAML was not changed", store)
 		}
-		meta = installation{Version: 1, NewInstall: isNew, DefaultPrivate: isNew, LastDisableLogin: f.DisableLoginMode}
+		meta = installation{Version: 1, NewInstall: isNew, DefaultPrivate: false, LastDisableLogin: f.DisableLoginMode}
 		if err = writePrivateJSON(filepath.Join(dir, "installation.json"), meta); err != nil {
 			return fail("faulted", "cannot persist installation metadata", store)
 		}

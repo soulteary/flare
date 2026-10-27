@@ -19,7 +19,7 @@ func main() {
 	if prepared.Status != "ready" {
 		fmt.Fprintln(os.Stderr, "Flare security:", prepared.Status, prepared.Message)
 		if prepared.Status == "new" {
-			fmt.Fprintln(os.Stderr, `首次使用请先停止服务（源码运行按 Ctrl+C），再初始化管理员：
+			fmt.Fprintln(os.Stderr, `当前已启用登录，但尚未配置管理员。请先停止服务（源码运行按 Ctrl+C），再初始化：
   源码：在原工作目录执行 go run . security init --username admin，然后 go run .
   二进制：flare security init --username admin，然后重新启动服务
   Docker Compose（服务名 flare）：
@@ -32,6 +32,9 @@ func main() {
 		} else {
 			fmt.Fprintln(os.Stderr, "请根据上方诊断检查配置、目录权限或完整备份；维护前先停止服务，保留原数据目录、挂载和环境变量。不要删除安全状态目录。参见 docs/accounts.md 和 docs/backup-restore.md。")
 		}
+	}
+	if prepared.Status == "ready" && flags.DisableLoginMode {
+		fmt.Fprintln(os.Stderr, "Flare：免登录模式已就绪，内部安全状态已自动准备。能访问此实例的人均可浏览和修改内容（编辑器需启用）。")
 	}
 	server.StartDaemon(&flags, prepared.Store)
 }

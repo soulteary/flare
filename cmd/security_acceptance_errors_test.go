@@ -237,3 +237,17 @@ func TestSecurityAcceptancePasswordInputErrorsDoNotCreateAccount(t *testing.T) {
 		})
 	}
 }
+
+func TestMigrationCheckReportsAutomaticallyPreparedTrustedDefaults(t *testing.T) {
+	commandDirectory(t)
+	p := PrepareSecurity(startupFlags(nil))
+	require.Equal(t, "ready", p.Status, p.Message)
+	closePreparation(t, p)
+	code, out, errout := runSecurity(t, []string{"migration-check", "--json"}, "")
+	require.Zero(t, code, errout)
+	var report migrationReport
+	require.NoError(t, json.Unmarshal([]byte(out), &report))
+	require.Equal(t, "existing_installation", report.Status)
+	require.True(t, report.LoginDisabled)
+	require.Equal(t, "DEFAULT", report.Visibility)
+}

@@ -18,22 +18,23 @@ Recreate a container after changing its image, Compose environment, or log drive
 
 All rows require a process restart; CLI changes require recreating a container's
 command. The default data working directory in published images is `/app`.
-The two access defaults below describe the effective result of the new-install
-startup gate, not just parser constants. Existing installations retain valid
-access settings; ambiguous legacy-default cases need explicit adoption. Stable
-0.6.7 uses the legacy baseline and generated-password behavior. Current main
-requires persistent credentials or initialization and blocks invalid security inputs.
+Current source restores the 0.4.0 defaults: login disabled and public navigation.
+Internal security state is prepared automatically, including in trusted mode.
+Previously recorded private defaults remain effective unless explicitly overridden.
+Published 0.6.8 used private defaults for new installations; this behavior change
+requires a build containing it. Login-enabled deployments still require persistent
+credentials or initialization, and invalid security inputs still block startup.
 
 | Environment | CLI | Default | Values and meaning |
 | --- | --- | --- | --- |
 | `FLARE_PORT` | `--port`, `-p` | `5005` | Integer 1–65535; configure the container port and published mapping consistently |
-| `FLARE_DISABLE_LOGIN` | `--disable_login`, `-l` | New install: `false`; legacy baseline: `true` | Boolean; startup resolves installation history; false requires administrator authentication |
-| `FLARE_VISIBILITY` | `--visibility`, `-s` | New install: `PRIVATE`; legacy baseline: `DEFAULT` | `DEFAULT` (public visible resources) or `PRIVATE` (whole-site authentication); never use `0`/`1` |
+| `FLARE_DISABLE_LOGIN` | `--disable_login`, `-l` | `true` (current source) | Boolean; false requires administrator authentication; recorded private defaults are preserved |
+| `FLARE_VISIBILITY` | `--visibility`, `-s` | `DEFAULT` (current source) | `DEFAULT` (public visible resources) or `PRIVATE` (whole-site authentication); never use `0`/`1` |
 | `FLARE_USER` | — | `flare` | Login username |
 | `FLARE_PASS` | — | No persistent password supplied | Initial/deployment password; current startup does not print a generated password; local mode retains stored credentials |
 | `FLARE_PASS_FILE` | — | Unset | Current main: password file, conflicts with nonempty effective `FLARE_PASS`; see format below |
 | `FLARE_STATE_DIR` | — | `.flare-security` | Current main: writable persistent security directory, relative to working directory unless absolute |
-| `FLARE_CREDENTIAL_MODE` | — | New install: `local`; migrated credentials: `deployment` | Current main: `local` or `deployment`; existing mode changes require explicit account/maintenance action |
+| `FLARE_CREDENTIAL_MODE` | — | Login disabled: `trusted`; new login account: `local`; migrated credentials: `deployment` | Current main: `local` or `deployment`; existing mode changes require explicit account/maintenance action |
 | `FLARE_EXTERNAL_URL` | — | Unset | Current main: canonical HTTP(S) origin without credentials, query or application subpath |
 | `FLARE_ALLOWED_HOSTS` | — | Unset | Current main: comma-separated allowed host/port authorities |
 | `FLARE_TRUSTED_PROXIES` | — | Unset | Current main: comma-separated peer IPs/CIDRs allowed to supply supported forwarding headers |

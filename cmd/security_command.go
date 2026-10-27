@@ -78,7 +78,7 @@ func ExecuteSecurityCommand(args []string, input io.Reader, out, errout io.Write
 		}
 		if exists && meta.Committed {
 			report.Status = "existing_installation"
-			if meta.NewInstall {
+			if meta.DefaultPrivate {
 				if _, set := values["FLARE_DISABLE_LOGIN"]; !set {
 					report.LoginDisabled = false
 				}

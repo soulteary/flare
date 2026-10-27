@@ -85,7 +85,8 @@ func NewFiberApp(appFlags *model.Flags, stores ...*security.Store) (*fiber.App, 
 			c.Set("Cache-Control", "private, no-store")
 			return c.Status(503).Type("html", "utf-8").SendString(`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Flare 尚未就绪</title></head><body><main><h1>Flare 尚未就绪</h1>
 <p>现有内容未公开。请由实例管理员查看终端输出或容器日志，确认具体原因。</p>
-<h2>首次使用：初始化管理员</h2>
+<p>默认免登录模式会自动准备内部状态，无需手动初始化。若仍看到此页，请先检查日志中的配置冲突或持久化故障。</p>
+<h2>已启用登录且尚未配置账户：初始化管理员</h2>
 <p>先停止服务，再在原工作目录、数据挂载和环境变量下执行初始化。密码需输入两次，终端不回显；要求 15–128 个字符且不能是弱密码。</p>
 <h3>源码运行</h3><p>在运行终端按 Ctrl+C，然后执行：</p><pre>go run . security init --username admin
 go run .</pre>
