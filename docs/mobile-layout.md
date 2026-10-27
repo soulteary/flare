@@ -37,6 +37,24 @@ and category navigation across the 599/600 and 767/768/769 boundaries.
 Configuration and HTTP tests reject invalid
 choices without writing and preserve saved choices when an older form omits them.
 
+## Current development: compact phone and tablet density
+
+The existing `Homepage.MobileBookmarkLayout: compact` option now also reduces
+navigation spacing through 1024 CSS pixels, including landscape iPad Mini widths.
+It reduces page side padding, section/category margins, bookmark rows and app-card
+spacing. Default spacing remains available with `single` or an omitted setting.
+Phone category columns retain the 360–599px range and narrow-screen fallback;
+tablet columns and desktop column choices retain their existing behavior.
+
+Compact bookmark rows have a 28px minimum height. This is an explicit density
+choice; the default phone layout retains its 44px minimum touch targets. Long
+names still wrap and enlarged navigation text still grows the rows. Settings and
+editor controls are unaffected. Viewports wider than 1024px retain their density.
+
+The production layout suite compares compact and default heights for the same
+bookmarks, enlarged-text overflow, category order and the 1024/1025px boundary.
+Physical iPad/Safari verification remains required.
+
 ## Readability
 
 Appearance settings can enlarge navigation text (`standard`, `larger`, `large`),

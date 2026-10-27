@@ -8,6 +8,7 @@ go run build/build.go
 go build -o /tmp/flare-mobile .
 npm ci --ignore-scripts --prefix tests/clock
 tests/clock/node_modules/.bin/playwright install chromium
+FLARE_BINARY=/tmp/flare-mobile node tests/settings/save.browser.cjs
 node tests/mobile/bookmark-columns.browser.cjs
 FLARE_BINARY=/tmp/flare-mobile node tests/mobile/bookmark-sections.browser.cjs
 FLARE_BINARY=/tmp/flare-mobile node tests/mobile/browser.cjs
@@ -54,3 +55,6 @@ starts as Not verified and requires device/version evidence for each real run.
 The sections suite checks generated production resources, per-category columns,
 column choices, long names, enlarged fonts, constrained parents, category/search
 combinations, collapse visibility, and uncategorized lists. It also runs in CI.
+
+The production layout suite also compares compact/default content heights through
+1024px, the 1024/1025px density boundary, and enlarged-text link overlap.

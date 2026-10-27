@@ -88,6 +88,18 @@ Some route-local failures are generic HTTP 403 rather than a structured code.
 Use response status/code, request ID when supplied and terminal logs together.
 An invalid configured/request authority may return `INVALID_INPUT` with HTTP 400.
 
+Current development settings documents explicitly declare a `same-origin`
+referrer policy. This preserves a non-opaque Origin on native form submissions
+even when a proxy overrides the HTTP response policy with `no-referrer`.
+Previously, that combination could produce `Origin: null` and `SOURCE_REJECTED`
+on a legitimate settings save. Opaque and cross-origin requests remain rejected.
+This does not correct rewritten Host headers or mismatched public scheme/port;
+those still require the proxy configuration above.
+
+Run `FLARE_BINARY=/absolute/path/to/flare node tests/settings/save.browser.cjs`
+after generating resources and rebuilding to verify direct/proxied native saves,
+proxy response-policy overrides, persisted reloads and hostile Origin rejection.
+
 Correct the public origin/proxy configuration, reopen the page on that origin and
 obtain fresh tokens. Never reuse tokens across sessions or put them in query URLs.
 Use Compose mapping syntax (`FLARE_DISABLE_LOGIN: "true"`); list syntax such as
