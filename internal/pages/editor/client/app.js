@@ -181,7 +181,7 @@
       if(!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('editor.unexpected_save_response',{status:response.status}));
       const result=await response.json();responseParsed=true;
       if(!response.ok&&(result.code==='write_source_rejected'||result.error?.code==='SOURCE_REJECTED'))throw Error(t('editor.write_source_rejected'));
-      if(!response.ok){if([result.code,result.message].includes('REAUTH_REQUIRED')){$('verify-session').hidden=false;throw Error(t('privacy.verify_retry'));}if(result.recoveryRequired){recoveryRequired=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(response.status===409){conflict=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(result.field)serverInvalid=result;throw Error(result.error||t('editor.save_failed_please_retry'));}
+      if(!response.ok){if([result.code,result.message,result.error?.code].includes('REAUTH_REQUIRED')){$('verify-session').hidden=false;throw Error(t('privacy.verify_retry'));}if(result.recoveryRequired){recoveryRequired=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(response.status===409){conflict=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(result.field)serverInvalid=result;throw Error(typeof result.error==='string'?result.error:result.error?.message||t('editor.save_failed_please_retry'));}
       if(!result.saved||!result.document)throw Error(t('editor.the_save_response_is_incomplete_check_the_data_before'));
       store.accept(result.document);batch?.refresh();undo=null;conflict=false;$('export-draft').hidden=true;$('reload-data').hidden=true;render();
     } catch(err){
