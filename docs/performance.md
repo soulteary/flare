@@ -1,5 +1,11 @@
 # 性能决策与测量索引
 
+## 0.4.0 / 0.5.0 / 0.6.9 版本对照
+
+[受控版本报告](../metrics-reports/versions-040-050-069-2026-10-27/report.md)记录同一 Go 1.27.3、Linux ARM64 环境中的六轮比较，涵盖首页、书签页、选择性搜索和末尾书签跳转，以及相同到达率的首页 CPU/延迟/RSS。0.5.0 与 0.4.0 总体接近，0.6.9 有明显计算收益，但小数据和相同低流量 RSS 更高，HTML 也更大。
+
+[交互图表](../metrics-reports/versions-040-050-069-2026-10-27/index.html)需下载打开或本地提供 HTTP；[校验与重放](../metrics-reports/versions-040-050-069-2026-10-27/README.md)保留 144 个窗口、8,871,300 次请求、原始归档和摘要。它测量三个冻结版本的热态、无登录、无压缩路径，不代表当前 HEAD、原始发布包或完整浏览器体验。
+
 ## 当前源码开发记录（0.6.7 之后）
 
 - [搜索与分类只读索引](../metrics-reports/navigation-read-index-2026-10-27/report.md)：取消整集合复制、复用搜索归一化与分类索引；另有[完整 HTTP 延迟/CPU/RSS 对照](../metrics-reports/navigation-read-index-2026-10-27/http-report.md)。

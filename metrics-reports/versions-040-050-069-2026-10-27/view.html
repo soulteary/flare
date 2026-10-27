@@ -1,0 +1,103 @@
+<div id="flare-performance-view">
+  <style>
+    #flare-performance-view .metric-value { white-space: nowrap; }
+    #flare-performance-view .metric-range { color: var(--muted-foreground); white-space: nowrap; }
+    #flare-performance-view .bar-track { height: 6px; background: var(--muted); margin-top: 6px; }
+    #flare-performance-view .bar-fill { height: 100%; background: var(--viz-series-1); }
+    #flare-performance-view .comparison-table { min-width: 610px; width: 100%; }
+    #flare-performance-view .comparison-table th:first-child { min-width: 65px; }
+    #flare-performance-view .comparison-table td { min-width: 120px; vertical-align: top; }
+    #flare-performance-view .view-title { padding-right: 90px; }
+  </style>
+  <h2 class="view-title">Flare 三版本性能对照</h2>
+  <div class="viz-controls">
+    <label class="form-label">数据规模
+      <select class="form-select" data-control="size">
+        <option value="20">20 条书签 + 8 条应用</option>
+        <option value="1000">1,000 条书签 + 8 条应用</option>
+      </select>
+    </label>
+    <label class="form-label">负载方式
+      <select class="form-select" data-control="phase">
+        <option value="Load">8 并发闭环</option>
+        <option value="Fixed">相同到达率：首页</option>
+      </select>
+    </label>
+    <label class="form-label">页面 / 操作
+      <select class="form-select" data-control="scene">
+        <option value="home">首页</option>
+        <option value="bookmarks">书签页</option>
+        <option value="search-last">选择性搜索（命中 1 条）</option>
+        <option value="redirect-last">跳转（命中末尾书签）</option>
+      </select>
+    </label>
+  </div>
+  <p class="text-small text-muted" data-role="scope"></p>
+  <div class="table-responsive" aria-live="polite">
+    <table class="table comparison-table">
+      <thead><tr>
+        <th>版本</th><th class="text-end">吞吐量<br>请求/秒 ↑</th>
+        <th class="text-end">p95 延迟<br>ms ↓</th>
+        <th class="text-end">服务端 CPU<br>µs/请求 ↓</th>
+        <th class="text-end">采样峰值 RSS<br>MiB</th>
+      </tr></thead>
+      <tbody data-role="values"></tbody>
+    </table>
+  </div>
+  <p class="text-small text-muted">六轮中位数；括号内为六轮最小值—最大值。每列条长按该列最大值归一化。</p>
+  <p class="text-small text-muted">来源：2026-10-27 本地测试 · Linux ARM64 · Go 1.27.3 · 144 个窗口 · 8,871,300 次请求 · 无登录、无压缩、热态。</p>
+  <script type="application/json" data-role="data">__COMPACT_DATA__</script>
+  <script>
+    (() => {
+      const root = document.getElementById('flare-performance-view');
+      const data = JSON.parse(root.querySelector('[data-role="data"]').textContent);
+      const fields = ['qps', 'p95_ms', 'server_cpu_us', 'rss_peak_mib'];
+      const digits = [0, 3, 2, 2];
+      const versions = ['0.4.0', '0.5.0', '0.6.9'];
+      const controls = Object.fromEntries(['size', 'phase', 'scene'].map(key => [key, root.querySelector('[data-control="' + key + '"]')]));
+      let state = { size: 20, phase: 'Load', scene: 'home' };
+      function restore(saved) {
+        if (!saved) return;
+        const value = saved.modelContent || saved;
+        if ([20, 1000].includes(Number(value.size))) state.size = Number(value.size);
+        if (['Load', 'Fixed'].includes(value.phase)) state.phase = value.phase;
+        if (['home', 'bookmarks', 'search-last', 'redirect-last'].includes(value.scene)) state.scene = value.scene;
+      }
+      function render() {
+        if (state.phase === 'Fixed') state.scene = 'home';
+        Object.entries(controls).forEach(([key, control]) => { control.value = String(state[key]); });
+        controls.scene.disabled = state.phase === 'Fixed';
+        const rows = versions.map(version => data.find(row => row.size === state.size && row.phase === state.phase && row.scene === state.scene && row.version === version));
+        const maxima = fields.map(key => Math.max(...rows.map(row => row.median[key])));
+        const body = root.querySelector('[data-role="values"]');
+        body.replaceChildren();
+        rows.forEach(row => {
+          const tr = document.createElement('tr');
+          const label = document.createElement('th');
+          label.scope = 'row'; label.textContent = row.version; tr.append(label);
+          fields.forEach((key, index) => {
+            const td = document.createElement('td'); td.className = 'text-end tabular-nums';
+            const format = value => value.toLocaleString('zh-CN', { minimumFractionDigits: digits[index], maximumFractionDigits: digits[index] });
+            const value = document.createElement('div'); value.className = 'metric-value'; value.textContent = format(row.median[key]);
+            const range = document.createElement('div'); range.className = 'metric-range text-small'; range.textContent = '(' + row.range[key].map(format).join('—') + ')';
+            const track = document.createElement('div'); track.className = 'bar-track'; track.setAttribute('aria-hidden', 'true');
+            const fill = document.createElement('div'); fill.className = 'bar-fill'; fill.style.width = (100 * row.median[key] / maxima[index]) + '%';
+            track.append(fill); td.append(value, range, track); tr.append(td);
+          });
+          body.append(tr);
+        });
+        root.querySelector('[data-role="scope"]').textContent = state.phase === 'Load' ? '每窗口 5 秒，8 个并发请求；吞吐越高越好，延迟与 CPU 越低越好。' : '首页固定 ' + (state.size === 20 ? '40' : '10') + ' 次/秒，每窗口 5 秒；此时吞吐由设定值决定。';
+      }
+      restore(window.openai && window.openai.widgetState);
+      Object.entries(controls).forEach(([key, control]) => control.addEventListener('change', () => {
+        state[key] = key === 'size' ? Number(control.value) : control.value;
+        render();
+        if (window.openai && window.openai.setWidgetState) window.openai.setWidgetState({ modelContent: { ...state }, privateContent: null }).catch(() => {});
+      }));
+      window.addEventListener('openai:set_globals', event => {
+        restore(event.detail && event.detail.globals && event.detail.globals.widgetState); render();
+      });
+      render();
+    })();
+  </script>
+</div>

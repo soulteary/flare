@@ -1,0 +1,31 @@
+import os
+from pathlib import Path
+import json
+OUT=Path(os.environ["FLARE_BENCH_OUTPUT"])
+s=json.loads((OUT/'summary.json').read_text());assert s['complete'];groups=s['groups'];pairs=s['paired_comparisons'];builds=json.loads((OUT/'builds.json').read_text())
+versions=['0.4.0','0.5.0','0.6.9'];names={'home':'首页','bookmarks':'书签页','search-last':'选择性搜索（仅命中最后一条）','redirect-last':'跳转（命中最后一条书签）'}
+def g(size,scene,v,phase='Load'):return next(x for x in groups if (x['size'],x['scene'],x['version'],x['phase'])==(size,scene,v,phase))
+def pair(size,scene,old,new,phase='Load'):return next(x for x in pairs if (x['size'],x['scene'],x['old'],x['new'],x['phase'])==(size,scene,old,new,phase))
+lines=['# Flare 0.4.0 / 0.5.0 / 0.6.9 受控性能比较','', '测量日期：2026-10-27。用户最终范围为上述三个版本，0.2.5 已排除。最新版本在本报告中固定指 0.6.9，不包括其后的 HEAD。','', '## 如何使用结论','', '这是三个版本源码在同一工具链和 Linux ARM64 环境下的受控比较。它回答在这些相同工作负载下的版本差异，不是原始发行包、框架单变量、所有部署硬件或浏览器整页性能的排名。','']
+for size in [20,1000]:
+ a,b,c=[g(size,'home',v)['median'] for v in versions]
+ lines += [f"- {size} 条书签首页：0.5.0 / 0.4.0 吞吐比 {b['qps']/a['qps']:.2f}；0.6.9 / 0.4.0 吞吐比 **{c['qps']/a['qps']:.2f}**。首页 p95 从 {a['p95_ms']:.3f} 降至 {c['p95_ms']:.3f} ms；CPU/请求从 {a['server_cpu_us']:.2f} 降至 {c['server_cpu_us']:.2f} µs。"]
+lines += ['', '## 冻结对象与构建','']
+for v,b in builds.items():lines += [f"- {v}：`{b['revision']}`；二进制 SHA-256 `{b['binary_sha256']}`；未裁剪二进制 {b['bytes']/2**20:.2f} MiB。"]
+lines += ['', '- 全部执行各自版本的 `go run build/build.go` 生成资源，再使用 Go 1.27.3，`GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -buildvcs=false`。没有修改服务端源代码，未增加 profiler，也未关闭新版的安全逻辑。','- 依赖保持各版本原样：统一编译器并不统一版本依赖，依赖升级属于被测版本变化。','- 三个新建测试镜像共用同一 `arm64v8/alpine:3.16` 基础镜像；完整镜像 ID、层及 Go build info 见 builds.json。这些是受控构建，不冒称历史发布包。','', '## 环境与方法','', '- Linux ARM64 Podman VM：5 个可见 CPU、约 5.35 GiB 内存。服务与独立客户端均 GOMAXPROCS=2，未绑核、未加 CPU/内存配额。既有 5 个其他容器未停止，后台负载无法彻底排除。','- 目标容器 network=none，客户端加入目标的网络和 PID namespace，HTTP 走容器内 127.0.0.1，避免 macOS/VM 端口转发路径。客户端使用独立 cgroup；不共享服务端 CPU/内存计数。','- 全部关闭登录、天气和时钟，使用同一配置和 YAML；每个数据集固定 8 个应用、20 或 1,000 条书签、4 类，唯一静态 URL。所有场景启用正常生产路由。','- 新版设 FLARE_ACCESS_LOG=all，旧版保持原生请求日志；全部使用相同 none 容器日志驱动。日志格式/次数仍随实现变化，成本保留。没有使用 FLARE_BASELINE。','- 每个版本/场景/轮次启动全新容器，先请求验证，再顺序预热 1 秒；文件留在相同 overlay 文件系统中，没有主机目录挂载。','- 六轮使用全部六种版本排列，每个版本恰好两次处于每个执行位置。先完整测试 20 条，再完整测试 1,000 条；两种规模之间不做逐时配对归因。','- 闭环负载：8 个 worker、8 个连接，每窗口 5 秒，截止后等待在途完成，统计实际墙钟时间。是该客户端与资源条件下的完成速率，不直接等于生产最大 QPS。','- 同到达率首页：20 条数据用 40 次/秒，1,000 条用 10 次/秒，窗口 5 秒；无等待队列，8 个在途槽位。分别应完成 200 与 50 次请求。随后在同一目标进程运行闭环负载；这是固定顺序。','- 请求显式 Accept-Encoding: identity，不跟随重定向；客户端没有 CookieJar，不跨请求回放 Cookie，是无状态匿名 HTTP 客户端。新版每次生成 CSRF 的实际成本被保留。这不模拟完整浏览器会话，也不测 gzip、TLS、DNS、远程网络、浏览器资源下载与布局。','- CPU：服务容器 cpu.stat usage_usec 的差值/完成量，含 GC 与日志，不含客户端。另记录客户端 cpu.stat 验证工具开销。','- RSS：/proc/1/status，每 50ms 采样；另保留该进程 VmHWM 和 cgroup memory.current。RSS 不是 Go 堆或分配字节；本次没有服务端 allocations/op 指标。','- p50/p95/p99 从单窗口响应完成延迟排序后取 floor(n×p) 索引（0-based）；不包含固定速率请求计划时刻至发出的等待，后者单独记录为 ScheduleLag。报告数字均为六个窗口指标的中位数，不是合并请求后的百分位数。','', '## 正确性校验','', f"完成 {s['windows']} 个正式窗口、{s['timed_requests']:,} 次计时请求（含固定到达率）。全量检查状态、完整正文长度及跳转 Location；每 256 次采样完整正文哈希；每窗口首尾保存原始响应并检查归一化后正文一致。",'', '唯一归一化是新版 HTML 隐藏字段 csrf-token 的随机 value；原始正文和原始 SHA-256 同样保留。最初两个调试窗口不进入统计，发现令牌变化后修正校验，再重新运行全部版本。','', '全部窗口还核对有序导航 URL、文字、target、rel：同场景三版一致。搜索只返回最后一条书签；跳转必须指向其唯一 URL，旧版 /redir/<base64> 与新版 /redir/url?go=<base64> 分别适配。不会把错误页、首条应用命中或少输出内容算成快。','', '同一版本首尾响应检查不等于跨版本所有 DOM/CSS/JS/图标完全相同。新版 HTML 和 CSP 确实不同，不能由服务端延迟推导浏览器视觉完成时间。','']
+for size in [20,1000]:
+ lines += [f'## {size} 条书签 + 8 条应用：闭环吞吐与延迟','', '以下数字依次为 0.4.0 → 0.5.0 → 0.6.9。RSS 为每窗口采样峰值的六轮中位数。','']
+ for scene,name in names.items():
+  ms=[g(size,scene,v)['median'] for v in versions];fmt=lambda k,d:' → '.join(f'{m[k]:,.{d}f}' for m in ms)
+  p=pair(size,scene,'0.4.0','0.6.9')['ratios']['qps']
+  lines += [f"- **{name}**：QPS {fmt('qps',0)}；p95 {fmt('p95_ms',3)} ms；CPU {fmt('server_cpu_us',2)} µs/请求；RSS {fmt('rss_peak_mib',2)} MiB。0.6.9 / 0.4.0 逐轮配对吞吐比中位数 {p['paired_median_ratio']:.2f}×，范围 {p['paired_range'][0]:.2f}–{p['paired_range'][1]:.2f}×。"]
+ lines += ['']
+lines += ['## 相同到达率：首页','']
+for size in [20,1000]:
+ ms=[g(size,'home',v,'Fixed')['median'] for v in versions];fmt=lambda k,d:' → '.join(f'{m[k]:,.{d}f}' for m in ms)
+ lines += [f"- {size} 条，{'40' if size==20 else '10'} 次/秒：p95 {fmt('p95_ms',3)} ms；CPU {fmt('server_cpu_us',2)} µs/请求；采样峰值 RSS {fmt('rss_peak_mib',2)} MiB。六轮计划发出和完成量均符合预期，零在途丢弃。"]
+lines += ['', '这组低到达率结果用于观察较轻负载下的成本；发送速率被人为固定，不能把完成速率称为吞吐提升。ScheduleLag 与客户端 CPU 的逐轮数据见 summary.json / 原始窗口。','', '## 统计口径与不确定性','', '报告同时保留各轮原值、指标中位数、逐轮配对比值及范围。summary.json 的 bootstrap95 使用固定种子 20261027，对六个配对比值重采样 10,000 次，给出中位比值的百分位区间。六轮样本仍很少，这只是这批窗口的重采样不确定性，不覆盖主机、温度、后台服务、数据分布和部署差异；不把小幅差异解释为普遍性能改进或回归。','', '## 原因与边界','', '- 0.4.0 和 0.5.0 均在读取后反复 YAML 解码，并使用大量字符串拼接；0.5.0 更新 Gin、日志，并加入逐项动态 URL 替换。只读代码可说明成本路径变化，不能单独证明某一行或框架造成了本次百分比。','- 0.6.9 缓存解析后的快照和导航 HTML，减少重复解码和渲染。该版本已有 HTML 片段缓存；本报告不包含之后 HEAD 的搜索/分类只读优化。','- 0.6.9 HTML 缓存上限为 16 MiB、64 项、单项 1 MiB；搜索、选中分类、编码链接及动态链接会绕过。当前数据集的无搜索静态导航可命中，不能外推到更大页面和动态内容。','- 跳转选择最后一条书签，用于覆盖旧版完整查找；首条应用命中会有不同的收益比，不能把本场景推广为所有跳转。','- 固定到达率阶段前仍使用同样 1 秒预热，但各版预热完成请求数不同，RSS 可能保留不同的堆/池状态。没有强制 GC 或冷却清空，因此不能将固定到达率 RSS 全部归因于缓存，也不是长期空闲常驻内存。',
+ '- 本次不测真实持久化登录会话；0.6.9 的认证语义与旧版不同，不能假设已登录请求有同样速度倍数。','- 本次没有冷启动、清空系统页缓存、长时间内存稳定性、完整浏览器体验或 NAS/小核设备测量。未测维度不下结论。','', '## 与上一轮短测的关系','', '上一轮是 macOS 原生短窗口，比较含 HEAD，搜索匹配全部条目、跳转命中首条应用；本轮固定 0.6.9，在 Linux 中同工具链构建，统一成功请求日志策略，搜索只命中一条、跳转命中最后一条书签。两轮绝对 QPS 和提升倍数不能直接相减或拼接，本轮结果优先用于这三个指定版本的比较。','', '## 复核入口','', '- `builds.json`：冻结提交、二进制/镜像摘要、完整 Go build info。','- `environment.json`：环境、参数和客户端摘要。','- `summary.json`：中位数、六轮值、配对范围与 bootstrap 区间。','- `windows/*.json`：所有正式窗口、阶段 CPU/内存快照、调度延迟、错误计数、原始响应与导航投影。','- `windows/*-Pre.html` / `*-Post.html`：原始首尾响应；可看到随机 CSRF 与实际 HTML 差异。','- `fixtures-20/`、`fixtures-1000/`：实际输入配置。','- `runner.go`、`compare.py`、`fixtures.py`、`build-images.py`、`analyze.py`：采集与统计脚本，路径和镜像参数对应本次本机实验；重放时须先按上述固定版本构建，再更新 ROOT/OUT 和镜像摘要。','']
+report='\n'.join(lines).replace('## 复核入口', '## 复核入口\n\n完整窗口保存在 `raw-windows.tar.gz`，归档内为 `windows/`。归档的每个文件均已与打包前 SHA-256 比较一致，清单为 `raw-manifest.json`。在本目录运行 `tar -xzf raw-windows.tar.gz` 可恢复下列原始窗口路径，随后可重跑 `analyze.py`。')
+(OUT/'report.md').write_text(report)
+print('report written')

@@ -1,0 +1,110 @@
+categories:
+- id: c0
+  title: Category 0
+- id: c1
+  title: Category 1
+- id: c2
+  title: Category 2
+- id: c3
+  title: Category 3
+links:
+- name: Entry 000000
+  link: https://benchmark.invalid/bookmarks/000000
+  icon: email
+  desc: Description 000000
+  category: c0
+- name: Entry 000001
+  link: https://benchmark.invalid/bookmarks/000001
+  icon: email
+  desc: Description 000001
+  category: c1
+- name: Entry 000002
+  link: https://benchmark.invalid/bookmarks/000002
+  icon: email
+  desc: Description 000002
+  category: c2
+- name: Entry 000003
+  link: https://benchmark.invalid/bookmarks/000003
+  icon: email
+  desc: Description 000003
+  category: c3
+- name: Entry 000004
+  link: https://benchmark.invalid/bookmarks/000004
+  icon: email
+  desc: Description 000004
+  category: c0
+- name: Entry 000005
+  link: https://benchmark.invalid/bookmarks/000005
+  icon: email
+  desc: Description 000005
+  category: c1
+- name: Entry 000006
+  link: https://benchmark.invalid/bookmarks/000006
+  icon: email
+  desc: Description 000006
+  category: c2
+- name: Entry 000007
+  link: https://benchmark.invalid/bookmarks/000007
+  icon: email
+  desc: Description 000007
+  category: c3
+- name: Entry 000008
+  link: https://benchmark.invalid/bookmarks/000008
+  icon: email
+  desc: Description 000008
+  category: c0
+- name: Entry 000009
+  link: https://benchmark.invalid/bookmarks/000009
+  icon: email
+  desc: Description 000009
+  category: c1
+- name: Entry 000010
+  link: https://benchmark.invalid/bookmarks/000010
+  icon: email
+  desc: Description 000010
+  category: c2
+- name: Entry 000011
+  link: https://benchmark.invalid/bookmarks/000011
+  icon: email
+  desc: Description 000011
+  category: c3
+- name: Entry 000012
+  link: https://benchmark.invalid/bookmarks/000012
+  icon: email
+  desc: Description 000012
+  category: c0
+- name: Entry 000013
+  link: https://benchmark.invalid/bookmarks/000013
+  icon: email
+  desc: Description 000013
+  category: c1
+- name: Entry 000014
+  link: https://benchmark.invalid/bookmarks/000014
+  icon: email
+  desc: Description 000014
+  category: c2
+- name: Entry 000015
+  link: https://benchmark.invalid/bookmarks/000015
+  icon: email
+  desc: Description 000015
+  category: c3
+- name: Entry 000016
+  link: https://benchmark.invalid/bookmarks/000016
+  icon: email
+  desc: Description 000016
+  category: c0
+- name: Entry 000017
+  link: https://benchmark.invalid/bookmarks/000017
+  icon: email
+  desc: Description 000017
+  category: c1
+- name: Entry 000018
+  link: https://benchmark.invalid/bookmarks/000018
+  icon: email
+  desc: Description 000018
+  category: c2
+- name: Entry 000019
+  link: https://benchmark.invalid/bookmarks/000019
+  icon: email
+  desc: Description 000019
+  category: c3

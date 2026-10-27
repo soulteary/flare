@@ -1,0 +1,45 @@
+import os
+import pathlib,json,statistics,random,math
+OUT=pathlib.Path(os.environ["FLARE_BENCH_OUTPUT"])
+VERSIONS=['0.4.0','0.5.0','0.6.9'];SCENES=['home','bookmarks','search-last','redirect-last']
+def median(xs):return statistics.median(xs)
+def metric(row,phase):
+ s=row[phase];before=s['Before'];after=s['After'];samples=[before,*s['Samples'],after];cpu=after['CPU']['usage_usec']-before['CPU']['usage_usec'];ccpu=s['ClientCPUAfter']['usage_usec']-s['ClientCPUBefore']['usage_usec']
+ return {'qps':s['QPS'],'p50_ms':s['P50'],'p95_ms':s['P95'],'p99_ms':s['P99'],'server_cpu_us':cpu/s['Requests'],'server_cores':cpu/1e6/s['Elapsed'],'client_cores':ccpu/1e6/s['Elapsed'],'rss_peak_mib':max(x['RSS'] for x in samples)/2**20,'rss_before_mib':before['RSS']/2**20,'process_hwm_mib':after['HWM']/2**20,'cgroup_peak_mib':max(x['MemoryCurrent'] for x in samples)/2**20,'bytes':row['Pre']['Bytes'],'schedule_p95_ms':s['ScheduleLagP95'],'schedule_max_ms':s['ScheduleLagMax']}
+def collect(complete=False):
+ raw=[json.loads(p.read_text()) for p in sorted((OUT/'windows').glob('*.json'))];groups=[];pairs=[]
+ for size in [20,1000]:
+  for scene in SCENES:
+   for phase in ['Load','Fixed']:
+    entries=[r for r in raw if r['size']==size and r['scenario']==scene and r.get(phase)]
+    if not entries:continue
+    for version in VERSIONS:
+     selected=[r for r in entries if r['version']==version]
+     if not selected:continue
+     vals=[metric(r,phase) for r in selected]
+     groups.append({'size':size,'scene':scene,'version':version,'phase':phase,'rounds':len(selected),'median':{k:median([v[k] for v in vals]) for k in vals[0]},'range':{k:[min(v[k] for v in vals),max(v[k] for v in vals)] for k in vals[0]},'round_values':[{'round':r['round'],**v} for r,v in zip(selected,vals)]})
+    for old,new in [('0.4.0','0.5.0'),('0.4.0','0.6.9'),('0.5.0','0.6.9')]:
+     oldrows={r['round']:metric(r,phase) for r in entries if r['version']==old};newrows={r['round']:metric(r,phase) for r in entries if r['version']==new};rounds=sorted(set(oldrows)&set(newrows))
+     if not rounds:continue
+     rr={}
+     for k in oldrows[rounds[0]]:
+      if any(oldrows[r][k]<=0 for r in rounds):continue
+      ratios=[newrows[r][k]/oldrows[r][k] for r in rounds];rand=random.Random(20261027);boots=sorted(median([rand.choice(ratios) for _ in ratios]) for _ in range(10000))
+      rr[k]={'paired_median_ratio':median(ratios),'paired_range':[min(ratios),max(ratios)],'bootstrap95':[boots[250],boots[9749]],'round_ratios':ratios}
+     pairs.append({'size':size,'scene':scene,'phase':phase,'old':old,'new':new,'rounds':len(rounds),'ratios':rr})
+ if complete:
+  assert len(raw)==144,len(raw)
+  assert all(g['rounds']==6 for g in groups)
+  assert all(r['Load']['Errors']==0 and r['Load']['Dropped']==0 for r in raw)
+  for size in [20,1000]:
+   for scene in SCENES:
+    checks=[r for r in raw if r['size']==size and r['scenario']==scene];assert len(set(r['projection_sha256'] for r in checks))==1
+ (OUT/'summary.json').write_text(json.dumps({'complete':complete,'windows':len(raw),'timed_requests':sum(r['Load']['Requests']+(r['Fixed']['Requests'] if r.get('Fixed') else 0) for r in raw),'groups':groups,'paired_comparisons':pairs},indent=2))
+ return raw,groups,pairs
+if __name__=='__main__':
+ import sys
+ raw,groups,pairs=collect('--complete' in sys.argv)
+ print('WINDOWS',len(raw),'REQUESTS',sum(r['Load']['Requests'] for r in raw))
+ for g in groups:
+  if g['phase']=='Load':
+   m=g['median'];print(g['size'],g['scene'],g['version'],g['rounds'],'qps',round(m['qps']),'p95',round(m['p95_ms'],3),'cpu',round(m['server_cpu_us'],1),'rss',round(m['rss_peak_mib'],2),'client cores',round(m['client_cores'],2))

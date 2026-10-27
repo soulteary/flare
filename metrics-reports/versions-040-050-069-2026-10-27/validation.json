@@ -1,0 +1,11 @@
+{
+  "windows": 144,
+  "timed_requests": 8871300,
+  "errors": 0,
+  "dropped": 0,
+  "throttled_periods": 0,
+  "normalized_response_checks": true,
+  "sampled_hashes_checked": 34568,
+  "max_client_cores": 1.2469115386477407,
+  "max_fixed_schedule_lag_ms": 11.619993
+}

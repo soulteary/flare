@@ -1,0 +1,33 @@
+links:
+- name: Entry 000000
+  link: https://benchmark.invalid/apps/000000
+  icon: email
+  desc: Description 000000
+- name: Entry 000001
+  link: https://benchmark.invalid/apps/000001
+  icon: email
+  desc: Description 000001
+- name: Entry 000002
+  link: https://benchmark.invalid/apps/000002
+  icon: email
+  desc: Description 000002
+- name: Entry 000003
+  link: https://benchmark.invalid/apps/000003
+  icon: email
+  desc: Description 000003
+- name: Entry 000004
+  link: https://benchmark.invalid/apps/000004
+  icon: email
+  desc: Description 000004
+- name: Entry 000005
+  link: https://benchmark.invalid/apps/000005
+  icon: email
+  desc: Description 000005
+- name: Entry 000006
+  link: https://benchmark.invalid/apps/000006
+  icon: email
+  desc: Description 000006
+- name: Entry 000007
+  link: https://benchmark.invalid/apps/000007
+  icon: email
+  desc: Description 000007

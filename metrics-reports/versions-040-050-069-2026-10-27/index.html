@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Flare 0.4.0 / 0.5.0 / 0.6.9 性能对照</title><style>
+:root { color-scheme: light dark; --background: light-dark(#fff,#181a1d); --foreground: light-dark(#202328,#e5e7eb); --muted: light-dark(#e8eaed,#30343a); --muted-foreground: light-dark(#626972,#aeb5be); --viz-series-1: light-dark(#2576ce,#77b6fc); --border: light-dark(#d8dce1,#454b54); }
+* { box-sizing: border-box; }
+body { margin: 0 auto; max-width: 1000px; padding: 24px; color: var(--foreground); background: var(--background); font: 15px/1.6 system-ui,sans-serif; }
+h2 { margin: 0 0 20px; font-size: 22px; font-weight: 600; }
+.viz-controls { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; }
+.form-label { display: flex; flex: 1 1 220px; flex-direction: column; gap: 6px; }
+.form-select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font: inherit; color: inherit; background: var(--background); }
+.table-responsive { overflow-x: auto; }
+.table { border-collapse: collapse; }
+.table th, .table td { padding: 12px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+.table th { font-weight: 600; }
+.table .text-end { text-align: right; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+.text-small { font-size: 12px; }
+.text-muted { color: var(--muted-foreground); }
+a { color: var(--viz-series-1); }
+@media (max-width: 500px) { body { padding: 16px; } }
+</style></head><body><div id="flare-performance-view">
+  <style>
+    #flare-performance-view .metric-value { white-space: nowrap; }
+    #flare-performance-view .metric-range { color: var(--muted-foreground); white-space: nowrap; }
+    #flare-performance-view .bar-track { height: 6px; background: var(--muted); margin-top: 6px; }
+    #flare-performance-view .bar-fill { height: 100%; background: var(--viz-series-1); }
+    #flare-performance-view .comparison-table { min-width: 610px; width: 100%; }
+    #flare-performance-view .comparison-table th:first-child { min-width: 65px; }
+    #flare-performance-view .comparison-table td { min-width: 120px; vertical-align: top; }
+    #flare-performance-view .view-title { padding-right: 90px; }
+  </style>
+  <h2 class="view-title">Flare 三版本性能对照</h2>
+  <div class="viz-controls">
+    <label class="form-label">数据规模
+      <select class="form-select" data-control="size">
+        <option value="20">20 条书签 + 8 条应用</option>
+        <option value="1000">1,000 条书签 + 8 条应用</option>
+      </select>
+    </label>
+    <label class="form-label">负载方式
+      <select class="form-select" data-control="phase">
+        <option value="Load">8 并发闭环</option>
+        <option value="Fixed">相同到达率：首页</option>
+      </select>
+    </label>
+    <label class="form-label">页面 / 操作
+      <select class="form-select" data-control="scene">
+        <option value="home">首页</option>
+        <option value="bookmarks">书签页</option>
+        <option value="search-last">选择性搜索（命中 1 条）</option>
+        <option value="redirect-last">跳转（命中末尾书签）</option>
+      </select>
+    </label>
+  </div>
+  <p class="text-small text-muted" data-role="scope"></p>
+  <div class="table-responsive" aria-live="polite">
+    <table class="table comparison-table">
+      <thead><tr>
+        <th>版本</th><th class="text-end">吞吐量<br>请求/秒 ↑</th>
+        <th class="text-end">p95 延迟<br>ms ↓</th>
+        <th class="text-end">服务端 CPU<br>µs/请求 ↓</th>
+        <th class="text-end">采样峰值 RSS<br>MiB</th>
+      </tr></thead>
+      <tbody data-role="values"></tbody>
+    </table>
+  </div>
+  <p class="text-small text-muted">六轮中位数；括号内为六轮最小值—最大值。每列条长按该列最大值归一化。</p>
+  <p class="text-small text-muted">来源：2026-10-27 本地测试 · Linux ARM64 · Go 1.27.3 · 144 个窗口 · 8,871,300 次请求 · 无登录、无压缩、热态。</p>
+  <script type="application/json" data-role="data">[{"size":20,"scene":"home","version":"0.4.0","phase":"Load","median":{"qps":5328.57868009827,"p95_ms":2.8444255,"server_cpu_us":311.8259795899295,"rss_peak_mib":22.38671875},"range":{"qps":[4833.101845276905,5559.59761240129],"p95_ms":[2.751759,3.252427],"server_cpu_us":[297.09902556542374,339.554980969717],"rss_peak_mib":[22.04296875,22.96875]}},{"size":20,"scene":"home","version":"0.5.0","phase":"Load","median":{"qps":5390.388168552101,"p95_ms":2.8260709999999998,"server_cpu_us":310.88701584281677,"rss_peak_mib":23.87109375},"range":{"qps":[4813.744916531277,5607.864736030865],"p95_ms":[2.642341,3.447177],"server_cpu_us":[299.38130727810864,344.80079534273534],"rss_peak_mib":[23.55078125,24.88671875]}},{"size":20,"scene":"home","version":"0.6.9","phase":"Load","median":{"qps":29178.023150069006,"p95_ms":0.644273,"server_cpu_us":53.40547927702039,"rss_peak_mib":26.8359375},"range":{"qps":[26184.167662915163,31438.925178601563],"p95_ms":[0.58796,0.716919],"server_cpu_us":[50.08144402035624,59.39692953981287],"rss_peak_mib":[26.6875,27.625]}},{"size":20,"scene":"home","version":"0.4.0","phase":"Fixed","median":{"qps":39.991046330637275,"p95_ms":3.5482395,"server_cpu_us":1815.7325,"rss_peak_mib":20.1484375},"range":{"qps":[39.98392990679223,39.995991553731294],"p95_ms":[3.275885,3.702844],"server_cpu_us":[1723.97,1880.9],"rss_peak_mib":[20.015625,20.19140625]}},{"size":20,"scene":"home","version":"0.5.0","phase":"Fixed","median":{"qps":39.99100141998328,"p95_ms":3.4552815,"server_cpu_us":1845.4725,"rss_peak_mib":21.47265625},"range":{"qps":[39.98283614411035,39.997799273086635],"p95_ms":[3.159343,3.579177],"server_cpu_us":[1681.49,1884.57],"rss_peak_mib":[21.3125,22.0234375]}},{"size":20,"scene":"home","version":"0.6.9","phase":"Fixed","median":{"qps":39.99195442988705,"p95_ms":2.1192355000000003,"server_cpu_us":841.3175,"rss_peak_mib":23.021484375},"range":{"qps":[39.9604585029282,39.997209682660355],"p95_ms":[2.033048,2.183674],"server_cpu_us":[786.315,859.29],"rss_peak_mib":[22.6640625,23.1875]}},{"size":20,"scene":"bookmarks","version":"0.4.0","phase":"Load","median":{"qps":6779.1426533157555,"p95_ms":2.3241325,"server_cpu_us":241.12672947885818,"rss_peak_mib":22.306640625},"range":{"qps":[5665.324646006549,7210.166177870586],"p95_ms":[2.174465,2.807967],"server_cpu_us":[229.844925124792,288.05972624003385],"rss_peak_mib":[22.04296875,23.64453125]}},{"size":20,"scene":"bookmarks","version":"0.5.0","phase":"Load","median":{"qps":6779.692852222907,"p95_ms":2.414695,"server_cpu_us":244.77852516809588,"rss_peak_mib":23.904296875},"range":{"qps":[5261.024091669994,7392.806553369865],"p95_ms":[2.194882,3.106051],"server_cpu_us":[225.37487081860212,309.16878871954697],"rss_peak_mib":[23.7421875,24.4921875]}},{"size":20,"scene":"bookmarks","version":"0.6.9","phase":"Load","median":{"qps":31202.994621756618,"p95_ms":0.6100015000000001,"server_cpu_us":48.681060385957835,"rss_peak_mib":26.7890625},"range":{"qps":[25776.17020638462,36310.63428237063],"p95_ms":[0.504002,0.733628],"server_cpu_us":[42.45388250586589,58.27570796803476],"rss_peak_mib":[26.3125,26.8515625]}},{"size":20,"scene":"search-last","version":"0.4.0","phase":"Load","median":{"qps":5757.429055513057,"p95_ms":2.720904,"server_cpu_us":296.4492497643661,"rss_peak_mib":22.009765625},"range":{"qps":[4735.240946550079,6367.525838644958],"p95_ms":[2.404341,3.497636],"server_cpu_us":[267.4882873830308,355.05029136052696],"rss_peak_mib":[21.89453125,22.22265625]}},{"size":20,"scene":"search-last","version":"0.5.0","phase":"Load","median":{"qps":5744.1421288441015,"p95_ms":2.8305295,"server_cpu_us":299.35952712897557,"rss_peak_mib":23.544921875},"range":{"qps":[4944.715074733941,6407.795982311479],"p95_ms":[2.519841,3.302718],"server_cpu_us":[268.85831071172265,345.25256731624484],"rss_peak_mib":[23.26953125,24.27734375]}},{"size":20,"scene":"search-last","version":"0.6.9","phase":"Load","median":{"qps":23238.125079327518,"p95_ms":0.826211,"server_cpu_us":68.78750295032523,"rss_peak_mib":26.587890625},"range":{"qps":[15538.321755408399,26477.74514851952],"p95_ms":[0.697544,1.268337],"server_cpu_us":[60.73398743164446,98.85529499588138],"rss_peak_mib":[26.296875,27.14453125]}},{"size":20,"scene":"redirect-last","version":"0.4.0","phase":"Load","median":{"qps":8691.105191231556,"p95_ms":2.0309435000000002,"server_cpu_us":195.43353407333177,"rss_peak_mib":21.654296875},"range":{"qps":[4874.509015924251,10207.794230117624],"p95_ms":[1.702588,3.734761],"server_cpu_us":[166.19545881984172,337.70274040039385],"rss_peak_mib":[21.1875,22.203125]}},{"size":20,"scene":"redirect-last","version":"0.5.0","phase":"Load","median":{"qps":9460.892102456934,"p95_ms":1.931714,"server_cpu_us":180.42389986356676,"rss_peak_mib":23.185546875},"range":{"qps":[7761.42836230618,10706.41086212496],"p95_ms":[1.702547,2.399299],"server_cpu_us":[159.3492940912826,219.14943831804595],"rss_peak_mib":[22.83203125,23.59765625]}},{"size":20,"scene":"redirect-last","version":"0.6.9","phase":"Load","median":{"qps":71115.01360157356,"p95_ms":0.2492095,"server_cpu_us":14.503373382332839,"rss_peak_mib":23.826171875},"range":{"qps":[65582.55373639897,87859.07844853232],"p95_ms":[0.194084,0.265668],"server_cpu_us":[12.222657005820636,16.138264067627077],"rss_peak_mib":[23.62109375,24.375]}},{"size":1000,"scene":"home","version":"0.4.0","phase":"Load","median":{"qps":170.42729767698057,"p95_ms":80.84199699999999,"server_cpu_us":10139.935822637106,"rss_peak_mib":104.76953125},"range":{"qps":[110.96335795547859,180.61006209554148],"p95_ms":[76.038399,165.971507],"server_cpu_us":[9576.55934065934,15305.966371681416],"rss_peak_mib":[68.7734375,140.55859375]}},{"size":1000,"scene":"home","version":"0.5.0","phase":"Load","median":{"qps":167.02699404021777,"p95_ms":84.116361,"server_cpu_us":10431.029572361706,"rss_peak_mib":90.390625},"range":{"qps":[149.00906011683878,178.1391727822847],"p95_ms":[77.013027,98.881927],"server_cpu_us":[9771.2109375,11683.856382978724],"rss_peak_mib":[44.1171875,138.5234375]}},{"size":1000,"scene":"home","version":"0.6.9","phase":"Load","median":{"qps":5701.939101582563,"p95_ms":3.1038639999999997,"server_cpu_us":276.5985917467102,"rss_peak_mib":48.876953125},"range":{"qps":[5336.648642722784,5970.571635968961],"p95_ms":[2.862759,3.314468],"server_cpu_us":[264.63653105642055,296.6001873009927],"rss_peak_mib":[47.8828125,53.55859375]}},{"size":1000,"scene":"home","version":"0.4.0","phase":"Fixed","median":{"qps":9.998064164840951,"p95_ms":27.563021499999998,"server_cpu_us":27558.309999999998,"rss_peak_mib":25.357421875},"range":{"qps":[9.990520173238872,9.999232264946237],"p95_ms":[27.162375,29.473048],"server_cpu_us":[26364.14,29161.56],"rss_peak_mib":[25.1640625,40.578125]}},{"size":1000,"scene":"home","version":"0.5.0","phase":"Fixed","median":{"qps":9.996192964841079,"p95_ms":28.1254815,"server_cpu_us":28120.059999999998,"rss_peak_mib":27.314453125},"range":{"qps":[9.991236534568735,9.99933575012572],"p95_ms":[25.731287,32.590891],"server_cpu_us":[25921.72,28358.4],"rss_peak_mib":[26.62890625,28.30859375]}},{"size":1000,"scene":"home","version":"0.6.9","phase":"Fixed","median":{"qps":9.996792481355614,"p95_ms":3.961387,"server_cpu_us":2237.74,"rss_peak_mib":29.349609375},"range":{"qps":[9.994369695818348,9.999247096690608],"p95_ms":[3.293344,6.006143],"server_cpu_us":[2161.8,2697.3],"rss_peak_mib":[28.13671875,30.6328125]}},{"size":1000,"scene":"bookmarks","version":"0.4.0","phase":"Load","median":{"qps":136.57149266469196,"p95_ms":100.9371835,"server_cpu_us":12692.889766132057,"rss_peak_mib":77.03515625},"range":{"qps":[129.04846211609635,141.18814509555764],"p95_ms":[95.697125,108.455539],"server_cpu_us":[12183.919718309859,13391.714285714286],"rss_peak_mib":[56.5078125,127.3671875]}},{"size":1000,"scene":"bookmarks","version":"0.5.0","phase":"Load","median":{"qps":139.66818605215371,"p95_ms":99.4846575,"server_cpu_us":12432.334190335692,"rss_peak_mib":100.12890625},"range":{"qps":[133.5871728870896,142.9564297566127],"p95_ms":[96.165961,108.427415],"server_cpu_us":[12163.975,12885.933135215453],"rss_peak_mib":[76.55859375,143.55078125]}},{"size":1000,"scene":"bookmarks","version":"0.6.9","phase":"Load","median":{"qps":6152.172465714845,"p95_ms":2.6651955000000003,"server_cpu_us":246.52022969607998,"rss_peak_mib":46.333984375},"range":{"qps":[5776.805402921903,6359.439997571396],"p95_ms":[2.553924,2.798675],"server_cpu_us":[237.66431073107626,267.1384168080025],"rss_peak_mib":[44.390625,49.1484375]}},{"size":1000,"scene":"search-last","version":"0.4.0","phase":"Load","median":{"qps":354.34547293920264,"p95_ms":52.789848500000005,"server_cpu_us":5275.040830549577,"rss_peak_mib":44.2578125},"range":{"qps":[337.42745706543985,365.2844740364277],"p95_ms":[50.763489,58.277845],"server_cpu_us":[5099.718886462882,5520.203189604253],"rss_peak_mib":[42.69140625,47.375]}},{"size":1000,"scene":"search-last","version":"0.5.0","phase":"Load","median":{"qps":360.63965247013743,"p95_ms":51.9852425,"server_cpu_us":5163.880521928111,"rss_peak_mib":42.416015625},"range":{"qps":[346.44865267575653,363.4371746188144],"p95_ms":[50.34032,54.996418],"server_cpu_us":[5125.281404278661,5396.53832853026],"rss_peak_mib":[40.5546875,46.515625]}},{"size":1000,"scene":"search-last","version":"0.6.9","phase":"Load","median":{"qps":7205.644493177977,"p95_ms":2.4448615,"server_cpu_us":238.21656380418997,"rss_peak_mib":28.19140625},"range":{"qps":[6596.931988176359,7484.560547225025],"p95_ms":[2.377383,2.700841],"server_cpu_us":[231.07021481243987,258.7521595489952],"rss_peak_mib":[27.921875,28.44140625]}},{"size":1000,"scene":"redirect-last","version":"0.4.0","phase":"Load","median":{"qps":367.12768224078604,"p95_ms":50.513383,"server_cpu_us":5087.789132535625,"rss_peak_mib":41.607421875},"range":{"qps":[345.4324335977791,380.0316129476679],"p95_ms":[48.597315,54.024123],"server_cpu_us":[4910.8635886673665,5402.127598152425],"rss_peak_mib":[38.8984375,45.6484375]}},{"size":1000,"scene":"redirect-last","version":"0.5.0","phase":"Load","median":{"qps":373.30164259244316,"p95_ms":51.5357195,"server_cpu_us":5005.756645330799,"rss_peak_mib":41.85546875},"range":{"qps":[347.2632934507518,396.96229253149585],"p95_ms":[45.919557,51.940616],"server_cpu_us":[4704.484681064791,5384.585295807007],"rss_peak_mib":[40.16015625,44.80859375]}},{"size":1000,"scene":"redirect-last","version":"0.6.9","phase":"Load","median":{"qps":65106.467431950325,"p95_ms":0.265584,"server_cpu_us":16.648477365748807,"rss_peak_mib":24.333984375},"range":{"qps":[64445.723254602555,66490.07651072677],"p95_ms":[0.256334,0.269168],"server_cpu_us":[15.929871051768789,17.05151241492957],"rss_peak_mib":[24.1796875,24.7265625]}}]</script>
+  <script>
+    (() => {
+      const root = document.getElementById('flare-performance-view');
+      const data = JSON.parse(root.querySelector('[data-role="data"]').textContent);
+      const fields = ['qps', 'p95_ms', 'server_cpu_us', 'rss_peak_mib'];
+      const digits = [0, 3, 2, 2];
+      const versions = ['0.4.0', '0.5.0', '0.6.9'];
+      const controls = Object.fromEntries(['size', 'phase', 'scene'].map(key => [key, root.querySelector('[data-control="' + key + '"]')]));
+      let state = { size: 20, phase: 'Load', scene: 'home' };
+      function restore(saved) {
+        if (!saved) return;
+        const value = saved.modelContent || saved;
+        if ([20, 1000].includes(Number(value.size))) state.size = Number(value.size);
+        if (['Load', 'Fixed'].includes(value.phase)) state.phase = value.phase;
+        if (['home', 'bookmarks', 'search-last', 'redirect-last'].includes(value.scene)) state.scene = value.scene;
+      }
+      function render() {
+        if (state.phase === 'Fixed') state.scene = 'home';
+        Object.entries(controls).forEach(([key, control]) => { control.value = String(state[key]); });
+        controls.scene.disabled = state.phase === 'Fixed';
+        const rows = versions.map(version => data.find(row => row.size === state.size && row.phase === state.phase && row.scene === state.scene && row.version === version));
+        const maxima = fields.map(key => Math.max(...rows.map(row => row.median[key])));
+        const body = root.querySelector('[data-role="values"]');
+        body.replaceChildren();
+        rows.forEach(row => {
+          const tr = document.createElement('tr');
+          const label = document.createElement('th');
+          label.scope = 'row'; label.textContent = row.version; tr.append(label);
+          fields.forEach((key, index) => {
+            const td = document.createElement('td'); td.className = 'text-end tabular-nums';
+            const format = value => value.toLocaleString('zh-CN', { minimumFractionDigits: digits[index], maximumFractionDigits: digits[index] });
+            const value = document.createElement('div'); value.className = 'metric-value'; value.textContent = format(row.median[key]);
+            const range = document.createElement('div'); range.className = 'metric-range text-small'; range.textContent = '(' + row.range[key].map(format).join('—') + ')';
+            const track = document.createElement('div'); track.className = 'bar-track'; track.setAttribute('aria-hidden', 'true');
+            const fill = document.createElement('div'); fill.className = 'bar-fill'; fill.style.width = (100 * row.median[key] / maxima[index]) + '%';
+            track.append(fill); td.append(value, range, track); tr.append(td);
+          });
+          body.append(tr);
+        });
+        root.querySelector('[data-role="scope"]').textContent = state.phase === 'Load' ? '每窗口 5 秒，8 个并发请求；吞吐越高越好，延迟与 CPU 越低越好。' : '首页固定 ' + (state.size === 20 ? '40' : '10') + ' 次/秒，每窗口 5 秒；此时吞吐由设定值决定。';
+      }
+      restore(window.openai && window.openai.widgetState);
+      Object.entries(controls).forEach(([key, control]) => control.addEventListener('change', () => {
+        state[key] = key === 'size' ? Number(control.value) : control.value;
+        render();
+        if (window.openai && window.openai.setWidgetState) window.openai.setWidgetState({ modelContent: { ...state }, privateContent: null }).catch(() => {});
+      }));
+      window.addEventListener('openai:set_globals', event => {
+        restore(event.detail && event.detail.globals && event.detail.globals.widgetState); render();
+      });
+      render();
+    })();
+  </script>
+</div>
+<p class="text-small"><a href="report.md">完整报告</a> · <a href="README.md">方法与复核</a></p></body></html>
