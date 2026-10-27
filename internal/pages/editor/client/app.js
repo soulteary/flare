@@ -180,7 +180,7 @@
       if(response.redirected)throw Error(t('editor.your_session_may_have_expired_sign_in_in_another'));
       if(!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('editor.unexpected_save_response',{status:response.status}));
       const result=await response.json();responseParsed=true;
-      if(!response.ok&&result.code==='write_source_rejected')throw Error(t('editor.write_source_rejected'));
+      if(!response.ok&&(result.code==='write_source_rejected'||result.error?.code==='SOURCE_REJECTED'))throw Error(t('editor.write_source_rejected'));
       if(!response.ok){if([result.code,result.message].includes('REAUTH_REQUIRED')){$('verify-session').hidden=false;throw Error(t('privacy.verify_retry'));}if(result.recoveryRequired){recoveryRequired=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(response.status===409){conflict=true;$('export-draft').hidden=false;$('reload-data').hidden=false;}if(result.field)serverInvalid=result;throw Error(result.error||t('editor.save_failed_please_retry'));}
       if(!result.saved||!result.document)throw Error(t('editor.the_save_response_is_incomplete_check_the_data_before'));
       store.accept(result.document);batch?.refresh();undo=null;conflict=false;$('export-draft').hidden=true;$('reload-data').hidden=true;render();
@@ -204,7 +204,7 @@
       if(file.size>FlareEditorState.maxDraftBytes)throw Error(t('editor.draft_files_must_not_exceed_64_mib'));
       const draft=JSON.parse(await file.text());
       if(!draft || !Array.isArray(draft.categories) || !Array.isArray(draft.apps) || !Array.isArray(draft.bookmarks))throw Error(t('editor.not_a_valid_editor_draft'));
-      const categories=draft.categories.map(c=>{if(!c||typeof c.ID!=='string'||typeof c.Name!=='string')throw Error(t('editor.invalid_category_format'));return{ID:c.ID,Name:c.Name};});
+      const categories=draft.categories.map(c=>{if(!c||typeof c.ID!=='string'||typeof c.Name!=='string')throw Error(t('editor.invalid_category_format'));return{ID:c.ID,Name:c.Name,...(typeof c.Private==='boolean'?{Private:c.Private}:{})};});
       // Handsontable exports cleared text cells as null; keep them editable as empty strings.
       const items=rows=>rows.map(item=>{if(!item||!['Name','URL'].every(name=>item[name]===null||typeof item[name]==='string'))throw Error(t('editor.invalid_entry_format'));const out={Name:item.Name??'',URL:item.URL??'',Category:typeof item.Category==='string'?item.Category:''};for(const name of ['Icon','Desc'])if(typeof item[name]==='string')out[name]=item[name];if(typeof item.Private==='boolean')out.Private=item.Private;return out;});
       const next={version:store.working.version,categories,apps:items(draft.apps),bookmarks:items(draft.bookmarks)};

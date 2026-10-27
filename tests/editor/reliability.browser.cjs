@@ -1,3 +1,4 @@
+const browserAuth=require('../browser-auth.cjs');
 // Exercise localized production markup and a draft larger than the former 4 MiB limit.
 const {chromium}=require(require.resolve('playwright',{paths:[__dirname,`${__dirname}/../clock`]}));
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),net=require('node:net'),{spawn}=require('node:child_process');
@@ -8,12 +9,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
  await fs.writeFile(path.join(dir,'bookmarks.yml'),'links: []\n');
  const recovery=path.join(dir,'.flare-editor-recovery','save-interrupted');await fs.mkdir(recovery,{recursive:true});
  await fs.copyFile(path.join(dir,'apps.yml'),path.join(recovery,'apps.yml'));await fs.copyFile(path.join(dir,'bookmarks.yml'),path.join(recovery,'bookmarks.yml'));
- const child=spawn(process.env.FLARE_BINARY,[],{cwd:dir,env:{...process.env,FLARE_PORT:String(port),FLARE_DISABLE_LOGIN:'true',FLARE_OFFLINE:'true',FLARE_BASELINE:'1'}});let log='';child.stdout.on('data',b=>log+=b);child.stderr.on('data',b=>log+=b);let browser;
+ const child=spawn(process.env.FLARE_BINARY,[],{cwd:dir,env:{...process.env,FLARE_PORT:String(port),...browserAuth.credentials,FLARE_OFFLINE:'true',FLARE_BASELINE:'1'}});let log='';child.stdout.on('data',b=>log+=b);child.stderr.on('data',b=>log+=b);let browser;
  try{
   for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error(log);try{if((await fetch(base+'/ping')).ok)break}catch{}await new Promise(r=>setTimeout(r,100));}
   browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
   const page=await browser.newPage();async function screenshot(name){if(process.env.EDITOR_SCREENSHOT_DIR){await fs.mkdir(process.env.EDITOR_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.EDITOR_SCREENSHOT_DIR,name),fullPage:true});}}const errors=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.goto(base+'/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);
+  await browserAuth.login(page,base);await page.goto(base+'/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);
   assert.equal(await page.locator('html').getAttribute('lang'),'en');assert.equal(await page.title(),'Manage navigation · Flare');
   assert.equal(await page.locator('#save-changes').textContent(),'Save changes');assert.equal(await page.locator('#entry-search').getAttribute('placeholder'),'Search names, addresses and descriptions');
   assert.match(await page.locator('#recovery-warning').textContent(),/Server recovery copies.*save-interrupted/);
