@@ -202,3 +202,20 @@ jobs:
         with:
           version: '~> v2'
           args: check
+
+  csrf-benchmark-evidence:
+    name: CSRF benchmark evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify archived measurements and report
+        run: |
+          python3 metrics-reports/trusted-readonly-csrf-2026-10-27/analyze.py
+          python3 metrics-reports/trusted-readonly-csrf-2026-10-27/render.py --check
+          python3 metrics-reports/trusted-readonly-csrf-2026-10-27/test_integrity.py
+          python3 metrics-reports/trusted-readonly-csrf-2026-10-27/privacy.py

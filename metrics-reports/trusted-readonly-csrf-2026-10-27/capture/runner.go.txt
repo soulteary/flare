@@ -1,0 +1,66 @@
+package main
+
+import (
+ "bytes"
+ "crypto/sha256"
+ "encoding/hex"
+ "encoding/json"
+ "flag"
+ "fmt"
+ "io"
+ "net/http"
+ "net/http/cookiejar"
+ "os"
+ "runtime"
+ "regexp"
+ "sort"
+ "strconv"
+ "strings"
+ "sync"
+ "sync/atomic"
+ "time"
+)
+type Snap struct {ElapsedNS int64; RSS, HWM uint64; CPU map[string]uint64; MemoryCurrent uint64; MemoryStat map[string]uint64; IO string; Error string}
+func values(path string) map[string]uint64 {b,e:=os.ReadFile(path);if e!=nil{return nil};m:=map[string]uint64{};for _,line:=range strings.Split(string(b),"\n"){f:=strings.Fields(line);if len(f)>=2{v,e:=strconv.ParseUint(f[1],10,64);if e==nil{m[strings.TrimSuffix(f[0],":")]=v}}};return m}
+func snapshot() Snap {s:=Snap{ElapsedNS:time.Since(started).Nanoseconds()};v:=values("/proc/1/status");s.RSS=v["VmRSS"]*1024;s.HWM=v["VmHWM"]*1024;s.CPU=values("/proc/1/root/sys/fs/cgroup/cpu.stat");s.MemoryStat=values("/proc/1/root/sys/fs/cgroup/memory.stat");if b,e:=os.ReadFile("/proc/1/root/sys/fs/cgroup/memory.current");e==nil{s.MemoryCurrent,_=strconv.ParseUint(strings.TrimSpace(string(b)),10,64)};if b,e:=os.ReadFile("/proc/1/io");e==nil{s.IO=string(b)};if s.CPU==nil||s.RSS==0{s.Error="missing isolated cgroup CPU or process RSS"};return s}
+type Probe struct {SetCookieCount int;Status int;Bytes int;Hash string;NormalizedHash string;Headers http.Header;Body string}
+type Stats struct {Mode string;Elapsed float64;Requests int;Errors int;ErrorSamples []string;QPS,P50,P95,P99 float64;Bytes int64;Dropped int;Before,After Snap;Samples []Snap;BodyHashes map[string]int; ClientCPUBefore,ClientCPUAfter map[string]uint64; ScheduleLagP95,ScheduleLagMax float64}
+type Result struct {Scenario string;Path string;Concurrency int;Duration float64;ReadyWait float64;Pre,Post Probe;WarmRequests int;WarmErrors int;WarmSnapshot Snap;Fixed *Stats;Load Stats;Environment map[string]string}
+var csrf = regexp.MustCompile(`(<input[^>]*name=(?:"csrf-token"|'csrf-token'|csrf-token)[^>]*value=")[^"]*(")`)
+func normalize(b []byte)[]byte{return csrf.ReplaceAll(b,[]byte(`${1}CSRF_TOKEN${2}`))}
+func digest(b []byte)string{h:=sha256.Sum256(b);return hex.EncodeToString(h[:])}
+func emit(result *Result) {
+ for _, p := range []*Probe{&result.Pre, &result.Post} {
+  p.SetCookieCount = len(p.Headers.Values("Set-Cookie"))
+  headers := http.Header{}
+  for _, key := range []string{"Content-Type", "Location", "Cache-Control", "Referrer-Policy"} { if v:=p.Headers.Values(key);len(v)>0{headers[key]=v} }
+  p.Headers=headers
+  p.Body=csrf.ReplaceAllStringFunc(p.Body,func(s string)string{parts:=csrf.FindStringSubmatch(s);return parts[1]+strings.Repeat("X",len(s)-len(parts[1])-len(parts[2]))+parts[2]})
+  p.Hash=digest([]byte(p.Body))
+ }
+ json.NewEncoder(os.Stdout).Encode(result)
+}
+var started=time.Now()
+var pools=sync.Pool{New:func()any{return make([]byte,64*1024)}}
+func main(){
+ cookieJar:=flag.Bool("cookie-jar",true,"");warmRequests:=flag.Int("warm-requests",200,"");path:=flag.String("path","/","");method:=flag.String("method","GET","");body:=flag.String("body","","");scenario:=flag.String("scenario","home","");sec:=flag.Float64("seconds",5,"");warm:=flag.Float64("warm",1,"");con:=flag.Int("concurrency",8,"");rate:=flag.Float64("rate",0,"");fixedSeconds:=flag.Float64("fixed-seconds",4,"");expected:=flag.Int("status",200,"");location:=flag.String("location","","");probeOnly:=flag.Bool("probe",false,"");flag.Parse()
+ tr:=&http.Transport{Proxy:nil,MaxIdleConns:16,MaxIdleConnsPerHost:*con,MaxConnsPerHost:*con,DisableCompression:true};client:=&http.Client{Transport:tr,Timeout:20*time.Second,CheckRedirect:func(*http.Request,[]*http.Request)error{return http.ErrUseLastResponse}};if *cookieJar { jar,_:=cookiejar.New(nil);client.Jar=jar };url:="http://127.0.0.1:5005"+*path
+ do:=func(full bool,expectedBytes int)(int,[]byte,http.Header,error){req,_:=http.NewRequest(*method,url,strings.NewReader(*body));req.Header.Set("Accept-Encoding","identity");req.Header.Set("Content-Type","application/x-www-form-urlencoded");r,e:=client.Do(req);if e!=nil{return 0,nil,nil,e};defer r.Body.Close();var b []byte;var n int64;if full {b,e=io.ReadAll(r.Body);n=int64(len(b))} else {buf:=pools.Get().([]byte);n,e=io.CopyBuffer(io.Discard,r.Body,buf);pools.Put(buf)};if e!=nil{return int(n),b,r.Header,e};if r.StatusCode!=*expected{return int(n),b,r.Header,fmt.Errorf("status %d expected %d",r.StatusCode,*expected)};if *location!="" && r.Header.Get("Location")!=*location{return int(n),b,r.Header,fmt.Errorf("bad location %q",r.Header.Get("Location"))};if expectedBytes>=0&&int(n)!=expectedBytes{return int(n),b,r.Header,fmt.Errorf("body bytes %d expected %d",n,expectedBytes)};return int(n),b,r.Header,nil}
+ start:=time.Now();var pre Probe
+ for {n,b,h,e:=do(true,-1);if e==nil{sum:=sha256.Sum256(b);pre=Probe{0,*expected,n,hex.EncodeToString(sum[:]),digest(normalize(b)),h,string(b)};break};if time.Since(start)>30*time.Second{fmt.Fprintln(os.Stderr,e);os.Exit(2)};time.Sleep(25*time.Millisecond)}
+ result:=Result{Scenario:*scenario,Path:*path,Concurrency:*con,Duration:*sec,ReadyWait:time.Since(start).Seconds(),Pre:pre,Environment:map[string]string{"go":runtime.Version(),"arch":runtime.GOARCH,"cookie_jar":strconv.FormatBool(*cookieJar),"separate_cgroups":strconv.FormatBool(read("/proc/1/cgroup")!=read("/proc/self/cgroup"))}}
+ if *probeOnly{result.WarmSnapshot=snapshot();emit(&result);return}
+ _ = warm
+ for i:=0;i<*warmRequests;i++{_,_,_,e:=do(false,pre.Bytes);result.WarmRequests++;if e!=nil{result.WarmErrors++}}
+ time.Sleep(250*time.Millisecond)
+ if result.WarmErrors>0{fmt.Fprintln(os.Stderr,"warm failures",result.WarmErrors);os.Exit(3)};result.WarmSnapshot=snapshot();if result.WarmSnapshot.Error!=""{fmt.Fprintln(os.Stderr,result.WarmSnapshot.Error);emit(&result);os.Exit(4)}
+ phase:=func(mode string,duration float64,fixedRate float64) Stats {
+  s:=Stats{Mode:mode,Before:snapshot(),BodyHashes:map[string]int{},ClientCPUBefore:values("/sys/fs/cgroup/cpu.stat")};lags:=[]int64{};var mu sync.Mutex;var seq atomic.Uint64;var errors atomic.Int64;var count atomic.Int64;var totalBytes atomic.Int64;lat:=[]int64{};errs:=[]string{};hashes:=map[string]int{};var sampler sync.WaitGroup;stop:=make(chan struct{});sampler.Add(1);go func(){defer sampler.Done();ticker:=time.NewTicker(50*time.Millisecond);defer ticker.Stop();for{select{case<-stop:return;case<-ticker.C:s.Samples=append(s.Samples,snapshot())}}}()
+  run:=func(){id:=seq.Add(1);full:=id%256==0;begin:=time.Now();n,b,_,e:=do(full,pre.Bytes);ns:=time.Since(begin).Nanoseconds();var hash string;if full {sum:=sha256.Sum256(b);hash=hex.EncodeToString(sum[:]);if e==nil&&!bytes.Equal(normalize(b),normalize([]byte(pre.Body))){e=fmt.Errorf("sampled body changed: %s",hash)}};count.Add(1);totalBytes.Add(int64(n));if e!=nil{errors.Add(1)};mu.Lock();lat=append(lat,ns);if e!=nil&&len(errs)<8{errs=append(errs,e.Error())};if full{hashes[digest(normalize(b))]++};mu.Unlock()}
+  begin:=time.Now();deadline:=begin.Add(time.Duration(duration*1e9));var wg sync.WaitGroup
+  if fixedRate==0{for i:=0;i<*con;i++{wg.Add(1);go func(){defer wg.Done();for time.Now().Before(deadline){run()}}()}} else {slots:=make(chan struct{},*con);for i:=0;;i++{due:=begin.Add(time.Duration(float64(i)/fixedRate*1e9));if !due.Before(deadline){break};if delay:=time.Until(due);delay>0{time.Sleep(delay)};lags=append(lags,time.Since(due).Nanoseconds());select{case slots<-struct{}{}:wg.Add(1);go func(){defer wg.Done();defer func(){<-slots}();run()}();default:s.Dropped++}};if delay:=time.Until(deadline);delay>0{time.Sleep(delay)}}
+  wg.Wait();s.Elapsed=time.Since(begin).Seconds();s.After=snapshot();s.ClientCPUAfter=values("/sys/fs/cgroup/cpu.stat");if len(lags)>0{sort.Slice(lags,func(i,j int)bool{return lags[i]<lags[j]});s.ScheduleLagP95=float64(lags[int(float64(len(lags))*.95)])/1e6;s.ScheduleLagMax=float64(lags[len(lags)-1])/1e6};close(stop);sampler.Wait();s.Requests=int(count.Load());s.Errors=int(errors.Load());s.ErrorSamples=errs;s.Bytes=totalBytes.Load();s.BodyHashes=hashes;s.QPS=float64(s.Requests)/s.Elapsed;sort.Slice(lat,func(i,j int)bool{return lat[i]<lat[j]});q:=func(p float64)float64{if len(lat)==0{return 0};i:=int(float64(len(lat))*p);if i>=len(lat){i=len(lat)-1};return float64(lat[i])/1e6};s.P50=q(.5);s.P95=q(.95);s.P99=q(.99);return s
+ }
+ if *rate>0 {s:=phase("fixed",*fixedSeconds,*rate);result.Fixed=&s};result.Load=phase("closed-loop",*sec,0);n,b,h,e:=do(true,pre.Bytes);if e!=nil{fmt.Fprintln(os.Stderr,"postflight",e);os.Exit(5)};sum:=sha256.Sum256(b);result.Post=Probe{0,*expected,n,hex.EncodeToString(sum[:]),digest(normalize(b)),h,string(b)};if result.Post.NormalizedHash!=result.Pre.NormalizedHash{fmt.Fprintln(os.Stderr,"postflight hash changed");emit(&result);os.Exit(6)};emit(&result)
+}
+func read(path string)string{b,_:=os.ReadFile(path);return strings.TrimSpace(string(b))}

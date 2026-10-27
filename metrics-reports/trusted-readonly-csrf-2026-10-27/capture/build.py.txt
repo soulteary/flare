@@ -1,0 +1,39 @@
+"""Build the exact two revisions with a common toolchain and runtime image."""
+import hashlib
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import tarfile
+
+ROOT=Path(os.environ['FLARE_BENCH_ROOT'])
+OUTPUT=Path(os.environ['FLARE_BENCH_OUTPUT'])
+CAPTURE=Path(__file__).resolve().parent
+REVISIONS={'before':'7e91e8f9ed066cafd5f4c088002aa93e4354be90','after':'12ff92842acccd9be6de197037831a11243e30e4'}
+BASE='docker.io/arm64v8/alpine@sha256:4bdb4ac63839546daabfe0a267a363b3effa17ce02ac5f42d222174484c5686c'
+ROOT.mkdir(parents=True,exist_ok=True);OUTPUT.mkdir(parents=True,exist_ok=True)
+env=dict(os.environ,GOTOOLCHAIN='go1.27.3',GOOS='linux',GOARCH='arm64',CGO_ENABLED='0')
+generator_env=dict(env)
+for key in ('GOOS','GOARCH','CGO_ENABLED'):
+    generator_env.pop(key,None)
+records={}
+for name,revision in REVISIONS.items():
+    source=ROOT/name;source.mkdir()
+    raw=subprocess.check_output(['git','archive',revision])
+    with tarfile.open(fileobj=io.BytesIO(raw)) as archive:
+        archive.extractall(source,filter='data')
+    subprocess.run(['go','run','build/build.go'],cwd=source,env=generator_env,check=True)
+    binary=ROOT/(name+'.bin')
+    subprocess.run(['go','build','-trimpath','-buildvcs=false','-o',str(binary),'.'],cwd=source,env=env,check=True)
+    records[name]={'revision':revision,'binary_sha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'bytes':binary.stat().st_size}
+runner=ROOT/'runner'
+subprocess.run(['go','build','-trimpath','-buildvcs=false','-o',str(runner),str(CAPTURE/'runner.go')],env=env,check=True)
+for name in [*REVISIONS,'runner']:
+    binary=runner if name=='runner' else ROOT/(name+'.bin')
+    directory=ROOT/('image-'+name);directory.mkdir(exist_ok=True)
+    (directory/'program').write_bytes(binary.read_bytes());(directory/'program').chmod(0o755)
+    (directory/'Dockerfile').write_text(f'FROM {BASE}\nCOPY program /bin/program\nWORKDIR /app\nENTRYPOINT ["/bin/program"]\n')
+    subprocess.run(['docker','build','--network','none','-t','flare-csrf-bench:'+name,str(directory)],check=True)
+records['runtime']={'base':BASE,'go':'go1.27.3','os':'linux','arch':'arm64','cgo_enabled':False,'trimpath':True,'buildvcs':False}
+(OUTPUT/'builds.json').write_text(json.dumps(records,indent=2)+'\n')
