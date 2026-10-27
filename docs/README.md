@@ -47,3 +47,5 @@ a password, or per-bookmark authorization. Category tabs are presentation filter
 [管理员读取性能优化与两轮三分钟配对验收](requirements/admin-performance-optimization.md)：请求内鉴权证据复用、持久化与撤销边界、同机延迟/吞吐及 CPU/RSS 对比。
 
 [管理员 CPU/内存归因与热点优化验收](requirements/admin-resource-analysis.md)：相同到达率、pprof 差分、缓存保留成本及最终四轮三分钟结果。
+
+[会话事务 I/O 合并验收](requirements/transaction-io-optimization.md)：完整 HTTP 事务/Sync 调用计数、安全释放边界及四轮三分钟原生对比。

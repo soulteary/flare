@@ -27,14 +27,25 @@ func generateBookmarkNavigation(filter, selected, path string, options *model.Ap
 }
 
 func generateBookmarkNavigationFor(filter, selected, path string, options *model.Application, administrator bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
+	return generateBookmarkNavigationForRead(filter, selected, path, options, administrator, false, requestInfo...)
+}
+func generateBookmarkNavigationForRead(filter, selected, path string, options *model.Application, administrator, existingOnly bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	if options == nil {
-		op, err := data.GetAllSettingsOptions()
+		readSettings := data.GetAllSettingsOptions
+		if existingOnly {
+			readSettings = data.ReadExistingSettingsOptions
+		}
+		op, err := readSettings()
 		if err != nil {
 			return "", navigationDataError("bookmarks", "", err)
 		}
 		options = &op
 	}
-	bookmarksData, err := data.LoadVisibleNormalBookmarks(administrator)
+	readBookmarks := data.LoadVisibleNormalBookmarks
+	if existingOnly {
+		readBookmarks = data.ReadExistingVisibleNormalBookmarks
+	}
+	bookmarksData, err := readBookmarks(administrator)
 	if err != nil {
 		return "", navigationDataError("bookmarks", options.Locale, err)
 	}

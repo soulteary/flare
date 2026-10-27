@@ -55,6 +55,15 @@ func LoadNavigationPair(showApps, showBookmarks bool) (model.Bookmarks, model.Bo
 // filtering is cached on that immutable snapshot; neither a renderer mutation
 // nor a concurrent editor publish can alter the cache or mix old/new collections.
 func LoadVisibleNavigationPair(showApps, showBookmarks, administrator bool) (model.Bookmarks, model.Bookmarks, error) {
+	return loadVisibleNavigationPair(showApps, showBookmarks, administrator, false)
+}
+
+// ReadExistingVisibleNavigationPair never initializes missing YAML. Selection,
+// parsing and caller-owned authorized copies otherwise match the legacy reader.
+func ReadExistingVisibleNavigationPair(showApps, showBookmarks, administrator bool) (model.Bookmarks, model.Bookmarks, error) {
+	return loadVisibleNavigationPair(showApps, showBookmarks, administrator, true)
+}
+func loadVisibleNavigationPair(showApps, showBookmarks, administrator, existingOnly bool) (model.Bookmarks, model.Bookmarks, error) {
 	names := []string{}
 	if showApps {
 		names = append(names, "apps")
@@ -62,7 +71,11 @@ func LoadVisibleNavigationPair(showApps, showBookmarks, administrator bool) (mod
 	if showBookmarks {
 		names = append(names, "bookmarks")
 	}
-	snapshots, err := navigationSnapshotSet(names)
+	read := navigationSnapshotSet
+	if existingOnly {
+		read = existingNavigationSnapshotSet
+	}
+	snapshots, err := read(names)
 	if err != nil {
 		return model.Bookmarks{}, model.Bookmarks{}, err
 	}
@@ -108,6 +121,45 @@ func ReadableBookmarkCategory(id string, administrator bool) (bool, error) {
 		return false, err
 	}
 	for _, category := range snapshot.value.Categories {
+		if category.ID == id && (administrator || !category.Private) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func existingNavigationSnapshotSet(names []string) ([]*parsedBookmarks, error) {
+	bookmarkMu.RLock()
+	defer bookmarkMu.RUnlock()
+	snapshots := make([]*parsedBookmarks, 0, len(names))
+	for _, name := range names {
+		snapshot, err := readExistingBookmarkSnapshot(name)
+		if err != nil {
+			return nil, err
+		}
+		snapshots = append(snapshots, snapshot)
+	}
+	return snapshots, nil
+}
+func readExistingVisibleNavigation(name string, administrator bool) (model.Bookmarks, error) {
+	snapshots, err := existingNavigationSnapshotSet([]string{name})
+	if err != nil {
+		return model.Bookmarks{}, err
+	}
+	return cloneVisibleNavigation(snapshots[0], administrator), nil
+}
+func ReadExistingVisibleFavoriteBookmarks(administrator bool) (model.Bookmarks, error) {
+	return readExistingVisibleNavigation("apps", administrator)
+}
+func ReadExistingVisibleNormalBookmarks(administrator bool) (model.Bookmarks, error) {
+	return readExistingVisibleNavigation("bookmarks", administrator)
+}
+func ReadableExistingBookmarkCategory(id string, administrator bool) (bool, error) {
+	snapshots, err := existingNavigationSnapshotSet([]string{"bookmarks"})
+	if err != nil {
+		return false, err
+	}
+	for _, category := range snapshots[0].value.Categories {
 		if category.ID == id && (administrator || !category.Private) {
 			return true, nil
 		}

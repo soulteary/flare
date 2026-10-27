@@ -120,6 +120,18 @@ func GetAllSettingsOptions() (model.Application, error) {
 	return options, nil
 }
 
+// ReadExistingSettingsOptions is the read-only counterpart used by tentative
+// buffered views. Missing settings return an error rather than initializing YAML.
+func ReadExistingSettingsOptions() (model.Application, error) {
+	options, err := loadExistingAppConfigFromYaml("config")
+	if err != nil {
+		return options, err
+	}
+	options.ConfigVersionState = ConfigurationVersionState(options.AppVersion)
+	options.Locale = i18n.Normalize(options.Locale)
+	return options, nil
+}
+
 func UpdateAppearance(update model.Application) bool {
 	settingsUpdateMu.Lock()
 	defer settingsUpdateMu.Unlock()

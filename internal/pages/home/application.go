@@ -25,14 +25,25 @@ func generateApplications(filter string, options *model.Application, requestInfo
 }
 
 func generateApplicationsFor(filter string, options *model.Application, administrator bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
+	return generateApplicationsForRead(filter, options, administrator, false, requestInfo...)
+}
+func generateApplicationsForRead(filter string, options *model.Application, administrator, existingOnly bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	if options == nil {
-		op, err := data.GetAllSettingsOptions()
+		readSettings := data.GetAllSettingsOptions
+		if existingOnly {
+			readSettings = data.ReadExistingSettingsOptions
+		}
+		op, err := readSettings()
 		if err != nil {
 			return "", navigationDataError("applications", "", err)
 		}
 		options = &op
 	}
-	appsData, err := data.LoadVisibleFavoriteBookmarks(administrator)
+	readApps := data.LoadVisibleFavoriteBookmarks
+	if existingOnly {
+		readApps = data.ReadExistingVisibleFavoriteBookmarks
+	}
+	appsData, err := readApps(administrator)
 	if err != nil {
 		return "", navigationDataError("applications", options.Locale, err)
 	}

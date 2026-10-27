@@ -29,3 +29,15 @@ python3 tools/security-load/resource_analysis.py --binary /absolute/path/to/flar
 ```
 
 The optional test-only profiling wrapper provides runtime/pprof on a separate localhost control port; production binaries expose no new profiling route. Use the runner's `--help` for profiling and heap-diagnostic arguments. Capture allocation profiles before and after the timed window and subtract the start profile (`go tool pprof -base start.pb.gz binary end.pb.gz`) to exclude startup parsing. Force GC only outside timing. A single post-GC heap snapshot is sensitive to `sync.Pool` victim retention: the separate `heap_retention_diagnostic.py` captures one/two/three GC phases and is diagnostic, not a 180-second acceptance substitute. Native CPU/RSS and instrumented runtime measurements must be compared within their respective matched builds. See [resource cause analysis and complete evidence](../../docs/requirements/admin-resource-analysis.md).
+
+For transaction I/O diagnostics, first copy/archive the intended source into a disposable directory, then run `transaction_overlay.py COPIED_SOURCE_DIRECTORY` and compile that copy with `go test -c`. The generated overlay counts Store commit/atomic-write calls and each actual Go `os.File.Sync` invocation in `internal/security/store.go`; it does not count kernel syscalls or content YAML persistence. It adds `/counters` only to the existing test-only localhost control server. Never generate this instrumentation in the production checkout, and never use its binary for native CPU/RSS comparisons.
+
+```sh
+python3 tools/security-load/transaction_overlay.py /tmp/flare-copied-source
+# Build the copied source with go test -c, then:
+python3 tools/security-load/transaction_counts.py --binary /tmp/flare-count.test --directory /tmp/flare-count-data --port 15600 --control-port 15601 --output /tmp/flare-count.json
+```
+
+The controlled sequence checks authenticated/anonymous GET and HEAD across offline home/search, applications, bookmarks, category and missing-category responses; snapshots counters around whole HTTP requests and verifies status/body/authorization. Login, logout and revoked-cookie replay are separate recorded sequences. Its added `Stat` accounting and counter overhead are diagnostic only. See [transaction I/O acceptance](../../docs/requirements/transaction-io-optimization.md).
+
+The overlay generator rejects the tool's own repository root and any target containing a `.git` file or directory before writing. Use a plain archive/copy rather than a checkout or worktree.
