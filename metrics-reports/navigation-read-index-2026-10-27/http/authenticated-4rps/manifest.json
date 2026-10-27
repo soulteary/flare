@@ -1,0 +1,29 @@
+{
+  "host": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 02:29:07) [Clang 19.1.7 ]",
+  "harness_sha256": "c8a31fe5725ec0303c21e9020b166d0ebe5455186015750e20b91bd87c6dd2a1",
+  "resource_helper_sha256": "fbdb4636559c3f0762741281712189b09571602716e0e83dfed0ae6b93d4e6f8",
+  "options": {
+    "baseline": "/tmp/flare-http-read-baseline-bin",
+    "candidate": "/tmp/flare-http-read-candidate",
+    "output": "/private/tmp/flare-http-read-authenticated-4rps",
+    "identities": [
+      "authenticated"
+    ],
+    "duration": 30.0,
+    "rounds": 2,
+    "entries": 10000,
+    "anonymous_rate": 20.0,
+    "authenticated_rate": 4.0
+  },
+  "runs": [
+    "r1-authenticated-search-baseline.json",
+    "r1-authenticated-search-candidate.json",
+    "r1-authenticated-category-baseline.json",
+    "r1-authenticated-category-candidate.json",
+    "r2-authenticated-search-candidate.json",
+    "r2-authenticated-search-baseline.json",
+    "r2-authenticated-category-candidate.json",
+    "r2-authenticated-category-baseline.json"
+  ]
+}

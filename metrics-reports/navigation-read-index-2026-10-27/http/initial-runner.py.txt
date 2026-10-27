@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+"""Paired native HTTP read benchmark. Uses only fresh disposable fixture directories."""
+import argparse
+import collections
+import hashlib
+import http.client
+import importlib.util
+import json
+import math
+import os
+from pathlib import Path
+import platform
+import re
+import socket
+import statistics
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+import urllib.parse
+
+_spec = importlib.util.spec_from_file_location("resource_analysis", Path(__file__).with_name("resource_analysis.py"))
+resources = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(resources)
+CARD = re.compile(rb'(?:<span>|<p class="app-title">)((?:PUBLIC|PRIVATE) Entry \d{5})(?:</span>|</p>)')
+
+
+def fixture(directory, size):
+    """Each category contains both visibility classes; apps have no categories."""
+    categories = "categories:\n" + "".join(f"- id: c{i:02d}\n  title: Category {i:02d}\n" for i in range(20))
+    apps, bookmarks, records = ["links:\n"], [categories, "links:\n"], []
+    for i in range(size):
+        private = (i // 20) % 2 == 1
+        name = f"{'PRIVATE' if private else 'PUBLIC'} Entry {i:05d}"
+        common = f"- name: {name}\n  link: https://service.example/{i:05d}\n  private: {str(private).lower()}\n"
+        apps.append(common)
+        bookmarks.append(common + f"  category: c{i % 20:02d}\n")
+        records.append((name, private, i % 20))
+    (directory / "apps.yml").write_text("".join(apps))
+    (directory / "bookmarks.yml").write_text("".join(bookmarks))
+    (directory / "config.yml").write_text(
+        'Title: HTTP navigation benchmark\nLocale: en\nTheme: blackboard\n'
+        'ShowApps: true\nShowBookmarks: true\nShowSearchComponent: true\n'
+        'ShowTitle: true\nShowDateTime: false\nShowWeather: false\n'
+        'Homepage:\n  CategoryNavigation: tabs\n')
+    return records, {name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
+                     for name in ("apps.yml", "bookmarks.yml", "config.yml")}
+
+
+class Client:
+    def __init__(self, port, cookies=None):
+        self.port = port
+        self.connection = http.client.HTTPConnection("127.0.0.1", port, timeout=15)
+        self.cookies = dict(cookies or {})
+
+    def close(self):
+        self.connection.close()
+
+    def request(self, path, form=None):
+        headers = {"Cookie": "; ".join(f"{k}={v}" for k, v in self.cookies.items())}
+        body = None
+        if form is not None:
+            body = urllib.parse.urlencode(form)
+            headers.update({"Origin": f"http://127.0.0.1:{self.port}", "Content-Type": "application/x-www-form-urlencoded"})
+        started = time.perf_counter()
+        self.connection.request("POST" if form is not None else "GET", path, body, headers)
+        response = self.connection.getresponse()
+        raw = response.read()
+        elapsed = (time.perf_counter() - started) * 1000
+        for cookie in response.headers.get_all("Set-Cookie", []):
+            name, _, value = cookie.split(";", 1)[0].partition("=")
+            self.cookies[name] = value
+        return response.status, raw, elapsed
+
+    def login(self):
+        status, body, _ = self.request("/login")
+        match = re.search(rb'name="csrf-token" value="([^"]+)"', body)
+        if status != 200 or match is None:
+            raise RuntimeError("login page/CSRF failure")
+        status, _, _ = self.request("/login", {"username": "bench-admin", "password": "bench-password-2026!", "csrf-token": match[1].decode()})
+        if status != 303:
+            raise RuntimeError(f"login failed: {status}")
+
+
+def expected_cards(records, identity, kind):
+    visible = [(name, category) for name, private, category in records if identity == "authenticated" or not private]
+    if kind == "search":
+        return collections.Counter({name: 2 for name, _ in visible if "Entry 099" in name})
+    return collections.Counter(name for name, category in visible if category == 0)
+
+
+def cards(body):
+    return collections.Counter(value.decode() for value in CARD.findall(body))
+
+
+def check_response(status, body, expected):
+    if status != 200 or cards(body) != expected:
+        raise RuntimeError(f"HTTP/card mismatch: status={status}, actual_cards={sum(cards(body).values())}, expected_cards={sum(expected.values())}")
+
+
+def percentile(values, fraction):
+    ordered = sorted(values)
+    return ordered[max(0, math.ceil(len(ordered) * fraction) - 1)]
+
+
+def run_one(binary, identity, kind, args, output, label, round_number):
+    with tempfile.TemporaryDirectory(prefix="flare-navigation-http-") as temp:
+        directory = Path(temp)
+        records, hashes = fixture(directory, args.entries)
+        with socket.socket() as reservation:
+            reservation.bind(("127.0.0.1", 0))
+            port = reservation.getsockname()[1]
+        environment = {k: v for k, v in os.environ.items() if not k.startswith("FLARE_") and k not in ("GOGC", "GOMEMLIMIT")}
+        environment.update(GOMAXPROCS="4", FLARE_PORT=str(port), FLARE_USER="bench-admin",
+                           FLARE_PASS="bench-password-2026!", FLARE_DISABLE_LOGIN="false",
+                           FLARE_VISIBILITY="DEFAULT", FLARE_OFFLINE="true", FLARE_EDITOR="true")
+        logfile = (output / f"r{round_number}-{identity}-{kind}-{label}.log").open("wb")
+        process = subprocess.Popen([str(binary)], cwd=directory, env=environment, stdout=logfile, stderr=subprocess.STDOUT)
+        stop = threading.Event()
+        samples, monitor_errors, clients = [], [], []
+        monitor = None
+        result = {"label": label, "round": round_number, "identity": identity, "kind": kind,
+                  "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
+                  "fixture_sha256": hashes, "entries_per_collection": args.entries,
+                  "gomaxprocs": 4, "login_enabled": True, "path": "/?search=Entry%20099" if kind == "search" else "/bookmarks?category=c00"}
+        try:
+            for _ in range(300):
+                ready = Client(port)
+                try:
+                    status, _, _ = ready.request("/ping")
+                    if status == 200:
+                        break
+                except OSError:
+                    pass
+                finally:
+                    ready.close()
+                if process.poll() is not None:
+                    raise RuntimeError("server exited before readiness")
+                time.sleep(.1)
+            else:
+                raise RuntimeError("readiness timeout")
+            warm = Client(port)
+            clients.append(warm)
+            if identity == "authenticated":
+                warm.login()
+            expected = expected_cards(records, identity, kind)
+            if not expected:
+                raise ValueError("fixture must produce nonempty results")
+            for _ in range(20):
+                code, body, _ = warm.request(result["path"])
+                check_response(code, body, expected)
+            result.update(expected_cards=sum(expected.values()), cards_sha256=hashlib.sha256(json.dumps(sorted(expected.items())).encode()).hexdigest(), warm_response_bytes=len(body))
+            local = threading.local()
+            rows, lengths = [], collections.Counter()
+            lock = threading.Lock()
+
+            def operation(_index):
+                if not hasattr(local, "client"):
+                    local.client = Client(port, warm.cookies)
+                    with lock:
+                        clients.append(local.client)
+                status, body, milliseconds = local.client.request(result["path"])
+                check_response(status, body, expected)
+                with lock:
+                    rows.append((status, milliseconds))
+                    lengths[len(body)] += 1
+
+            def sample():
+                while not stop.wait(1):
+                    try:
+                        samples.append({"elapsed_seconds": time.monotonic() - started, **resources.process_sample(process.pid)})
+                    except Exception as error:
+                        monitor_errors.append(repr(error))
+
+            before = resources.process_sample(process.pid)
+            started = time.monotonic()
+            result["started_utc"] = resources.acceptance.utc_now()
+            monitor = threading.Thread(target=sample)
+            monitor.start()
+            rate = args.anonymous_rate if identity == "anonymous" else args.authenticated_rate
+            schedule = resources.bounded_offered_load(args.duration, rate, 4, operation)
+            after = resources.process_sample(process.pid)
+            stop.set()
+            monitor.join()
+            samples = [{"elapsed_seconds": 0, **before}, *samples, {"elapsed_seconds": time.monotonic() - started, **after}]
+            if schedule["drops"] or schedule["operation_errors"] or len(rows) != schedule["offered"] or monitor_errors:
+                raise RuntimeError(f"invalid observation window: {schedule}, monitor={monitor_errors}")
+            latencies = [row[1] for row in rows]
+            cpu = after["cpu_seconds"] - before["cpu_seconds"]
+            rss = [row["rss_kib"] for row in samples]
+            result.update(completed_utc=resources.acceptance.utc_now(), schedule=schedule,
+                          requests=len(rows), statuses=dict(collections.Counter(str(row[0]) for row in rows)),
+                          latency_ms={"p50": percentile(latencies, .5), "p95": percentile(latencies, .95), "p99": percentile(latencies, .99)},
+                          cpu_seconds=cpu, cpu_ms_per_request=cpu * 1000 / len(rows),
+                          rss_kib={"start": rss[0], "end": rss[-1], "median": statistics.median(rss), "sampled_peak": max(rss)},
+                          resource_samples=samples, response_lengths=dict(lengths),
+                          samples_ms=latencies, privacy_and_content_assertions=True)
+            if identity == "authenticated":
+                replay = Client(port, warm.cookies)
+                clients.append(replay)
+                code, body, _ = warm.request("/editor/csrf")
+                if code != 200:
+                    raise RuntimeError("CSRF fetch failed")
+                token = json.loads(body)["csrfToken"]
+                code, _, _ = warm.request("/logout", {"csrf-token": token})
+                if code != 303:
+                    raise RuntimeError("logout failed")
+                code, body, _ = replay.request(result["path"])
+                check_response(code, body, expected_cards(records, "anonymous", kind))
+                result["post_window_revoked_cookie_public_only"] = True
+        finally:
+            stop.set()
+            if monitor is not None:
+                monitor.join()
+            for client in clients:
+                client.close()
+            if process.returncode is None:
+                process.terminate()
+            # Exact native server child high-water mark; do not include ps/client children.
+            if process.returncode is None:
+                watchdog = threading.Timer(10, process.kill)
+                watchdog.start()
+                try:
+                    _, status, usage = os.wait4(process.pid, 0)
+                    process.returncode = os.waitstatus_to_exitcode(status)
+                    result["server_lifetime_peak_rss_kib"] = usage.ru_maxrss / 1024 if sys.platform == "darwin" else usage.ru_maxrss
+                finally:
+                    watchdog.cancel()
+            logfile.close()
+        return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--baseline", required=True, type=Path)
+    parser.add_argument("--candidate", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--duration", type=float, default=30)
+    parser.add_argument("--rounds", type=int, default=2)
+    parser.add_argument("--entries", type=int, default=10000)
+    parser.add_argument("--anonymous-rate", type=float, default=80)
+    parser.add_argument("--authenticated-rate", type=float, default=8)
+    args = parser.parse_args()
+    if args.duration <= 0 or args.rounds < 1 or args.entries < 10000 or min(args.anonymous_rate, args.authenticated_rate) <= 0:
+        parser.error("positive windows/rates and at least 10000 entries are required")
+    args.output = args.output.resolve()
+    args.output.mkdir(parents=True, exist_ok=False)
+    binaries = {"baseline": args.baseline.resolve(), "candidate": args.candidate.resolve()}
+    metadata = {"host": platform.platform(), "python": sys.version, "harness_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                "resource_helper_sha256": hashlib.sha256(Path(resources.__file__).read_bytes()).hexdigest(),
+                "options": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()}, "runs": []}
+    for round_number in range(1, args.rounds + 1):
+        order = ("baseline", "candidate") if round_number % 2 else ("candidate", "baseline")
+        for identity in ("anonymous", "authenticated"):
+            for kind in ("search", "category"):
+                for label in order:
+                    result = run_one(binaries[label], identity, kind, args, args.output, label, round_number)
+                    filename = f"r{round_number}-{identity}-{kind}-{label}.json"
+                    (args.output / filename).write_text(json.dumps(result, indent=2) + "\n")
+                    metadata["runs"].append(filename)
+                    (args.output / "manifest.json").write_text(json.dumps(metadata, indent=2) + "\n")
+                    print(f"{filename}: n={result['requests']} p50={result['latency_ms']['p50']:.3f}ms p95={result['latency_ms']['p95']:.3f}ms CPU={result['cpu_ms_per_request']:.3f}ms/read peakRSS={result['rss_kib']['sampled_peak']/1024:.2f}MiB", flush=True)
+
+
+if __name__ == "__main__":
+    main()

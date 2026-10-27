@@ -4,6 +4,9 @@
 基线为 `e9cadb6245cc8bc28bf5cda06a55cf5af79dd00f`；候选实现摘要见
 [source-manifest.json](source-manifest.json)。本报告只描述渲染旁路，不代表全站延迟或 RSS。
 
+完整 HTTP 延迟、CPU 与 RSS 的后续对照见 [http-report.md](http-report.md)；
+其中已登录分类尾延迟与 RSS 未表现出一致改善。
+
 ## 改动与安全边界
 
 页面搜索和分类路径不再先 `NavigationView.Copy()` 克隆全部条目。渲染器从已授权、

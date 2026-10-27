@@ -41,3 +41,37 @@ python3 tools/security-load/transaction_counts.py --binary /tmp/flare-count.test
 The controlled sequence checks authenticated/anonymous GET and HEAD across offline home/search, applications, bookmarks, category and missing-category responses; snapshots counters around whole HTTP requests and verifies status/body/authorization. Login, logout and revoked-cookie replay are separate recorded sequences. Its added `Stat` accounting and counter overhead are diagnostic only. See [transaction I/O acceptance](../../docs/requirements/transaction-io-optimization.md).
 
 The overlay generator rejects the tool's own repository root and any target containing a `.git` file or directory before writing. Use a plain archive/copy rather than a checkout or worktree.
+
+## Matched native HTTP search/category comparison
+
+`navigation_http.py` compares two immutable production binaries with login enabled
+in both. It uses fresh disposable directories, 10,000 applications plus 10,000
+bookmarks, 20 mixed-visibility categories, and actual anonymous/authenticated
+cookies. It never uses the older harness's trusted/no-login baseline mode.
+
+```sh
+python3 tools/security-load/navigation_http.py \
+  --baseline /absolute/path/to/baseline-flare \
+  --candidate /absolute/path/to/candidate-flare \
+  --output /tmp/flare-navigation-http-new \
+  --duration 30 --rounds 2 --anonymous-rate 20 --authenticated-rate 4
+```
+
+The output directory must not exist. Each scenario starts a fresh server, warms
+20 reads, then runs a fixed-rate bounded workload with four in-flight slots and
+no waiting queue. Versions run sequentially and exchange order in the second
+round. Every response checks exact rendered card membership, including private
+content. Authenticated runs additionally check logout and old-cookie replay
+outside timing. Any drop, operation error or sampler failure rejects the window;
+exclude it and recalibrate both versions at the same rate rather than comparing
+different completion counts.
+
+Latency covers the complete HTTP GET through reading the body over loopback with
+per-worker keep-alive connections. CPU uses the native server's cumulative
+`ps time` delta (10 ms precision on the measured macOS host); it excludes client
+CPU. RSS is sampled every second; a separate `wait4` high-water mark covers only
+the native server child over its whole lifetime, including startup/login/probes.
+Neither RSS metric is equivalent to live Go heap size. These short steady-load
+comparisons are not the 180-second or 1,800-second scale acceptance above.
+The PR #210 report is at
+[complete HTTP comparison](../../metrics-reports/navigation-read-index-2026-10-27/http-report.md).
