@@ -1,0 +1,112 @@
+name: "Go Report Card Badge"
+description: "Grade a Go project with Go Report Card, generate a self-contained SVG badge, and optionally commit it back to the repo."
+author: "goreportcard"
+branding:
+  icon: "award"
+  color: "blue"
+
+inputs:
+  directory:
+    description: "Root directory of the Go project to grade."
+    required: false
+    default: "."
+  output:
+    description: "Path (relative to the repository) where the SVG badge will be written."
+    required: false
+    default: ".github/goreportcard.svg"
+  report:
+    description: "Whether to also generate a Markdown quality report."
+    required: false
+    default: "true"
+  report_output:
+    description: "Path (relative to the repository) where the Markdown report will be written."
+    required: false
+    default: ".github/goreportcard-report.md"
+  threshold:
+    description: "Minimum grade percentage (0-100). If the score is below this value the action fails. Set to 0 to never fail."
+    required: false
+    default: "0"
+  commit:
+    description: "Whether to commit the generated SVG back into the repository."
+    required: false
+    default: "true"
+  commit_message:
+    description: "Commit message used when committing the badge."
+    required: false
+    default: "chore: update Go Report Card badge [skip ci]"
+  commit_user_name:
+    description: "Git user.name used for the commit."
+    required: false
+    default: "github-actions[bot]"
+  commit_user_email:
+    description: "Git user.email used for the commit."
+    required: false
+    default: "github-actions[bot]@users.noreply.github.com"
+  version:
+    description: "Pinned pre-built report release; source builds are disabled."
+    required: true
+
+outputs:
+  grade:
+    description: "The overall letter grade (e.g. A+)."
+    value: ${{ steps.grade.outputs.grade }}
+  score:
+    description: "The overall score percentage."
+    value: ${{ steps.grade.outputs.score }}
+  badge:
+    description: "Path to the generated SVG badge."
+    value: ${{ steps.grade.outputs.badge }}
+  report:
+    description: "Path to the generated Markdown report (empty when report is disabled)."
+    value: ${{ steps.grade.outputs.report }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install goreportcard-cli and its linters
+      shell: bash
+      run: |
+        set -euo pipefail
+        # ${{ github.action_path }} points at the checked-out copy of this action.
+        python3 "${GITHUB_ACTION_PATH}/../../scripts/install-report-tool.py" goreportcard "${INPUT_VERSION}" "${RUNNER_TEMP}/goreportcard-bin"
+        echo "${RUNNER_TEMP}/goreportcard-bin" >> "${GITHUB_PATH}"
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+        INPUT_VERSION: ${{ inputs.version }}
+        GOREPORTCARD_REPO: ${{ github.action_repository }}
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Generate report card badge
+      id: grade
+      shell: bash
+      run: |
+        set -euo pipefail
+        bash "${GITHUB_ACTION_PATH}/scripts/generate-badge.sh"
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+        INPUT_DIRECTORY: ${{ inputs.directory }}
+        INPUT_OUTPUT: ${{ inputs.output }}
+        INPUT_THRESHOLD: ${{ inputs.threshold }}
+        INPUT_REPORT: ${{ inputs.report }}
+        INPUT_REPORT_OUTPUT: ${{ inputs.report_output }}
+
+    - name: Commit badge
+      if: ${{ inputs.commit == 'true' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        bash "${GITHUB_ACTION_PATH}/scripts/commit-badge.sh"
+      env:
+        INPUT_OUTPUT: ${{ inputs.output }}
+        INPUT_REPORT: ${{ inputs.report }}
+        INPUT_REPORT_OUTPUT: ${{ inputs.report_output }}
+        INPUT_COMMIT_MESSAGE: ${{ inputs.commit_message }}
+        INPUT_COMMIT_USER_NAME: ${{ inputs.commit_user_name }}
+        INPUT_COMMIT_USER_EMAIL: ${{ inputs.commit_user_email }}
+
+    - name: Enforce threshold
+      if: ${{ steps.grade.outputs.below_threshold == 'true' }}
+      shell: bash
+      run: |
+        echo "::error::Go Report Card score ${{ steps.grade.outputs.score }}% is below the required threshold of ${{ inputs.threshold }}%."
+        exit 1
