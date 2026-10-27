@@ -78,7 +78,7 @@ class ArchiveTests(unittest.TestCase):
 
     def create_candidates(self, directory):
         for target, (goos, arch, arm) in preflight.TARGET_MAP.items():
-            binary = f'binary-{target}'.encode()
+            binary = f'binary-{target} {self.commit} {self.version}'.encode()
             archive = directory / f'flare_{self.version}_{target}.tar.gz'
             archive.write_bytes(tar_bytes([('flare', binary, 0o755),
                                           ('LICENSE', b'license', 0o644),
@@ -96,13 +96,13 @@ class ArchiveTests(unittest.TestCase):
             directory = Path(directory)
             self.create_candidates(directory)
             preflight.collect_archives(directory, self.version, self.commit)
-            self.assertEqual((directory / 'linux_amd64/flare').read_bytes(), b'binary-linux_amd64')
+            self.assertEqual((directory / 'linux_amd64/flare').read_bytes(), f'binary-linux_amd64 {self.commit} {self.version}'.encode())
             self.assertTrue((directory / 'linux_amd64/flare').stat().st_mode & 0o111)
             self.assertEqual(len(json.loads((directory / 'archives-verification.json').read_text())['archives']), 7)
             self.assertEqual(len((directory / f'flare_{self.version}_checksums.txt').read_text().splitlines()), 7)
 
     def test_moved_source_missing_target_and_corrupted_archive_fail_closed(self):
-        for problem in ('commit', 'missing', 'archive', 'binary', 'platform'):
+        for problem in ('commit', 'missing', 'archive', 'binary', 'metadata', 'platform'):
             with self.subTest(problem=problem), tempfile.TemporaryDirectory() as directory:
                 directory = Path(directory)
                 self.create_candidates(directory)
@@ -110,6 +110,12 @@ class ArchiveTests(unittest.TestCase):
                 data = json.loads(evidence.read_text())
                 if problem == 'commit':
                     data['commit'] = 'b' * 40
+                elif problem == 'metadata':
+                    archive = directory / data['archives'][0]['archive']
+                    binary = b'missing embedded version and commit'
+                    archive.write_bytes(tar_bytes([('flare', binary, 0o755), ('LICENSE', b'license', 0o644), ('README.md', b'readme', 0o644)]))
+                    data['archives'][0]['sha256'] = preflight.sha(archive)
+                    data['archives'][0]['binary_sha256'] = hashlib.sha256(binary).hexdigest()
                 elif problem == 'binary':
                     data['archives'][0]['binary_sha256'] = '0' * 64
                 elif problem == 'platform':

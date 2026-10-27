@@ -84,10 +84,10 @@ def verify_archive(archive, entry, version, commit):
             raise RuntimeError(f'{target}: archived binary mismatch')
     info = entry['build_info']
     goos, arch, arm = TARGET_MAP[target]
-    expected = [f'GOOS={goos}', f'GOARCH={arch}', 'CGO_ENABLED=0', commit, version]
+    expected = [f'GOOS={goos}', f'GOARCH={arch}', 'CGO_ENABLED=0']
     if arm:
         expected.append(f'GOARM={arm}')
-    if not all(value in info for value in expected):
+    if not all(value in info for value in expected) or not all(value.encode() in binary for value in (commit, version)):
         raise RuntimeError(f'{target}: missing/wrong build metadata')
     return binary
 
