@@ -117,13 +117,24 @@ a general trusted-proxy feature or a two-address network-switching configuration
 Since 0.6.5, encoded redirects carry validated relative source context so path
 placeholders continue to refer to the originating navigation page.
 
-Per-entry `private` values are preserved for data compatibility; they do not
-implement a per-entry access-control list. Use whole-site authentication for
-private navigation, and never rely on a stored flag, link encoding, tabs or hidden
-buttons to protect individual links on a public homepage.
+On the phase-one development branch, `private: true` on an item or bookmark
+category restricts it to the single authenticated administrator. A category's
+restriction cannot be relaxed by an item with `private: false`. Missing/false
+fields retain their existing meaning; the files remain the source of truth.
+Login-disabled trusted deployments cannot contain private resources. See the
+[upgrade and rollback guide](login-private-upgrade.md) before upgrading: released
+0.6.7 does not enforce these per-entry/category rules.
 
 
 Deprecated boolean alias resolution (`--nologin` and `--mr`) was repaired in
 0.6.5. Both spellings now use normal last-occurrence precedence. Prefer canonical
 `--disable_login` and `--mini_request`; do not assume legacy spellings enforce
 access settings when running 0.6.4.
+
+## Phase-one development branch
+
+The runtime table above documents the legacy configuration baseline. New installation
+safety defaults, persistent account/session state, password-source handling, and the
+extra security-directory mount are described in the [upgrade guide](login-private-upgrade.md).
+Normal existing deployments keep their YAML and access settings; the new startup
+gate prevents invalid/private-plus-anonymous configurations from becoming public.

@@ -10,6 +10,7 @@ type Application struct {
 	Clock                   *ClockOptions    `yaml:"Clock,omitempty"`
 	Title                   string           `yaml:"Title"`
 	Footer                  string           `yaml:"Footer"`
+	LoginFooter             string           `yaml:"LoginFooter,omitempty"`
 	OpenAppNewTab           bool             `yaml:"OpenAppNewTab"`
 	OpenBookmarkNewTab      bool             `yaml:"OpenBookmarkNewTab"`
 	ShowTitle               bool             `yaml:"ShowTitle"`

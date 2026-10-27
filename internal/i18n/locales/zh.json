@@ -452,5 +452,16 @@
   "transfer.invalid_collection": "无效的数据类型",
   "transfer.unknown_error": "操作失败，请检查文件和选项，或查看服务日志。",
   "editor.write_source_rejected": "保存请求未通过来源校验。请从当前 Flare 页面重试；使用反向代理时，请保留原始 Host 请求头及外部端口。关闭登录不会关闭来源校验。",
-  "editor.unexpected_save_response": "保存响应格式异常（HTTP {status}），请检查服务端或反向代理配置。"
+  "editor.unexpected_save_response": "保存响应格式异常（HTTP {status}），请检查服务端或反向代理配置。",
+  "privacy.private": "私有",
+  "privacy.inherited": "继承私有分类",
+  "privacy.admin_only": "仅管理员",
+  "privacy.public_hint": "保存后匿名可见",
+  "privacy.save_confirm": "确认保存可见性设置？公开内容匿名可见。",
+  "privacy.import_default": "开启登录时默认私有导入。",
+  "privacy.import_public": "公开导入（确认匿名可见）",
+  "privacy.export_confirm": "导出可能包含私有内容；HTML 丢失权限。",
+  "privacy.new_public_count": "新增匿名可见条目：{0}",
+  "privacy.trusted_import": "可信免登录模式：保存后匿名可读写。",
+  "privacy.verify_retry": "在新标签页验证密码，返回后重新提交（不会自动保存）"
 }

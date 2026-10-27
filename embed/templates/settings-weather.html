@@ -2,7 +2,7 @@
 <div class="setting-group-container weather-settings">
 <header class="weather-heading"><h2>{{ T .Locale "settings_weather" }}</h2><p>{{ T .Locale "weather_intro" }}</p></header>
 {{ if .SaveFailed }}<p class="weather-notice" role="alert">{{ T .Locale "weather_save_failed" }}</p>{{ end }}
-<form id="weather-form" method="POST" action="{{ .SettingPages.Weather.Path }}" data-detect-failed="{{ T .Locale "weather_detect_failed" }}" data-loading="{{ T .Locale "weather_loading" }}" data-choose="{{ T .Locale "weather_choose" }}" data-empty="{{ T .Locale "weather_empty" }}" data-failed="{{ T .Locale "weather_search_failed" }}">
+<form id="weather-form" method="POST" action="{{ .SettingPages.Weather.Path }}" data-detect-failed="{{ T .Locale "weather_detect_failed" }}" data-loading="{{ T .Locale "weather_loading" }}" data-choose="{{ T .Locale "weather_choose" }}" data-empty="{{ T .Locale "weather_empty" }}" data-failed="{{ T .Locale "weather_search_failed" }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
 <fieldset class="weather-fields" {{ if .Offline }}disabled{{ end }}>
 <section class="weather-card weather-enable form-group">
 <div><label for="show-weather-component">{{ T .Locale "enable_weather" }}</label><p class="weather-muted">{{ T .Locale "weather_enable_description" }}</p></div>
@@ -25,7 +25,7 @@
 <noscript><p class="weather-notice">{{ T .Locale "weather_needs_js" }}</p></noscript>
 <script src="/settings/weather/picker.js" defer></script>
 {{ if .ShowWeatherModule }}
-<section class="weather-card weather-test"><div class="weather-test-heading"><div><h3>{{ T .Locale "weather_connection" }}</h3><p class="weather-muted">{{ T .Locale "weather_test_description" }}</p></div><form method="POST" action="{{ .SettingPagesAPI.WeatherTest.Path }}"><input class="btn-submit" type="submit" value="{{ T .Locale "weather_test_button" }}"></form></div>
+<section class="weather-card weather-test"><div class="weather-test-heading"><div><h3>{{ T .Locale "weather_connection" }}</h3><p class="weather-muted">{{ T .Locale "weather_test_description" }}</p></div><form method="POST" action="{{ .SettingPagesAPI.WeatherTest.Path }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}<input class="btn-submit" type="submit" value="{{ T .Locale "weather_test_button" }}"></form></div>
 {{ if .WeatherTest }}<div id="weather-test-result" class="weather-observation" role="status"><div class="weather-temperature">{{ .WeatherTest.Degree }}<span>°C</span></div><div class="weather-observation-details"><strong>{{ .WeatherTest.ConditionText }}</strong><span>{{ T .Locale "weather_humidity" }} {{ .WeatherTest.Humidity }}%</span><small>{{ .Location }} · {{ .WeatherTestTime }}</small></div></div>{{ else }}{{ if .TestResult }}<p class="weather-notice" role="status">{{ .TestResult }}</p>{{ end }}{{ end }}
 </section>
 {{ end }}{{ end }}

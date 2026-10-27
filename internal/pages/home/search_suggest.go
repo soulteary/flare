@@ -90,7 +90,7 @@ func pageSearchSuggestions(c fiber.Ctx) error {
 		r.TLS = &tls.ConnectionState{}
 	}
 	info := fn.ParseRequestURLTo(&r)
-	matches, err := collectSearchSuggestions(options, query, &info)
+	matches, err := collectSearchSuggestionsFor(options, query, &info, auth.CheckUserIsLogin(c))
 	if err != nil {
 		return c.SendStatus(http.StatusInternalServerError)
 	}
@@ -98,7 +98,11 @@ func pageSearchSuggestions(c fiber.Ctx) error {
 }
 
 func collectSearchSuggestions(options model.Application, query string, info *fn.DynamicURL) ([]searchSuggestion, error) {
-	matches, err := data.SearchNavigationMatches(query, options.ShowApps, options.ShowBookmarks, 8, func(link string) string { return fn.ParseDynamicUrlWith(link, info) }, safeSuggestionURL)
+	return collectSearchSuggestionsFor(options, query, info, false)
+}
+
+func collectSearchSuggestionsFor(options model.Application, query string, info *fn.DynamicURL, administrator bool) ([]searchSuggestion, error) {
+	matches, err := data.SearchNavigationMatchesFor(query, options.ShowApps, options.ShowBookmarks, 8, func(link string) string { return fn.ParseDynamicUrlWith(link, info) }, safeSuggestionURL, administrator)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +110,7 @@ func collectSearchSuggestions(options model.Application, query string, info *fn.
 	for _, match := range matches {
 		link := match.URL
 		if options.EnableEncryptedLink || strings.HasPrefix(link, "chrome-extension://") {
-			link = fn.EncodedNavigationURL(link, info)
+			link = navigationHref(link, true, info)
 		}
 		newTab := options.OpenBookmarkNewTab
 		if match.IsApp {

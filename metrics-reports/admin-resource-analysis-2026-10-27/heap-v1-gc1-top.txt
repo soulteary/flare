@@ -1,0 +1,26 @@
+File: flare-resource-profile-after.test
+Type: inuse_space
+Time: 2026-10-27 10:45:22 CST
+Showing nodes accounting for 28590.21kB, 100% of 28590.21kB total
+Showing top 20 nodes out of 118
+      flat  flat%   sum%        cum   cum%
+10621.21kB 37.15% 37.15% 10621.21kB 37.15%  github.com/valyala/bytebufferpool.(*ByteBuffer).Write (partial-inline)
+ 5310.61kB 18.57% 55.72%  5310.61kB 18.57%  bytes.growSlice
+ 2564.05kB  8.97% 64.69%  2564.05kB  8.97%  runtime.mallocgc
+ 2131.55kB  7.46% 72.15%  2131.55kB  7.46%  os.readFileContents
+ 2071.14kB  7.24% 79.39%  2071.14kB  7.24%  reflect.unsafe_NewArray
+ 2048.05kB  7.16% 86.56%  2048.05kB  7.16%  go.yaml.in/yaml/v3.(*parser).scalar
+ 1242.04kB  4.34% 90.90%  1242.04kB  4.34%  github.com/soulteary/flare/config/data.FilterNavigation
+ 1064.52kB  3.72% 94.62%  1064.52kB  3.72%  github.com/soulteary/flare/internal/resources/mdi.map.init.0
+     513kB  1.79% 96.42%      513kB  1.79%  regexp.onePassCopy
+  512.02kB  1.79% 98.21%   512.02kB  1.79%  github.com/valyala/fasthttp.newCompressWriterPoolMap
+  512.02kB  1.79%   100%   512.02kB  1.79%  text/template/parse.(*Tree).newField
+         0     0%   100%  5310.61kB 18.57%  bytes.(*Buffer).Write
+         0     0%   100%  5310.61kB 18.57%  bytes.(*Buffer).WriteTo
+         0     0%   100%  5310.61kB 18.57%  bytes.(*Buffer).grow
+         0     0%   100%  5310.61kB 18.57%  fmt.Fprint
+         0     0%   100% 23424.59kB 81.93%  github.com/gofiber/fiber/v3.(*App).defaultRequestHandler
+         0     0%   100% 23424.59kB 81.93%  github.com/gofiber/fiber/v3.(*App).next
+         0     0%   100% 23424.59kB 81.93%  github.com/gofiber/fiber/v3.(*DefaultCtx).Next
+         0     0%   100% 15931.82kB 55.72%  github.com/gofiber/fiber/v3.(*DefaultRes).Render
+         0     0%   100% 10621.21kB 37.15%  github.com/gofiber/fiber/v3.(*DefaultRes).Render-range1 (inline)

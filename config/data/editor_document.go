@@ -13,7 +13,6 @@ import (
 
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/yamlutil"
-	"go.yaml.in/yaml/v3"
 )
 
 // EditorDocument retains category IDs and private flags across every editor view.
@@ -87,10 +86,10 @@ func editorSnapshotLocked() (EditorDocument, [2][]byte, error) {
 		raw[i] = b
 	}
 	var apps, bookmarks model.Bookmarks
-	if err := yamlutil.UnmarshalStrict(raw[0], &apps); err != nil {
+	if err := yamlutil.DecodeBookmarks(raw[0], &apps, true); err != nil {
 		return doc, raw, err
 	}
-	if err := yamlutil.UnmarshalStrict(raw[1], &bookmarks); err != nil {
+	if err := yamlutil.DecodeBookmarks(raw[1], &bookmarks, false); err != nil {
 		return doc, raw, err
 	}
 	doc = EditorDocument{Version: editorVersion(raw[0], raw[1]), Categories: bookmarks.Categories, Apps: apps.Items, Bookmarks: bookmarks.Items}
@@ -129,11 +128,24 @@ func ValidateEditorDocument(doc EditorDocument) error {
 // either destination. This is not a cross-file filesystem transaction. A process
 // crash can leave a partial replacement; recovery copies are retained on failure.
 func CommitEditorDocument(next EditorDocument) (EditorDocument, error) {
+	return CommitEditorDocumentChecked(next, nil)
+}
+
+// CommitEditorDocumentChecked rechecks session authorization under the writer lock.
+func CommitEditorDocumentChecked(next EditorDocument, check func() error) (EditorDocument, error) {
 	bookmarkMu.Lock()
 	defer bookmarkMu.Unlock()
-	return commitEditorDocument(next, os.Rename)
+	if check != nil {
+		if err := check(); err != nil {
+			return EditorDocument{}, err
+		}
+	}
+	return commitEditorDocumentChecked(next, os.Rename, check)
 }
 func commitEditorDocument(next EditorDocument, rename func(string, string) error) (EditorDocument, error) {
+	return commitEditorDocumentChecked(next, rename, nil)
+}
+func commitEditorDocumentChecked(next EditorDocument, rename func(string, string) error, check func() error) (EditorDocument, error) {
 	if err := ValidateEditorDocument(next); err != nil {
 		return EditorDocument{}, err
 	}
@@ -155,6 +167,12 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	if err != nil {
 		return EditorDocument{}, err
 	}
+	for i, name := range []string{"apps", "bookmarks"} {
+		var target model.Bookmarks
+		if decodeErr := yamlutil.DecodeBookmarks(output[i], &target, name == "apps"); decodeErr != nil {
+			return EditorDocument{}, decodeErr
+		}
+	}
 	files := []*stagedFile{
 		{name: "apps", original: raw[0], next: output[0]},
 		{name: "bookmarks", original: raw[1], next: output[1]},
@@ -167,16 +185,21 @@ func commitEditorDocument(next EditorDocument, rename func(string, string) error
 	}
 	// Disk versions are checked again after staging, so edits during preparation
 	// cannot silently replace an already changed configuration.
-	check, _, err := editorSnapshotLocked()
+	latest, _, err := editorSnapshotLocked()
 	if err != nil {
 		return EditorDocument{}, err
 	}
-	if check.Version != next.Version {
+	if latest.Version != next.Version {
 		return EditorDocument{}, ErrBookmarkConflict
 	}
 	recovery, err := prepareEditorRecovery(files)
 	if err != nil {
 		return EditorDocument{}, err
+	}
+	if check != nil {
+		if err = check(); err != nil {
+			return EditorDocument{}, err
+		}
 	}
 	if err = replaceEditorFiles(files, recovery, rename); err != nil {
 		return EditorDocument{}, err
@@ -259,6 +282,9 @@ func stageEditorFile(file *stagedFile) error {
 		return fmt.Errorf("配置目标不是普通文件：%s", file.name)
 	}
 	file.mode = info.Mode().Perm()
+	if file.mode&0222 == 0 {
+		return fmt.Errorf("%w: %s", ErrBookmarkReadOnly, file.name)
+	}
 	f, stageErr := os.CreateTemp(filepath.Dir(file.path), ".flare-editor-stage-*")
 	if stageErr != nil {
 		return stageErr
@@ -333,11 +359,11 @@ func replaceEditorFiles(files []*stagedFile, recovery string, rename func(string
 func encodeEditorFiles(next EditorDocument, raw [2][]byte, appsUnchanged, bookmarksUnchanged bool) ([2][]byte, error) {
 	output := [2][]byte{}
 	var err error
-	output[0], err = yaml.Marshal(model.Bookmarks{Items: next.Apps})
+	output[0], err = yamlutil.MergeBookmarks(raw[0], model.Bookmarks{Items: next.Apps})
 	if err != nil {
 		return output, err
 	}
-	output[1], err = yaml.Marshal(model.Bookmarks{Categories: next.Categories, Items: next.Bookmarks})
+	output[1], err = yamlutil.MergeBookmarks(raw[1], model.Bookmarks{Categories: next.Categories, Items: next.Bookmarks})
 	if err != nil {
 		return output, err
 	}

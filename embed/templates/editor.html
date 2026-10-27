@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{HTMLLang .Locale}}" data-editor-asset-version="{{.EditorAssetVersion}}">
-<head>
+<head><meta name="csrf-token" content="{{.CSRFToken}}"><meta name="trusted-mode" content="{{.TrustedMode}}">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{{T .Locale "editor.manage_navigation_flare"}}</title>
 <link rel="stylesheet" href="/assets/editor-ui/editor.css?v={{.EditorAssetVersion}}">

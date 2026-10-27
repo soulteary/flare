@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/formvalue"
 	"github.com/soulteary/flare/internal/i18n"
+	"github.com/soulteary/flare/internal/security"
 )
 
 const (
@@ -44,7 +46,10 @@ func RequestHandleSessionName(cookieName string, port int) string {
 	return fmt.Sprintf("%s_%d", cookieName, port)
 }
 
-func RequestHandle(app *fiber.App) error {
+func RequestHandle(app *fiber.App, stores ...*security.Store) error {
+	if len(stores) > 0 {
+		return RequestHandleWithSecurity(app, stores[0])
+	}
 	if !define.AppFlags.DisableLoginMode {
 		secret, err := initializeCookieSecret(define.AppFlags.CookieSecret)
 		if err != nil {
@@ -90,6 +95,24 @@ func getSession(c fiber.Ctx) (*sessionState, error) {
 }
 
 func AuthRequired(c fiber.Ctx) error {
+	if a := persistent(c); a != nil {
+		if define.AppFlags.DisableLoginMode {
+			if unsafeMethod(c.Method()) && !a.validCSRF(c) {
+				return securityResponse(c, 403, "CSRF_INVALID")
+			}
+			return c.Next()
+		}
+		if _, err := a.session(c, false); err != nil {
+			if errors.Is(err, security.ErrInvalidSession) && strings.Contains(c.Get("Accept"), "text/html") && c.Method() == http.MethodGet {
+				return c.Redirect().Status(302).To("/login?return_to=" + url.QueryEscape(c.OriginalURL()))
+			}
+			return securityError(c, err)
+		}
+		if unsafeMethod(c.Method()) && !a.validCSRF(c) {
+			return securityResponse(c, 403, "CSRF_INVALID")
+		}
+		return c.Next()
+	}
 	if !define.AppFlags.DisableLoginMode {
 		state, err := getSession(c)
 		if err != nil || state.session.Values[SESSION_KEY_USER_NAME] == nil {
@@ -100,6 +123,16 @@ func AuthRequired(c fiber.Ctx) error {
 }
 
 func CheckUserIsLogin(c fiber.Ctx) bool {
+	if guarded, ok := c.Locals(authorizedWriteKey{}).(bool); ok && guarded {
+		return true
+	}
+	if a := persistent(c); a != nil {
+		if define.AppFlags.DisableLoginMode {
+			return true
+		}
+		_, err := a.session(c, false)
+		return err == nil
+	}
 	if define.AppFlags.DisableLoginMode {
 		return true
 	}
@@ -108,6 +141,15 @@ func CheckUserIsLogin(c fiber.Ctx) bool {
 }
 
 func GetUserName(c fiber.Ctx) string {
+	if a := persistent(c); a != nil {
+		if define.AppFlags.DisableLoginMode {
+			return ""
+		}
+		if _, err := a.session(c, false); err == nil {
+			return a.identity(c).username
+		}
+		return ""
+	}
 	if !define.AppFlags.DisableLoginMode {
 		if state, err := getSession(c); err == nil {
 			if value, ok := state.session.Values[SESSION_KEY_USER_NAME].(string); ok {
@@ -119,6 +161,12 @@ func GetUserName(c fiber.Ctx) string {
 }
 
 func GetUserLoginDate(c fiber.Ctx) string {
+	if a := persistent(c); a != nil {
+		if s, err := a.session(c, false); err == nil {
+			return s.CreatedAt.Format(time.RFC3339)
+		}
+		return ""
+	}
 	if !define.AppFlags.DisableLoginMode {
 		if state, err := getSession(c); err == nil {
 			if value, ok := state.session.Values[SESSION_KEY_LOGIN_DATE].(string); ok {

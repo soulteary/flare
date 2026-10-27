@@ -90,7 +90,7 @@ func assertNavigationDOM(t *testing.T, doc *htmlparse.Node, encoded bool, name, 
 				} else {
 					require.Contains(t, textContent(node), name)
 					if encoded {
-						require.True(t, strings.HasPrefix(attrs["href"], "/redir/url?go="))
+						require.True(t, strings.HasPrefix(attrs["href"], "/redir/url?id="))
 					} else {
 						require.Equal(t, address, attrs["href"])
 					}

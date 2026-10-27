@@ -1,0 +1,198 @@
+{
+  "started_utc": "2026-10-27T00:51:40Z",
+  "host": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+  "fixture": {
+    "resources": 20000,
+    "private": 10000,
+    "categories": 100,
+    "sha256": "9537f2d51a70b2944ccbe6945eabdef698d6900326e2ee4d0c444d14c310214b"
+  },
+  "binary_sha256": "b0ffcb369d3f5f149baa46ced5d4ee37c9a1476a89c4ed7b4a61e02d12b072cf",
+  "harness_sha256": "c8d8dd9f3f19526fe4054f161aa502ef3714453a33314d0f78ed6953d7c90f46",
+  "startup_seconds": 0.3262514170492068,
+  "cold_home_ms": 87.10904198233038,
+  "pressure_started_utc": "2026-10-27T00:51:40Z",
+  "pressure_completed_utc": "2026-10-27T00:52:41Z",
+  "duration_seconds": 60,
+  "actual_pressure_elapsed_seconds": 60.710699292016216,
+  "login": {
+    "requests": 261,
+    "statuses": {
+      "303": 261
+    },
+    "p50_ms": 433.733084006235,
+    "p95_ms": 551.9375839503482,
+    "qps": 4.29904285981238
+  },
+  "accepted_login": {
+    "requests": 261,
+    "statuses": {
+      "303": 261
+    },
+    "p50_ms": 433.733084006235,
+    "p95_ms": 551.9375839503482
+  },
+  "home_probes": {
+    "requests": 27,
+    "statuses": {
+      "200": 27
+    },
+    "p50_ms": 214.86491698306054,
+    "p95_ms": 549.7132090386003
+  },
+  "kernel_children_peak_rss_kib": 163856.0,
+  "resource_samples": [
+    {
+      "t": 2.0350924590602517,
+      "rss_kib": 163232,
+      "cpu_percent": 21.1
+    },
+    {
+      "t": 4.0448880000039935,
+      "rss_kib": 163344,
+      "cpu_percent": 15.6
+    },
+    {
+      "t": 6.0541903340490535,
+      "rss_kib": 163488,
+      "cpu_percent": 22.6
+    },
+    {
+      "t": 8.066140584065579,
+      "rss_kib": 163504,
+      "cpu_percent": 15.5
+    },
+    {
+      "t": 10.07613029202912,
+      "rss_kib": 163504,
+      "cpu_percent": 18.5
+    },
+    {
+      "t": 12.082825209014118,
+      "rss_kib": 163616,
+      "cpu_percent": 18.6
+    },
+    {
+      "t": 14.09990520903375,
+      "rss_kib": 163792,
+      "cpu_percent": 17.2
+    },
+    {
+      "t": 16.10822754201945,
+      "rss_kib": 163792,
+      "cpu_percent": 18.5
+    },
+    {
+      "t": 18.12018295901362,
+      "rss_kib": 163792,
+      "cpu_percent": 25.4
+    },
+    {
+      "t": 20.133876375039108,
+      "rss_kib": 163792,
+      "cpu_percent": 15.6
+    },
+    {
+      "t": 22.143815834075212,
+      "rss_kib": 163840,
+      "cpu_percent": 19.3
+    },
+    {
+      "t": 24.150531334104016,
+      "rss_kib": 163856,
+      "cpu_percent": 9.9
+    },
+    {
+      "t": 26.162955542095006,
+      "rss_kib": 163856,
+      "cpu_percent": 16.2
+    },
+    {
+      "t": 28.17596887506079,
+      "rss_kib": 156000,
+      "cpu_percent": 15.2
+    },
+    {
+      "t": 30.184610292082652,
+      "rss_kib": 142848,
+      "cpu_percent": 18.1
+    },
+    {
+      "t": 32.19378700002562,
+      "rss_kib": 129712,
+      "cpu_percent": 29.4
+    },
+    {
+      "t": 34.20078237506095,
+      "rss_kib": 130032,
+      "cpu_percent": 18.3
+    },
+    {
+      "t": 36.20948004210368,
+      "rss_kib": 130032,
+      "cpu_percent": 20.7
+    },
+    {
+      "t": 38.21625108399894,
+      "rss_kib": 130048,
+      "cpu_percent": 11.9
+    },
+    {
+      "t": 40.226420250022784,
+      "rss_kib": 130688,
+      "cpu_percent": 14.5
+    },
+    {
+      "t": 42.23613087506965,
+      "rss_kib": 130736,
+      "cpu_percent": 17.3
+    },
+    {
+      "t": 44.253865000093356,
+      "rss_kib": 131136,
+      "cpu_percent": 13.6
+    },
+    {
+      "t": 46.260647167102434,
+      "rss_kib": 131168,
+      "cpu_percent": 18.1
+    },
+    {
+      "t": 48.270059875096194,
+      "rss_kib": 131328,
+      "cpu_percent": 22.3
+    },
+    {
+      "t": 50.27924162510317,
+      "rss_kib": 131328,
+      "cpu_percent": 24.6
+    },
+    {
+      "t": 52.2887401250191,
+      "rss_kib": 131488,
+      "cpu_percent": 19.2
+    },
+    {
+      "t": 54.300341584021226,
+      "rss_kib": 131504,
+      "cpu_percent": 12.5
+    },
+    {
+      "t": 56.30895179207437,
+      "rss_kib": 131504,
+      "cpu_percent": 2.0
+    },
+    {
+      "t": 58.31870100006927,
+      "rss_kib": 131600,
+      "cpu_percent": 18.1
+    },
+    {
+      "t": 60.33078920899425,
+      "rss_kib": 131696,
+      "cpu_percent": 17.7
+    }
+  ],
+  "peak_rss_kib": 163856,
+  "completed_utc": "2026-10-27T00:52:41Z"
+}

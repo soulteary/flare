@@ -1,0 +1,28 @@
+File: flare-resource-profile-before.test
+Type: cpu
+Time: 2026-10-27 10:35:37 CST
+Duration: 183.05s, Total samples = 20.11s (10.99%)
+Showing nodes accounting for 17.64s, 87.72% of 20.11s total
+Dropped 304 nodes (cum <= 0.10s)
+Showing top 20 nodes out of 177
+      flat  flat%   sum%        cum   cum%
+     3.97s 19.74% 19.74%      3.97s 19.74%  runtime.madvise
+     3.50s 17.40% 37.15%      3.50s 17.40%  syscall.rawsyscalln
+     1.56s  7.76% 44.90%      1.56s  7.76%  runtime.pthread_cond_signal
+     1.31s  6.51% 51.42%      1.47s  7.31%  internal/stringslite.Index
+     1.26s  6.27% 57.68%      1.26s  6.27%  runtime.pthread_cond_wait
+     0.95s  4.72% 62.41%      1.91s  9.50%  golang.org/x/crypto/argon2.processBlockGeneric
+     0.94s  4.67% 67.08%      0.95s  4.72%  golang.org/x/crypto/argon2.blamkaGeneric
+     0.55s  2.73% 69.82%      0.55s  2.73%  runtime.pthread_kill
+     0.51s  2.54% 72.35%      0.62s  3.08%  runtime.tryDeferToSpanScan
+     0.47s  2.34% 74.69%      0.47s  2.34%  runtime.usleep
+     0.44s  2.19% 76.88%      0.61s  3.03%  strings.ToLower
+     0.38s  1.89% 78.77%      0.38s  1.89%  runtime.memmove
+     0.32s  1.59% 80.36%      1.05s  5.22%  runtime.scanObject
+     0.31s  1.54% 81.90%      0.31s  1.54%  runtime.fcntl
+     0.25s  1.24% 83.14%      0.25s  1.24%  runtime.kevent
+     0.25s  1.24% 84.39%      1.61s  8.01%  strings.Count
+     0.19s  0.94% 85.33%      0.19s  0.94%  runtime.memclrNoHeapPointers
+     0.16s   0.8% 86.13%      0.16s   0.8%  internal/bytealg.IndexByteString
+     0.16s   0.8% 86.92%      1.77s  8.80%  strings.Replace
+     0.16s   0.8% 87.72%      0.21s  1.04%  strings.indexFunc

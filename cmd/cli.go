@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/soulteary/cli-kit/configutil"
@@ -52,7 +53,9 @@ func GetCliFlags() (*model.Flags, *flags.FlagSet) {
 	options.StringVarP(&cliFlags.CookieSecret, _KEY_COOKIE_SECRET, _KEY_COOKIE_SECRET_SHORT, define.DEFAULT_COOKIE_SECRET, "设置 Cookie 密钥（建议使用至少 32 字节的随机值；缺省或过短时自动初始化）")
 	options.BoolVar(&cliFlags.CookieSecure, _KEY_COOKIE_SECURE, define.DEFAULT_COOKIE_SECURE, "强制会话 Cookie 仅通过 HTTPS 发送（TLS 直连自动启用）")
 
-	_ = options.Parse(os.Args)
+	if err := options.Parse(os.Args); err != nil {
+		cliFlags.ConfigError = "invalid command-line configuration"
+	}
 
 	return cliFlags, options
 }
@@ -94,6 +97,24 @@ func CheckFlagsExists(dict map[string]bool, keys []string) bool {
 
 func parseCLI(baseFlags model.Flags) model.Flags {
 	cliFlags, fs := GetCliFlags()
+	if cliFlags.ConfigError != "" {
+		baseFlags.ConfigError = cliFlags.ConfigError
+	}
+	if baseFlags.RuntimeInputs != nil {
+		for _, entry := range []struct{ flag, legacy, key string }{
+			{_KEY_DISABLE_LOGIN, _KEY_DISABLE_LOGIN_OLD, "FLARE_DISABLE_LOGIN"},
+			{_KEY_VISIBILITY, "", "FLARE_VISIBILITY"},
+		} {
+			if fs.Changed(entry.flag) || (entry.legacy != "" && fs.Changed(entry.legacy)) {
+				value := cliFlags.Visibility
+				if entry.key == "FLARE_DISABLE_LOGIN" {
+					value = strconv.FormatBool(cliFlags.DisableLoginMode)
+				}
+				baseFlags.RuntimeInputs[entry.key] = value
+				baseFlags.InputSources[entry.key] = "CLI"
+			}
+		}
+	}
 	exit := ExecuteCLI(cliFlags, fs)
 	if exit {
 		os.Exit(0)

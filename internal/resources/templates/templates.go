@@ -19,6 +19,10 @@ import (
 //go:embed html
 var TPL embed.FS
 
+// Navigation pages can be several MiB. Retain reusable buffers for ordinary
+// pages, but do not pin an oversized response in sync.Pool's victim generation.
+const maxRetainedTemplateBuffer = 256 << 10
+
 var bufPool = sync.Pool{
 	New: func() any { return &bytes.Buffer{} },
 }
@@ -41,12 +45,23 @@ func (r *Renderer) Render(w io.Writer, templateName string, data any, _ ...strin
 		buf = &bytes.Buffer{}
 	}
 	buf.Reset()
-	defer bufPool.Put(buf)
+	defer releaseTemplateBuffer(buf)
 	if err := r.templates.ExecuteTemplate(buf, tmplName, data); err != nil {
 		return err
 	}
 	_, err := buf.WriteTo(w)
 	return err
+}
+
+func releaseTemplateBuffer(buf *bytes.Buffer) {
+	if buf.Cap() > maxRetainedTemplateBuffer {
+		// Reset alone retains the backing array, including after WriteTo. Dropping
+		// the allocation preserves the small pooled object without retaining HTML.
+		*buf = bytes.Buffer{}
+	} else {
+		buf.Reset()
+	}
+	bufPool.Put(buf)
 }
 
 var templateFuncMap = template.FuncMap{

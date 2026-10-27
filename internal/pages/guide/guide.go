@@ -11,6 +11,7 @@ import (
 	"github.com/soulteary/flare/internal/resources/assets"
 
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/fn"
 )
 
@@ -23,7 +24,11 @@ func RegisterRouting(e *fiber.App) {
 	if introAssets, err := fs.Sub(IntroAssets, "guide-assets"); err == nil {
 		e.Use(_ASSETS_WEB_URI, assets.StaticFS(introAssets, _ASSETS_WEB_URI))
 	}
-	e.Get(define.RegularPages.Guide.Path, render)
+	if define.AppFlags.Visibility == "PRIVATE" {
+		e.Get(define.RegularPages.Guide.Path, auth.AuthRequired, render)
+	} else {
+		e.Get(define.RegularPages.Guide.Path, render)
+	}
 }
 
 func render(c fiber.Ctx) error {

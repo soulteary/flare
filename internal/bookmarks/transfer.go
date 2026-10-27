@@ -187,6 +187,15 @@ func Build(current model.Bookmarks, entries []Entry, options Options) (Plan, err
 	if len(p.Result.Items) > MaxItems || len(p.Result.Categories) > MaxItems {
 		return Plan{}, fmt.Errorf("合并后最多支持 %d 个书签或分类", MaxItems)
 	}
+	privateCats := map[string]bool{}
+	for _, c := range p.Result.Categories {
+		privateCats[c.ID] = c.Private
+	}
+	for _, b := range p.Result.Items[len(current.Items):] {
+		if !b.Private && !privateCats[b.Category] {
+			p.Public++
+		}
+	}
 	return p, nil
 }
 
@@ -225,8 +234,11 @@ func HTML(src model.Bookmarks) ([]byte, error) {
 }
 
 func parseYAML(raw []byte) ([]Entry, error) {
+	if err := yamlutil.RejectBookmarkAliases(raw); err != nil {
+		return nil, err
+	}
 	var src model.Bookmarks
-	if err := yamlutil.UnmarshalStrict(raw, &src); err != nil {
+	if err := yamlutil.DecodeBookmarks(raw, &src, false); err != nil {
 		return nil, fmt.Errorf("无效的 Flare YAML: %w", err)
 	}
 	if src.Items == nil {
@@ -236,15 +248,20 @@ func parseYAML(raw []byte) ([]Entry, error) {
 		return nil, fmt.Errorf("最多支持 %d 个书签或分类", MaxItems)
 	}
 	cats := map[string]string{}
+	privateCats := map[string]bool{}
+	categoryExtensions := map[string]string{}
 	for _, cat := range src.Categories {
 		if cat.ID == "" || strings.TrimSpace(cat.Name) == "" || cats[cat.ID] != "" {
 			return nil, fmt.Errorf("分类 ID 或名称无效或重复")
 		}
 		cats[cat.ID] = cat.Name
+		privateCats[cat.ID] = cat.Private
+		categoryExtensions[cat.ID] = cat.Extensions
 	}
 	entries := make([]Entry, 0, len(src.Items))
 	for _, b := range src.Items {
-		e := Entry{Bookmark: b}
+		b.Private = b.Private || privateCats[b.Category]
+		e := Entry{Bookmark: b, CategoryExtensions: categoryExtensions[b.Category], CategoryPrivate: privateCats[b.Category]}
 		if b.Category != "" {
 			name, ok := cats[b.Category]
 			if !ok {
@@ -268,6 +285,9 @@ func safeImportScheme(scheme string) bool {
 
 func appendImportEntry(p *Plan, e Entry, options Options, byName map[string]string, ids map[string]bool, existing map[string]int) {
 	b := e.Bookmark
+	if options.PrivateDefault {
+		b.Private = true
+	}
 	b.URL = strings.TrimSpace(b.URL)
 	target := importTarget(e, options)
 	row := Row{Source: strings.Join(e.Path, " / "), Target: target, Name: b.Name, URL: b.URL}
@@ -290,7 +310,12 @@ func appendImportEntry(p *Plan, e Entry, options Options, byName map[string]stri
 		row.Name = b.Name
 		row.Reason = "缺少名称，已使用域名或链接"
 	}
+	beforeCategories := len(p.Result.Categories)
 	b.Category = importCategory(p, target, options.Apps, byName, ids)
+	if len(p.Result.Categories) > beforeCategories {
+		p.Result.Categories[len(p.Result.Categories)-1].Extensions = e.CategoryExtensions
+		p.Result.Categories[len(p.Result.Categories)-1].Private = options.PrivateDefault || e.CategoryPrivate
+	}
 	mergeImportBookmark(p, b, key, options.Strategy, existing, &row)
 	p.Rows = append(p.Rows, row)
 }

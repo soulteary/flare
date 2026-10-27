@@ -109,3 +109,20 @@ func TestURLComparisonAndForbiddenProtocols(t *testing.T) {
 		t.Fatal("path case was normalized")
 	}
 }
+
+func TestNativeImportPreservesInheritedPrivacyAndExtensions(t *testing.T) {
+	entries, err := Parse([]byte("categories:\n- id: c\n  title: Secret\n  private: true\n  extension: category-data\nlinks:\n- name: Child\n  link: https://example.com\n  category: c\n  private: false\n  extension: link-data\n"), "yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !entries[0].Bookmark.Private || entries[0].Bookmark.Extensions == "" || entries[0].CategoryExtensions == "" {
+		t.Fatalf("lost source permission or fields: %+v", entries)
+	}
+	plan, err := Build(model.Bookmarks{}, entries, Options{Strategy: "skip", PrivateDefault: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !plan.Result.Items[0].Private || !plan.Result.Categories[0].Private || plan.Result.Categories[0].Extensions == "" {
+		t.Fatalf("import weakened private state: %+v", plan.Result)
+	}
+}

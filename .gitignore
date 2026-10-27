@@ -46,3 +46,10 @@ tests/clock/node_modules/
 # Private configuration backups
 .flare-search-backups/
 config.yml.pre-search-*.bak
+
+.flare-security/
+
+.flare-bookmark-backups/
+
+# Python acceptance runner caches
+__pycache__/

@@ -33,7 +33,17 @@ func updateSearchOptions(c fiber.Ctx) error {
 		options.DisabledSearchAutoFocus = c.FormValue("search-auto-focus") != "1"
 	}
 	if c.FormValue("engine-count") == "" {
-		if !data.UpdateSearch(options.ShowSearchComponent, options.DisabledSearchAutoFocus) {
+		if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
+			return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
+		}
+		saved := false
+		if writeErr := auth.AuthorizedWrite(c, func() error {
+			saved = data.UpdateSearch(options.ShowSearchComponent, options.DisabledSearchAutoFocus)
+			return nil
+		}); writeErr != nil {
+			return writeErr
+		}
+		if !saved {
 			return renderSettings(c, options, "Unable to save search settings", false)
 		}
 		return renderSettings(c, options, "", true)
@@ -74,7 +84,9 @@ func renderSettings(c fiber.Ctx, options model.Application, message string, save
 	}
 	m := pool.GetTemplateMap()
 	defer pool.PutTemplateMap(m)
-	if guard, ok := c.Locals(searchSecurityKey{}).(*searchSecurity); ok {
+	if auth.PersistentSecurity(c) {
+		m["SearchCSRFToken"] = auth.CSRFToken(c)
+	} else if guard, ok := c.Locals(searchSecurityKey{}).(*searchSecurity); ok {
 		m["SearchCSRFToken"] = guard.formToken(c)
 	}
 	m["SearchConfigRevision"] = options.ConfigRevision
@@ -238,8 +250,18 @@ func saveSearchForm(c fiber.Ctx, options model.Application, opts model.SearchOpt
 	if err := searchcore.Validate(opts); err != nil {
 		return renderSettings(c, options, err.Error(), false)
 	}
-	if err := data.UpdateSearchOptions(options.ShowSearchComponent, options.DisabledSearchAutoFocus, &opts, c.FormValue("config-revision")); err != nil {
-		return renderSettings(c, options, "Unable to save search settings: "+err.Error(), false)
+	if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
+		return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
+	}
+	var saveErr error
+	if err := auth.AuthorizedWrite(c, func() error {
+		saveErr = data.UpdateSearchOptions(options.ShowSearchComponent, options.DisabledSearchAutoFocus, &opts, c.FormValue("config-revision"))
+		return nil
+	}); err != nil {
+		return err
+	}
+	if saveErr != nil {
+		return renderSettings(c, options, "Unable to save search settings: "+saveErr.Error(), false)
 	}
 	options.Search = &opts
 	return renderSettings(c, options, "", true)

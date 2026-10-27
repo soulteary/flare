@@ -35,7 +35,14 @@ func updateThemes(c fiber.Ctx) error {
 	if !define.IsKnownTheme(theme) {
 		return c.Status(http.StatusBadRequest).SendString("Unknown theme")
 	}
-	if !data.UpdateThemeName(theme) {
+	if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
+		return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
+	}
+	saved := false
+	if err := auth.AuthorizedWrite(c, func() error { saved = data.UpdateThemeName(theme); return nil }); err != nil {
+		return err
+	}
+	if !saved {
 		return c.Status(http.StatusInternalServerError).SendString("Unable to save theme; previous theme remains active")
 	}
 	define.SetTheme(theme)
@@ -53,6 +60,9 @@ func pageTheme(c fiber.Ctx) error {
 		locale = "zh"
 	}
 	m := pool.GetTemplateMap()
+	if auth.PersistentSecurity(c) {
+		m["SecurityCSRFToken"] = auth.CSRFToken(c)
+	}
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
 	m["DebugMode"] = define.AppFlags.DebugMode

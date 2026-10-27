@@ -11,10 +11,18 @@ import (
 // The callback runs without cache or persistence locks and cannot mutate indexes.
 // Malformed collections are skipped, matching the redirect route's prior behavior.
 func MatchNavigationTarget(target string, matchDynamic func(string) bool) bool {
-	for _, name := range []string{"apps", "bookmarks"} {
-		snapshot, err := navigationSnapshot(name)
-		if err != nil {
-			continue
+	return MatchNavigationTargetFor(target, true, matchDynamic)
+}
+
+// MatchNavigationTargetFor authorizes current YAML membership before redirecting.
+func MatchNavigationTargetFor(target string, administrator bool, matchDynamic func(string) bool) bool {
+	snapshots, err := navigationSnapshotSet([]string{"apps", "bookmarks"})
+	if err != nil {
+		return false
+	}
+	for _, snapshot := range snapshots {
+		if !administrator {
+			snapshot = snapshot.publicSnapshot()
 		}
 		snapshot.prepareTargets()
 		if _, ok := snapshot.targets[target]; ok {
@@ -27,6 +35,7 @@ func MatchNavigationTarget(target string, matchDynamic func(string) bool) bool {
 				}
 			}
 		}
+
 	}
 	return false
 }
@@ -41,25 +50,36 @@ type NavigationMatch struct {
 // SearchNavigationMatches visits only enabled collections and uses pre-normalized
 // fields and category membership. URL expansion and URL policy stay request-local.
 func SearchNavigationMatches(query string, showApps, showBookmarks bool, limit int, resolve func(string) string, accept func(string) bool) ([]NavigationMatch, error) {
+	return SearchNavigationMatchesFor(query, showApps, showBookmarks, limit, resolve, accept, true)
+}
+
+// SearchNavigationMatchesFor applies visibility before matching and limiting.
+func SearchNavigationMatchesFor(query string, showApps, showBookmarks bool, limit int, resolve func(string) string, accept func(string) bool, administrator bool) ([]NavigationMatch, error) {
 	if limit < 1 || limit > 64 {
 		limit = 8
 	}
 	query = strings.ToLower(query)
 	collections := make([]searchCollection, 0, 2)
-	for _, collection := range []struct {
-		name           string
-		enabled, isApp bool
-	}{{"apps", showApps, true}, {"bookmarks", showBookmarks, false}} {
-		if !collection.enabled {
-			continue
-		}
-		snapshot, err := navigationSnapshot(collection.name)
-		if err != nil {
-			return nil, err
-		}
-		snapshot.prepareSearch(collection.isApp)
-		collections = append(collections, searchCollection{snapshot: snapshot, isApp: collection.isApp})
+	names := []string{}
+	if showApps {
+		names = append(names, "apps")
 	}
+	if showBookmarks {
+		names = append(names, "bookmarks")
+	}
+	snapshots, err := navigationSnapshotSet(names)
+	if err != nil {
+		return nil, err
+	}
+	for i, snapshot := range snapshots {
+		isApp := names[i] == "apps"
+		if !administrator {
+			snapshot = snapshot.publicSnapshot()
+		}
+		snapshot.prepareSearch(isApp)
+		collections = append(collections, searchCollection{snapshot: snapshot, isApp: isApp})
+	}
+
 	return collectNavigationMatches(collections, query, limit, resolve, accept), nil
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/fn"
 )
 
@@ -20,27 +21,51 @@ func RegisterRouting(e *fiber.App) {
 	})
 
 	e.Get(define.MiscPages.RedirHelper.Path, func(c fiber.Ctx) error {
-		encoded := c.Query("go")
-		if len(encoded) < 1 {
-			return c.Status(http.StatusBadRequest).Type("html", "utf-8").Send(internalError)
+		c.Set("Cache-Control", "private, no-store")
+		c.Set("Referrer-Policy", "no-referrer")
+		if define.AppFlags.Visibility == "PRIVATE" && !auth.CheckUserIsLogin(c) {
+			return c.Redirect().Status(302).To(define.SettingPages.Others.Path)
 		}
-		decoded, err := data.Base64DecodeUrl(encoded)
-		if err != nil {
-			return c.Status(http.StatusBadRequest).Type("html", "utf-8").Send(internalError)
+		id := c.Query("id")
+		if id != "" && c.Query("go") != "" {
+			return c.SendStatus(http.StatusBadRequest)
 		}
-		decodeURL := string(decoded)
+		var decodeURL string
+		if id != "" {
+			target, ok := data.MatchOpaqueNavigationTarget(id, auth.CheckUserIsLogin(c))
+			if !ok {
+				return c.Status(404).SendString("Not Found")
+			}
+			decodeURL = target
+		} else {
+			encoded := c.Query("go")
+			if len(encoded) < 1 {
+				return c.Status(http.StatusBadRequest).Type("html", "utf-8").Send(internalError)
+			}
+			decoded, err := data.Base64DecodeUrl(encoded)
+			if err != nil {
+				return c.Status(http.StatusBadRequest).Type("html", "utf-8").Send(internalError)
+			}
+			decodeURL = string(decoded)
+		}
 		request := http.Request{Host: string(c.Request().Host()), URL: &url.URL{Path: c.Path()}, RequestURI: c.OriginalURL()}
 		if c.RequestCtx().IsTLS() {
 			request.TLS = &tls.ConnectionState{}
 		}
 		info, valid := fn.ParseNavigationSource(&request, c.Query("from"))
+		if id != "" {
+			decodeURL = fn.ParseDynamicUrlWith(decodeURL, &info)
+		}
 		if !valid || !fn.IsSafeNavigationURL(decodeURL) {
 			return c.Status(http.StatusBadRequest).Type("html", "utf-8").Send(internalError)
 		}
-		if data.MatchNavigationTarget(decodeURL, func(template string) bool { return fn.ParseDynamicUrlWith(template, &info) == decodeURL }) {
-			return c.Redirect().Status(http.StatusFound).To(string(decoded))
+		if id != "" {
+			return c.Redirect().Status(http.StatusFound).To(decodeURL)
+		}
+		if data.MatchNavigationTargetFor(decodeURL, auth.CheckUserIsLogin(c), func(template string) bool { return fn.ParseDynamicUrlWith(template, &info) == decodeURL }) {
+			return c.Redirect().Status(http.StatusFound).To(decodeURL)
 		}
 
-		return c.Status(http.StatusOK).Type("html", "utf-8").Send(internalError)
+		return c.Status(http.StatusNotFound).SendString("Not Found")
 	})
 }

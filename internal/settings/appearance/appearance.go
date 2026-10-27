@@ -88,7 +88,14 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 	if body.Locale != "" {
 		update.Locale = body.Locale
 	}
-	if !data.UpdateAppearance(update) {
+	if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
+		return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
+	}
+	saved := false
+	if err := auth.AuthorizedWrite(c, func() error { saved = data.UpdateAppearance(update); return nil }); err != nil {
+		return err
+	}
+	if !saved {
 		return c.Status(http.StatusInternalServerError).SendString("unable to save appearance settings")
 	}
 	return pageAppearance(c)
@@ -102,6 +109,9 @@ func pageAppearance(c fiber.Ctx) error {
 	IconModeDefault := options.IconMode == "DEFAULT"
 	IconModeFilling := options.IconMode == "FILLING"
 	m := pool.GetTemplateMap()
+	if auth.PersistentSecurity(c) {
+		m["SecurityCSRFToken"] = auth.CSRFToken(c)
+	}
 	defer pool.PutTemplateMap(m)
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
