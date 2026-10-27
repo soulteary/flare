@@ -35,6 +35,7 @@ Guides below explicitly distinguish the two access models.
 
 ## Develop and verify
 
+- [0.6.8 candidate release notes and publication checklist](release-0.6.8.md) — preparation only; not yet published
 - [Build and test](development.md), [contributing](../CONTRIBUTING.md)
 - [Navigation snapshots and HTML fragment cache](navigation-cache.md)
 - [Performance decisions and reports](performance.md), [measurement methods](baseline-metrics.md)
