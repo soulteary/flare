@@ -36,6 +36,7 @@ see the release record. Merging later features does not publish an image or move
 
 - [Build and test](development.md), [contributing](../CONTRIBUTING.md)
 - [Navigation snapshots and HTML fragment cache](navigation-cache.md)
+- [Go management / Rust presentation split proposal](rust-display-design.md) — design only, not implemented
 - [Performance decisions and reports](performance.md), [measurement methods](baseline-metrics.md)
 - [Current security requirements, architecture and acceptance index](requirements/README.md)
 - [CI ownership and cache design](../.github/CI-OPTIMIZATION.md), [Go report scopes](../.github/GO-REPORTS.md), [container publishing](../.github/CONTAINER-RELEASES.md)
