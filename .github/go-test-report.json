@@ -1,15 +1,15 @@
 {
   "schema_version": "1.0",
   "tests": {
-    "total": 527,
-    "passed": 525,
+    "total": 532,
+    "passed": 530,
     "failed": 0,
     "skipped": 2
   },
   "coverage": {
-    "covered_statements": 6301,
-    "total_statements": 7438,
-    "percentage": 84.71,
+    "covered_statements": 6299,
+    "total_statements": 7440,
+    "percentage": 84.66,
     "threshold": 0
   },
   "packages": [
@@ -37,16 +37,16 @@
     {
       "name": "cmd",
       "status": "pass",
-      "tests": 60,
+      "tests": 64,
       "failed": 0,
-      "coverage": 92.08
+      "coverage": 92.18
     },
     {
       "name": "config/data",
       "status": "pass",
       "tests": 107,
       "failed": 0,
-      "coverage": 91.71
+      "coverage": 91.64
     },
     {
       "name": "config/define",
@@ -186,7 +186,7 @@
       "status": "pass",
       "tests": 3,
       "failed": 0,
-      "coverage": 54.84
+      "coverage": 58.06
     },
     {
       "name": "internal/search",
@@ -212,7 +212,7 @@
     {
       "name": "internal/server",
       "status": "pass",
-      "tests": 50,
+      "tests": 51,
       "failed": 0,
       "coverage": 77.33
     },

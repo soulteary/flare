@@ -4,11 +4,11 @@
 
 | Metric | Value |
 | --- | --- |
-| Total | 527 |
-| Passed | 525 |
+| Total | 532 |
+| Passed | 530 |
 | Failed | 0 |
 | Skipped | 2 |
-| Coverage | 84.71% |
+| Coverage | 84.66% |
 | Threshold | 0.00% |
 
 ### Packages
@@ -18,8 +18,8 @@
 | . | pass | 1 | 0 | 0.00% |
 | build | no\_tests | 0 | 0 | 0.00% |
 | build/builder | pass | 12 | 0 | 88.45% |
-| cmd | pass | 60 | 0 | 92.08% |
-| config/data | pass | 107 | 0 | 91.71% |
+| cmd | pass | 64 | 0 | 92.18% |
+| config/data | pass | 107 | 0 | 91.64% |
 | config/define | pass | 1 | 0 | 62.79% |
 | config/model | pass | 5 | 0 | 82.35% |
 | internal/auth | pass | 70 | 0 | 91.07% |
@@ -39,11 +39,11 @@
 | internal/requestsource | pass | 5 | 0 | 84.62% |
 | internal/resources/assets | pass | 12 | 0 | 92.42% |
 | internal/resources/mdi | pass | 14 | 0 | 91.09% |
-| internal/resources/templates | pass | 3 | 0 | 54.84% |
+| internal/resources/templates | pass | 3 | 0 | 58.06% |
 | internal/search | pass | 9 | 0 | 94.49% |
 | internal/searchui | pass | 1 | 0 | 87.50% |
 | internal/security | pass | 37 | 0 | 90.96% |
-| internal/server | pass | 50 | 0 | 77.33% |
+| internal/server | pass | 51 | 0 | 77.33% |
 | internal/settings | no\_tests | 0 | 0 | 0.00% |
 | internal/settings/appearance | no\_tests | 0 | 0 | 0.00% |
 | internal/settings/others | no\_tests | 0 | 0 | 0.00% |
