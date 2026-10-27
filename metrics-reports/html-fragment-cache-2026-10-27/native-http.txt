@@ -1,0 +1,24 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/soulteary/flare/internal/pages/home
+cpu: Apple M5
+BenchmarkNativeHomepageFragmentCache/disabled/cold-10         	    3344	    727374 ns/op	 516.42 MB/s	         0.7026 p50-ms	         0.9306 p95-ms	      1375 req/s	 2561846 B/op	    2410 allocs/op
+BenchmarkNativeHomepageFragmentCache/disabled/cold-10         	    2848	    802649 ns/op	 467.99 MB/s	         0.7524 p50-ms	         1.080 p95-ms	      1246 req/s	 2561643 B/op	    2407 allocs/op
+BenchmarkNativeHomepageFragmentCache/disabled/cold-10         	    3048	    965464 ns/op	 389.07 MB/s	         0.8947 p50-ms	         1.577 p95-ms	      1036 req/s	 2523221 B/op	    2404 allocs/op
+BenchmarkNativeHomepageFragmentCache/disabled/hot-10          	    7712	    278545 ns/op	1348.54 MB/s	         0.2283 p50-ms	         0.5150 p95-ms	      3590 req/s	 1362759 B/op	     374 allocs/op
+BenchmarkNativeHomepageFragmentCache/disabled/hot-10          	    7951	    292927 ns/op	1282.33 MB/s	         0.2375 p50-ms	         0.5339 p95-ms	      3414 req/s	 1362197 B/op	     374 allocs/op
+BenchmarkNativeHomepageFragmentCache/disabled/hot-10          	    8331	    278585 ns/op	1348.35 MB/s	         0.2302 p50-ms	         0.5142 p95-ms	      3590 req/s	 1356279 B/op	     374 allocs/op
+BenchmarkNativeHomepageFragmentCache/anonymous/cold-10        	    3039	    853787 ns/op	 439.31 MB/s	         0.7592 p50-ms	         1.262 p95-ms	      1171 req/s	 2512241 B/op	    2404 allocs/op
+BenchmarkNativeHomepageFragmentCache/anonymous/cold-10        	    3013	    858437 ns/op	 436.93 MB/s	         0.7790 p50-ms	         1.284 p95-ms	      1165 req/s	 2513765 B/op	    2404 allocs/op
+BenchmarkNativeHomepageFragmentCache/anonymous/cold-10        	    2955	    864902 ns/op	 433.66 MB/s	         0.7665 p50-ms	         1.270 p95-ms	      1156 req/s	 2559476 B/op	    2405 allocs/op
+BenchmarkNativeHomepageFragmentCache/anonymous/hot-10         	    7710	    305876 ns/op	1226.24 MB/s	         0.2636 p50-ms	         0.5417 p95-ms	      3269 req/s	 1396519 B/op	     378 allocs/op
+BenchmarkNativeHomepageFragmentCache/anonymous/hot-10         	    7915	    283898 ns/op	1321.17 MB/s	         0.2394 p50-ms	         0.5329 p95-ms	      3522 req/s	 1398485 B/op	     378 allocs/op
+BenchmarkNativeHomepageFragmentCache/anonymous/hot-10         	    7608	    303123 ns/op	1237.38 MB/s	         0.2575 p50-ms	         0.5384 p95-ms	      3299 req/s	 1393138 B/op	     377 allocs/op
+BenchmarkNativeHomepageFragmentCache/authenticated/cold-10    	     100	  24786208 ns/op	  15.15 MB/s	        24.61 p50-ms	        27.80 p95-ms	        40.35 req/s	 2544569 B/op	    2478 allocs/op
+BenchmarkNativeHomepageFragmentCache/authenticated/cold-10    	     100	  24659827 ns/op	  15.23 MB/s	        24.58 p50-ms	        27.86 p95-ms	        40.55 req/s	 2528714 B/op	    2478 allocs/op
+BenchmarkNativeHomepageFragmentCache/authenticated/cold-10    	     100	  24629378 ns/op	  15.25 MB/s	        24.56 p50-ms	        27.75 p95-ms	        40.60 req/s	 2550737 B/op	    2480 allocs/op
+BenchmarkNativeHomepageFragmentCache/authenticated/hot-10     	     100	  30848034 ns/op	  12.18 MB/s	        24.17 p50-ms	        27.63 p95-ms	        32.42 req/s	 1392368 B/op	     450 allocs/op
+BenchmarkNativeHomepageFragmentCache/authenticated/hot-10     	      97	  22672408 ns/op	  16.57 MB/s	        22.58 p50-ms	        25.21 p95-ms	        44.11 req/s	 1364029 B/op	     450 allocs/op
+BenchmarkNativeHomepageFragmentCache/authenticated/hot-10     	     100	  23386164 ns/op	  16.06 MB/s	        23.39 p50-ms	        25.83 p95-ms	        42.76 req/s	 1376301 B/op	     451 allocs/op
+PASS
+ok  	github.com/soulteary/flare/internal/pages/home	51.876s

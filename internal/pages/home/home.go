@@ -72,9 +72,9 @@ func renderHelp(c fiber.Ctx) error {
 	configWeatherShow := true
 	var weatherData model.Weather
 	if !define.AppFlags.EnableOfflineMode {
-		_, weatherShow := data.GetLocationAndWeatherShow()
+		weatherShow := options.ShowWeather
 		if weatherShow {
-			weatherData = GetWeatherData()
+			weatherData = weatherForSettings(options)
 		} else {
 			configWeatherShow = weatherShow
 		}
@@ -245,11 +245,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
 	administrator := auth.CheckUserIsLogin(c)
-	loadNavigation := data.LoadVisibleNavigationPair
-	if auth.BufferedReadTentative(c) {
-		loadNavigation = data.ReadExistingVisibleNavigationPair
-	}
-	appsView, bookmarksView, viewErr := loadNavigation(options.ShowApps, options.ShowBookmarks, administrator)
+	appsView, bookmarksView, viewErr := data.LoadNavigationViews(options.ShowApps, options.ShowBookmarks, administrator, auth.BufferedReadTentative(c))
 	if auth.BufferedReadTentative(c) && viewErr != nil {
 		return c.Status(http.StatusInternalServerError).SendString("navigation unavailable")
 	}
@@ -267,9 +263,9 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	configWeatherShow := true
 	var weatherData model.Weather
 	if !define.AppFlags.EnableOfflineMode {
-		_, weatherShow := data.GetLocationAndWeatherShow()
+		weatherShow := options.ShowWeather
 		if weatherShow {
-			weatherData = GetWeatherData()
+			weatherData = weatherForSettings(options)
 		} else {
 			configWeatherShow = weatherShow
 		}
@@ -295,7 +291,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 		if viewErr != nil {
 			m["ApplicationsError"] = navigationDataError("applications", options.Locale, viewErr)
 		} else {
-			apps, m["ApplicationsError"] = generateApplicationsSnapshot(filter, &options, appsView, &requestURL)
+			apps = navigationFragment(appsView, &options, true, filter, "", c.Path(), &requestURL)
 		}
 	}
 	selected := c.Query("category")
@@ -308,7 +304,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 		if viewErr != nil {
 			m["BookmarksError"] = navigationDataError("bookmarks", options.Locale, viewErr)
 		} else {
-			bookmarks, m["BookmarksError"] = generateBookmarkSnapshot(filter, selected, c.Path(), &options, bookmarksView, &requestURL)
+			bookmarks = navigationFragment(bookmarksView, &options, false, filter, selected, c.Path(), &requestURL)
 		}
 	}
 	m["Applications"] = apps

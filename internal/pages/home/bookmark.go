@@ -41,15 +41,11 @@ func generateBookmarkNavigationForRead(filter, selected, path string, options *m
 		}
 		options = &op
 	}
-	readBookmarks := data.LoadVisibleNormalBookmarks
-	if existingOnly {
-		readBookmarks = data.ReadExistingVisibleNormalBookmarks
-	}
-	bookmarksData, err := readBookmarks(administrator)
+	_, view, err := data.LoadNavigationViews(false, true, administrator, existingOnly)
 	if err != nil {
 		return "", navigationDataError("bookmarks", options.Locale, err)
 	}
-	return generateBookmarkSnapshot(filter, selected, path, options, bookmarksData, requestInfo...)
+	return navigationFragment(view, options, false, filter, selected, path, firstRequestInfo(requestInfo)), ""
 }
 func generateBookmarkSnapshot(filter, selected, path string, options *model.Application, bookmarksData model.Bookmarks, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	privateCategories := make(map[string]bool, len(bookmarksData.Categories))

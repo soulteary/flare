@@ -15,19 +15,22 @@ type parsedApplication struct {
 	err   error
 }
 type parsedBookmarks struct {
-	raw           []byte
-	value         model.Bookmarks
-	err           error
-	publicOnce    sync.Once
-	publicView    *parsedBookmarks
-	handleOnce    sync.Once
-	handles       map[string]string
-	handleTargets map[string]string
-	targetOnce    sync.Once
-	targets       map[string]struct{}
-	dynamic       []string
-	searchOnce    sync.Once
-	search        []searchEntry
+	renderOnce        sync.Once
+	renderVersion     uint64
+	renderIndependent bool
+	raw               []byte
+	value             model.Bookmarks
+	err               error
+	publicOnce        sync.Once
+	publicView        *parsedBookmarks
+	handleOnce        sync.Once
+	handles           map[string]string
+	handleTargets     map[string]string
+	targetOnce        sync.Once
+	targets           map[string]struct{}
+	dynamic           []string
+	searchOnce        sync.Once
+	search            []searchEntry
 }
 
 type searchEntry struct {

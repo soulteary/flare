@@ -12,6 +12,7 @@ import (
 
 // 程序运行默认使用内置的主题配色
 var themeMu sync.RWMutex
+var themeGeneration uint64
 
 var ThemePalettes = getDefaultThemePalettes()
 var ThemeCurrent = ""
@@ -61,6 +62,13 @@ func ThemeSnapshot() (string, string) {
 	return ThemeCurrent, ThemePrimaryColor
 }
 
+// ThemeRenderSnapshot also detects an ABA theme change during HTML generation.
+func ThemeRenderSnapshot() (string, string, uint64) {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	return ThemeCurrent, ThemePrimaryColor, themeGeneration
+}
+
 func IsKnownTheme(theme string) bool {
 	for _, item := range ThemePalettes {
 		if item.Name == theme {
@@ -85,6 +93,7 @@ const emptyPageBodyStyle = template.CSS(``)
 func SetTheme(theme string) {
 	themeMu.Lock()
 	defer themeMu.Unlock()
+	themeGeneration++
 	ThemeCurrent = theme
 	ThemePrimaryColor = GetThemePrimaryColor(theme)
 	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor

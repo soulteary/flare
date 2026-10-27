@@ -1,5 +1,63 @@
 # Parsed navigation snapshots
 
+## Request settings and rendered fragments
+
+Homepage/help rendering captures settings once per request, including failures.
+Weather rendering consumes that same read-only snapshot instead of rereading
+configuration. A new request still reads current `config.yml` bytes for revision
+and downgrade checks; this is not an indefinite global settings cache.
+
+Default, unfiltered navigation HTML is cached in process before cloning its
+authorized collection. Immutable navigation views have distinct numeric identities
+for public and administrator snapshots. Both collections are still selected as a
+pair, and tentative authenticated reads still check backing files before looking
+up HTML. File/storage errors and final authorization failures never fall back to
+retained private HTML. The existing response cache policy remains `private, no-store`.
+
+Fragment keys include content identity, configuration revision, relevant rendering
+options, route, and theme generation. Successful in-process saves replace content
+snapshots; observed configuration changes replace the revision. Old builds can
+only publish under their old key, never overwrite a newer version. A theme change
+during rendering (including change-and-revert) prevents retaining that build.
+In-flight requests retain the existing immutable-snapshot semantics; there is no
+new promise that a content edit cancels already-started responses.
+
+Search queries, selected categories, encoded links, extension links and dynamic
+destination placeholders bypass this first-stage cache. Encoded links depend on
+the source URI even without placeholders. CSRF tokens, cookies, weather and clocks
+are never retained in a navigation fragment. Rendering and cache construction do
+not bypass or reduce durable security checks.
+
+The FIFO cache retains at most 64 entries, 16 MiB of HTML, and 1 MiB per entry.
+Larger fragments render normally without retention. Per-key builds are coalesced;
+at most 64 distinct builds are tracked. Entries retain numeric identities rather
+than whole navigation snapshots. Old generations become unreachable by new
+requests and are reclaimed by bounded eviction; the byte budget does not include
+transient rendering allocations or all process heap memory.
+
+Cold/hot fragment and native loopback HTTP benchmarks are available:
+
+```sh
+go test ./internal/pages/home -run '^$' \
+  -bench '^BenchmarkNavigationFragmentCache$' -benchmem -benchtime=500ms -count=3
+go test ./internal/pages/home -run '^$' \
+  -bench '^BenchmarkNativeHomepageFragmentCache$' -benchmem -benchtime=2s -count=3
+```
+
+Both warm parsed YAML first. “Cold” means the HTML cache is cleared for every
+request, not a cold filesystem/process. Native HTTP uses sequential keep-alive
+TCP requests with 1,000 public entries per collection plus private sentinels,
+with login disabled, anonymous, and authenticated identities. Client and server
+run in the same process; allocation counts include both. Reported p50/p95 use at
+most the first 10,000 timed requests per round. Cold-cache clearing contributes to
+ns/op and allocation totals but is outside the individual latency sample.
+The 10,000-entry application microbenchmark exceeds the single-entry budget and
+is explicitly labelled `oversize-bypass`; it does not demonstrate a cache hit.
+These measurements do not establish browser DOM cost, peak RSS, cold startup,
+multi-client saturation, or remote network latency.
+
+## Parsed data and indexes
+
 Display reads retain immutable parsed snapshots of `config.yml`, `apps.yml` and
 `bookmarks.yml`. An unchanged snapshot avoids repeated YAML decoding. On 0.6.5,
 all three use the existing byte cache. The 0.6.6 rereads `config.yml`

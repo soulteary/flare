@@ -1,0 +1,486 @@
+{
+  "aggregation": "median of three rounds for each metric; not a pooled latency percentile",
+  "rounds": {
+    "fragments": {
+      "BenchmarkNavigationFragmentCache/entries-100/uncached": [
+        {
+          "iterations": 26066,
+          "ns/op": 21985.0,
+          "B/op": 67323.0,
+          "allocs/op": 104.0
+        },
+        {
+          "iterations": 27558,
+          "ns/op": 22272.0,
+          "B/op": 67323.0,
+          "allocs/op": 104.0
+        },
+        {
+          "iterations": 22515,
+          "ns/op": 28774.0,
+          "B/op": 67324.0,
+          "allocs/op": 104.0
+        }
+      ],
+      "BenchmarkNavigationFragmentCache/entries-100/cold": [
+        {
+          "iterations": 22144,
+          "ns/op": 25579.0,
+          "B/op": 68413.0,
+          "allocs/op": 114.0
+        },
+        {
+          "iterations": 23679,
+          "ns/op": 24657.0,
+          "B/op": 68413.0,
+          "allocs/op": 114.0
+        },
+        {
+          "iterations": 24517,
+          "ns/op": 25479.0,
+          "B/op": 68414.0,
+          "allocs/op": 114.0
+        }
+      ],
+      "BenchmarkNavigationFragmentCache/entries-100/hot": [
+        {
+          "iterations": 9871017,
+          "ns/op": 55.93,
+          "B/op": 0.0,
+          "allocs/op": 0.0
+        },
+        {
+          "iterations": 11236936,
+          "ns/op": 52.89,
+          "B/op": 0.0,
+          "allocs/op": 0.0
+        },
+        {
+          "iterations": 11334476,
+          "ns/op": 52.85,
+          "B/op": 0.0,
+          "allocs/op": 0.0
+        }
+      ],
+      "BenchmarkNavigationFragmentCache/entries-1000/uncached": [
+        {
+          "iterations": 2896,
+          "ns/op": 199612.0,
+          "B/op": 627766.0,
+          "allocs/op": 1004.0
+        },
+        {
+          "iterations": 2697,
+          "ns/op": 206011.0,
+          "B/op": 627761.0,
+          "allocs/op": 1004.0
+        },
+        {
+          "iterations": 2817,
+          "ns/op": 201493.0,
+          "B/op": 627769.0,
+          "allocs/op": 1004.0
+        }
+      ],
+      "BenchmarkNavigationFragmentCache/entries-1000/cold": [
+        {
+          "iterations": 2760,
+          "ns/op": 221530.0,
+          "B/op": 628921.0,
+          "allocs/op": 1014.0
+        },
+        {
+          "iterations": 2676,
+          "ns/op": 240622.0,
+          "B/op": 628920.0,
+          "allocs/op": 1014.0
+        },
+        {
+          "iterations": 2272,
+          "ns/op": 258507.0,
+          "B/op": 628926.0,
+          "allocs/op": 1014.0
+        }
+      ],
+      "BenchmarkNavigationFragmentCache/entries-1000/hot": [
+        {
+          "iterations": 9810219,
+          "ns/op": 57.38,
+          "B/op": 0.0,
+          "allocs/op": 0.0
+        },
+        {
+          "iterations": 10778974,
+          "ns/op": 53.95,
+          "B/op": 0.0,
+          "allocs/op": 0.0
+        },
+        {
+          "iterations": 11387602,
+          "ns/op": 53.04,
+          "B/op": 0.0,
+          "allocs/op": 0.0
+        }
+      ],
+      "BenchmarkNavigationFragmentCache/entries-10000/uncached": [
+        {
+          "iterations": 319,
+          "ns/op": 1903426.0,
+          "B/op": 6225333.0,
+          "allocs/op": 10005.0
+        },
+        {
+          "iterations": 303,
+          "ns/op": 2006113.0,
+          "B/op": 6225332.0,
+          "allocs/op": 10005.0
+        },
+        {
+          "iterations": 289,
+          "ns/op": 2085349.0,
+          "B/op": 6225336.0,
+          "allocs/op": 10005.0
+        }
+      ],
+      "BenchmarkNavigationFragmentCache/entries-10000/cold": [
+        {
+          "iterations": 282,
+          "ns/op": 2101990.0,
+          "B/op": 6225925.0,
+          "allocs/op": 10012.0
+        },
+        {
+          "iterations": 284,
+          "ns/op": 2034111.0,
+          "B/op": 6225920.0,
+          "allocs/op": 10012.0
+        },
+        {
+          "iterations": 303,
+          "ns/op": 1971294.0,
+          "B/op": 6225924.0,
+          "allocs/op": 10012.0
+        }
+      ],
+      "BenchmarkNavigationFragmentCache/entries-10000/oversize-bypass": [
+        {
+          "iterations": 289,
+          "ns/op": 2162795.0,
+          "B/op": 6225625.0,
+          "allocs/op": 10008.0
+        },
+        {
+          "iterations": 290,
+          "ns/op": 2074418.0,
+          "B/op": 6225622.0,
+          "allocs/op": 10008.0
+        },
+        {
+          "iterations": 277,
+          "ns/op": 2075915.0,
+          "B/op": 6225622.0,
+          "allocs/op": 10008.0
+        }
+      ]
+    },
+    "native_http": {
+      "BenchmarkNativeHomepageFragmentCache/disabled/cold": [
+        {
+          "iterations": 3344,
+          "ns/op": 727374.0,
+          "MB/s": 516.42,
+          "p50-ms": 0.7026,
+          "p95-ms": 0.9306,
+          "req/s": 1375.0,
+          "B/op": 2561846.0,
+          "allocs/op": 2410.0
+        },
+        {
+          "iterations": 2848,
+          "ns/op": 802649.0,
+          "MB/s": 467.99,
+          "p50-ms": 0.7524,
+          "p95-ms": 1.08,
+          "req/s": 1246.0,
+          "B/op": 2561643.0,
+          "allocs/op": 2407.0
+        },
+        {
+          "iterations": 3048,
+          "ns/op": 965464.0,
+          "MB/s": 389.07,
+          "p50-ms": 0.8947,
+          "p95-ms": 1.577,
+          "req/s": 1036.0,
+          "B/op": 2523221.0,
+          "allocs/op": 2404.0
+        }
+      ],
+      "BenchmarkNativeHomepageFragmentCache/disabled/hot": [
+        {
+          "iterations": 7712,
+          "ns/op": 278545.0,
+          "MB/s": 1348.54,
+          "p50-ms": 0.2283,
+          "p95-ms": 0.515,
+          "req/s": 3590.0,
+          "B/op": 1362759.0,
+          "allocs/op": 374.0
+        },
+        {
+          "iterations": 7951,
+          "ns/op": 292927.0,
+          "MB/s": 1282.33,
+          "p50-ms": 0.2375,
+          "p95-ms": 0.5339,
+          "req/s": 3414.0,
+          "B/op": 1362197.0,
+          "allocs/op": 374.0
+        },
+        {
+          "iterations": 8331,
+          "ns/op": 278585.0,
+          "MB/s": 1348.35,
+          "p50-ms": 0.2302,
+          "p95-ms": 0.5142,
+          "req/s": 3590.0,
+          "B/op": 1356279.0,
+          "allocs/op": 374.0
+        }
+      ],
+      "BenchmarkNativeHomepageFragmentCache/anonymous/cold": [
+        {
+          "iterations": 3039,
+          "ns/op": 853787.0,
+          "MB/s": 439.31,
+          "p50-ms": 0.7592,
+          "p95-ms": 1.262,
+          "req/s": 1171.0,
+          "B/op": 2512241.0,
+          "allocs/op": 2404.0
+        },
+        {
+          "iterations": 3013,
+          "ns/op": 858437.0,
+          "MB/s": 436.93,
+          "p50-ms": 0.779,
+          "p95-ms": 1.284,
+          "req/s": 1165.0,
+          "B/op": 2513765.0,
+          "allocs/op": 2404.0
+        },
+        {
+          "iterations": 2955,
+          "ns/op": 864902.0,
+          "MB/s": 433.66,
+          "p50-ms": 0.7665,
+          "p95-ms": 1.27,
+          "req/s": 1156.0,
+          "B/op": 2559476.0,
+          "allocs/op": 2405.0
+        }
+      ],
+      "BenchmarkNativeHomepageFragmentCache/anonymous/hot": [
+        {
+          "iterations": 7710,
+          "ns/op": 305876.0,
+          "MB/s": 1226.24,
+          "p50-ms": 0.2636,
+          "p95-ms": 0.5417,
+          "req/s": 3269.0,
+          "B/op": 1396519.0,
+          "allocs/op": 378.0
+        },
+        {
+          "iterations": 7915,
+          "ns/op": 283898.0,
+          "MB/s": 1321.17,
+          "p50-ms": 0.2394,
+          "p95-ms": 0.5329,
+          "req/s": 3522.0,
+          "B/op": 1398485.0,
+          "allocs/op": 378.0
+        },
+        {
+          "iterations": 7608,
+          "ns/op": 303123.0,
+          "MB/s": 1237.38,
+          "p50-ms": 0.2575,
+          "p95-ms": 0.5384,
+          "req/s": 3299.0,
+          "B/op": 1393138.0,
+          "allocs/op": 377.0
+        }
+      ],
+      "BenchmarkNativeHomepageFragmentCache/authenticated/cold": [
+        {
+          "iterations": 100,
+          "ns/op": 24786208.0,
+          "MB/s": 15.15,
+          "p50-ms": 24.61,
+          "p95-ms": 27.8,
+          "req/s": 40.35,
+          "B/op": 2544569.0,
+          "allocs/op": 2478.0
+        },
+        {
+          "iterations": 100,
+          "ns/op": 24659827.0,
+          "MB/s": 15.23,
+          "p50-ms": 24.58,
+          "p95-ms": 27.86,
+          "req/s": 40.55,
+          "B/op": 2528714.0,
+          "allocs/op": 2478.0
+        },
+        {
+          "iterations": 100,
+          "ns/op": 24629378.0,
+          "MB/s": 15.25,
+          "p50-ms": 24.56,
+          "p95-ms": 27.75,
+          "req/s": 40.6,
+          "B/op": 2550737.0,
+          "allocs/op": 2480.0
+        }
+      ],
+      "BenchmarkNativeHomepageFragmentCache/authenticated/hot": [
+        {
+          "iterations": 100,
+          "ns/op": 30848034.0,
+          "MB/s": 12.18,
+          "p50-ms": 24.17,
+          "p95-ms": 27.63,
+          "req/s": 32.42,
+          "B/op": 1392368.0,
+          "allocs/op": 450.0
+        },
+        {
+          "iterations": 97,
+          "ns/op": 22672408.0,
+          "MB/s": 16.57,
+          "p50-ms": 22.58,
+          "p95-ms": 25.21,
+          "req/s": 44.11,
+          "B/op": 1364029.0,
+          "allocs/op": 450.0
+        },
+        {
+          "iterations": 100,
+          "ns/op": 23386164.0,
+          "MB/s": 16.06,
+          "p50-ms": 23.39,
+          "p95-ms": 25.83,
+          "req/s": 42.76,
+          "B/op": 1376301.0,
+          "allocs/op": 451.0
+        }
+      ]
+    }
+  },
+  "medians": {
+    "fragments": {
+      "BenchmarkNavigationFragmentCache/entries-100/uncached": {
+        "ns/op": 22272.0,
+        "B/op": 67323.0,
+        "allocs/op": 104.0
+      },
+      "BenchmarkNavigationFragmentCache/entries-100/cold": {
+        "ns/op": 25479.0,
+        "B/op": 68413.0,
+        "allocs/op": 114.0
+      },
+      "BenchmarkNavigationFragmentCache/entries-100/hot": {
+        "ns/op": 52.89,
+        "B/op": 0.0,
+        "allocs/op": 0.0
+      },
+      "BenchmarkNavigationFragmentCache/entries-1000/uncached": {
+        "ns/op": 201493.0,
+        "B/op": 627766.0,
+        "allocs/op": 1004.0
+      },
+      "BenchmarkNavigationFragmentCache/entries-1000/cold": {
+        "ns/op": 240622.0,
+        "B/op": 628921.0,
+        "allocs/op": 1014.0
+      },
+      "BenchmarkNavigationFragmentCache/entries-1000/hot": {
+        "ns/op": 53.95,
+        "B/op": 0.0,
+        "allocs/op": 0.0
+      },
+      "BenchmarkNavigationFragmentCache/entries-10000/uncached": {
+        "ns/op": 2006113.0,
+        "B/op": 6225333.0,
+        "allocs/op": 10005.0
+      },
+      "BenchmarkNavigationFragmentCache/entries-10000/cold": {
+        "ns/op": 2034111.0,
+        "B/op": 6225924.0,
+        "allocs/op": 10012.0
+      },
+      "BenchmarkNavigationFragmentCache/entries-10000/oversize-bypass": {
+        "ns/op": 2075915.0,
+        "B/op": 6225622.0,
+        "allocs/op": 10008.0
+      }
+    },
+    "native_http": {
+      "BenchmarkNativeHomepageFragmentCache/disabled/cold": {
+        "ns/op": 802649.0,
+        "MB/s": 467.99,
+        "p50-ms": 0.7524,
+        "p95-ms": 1.08,
+        "req/s": 1246.0,
+        "B/op": 2561643.0,
+        "allocs/op": 2407.0
+      },
+      "BenchmarkNativeHomepageFragmentCache/disabled/hot": {
+        "ns/op": 278585.0,
+        "MB/s": 1348.35,
+        "p50-ms": 0.2302,
+        "p95-ms": 0.515,
+        "req/s": 3590.0,
+        "B/op": 1362197.0,
+        "allocs/op": 374.0
+      },
+      "BenchmarkNativeHomepageFragmentCache/anonymous/cold": {
+        "ns/op": 858437.0,
+        "MB/s": 436.93,
+        "p50-ms": 0.7665,
+        "p95-ms": 1.27,
+        "req/s": 1165.0,
+        "B/op": 2513765.0,
+        "allocs/op": 2404.0
+      },
+      "BenchmarkNativeHomepageFragmentCache/anonymous/hot": {
+        "ns/op": 303123.0,
+        "MB/s": 1237.38,
+        "p50-ms": 0.2575,
+        "p95-ms": 0.5384,
+        "req/s": 3299.0,
+        "B/op": 1396519.0,
+        "allocs/op": 378.0
+      },
+      "BenchmarkNativeHomepageFragmentCache/authenticated/cold": {
+        "ns/op": 24659827.0,
+        "MB/s": 15.23,
+        "p50-ms": 24.58,
+        "p95-ms": 27.8,
+        "req/s": 40.55,
+        "B/op": 2544569.0,
+        "allocs/op": 2478.0
+      },
+      "BenchmarkNativeHomepageFragmentCache/authenticated/hot": {
+        "ns/op": 23386164.0,
+        "MB/s": 16.06,
+        "p50-ms": 23.39,
+        "p95-ms": 25.83,
+        "req/s": 42.76,
+        "B/op": 1376301.0,
+        "allocs/op": 450.0
+      }
+    }
+  }
+}

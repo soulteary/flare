@@ -39,15 +39,11 @@ func generateApplicationsForRead(filter string, options *model.Application, admi
 		}
 		options = &op
 	}
-	readApps := data.LoadVisibleFavoriteBookmarks
-	if existingOnly {
-		readApps = data.ReadExistingVisibleFavoriteBookmarks
-	}
-	appsData, err := readApps(administrator)
+	view, _, err := data.LoadNavigationViews(true, false, administrator, existingOnly)
 	if err != nil {
 		return "", navigationDataError("applications", options.Locale, err)
 	}
-	return generateApplicationsSnapshot(filter, options, appsData, requestInfo...)
+	return navigationFragment(view, options, true, filter, "", "/applications", firstRequestInfo(requestInfo)), ""
 }
 func generateApplicationsSnapshot(filter string, options *model.Application, appsData model.Bookmarks, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	b, ok := builderPool.Get().(*strings.Builder)
