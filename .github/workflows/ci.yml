@@ -91,6 +91,7 @@ jobs:
     env:
       COVERAGE_THRESHOLD: "85"
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
 
