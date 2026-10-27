@@ -89,11 +89,16 @@ func (cache *navigationHTMLCache) get(key navigationFragmentKey, build func() te
 
 func navigationFragment(view data.NavigationView, options *model.Application, apps bool, filter, selected, path string, info *fn.DynamicURL) template.HTML {
 	build := func() template.HTML {
+		category := ""
+		if options.Homepage != nil && options.Homepage.CategoryNavigation == "tabs" {
+			category = selected
+		}
+		matches := view.Matches(filter, apps, category, func(raw string) string { return expandNavigationURL(raw, info) })
 		if apps {
-			value, _ := generateApplicationsSnapshot(filter, options, view.Copy(), info)
+			value, _ := renderApplicationSelection(options, view.Item, matches, info)
 			return value
 		}
-		value, _ := generateBookmarkSnapshot(filter, selected, path, options, view.Copy(), info)
+		value, _ := renderBookmarkSelection(filter, selected, path, options, view.Categories(), view.Item, matches, info)
 		return value
 	}
 	// Arbitrary queries/categories/URL contexts do not create cache entries.

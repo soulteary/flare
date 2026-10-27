@@ -46,37 +46,41 @@ func generateApplicationsForRead(filter string, options *model.Application, admi
 	return navigationFragment(view, options, true, filter, "", "/applications", firstRequestInfo(requestInfo)), ""
 }
 func generateApplicationsSnapshot(filter string, options *model.Application, appsData model.Bookmarks, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
-	b, ok := builderPool.Get().(*strings.Builder)
-	if !ok {
-		b = &strings.Builder{}
-	}
-	b.Reset()
-	defer releaseNavigationBuilder(b)
-
 	info := firstRequestInfo(requestInfo)
-	filterLower := strings.ToLower(filter)
-	// Count only matching output before reserving. Search misses must not reserve
-	// a full navigation page, and the builder never retains its large buffer in a pool.
-	estimate := 0
 	matches := make([]int, 0, len(appsData.Items))
+	filterLower := strings.ToLower(filter)
 	for index, app := range appsData.Items {
 		link := expandNavigationURL(app.URL, info)
 		if filter != "" && !strings.Contains(strings.ToLower(app.Name), filterLower) && !strings.Contains(strings.ToLower(link), filterLower) && !strings.Contains(strings.ToLower(app.Desc), filterLower) {
 			continue
 		}
 		matches = append(matches, index)
-		estimate = boundedNavigationEstimate(estimate, 320+len(app.Name)*2+len(link)+len(app.Desc)+len(app.Icon))
+	}
+	return renderApplicationSelection(options, func(i int) model.Bookmark { return appsData.Items[i] }, matches, info)
+}
+
+func renderApplicationSelection(options *model.Application, item func(int) model.Bookmark, matches []int, info *fn.DynamicURL) (template.HTML, string) {
+	b, ok := builderPool.Get().(*strings.Builder)
+	if !ok {
+		b = &strings.Builder{}
+	}
+	b.Reset()
+	defer releaseNavigationBuilder(b)
+	estimate := 0
+	for _, index := range matches {
+		app := item(index)
+		estimate = boundedNavigationEstimate(estimate, 320+len(app.Name)*2+len(expandNavigationURL(app.URL, info))+len(app.Desc)+len(app.Icon))
 	}
 	growNavigationBuilder(b, estimate)
 	for _, index := range matches {
-		app := appsData.Items[index]
+		app := item(index)
 		app.URL = expandNavigationURL(app.URL, info)
 
 		desc := app.Desc
 		if desc == "" {
 			desc = app.URL
 		}
-		templateURL := navigationHref(app.URL, options.EnableEncryptedLink, firstRequestInfo(requestInfo))
+		templateURL := navigationHref(app.URL, options.EnableEncryptedLink, info)
 		templateIcon := navigationIcon(app.Icon, app.URL, options.IconMode, app.Private)
 		if options.OpenAppNewTab {
 			b.WriteString(`<div class="app-container" data-id="`)

@@ -1,0 +1,126 @@
+{
+  "baseline": {
+    "1000/apps-miss": {
+      "ns_per_op": 45223.0,
+      "bytes_per_op": 114750,
+      "allocs_per_op": 2
+    },
+    "1000/apps-hit": {
+      "ns_per_op": 51926.0,
+      "bytes_per_op": 120429,
+      "allocs_per_op": 14
+    },
+    "1000/bookmarks-miss": {
+      "ns_per_op": 43217.0,
+      "bytes_per_op": 115773,
+      "allocs_per_op": 19
+    },
+    "1000/bookmarks-hit": {
+      "ns_per_op": 51402.0,
+      "bytes_per_op": 119208,
+      "allocs_per_op": 29
+    },
+    "1000/category": {
+      "ns_per_op": 196923.0,
+      "bytes_per_op": 431165,
+      "allocs_per_op": 1010
+    },
+    "1000/category-sparse": {
+      "ns_per_op": 38491.0,
+      "bytes_per_op": 141539,
+      "allocs_per_op": 145
+    },
+    "10000/apps-miss": {
+      "ns_per_op": 423044.0,
+      "bytes_per_op": 1122463,
+      "allocs_per_op": 2
+    },
+    "10000/apps-hit": {
+      "ns_per_op": 514688.0,
+      "bytes_per_op": 1179426,
+      "allocs_per_op": 114
+    },
+    "10000/bookmarks-miss": {
+      "ns_per_op": 421962.0,
+      "bytes_per_op": 1123487,
+      "allocs_per_op": 19
+    },
+    "10000/bookmarks-hit": {
+      "ns_per_op": 483303.0,
+      "bytes_per_op": 1158265,
+      "allocs_per_op": 129
+    },
+    "10000/category": {
+      "ns_per_op": 1900929.0,
+      "bytes_per_op": 4275147,
+      "allocs_per_op": 10010
+    },
+    "10000/category-sparse": {
+      "ns_per_op": 310440.0,
+      "bytes_per_op": 1295571,
+      "allocs_per_op": 595
+    }
+  },
+  "candidate": {
+    "1000/apps-miss": {
+      "ns_per_op": 8958.0,
+      "bytes_per_op": 8196,
+      "allocs_per_op": 1
+    },
+    "1000/apps-hit": {
+      "ns_per_op": 18621.0,
+      "bytes_per_op": 13879,
+      "allocs_per_op": 13
+    },
+    "1000/bookmarks-miss": {
+      "ns_per_op": 7823.0,
+      "bytes_per_op": 9221,
+      "allocs_per_op": 18
+    },
+    "1000/bookmarks-hit": {
+      "ns_per_op": 17126.0,
+      "bytes_per_op": 12655,
+      "allocs_per_op": 28
+    },
+    "1000/category": {
+      "ns_per_op": 189406.0,
+      "bytes_per_op": 316430,
+      "allocs_per_op": 1008
+    },
+    "1000/category-sparse": {
+      "ns_per_op": 12850.0,
+      "bytes_per_op": 20307,
+      "allocs_per_op": 137
+    },
+    "10000/apps-miss": {
+      "ns_per_op": 89192.0,
+      "bytes_per_op": 81932,
+      "allocs_per_op": 1
+    },
+    "10000/apps-hit": {
+      "ns_per_op": 185734.0,
+      "bytes_per_op": 138885,
+      "allocs_per_op": 113
+    },
+    "10000/bookmarks-miss": {
+      "ns_per_op": 80906.0,
+      "bytes_per_op": 82957,
+      "allocs_per_op": 18
+    },
+    "10000/bookmarks-hit": {
+      "ns_per_op": 161444.0,
+      "bytes_per_op": 117722,
+      "allocs_per_op": 128
+    },
+    "10000/category": {
+      "ns_per_op": 1804732.0,
+      "bytes_per_op": 3152723,
+      "allocs_per_op": 10008
+    },
+    "10000/category-sparse": {
+      "ns_per_op": 95036.0,
+      "bytes_per_op": 162530,
+      "allocs_per_op": 587
+    }
+  }
+}

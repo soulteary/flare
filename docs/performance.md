@@ -2,6 +2,8 @@
 
 ## 当前源码开发记录（0.6.7 之后）
 
+- [搜索与分类只读索引](../metrics-reports/navigation-read-index-2026-10-27/report.md)：取消整集合复制、复用搜索归一化与分类索引；仅渲染旁路测量。
+
 - [管理员读取鉴权复用](requirements/admin-performance-optimization.md)：请求内证明与持久化边界。
 - [管理员 CPU/内存归因](requirements/admin-resource-analysis.md)：相同到达率、profile 与缓存保留成本。
 - [会话事务 I/O 合并](requirements/transaction-io-optimization.md)：响应释放前持久化及完整 HTTP 计数。
