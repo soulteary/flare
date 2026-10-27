@@ -39,9 +39,10 @@ func TestSecurityStartupDefaultsPrepareTrustedState(t *testing.T) {
 		for _, explicit := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/explicit=%v", content, explicit), func(t *testing.T) {
 				t.Chdir(t.TempDir())
-				if content == "existing" {
+				switch content {
+				case "existing":
 					writeStartupFiles(t, startupPublic)
-				} else if content == "samples" {
+				case "samples":
 					_, err := data.LoadFavoriteBookmarks()
 					require.NoError(t, err)
 					_, err = data.LoadNormalBookmarks()

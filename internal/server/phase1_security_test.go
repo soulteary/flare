@@ -203,14 +203,14 @@ func TestDefaultStartupAllowsAnonymousEditingWithCSRF(t *testing.T) {
 		if origin != "" {
 			req.Header.Set("Origin", origin)
 		}
-		res, err := app.Test(req)
-		require.NoError(t, err)
+		res, requestErr := app.Test(req)
+		require.NoError(t, requestErr)
 		defer res.Body.Close()
 		for _, cookie := range res.Cookies() {
 			cookies[cookie.Name] = cookie
 		}
-		raw, err := io.ReadAll(res.Body)
-		require.NoError(t, err)
+		raw, readErr := io.ReadAll(res.Body)
+		require.NoError(t, readErr)
 		return res.StatusCode, string(raw)
 	}
 	for _, path := range []string{"/", "/editor", "/settings/appearance"} {
