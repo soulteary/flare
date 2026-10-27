@@ -163,6 +163,7 @@ func UpdateAppearance(update model.Application) bool {
 	options.ShowBookmarks = update.ShowBookmarks
 	options.HideSettingsButton = update.HideSettingsButton
 	options.HideHelpButton = update.HideHelpButton
+	options.HideVersion = update.HideVersion
 	options.EnableEncryptedLink = update.EnableEncryptedLink
 	options.IconMode = update.IconMode
 	options.KeepLetterCase = update.KeepLetterCase

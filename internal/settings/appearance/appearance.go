@@ -35,6 +35,7 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		OptionShowApps           bool   `form:"show-apps"`
 		OptionShowBookmarks      bool   `form:"show-bookmarks"`
 		HideSettingsButton       bool   `form:"hide-settings-button"`
+		HideVersion              bool   `form:"hide-version"`
 		HideHelpButton           bool   `form:"hide-help-button"`
 		EnableEncryptedLink      bool   `form:"enable-encrypted-link"`
 		IconMode                 string `form:"icon-mode"`
@@ -77,6 +78,7 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 	update.ShowBookmarks = body.OptionShowBookmarks
 	update.HideSettingsButton = body.HideSettingsButton
 	update.HideHelpButton = body.HideHelpButton
+	update.HideVersion = body.HideVersion
 	update.EnableEncryptedLink = body.EnableEncryptedLink
 	update.KeepLetterCase = body.KeepLetterCase
 	requestIconMode := strings.ToUpper(body.IconMode)
@@ -146,6 +148,7 @@ func pageAppearance(c fiber.Ctx) error {
 	m["OptionShowBookmarks"] = options.ShowBookmarks
 	m["OptionHideSettingsButton"] = options.HideSettingsButton
 	m["OptionHideHelpButton"] = options.HideHelpButton
+	m["OptionHideVersion"] = options.HideVersion
 	m["OptionEnableEncryptedLink"] = options.EnableEncryptedLink
 	m["OptionKeepLetterCase"] = options.KeepLetterCase
 	m["OptionIconModeDefault"] = IconModeDefault

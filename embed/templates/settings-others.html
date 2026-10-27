@@ -52,8 +52,10 @@
             <br />
 
             <p>{{ T .Locale "project_link" }}：<a href="https://github.com/soulteary/docker-flare" target="_blank">soulteary/docker-flare</a> </p>
+            {{ if not .OptionHideVersion }}
             <p>{{ T .Locale "version" }}：{{ .Version }} / {{.COMMIT}}</p>
             <p>{{ T .Locale "build_date" }}：{{ .BuildDate }}</p>
+            {{ end }}
         </div>
     </form>
 

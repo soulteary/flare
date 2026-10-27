@@ -101,6 +101,11 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 | `config.yml` `Footer` | Administrator-controlled internal HTML | Treat it as trusted site content, unlike ordinary bookmark text |
 | `config.yml` `LoginFooter` | Current main: public login-page text/filtered HTTP(S) links | [Accounts](accounts.md); separate from internal Footer |
 
+`config.yml` also supports `HideVersion: true` (default: `false`), available in
+Settings → Appearance. It removes the application version, commit and build date
+from the About section for all visitors. Saving takes effect on subsequent requests.
+CLI version output and startup logs remain available for local diagnostics.
+
 Search settings are not included in bookmark exports. Multiple processes sharing
 YAML do not share in-process locks. Use one writer and normal filesystem backups.
 

@@ -21,6 +21,7 @@ type Application struct {
 	ShowApps                bool             `yaml:"ShowApps"`
 	ShowBookmarks           bool             `yaml:"ShowBookmarks"`
 	HideSettingsButton      bool             `yaml:"HideSettingButton"`
+	HideVersion             bool             `yaml:"HideVersion"`
 	HideHelpButton          bool             `yaml:"HideHelpButton"`
 	Theme                   string           `yaml:"Theme"`
 	ShowWeather             bool             `yaml:"ShowWeather"`

@@ -257,6 +257,21 @@
         </div>
 
         <div class="form-group">
+            <label for="settings-hide-version">{{ T .Locale "hide_version" }}</label>
+            {{ if .OptionHideVersion }}
+            <select name="hide-version" id="settings-hide-version">
+                <option value="1" selected>{{ T .Locale "yes" }}</option>
+                <option value="0">{{ T .Locale "no" }}</option>
+            </select>
+            {{ else }}
+            <select name="hide-version" id="settings-hide-version">
+                <option value="0" selected>{{ T .Locale "no" }}</option>
+                <option value="1">{{ T .Locale "yes" }}</option>
+            </select>
+            {{ end }}
+        </div>
+
+        <div class="form-group">
  <label for="category-navigation">{{ T .Locale "category_navigation" }}</label>
  <select id="category-navigation" name="category-navigation">
  <option value="all" {{if eq .CategoryNavigation "all"}}selected{{end}}>{{ T .Locale "category_navigation_all" }}</option>
