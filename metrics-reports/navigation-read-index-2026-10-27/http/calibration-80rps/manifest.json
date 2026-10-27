@@ -1,0 +1,19 @@
+{
+  "host": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 02:29:07) [Clang 19.1.7 ]",
+  "harness_sha256": "f214e750ab47aa40b286b86f0a3fa810c82f210a1b1c964223b667f2281f900d",
+  "resource_helper_sha256": "fbdb4636559c3f0762741281712189b09571602716e0e83dfed0ae6b93d4e6f8",
+  "options": {
+    "baseline": "/tmp/flare-http-read-baseline-bin",
+    "candidate": "/tmp/flare-http-read-candidate",
+    "output": "/private/tmp/flare-http-read-formal",
+    "duration": 30.0,
+    "rounds": 2,
+    "entries": 10000,
+    "anonymous_rate": 80.0,
+    "authenticated_rate": 8.0
+  },
+  "runs": [
+    "r1-anonymous-search-baseline.json"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "smoke": "1-second / 2rps windows excluded; harness correctness only",
+  "calibration_80rps": {
+    "invalid": "candidate anonymous search",
+    "offered": 2400,
+    "admitted": 2398,
+    "drops": [
+      {
+        "index": 2163,
+        "reason": "scheduler-late"
+      },
+      {
+        "index": 2164,
+        "reason": "scheduler-late"
+      }
+    ],
+    "operation_errors": [],
+    "policy": "exclude all 80rps observations"
+  },
+  "calibration_8rps_authenticated": {
+    "invalid": "round 2 baseline authenticated search",
+    "offered": 240,
+    "admitted": 239,
+    "drops": [
+      {
+        "index": 168,
+        "reason": "inflight-cap"
+      }
+    ],
+    "operation_errors": [],
+    "policy": "exclude all 8rps authenticated observations; repeat both versions at 4rps"
+  },
+  "anonymous_20rps": "retain all 8 valid anonymous windows; identity selection added without changing measurement functions",
+  "initial_runner_sha256": "f214e750ab47aa40b286b86f0a3fa810c82f210a1b1c964223b667f2281f900d",
+  "final_runner_sha256": "c8a31fe5725ec0303c21e9020b166d0ebe5455186015750e20b91bd87c6dd2a1"
+}
