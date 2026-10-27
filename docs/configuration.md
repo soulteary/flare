@@ -1,6 +1,6 @@
 # Configuration reference
 
-> Scope: current main development. Stable 0.6.7 differences are explicit below;
+> Scope: stable 0.6.8 and current source. Legacy 0.6.7 differences are explicit below;
 > use [tagged docs](https://github.com/soulteary/flare/tree/0.6.7/docs) for an unchanged
 > stable deployment. See [accounts](accounts.md) before initializing or migrating.
 

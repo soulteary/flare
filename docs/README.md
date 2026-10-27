@@ -2,24 +2,23 @@
 
 ## Choose your version
 
-The latest published stable release is [0.6.7](https://github.com/soulteary/flare/releases/tag/0.6.7)
-(verified 2026-10-27, Asia/Shanghai). It includes Chinese/English interfaces,
-columns within bookmark categories, icon improvements and clearer write-source
-errors. Use [release-tagged documentation](https://github.com/soulteary/flare/tree/0.6.7/docs)
-when deploying that image. Merging a feature does not publish an image or move `latest`.
+The latest published stable release is [0.6.8](https://github.com/soulteary/flare/releases/tag/0.6.8)
+(verified 2026-10-27, Asia/Shanghai). It includes persistent single-administrator
+accounts, revocable sessions, per-entry/category privacy and navigation caching.
+Read the [release and upgrade notes](release-0.6.8.md) before updating, especially
+the security-directory persistence and rollback requirements.
 
-This working-tree documentation also describes **current main development**:
-persistent single-administrator accounts/sessions, enforced per-entry/category
-privacy and HTML fragment caching. These changes are not included in 0.6.7 and
-have not received a new stable release or complete physical-device acceptance.
-Guides below explicitly distinguish the two access models.
+Guides below describe 0.6.8 and current source, with explicit legacy 0.6.7
+differences. Use [0.6.7 tagged documentation](https://github.com/soulteary/flare/tree/0.6.7/docs)
+for an unchanged older deployment. Physical-device acceptance remains limited;
+see the release record. Merging later features does not publish an image or move `latest`.
 
 ## Install and operate
 
-- [Deployment examples](https://github.com/soulteary/docker-flare#快速上手) and [0.6.7 release notes](release-0.6.7.md)
+- [Deployment examples](https://github.com/soulteary/docker-flare#快速上手) and [0.6.8 release notes](release-0.6.8.md)
 - [Configuration, precedence and access models](configuration.md)
-- [Accounts, initialization and private resources](accounts.md) — current main; includes stable-version differences
-- [Development-version upgrade and rollback](login-private-upgrade.md)
+- [Accounts, initialization and private resources](accounts.md) — 0.6.8 and current source; includes legacy-version differences
+- [Upgrade from 0.6.7 and rollback](login-private-upgrade.md)
 - [Backups and restore](backup-restore.md), [editor recovery](editor-recovery.md)
 - [Reverse proxies and deployment boundaries](reverse-proxy.md)
 - [Troubleshooting](troubleshooting.md), [access logs and Docker log rotation](logging.md)
@@ -35,7 +34,6 @@ Guides below explicitly distinguish the two access models.
 
 ## Develop and verify
 
-- [0.6.8 candidate release notes and publication checklist](release-0.6.8.md) — preparation only; not yet published
 - [Build and test](development.md), [contributing](../CONTRIBUTING.md)
 - [Navigation snapshots and HTML fragment cache](navigation-cache.md)
 - [Performance decisions and reports](performance.md), [measurement methods](baseline-metrics.md)

@@ -7,8 +7,9 @@
 
 A lightweight self-hosted bookmark dashboard and start page, written in Go.
 
-The latest stable release is [**0.6.7**](https://github.com/soulteary/flare/releases/tag/0.6.7),
-including Chinese/English interfaces and columns within bookmark categories.
+The latest stable release is [**0.6.8**](https://github.com/soulteary/flare/releases/tag/0.6.8),
+including persistent administrator accounts, revocable sessions, resource privacy
+and navigation caching. Read the [upgrade requirements](docs/release-0.6.8.md) before updating.
 See the [documentation index](docs/README.md) for version scope and usage.
 
 ## Features
@@ -79,8 +80,8 @@ Echo is no longer part of the production dependency graph. See
 Published stable versions are available from both registries:
 
 ```sh
-docker pull soulteary/flare:0.6.7
-docker pull ghcr.io/soulteary/flare:0.6.7
+docker pull soulteary/flare:0.6.8
+docker pull ghcr.io/soulteary/flare:0.6.8
 ```
 
 Both images support `linux/amd64`, `linux/arm64`, `linux/arm/v7`, and
@@ -108,9 +109,9 @@ precedence, and rebuilding existing containers while preserving application data
 
 ### Accounts and private access
 
-**Version scope:** stable 0.6.7 retains the legacy login model. The persistent
-single-administrator account, session revocation and per-entry/category privacy
-features in current `main` are development features, not part of that release.
+**Version scope:** stable 0.6.8 includes persistent single-administrator accounts,
+session revocation and per-entry/category privacy. Stable 0.6.7 retains the legacy
+login model.
 Use [the documentation index](docs/README.md) to choose the matching instructions.
 
 For 0.6.7, use `FLARE_DISABLE_LOGIN=false` to protect administration and also
@@ -118,7 +119,7 @@ For 0.6.7, use `FLARE_DISABLE_LOGIN=false` to protect administration and also
 alone do not protect data in 0.6.7. Preserve `.flare-cookie-secret` and configure
 `FLARE_COOKIE_SECURE=true` when HTTPS terminates at a reverse proxy.
 
-For current source, new installations require administrator initialization and
+For 0.6.8 and current source, new installations require administrator initialization and
 use private-site defaults unless explicitly configured otherwise. Persist the
 security directory as well as YAML. Read [accounts](docs/accounts.md),
 [configuration](docs/configuration.md), [upgrade/rollback](docs/login-private-upgrade.md),

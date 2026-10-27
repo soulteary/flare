@@ -1,7 +1,7 @@
 # Troubleshooting
 
-> Scope: stable 0.6.7 and current main development. Persistent security-state
-> diagnostics below apply to current main; see [accounts](accounts.md).
+> Scope: stable 0.6.8 and current source, with legacy 0.6.7 differences. Persistent
+> security-state diagnostics apply to 0.6.8 and current main; see [accounts](accounts.md).
 
 Record the exact release/source SHA, image digest, platform, OS, browser version,
 redacted Compose/runtime configuration, exit code and relevant logs. Never paste

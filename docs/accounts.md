@@ -1,7 +1,7 @@
 # Accounts and private resources
 
-> Scope: current main development, after stable 0.6.7. These persistent-account
-> and per-resource authorization features are not included in 0.6.7.
+> Scope: stable 0.6.8 and current source. These persistent-account and
+> per-resource authorization features are not included in legacy 0.6.7.
 
 ## Stable 0.6.7
 
@@ -13,14 +13,14 @@ or supply a strong `FLARE_COOKIE_SECRET`. Those legacy cookie settings are not
 the current-main persistent-session mechanism. Old instructions and measurements
 remain available through the [archive](archive/README.md).
 
-## Initialize current source
+## Initialize 0.6.8 or current source
 
 New installations default to login enabled and whole-site PRIVATE visibility
 unless explicitly configured. Missing credentials, contradictory access settings
 or damaged security state never silently enable anonymous access. A non-ready
 instance serves a generic HTTP 503 page; inspect its terminal diagnostics.
 
-Build following [development instructions](development.md). Run maintenance in
+Use the 0.6.8 release binary, or build following [development instructions](development.md). Run maintenance in
 the same working directory and effective environment as the service, while the
 service is stopped:
 

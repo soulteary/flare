@@ -1,7 +1,7 @@
 # Navigation editor
 
 > Availability: the editor shipped in 0.6.5. Privacy, unified CSRF and recent-
-> authentication behavior below describe current main development, after 0.6.7.
+> authentication behavior below ship in 0.6.8 and also describe current main.
 
 ## State and persistence
 

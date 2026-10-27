@@ -1,7 +1,7 @@
 # Backups and restore
 
-> Scope: stable 0.6.7 content backups and current-main development. Persistent
-> security-directory and session-revocation steps apply only to current main.
+> Scope: stable 0.6.8 and current source, with legacy 0.6.7 backup differences.
+> Security-directory and session-revocation steps apply to 0.6.8 and current main.
 
 Stop Flare and other writers before taking a consistent full backup or replacing
 configuration files. Keep the original volume/project identity during upgrades.
