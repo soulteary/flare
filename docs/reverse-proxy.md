@@ -1,7 +1,7 @@
 # Reverse proxies and support boundaries
 
-> Scope: stable 0.6.7 and current-main development. Explicit trusted-proxy and
-> canonical-origin settings below are current-main features, not part of 0.6.7.
+> Scope: stable 0.6.8 and current source, with legacy 0.6.7 differences. Explicit
+> trusted-proxy and canonical-origin settings ship in 0.6.8 and are absent in 0.6.7.
 
 Use a dedicated hostname at the URL root, such as `https://flare.example.com/`.
 Full subpath mounting at `/flare/` is unsupported: routes, forms, assets and
