@@ -38,6 +38,12 @@ func TestBufferedViewsDoNotInitializeMissingFiles(t *testing.T) {
 			require.NoError(t, os.WriteFile("config.yml", []byte("Title: read test\nShowApps: true\nShowBookmarks: true\nLocale: en\n"), 0600))
 			require.True(t, data.SaveFavoriteBookmarks(model.Bookmarks{Items: []model.Bookmark{{Name: "app sentinel", URL: "https://app.example", Private: true}}}))
 			require.True(t, data.SaveNormalBookmarks(model.Bookmarks{Categories: []model.Category{{ID: "public", Name: "Public"}}, Items: []model.Bookmark{{Name: "bookmark sentinel", URL: "https://bookmark.example", Category: "public"}}}))
+			// Warm both byte and parsed caches before an external removal. No
+			// editor cache invalidation accompanies an operator deleting YAML.
+			_, settingsErr := data.ReadExistingSettingsOptions()
+			require.NoError(t, settingsErr)
+			_, _, navigationErr := data.ReadExistingVisibleNavigationPair(true, true, true)
+			require.NoError(t, navigationErr)
 			if test.missing != "" {
 				require.NoError(t, os.Remove(test.missing))
 			}

@@ -32,3 +32,27 @@ func readFile(filePath string) ([]byte, error) {
 	}
 	return data, nil
 }
+
+func checkReadableConfig(path string) error {
+	// Reject special files before opening: a FIFO can otherwise block a read.
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat existing configuration %s: %w", path, err)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("existing configuration %s is not a regular file", path)
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("open existing configuration %s: %w", path, err)
+	}
+	info, statErr := f.Stat()
+	closeErr := f.Close()
+	if statErr != nil {
+		return fmt.Errorf("stat existing configuration %s: %w", path, statErr)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("existing configuration %s is not a regular file", path)
+	}
+	return closeErr
+}

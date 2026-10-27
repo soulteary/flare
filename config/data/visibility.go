@@ -133,6 +133,11 @@ func existingNavigationSnapshotSet(names []string) ([]*parsedBookmarks, error) {
 	defer bookmarkMu.RUnlock()
 	snapshots := make([]*parsedBookmarks, 0, len(names))
 	for _, name := range names {
+		// Cached content must not hide a removed or unreadable backing file.
+		// Opening read-only never invokes the legacy initialization path.
+		if err := checkReadableConfig(getConfigPath(name)); err != nil {
+			return nil, err
+		}
 		snapshot, err := readExistingBookmarkSnapshot(name)
 		if err != nil {
 			return nil, err
