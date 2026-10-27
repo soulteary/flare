@@ -39,6 +39,10 @@ jobs:
           npx playwright install --with-deps --only-shell chromium
       - name: Adaptive phone and tablet bookmark columns
         run: node tests/mobile/bookmark-columns.browser.cjs
+      - name: Native settings form save and proxy referrer policy
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/settings/save.browser.cjs
       - name: Compact mobile layout acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
