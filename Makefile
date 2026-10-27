@@ -7,9 +7,10 @@ build:
 test:
 	go test ./... -count=1
 
-# 生成覆盖率报告（coverage.out、coverage.html）
+# 与 CI 一致：全包语句覆盖率，启用 race 和 atomic 插桩
 coverage:
-	go test ./... -count=1 -coverprofile=coverage.out -covermode=atomic
+	go test -race -count=1 -coverpkg=./... -coverprofile=coverage.out -covermode=atomic ./...
+	go tool cover -func=coverage.out
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
 

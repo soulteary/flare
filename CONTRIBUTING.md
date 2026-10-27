@@ -19,7 +19,9 @@ go vet ./...
 golangci-lint run
 ```
 
-The main CI requires at least 85% all-package statement coverage. Use a
+The main CI requires at least 90% all-package statement coverage. `make coverage`
+uses the same race check, all-package instrumentation and atomic coverage mode,
+and writes `coverage.out` and `coverage.html`. Use a
 `golangci-lint` v2 release compatible with the project's Go toolchain and the
 checked-in `.golangci.yml`. Format changed Go files with `gofmt -w` (use `-s`
 for simplification); CI rejects formatting differences.

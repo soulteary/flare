@@ -19,8 +19,11 @@ with placeholder vendor directories and leave optional browser features missing.
 GoReleaser runs the generation hook automatically. Do not run generation and
 compilation concurrently against the same checkout.
 
-The main CI requires at least 85% all-package statement coverage. Formatting
-and `golangci-lint` v2 checks are also required; see [contributing](../CONTRIBUTING.md).
+The main CI requires at least 90% all-package statement coverage. `make coverage`
+runs the same race check and all-package atomic coverage instrumentation, prints
+the function/total summary, and generates `coverage.out` and `coverage.html`.
+Formatting and `golangci-lint` v2 checks are also required;
+see [contributing](../CONTRIBUTING.md).
 The separate release/manual quality-report workflow uses a different reporting
 threshold; see [report scopes](../.github/GO-REPORTS.md).
 

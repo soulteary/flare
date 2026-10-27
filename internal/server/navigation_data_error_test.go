@@ -58,6 +58,10 @@ func TestMalformedNavigationDataIsVisibleWithoutInternalDetails(t *testing.T) {
 	options.ShowApps = true
 	options.ShowBookmarks = true
 	require.True(t, data.UpdateAppearance(options))
+	// The public writers invalidate process-wide snapshots left by earlier tests.
+	// Corrupt the files only after invalidation so this request must parse disk.
+	require.True(t, data.SaveFavoriteBookmarks(model.Bookmarks{}))
+	require.True(t, data.SaveNormalBookmarks(model.Bookmarks{}))
 	for _, name := range []string{"apps.yml", "bookmarks.yml"} {
 		require.NoError(t, os.WriteFile(name, []byte("links: [sensitive-sentinel"), 0600))
 	}
