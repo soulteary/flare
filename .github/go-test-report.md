@@ -4,49 +4,51 @@
 
 | Metric | Value |
 | --- | --- |
-| Total | 332 |
-| Passed | 331 |
+| Total | 527 |
+| Passed | 525 |
 | Failed | 0 |
-| Skipped | 1 |
-| Coverage | 75.35% |
+| Skipped | 2 |
+| Coverage | 84.71% |
 | Threshold | 0.00% |
 
 ### Packages
 
 | Package | Status | Tests | Failed | Coverage |
 | --- | --- | --- | --- | --- |
-| . | no\_tests | 0 | 0 | 0.00% |
+| . | pass | 1 | 0 | 0.00% |
 | build | no\_tests | 0 | 0 | 0.00% |
-| build/builder | pass | 8 | 0 | 80.51% |
-| cmd | pass | 29 | 0 | 97.79% |
-| config/data | pass | 78 | 0 | 89.91% |
-| config/define | pass | 1 | 0 | 66.67% |
+| build/builder | pass | 12 | 0 | 88.45% |
+| cmd | pass | 60 | 0 | 92.08% |
+| config/data | pass | 107 | 0 | 91.71% |
+| config/define | pass | 1 | 0 | 62.79% |
 | config/model | pass | 5 | 0 | 82.35% |
-| internal/auth | pass | 31 | 0 | 87.63% |
-| internal/bookmarks | pass | 5 | 0 | 89.86% |
+| internal/auth | pass | 70 | 0 | 91.07% |
+| internal/bookmarks | pass | 6 | 0 | 90.25% |
 | internal/clock | pass | 5 | 0 | 91.25% |
-| internal/fn | pass | 12 | 0 | 71.43% |
+| internal/fn | pass | 13 | 0 | 87.91% |
 | internal/formvalue | pass | 1 | 0 | 95.00% |
 | internal/i18n | pass | 5 | 0 | 94.74% |
 | internal/logger | pass | 6 | 0 | 73.79% |
 | internal/misc/deprecated | no\_tests | 0 | 0 | 0.00% |
 | internal/misc/health | pass | 1 | 0 | 100.00% |
 | internal/misc/redir | no\_tests | 0 | 0 | 0.00% |
-| internal/pages/editor | pass | 14 | 0 | 66.16% |
-| internal/pages/guide | no\_tests | 0 | 0 | 0.00% |
-| internal/pages/home | pass | 19 | 0 | 69.36% |
+| internal/pages/editor | pass | 20 | 0 | 74.59% |
+| internal/pages/guide | pass | 1 | 0 | 100.00% |
+| internal/pages/home | pass | 35 | 0 | 85.25% |
 | internal/pool | no\_tests | 0 | 0 | 0.00% |
-| internal/resources/assets | pass | 10 | 0 | 83.85% |
+| internal/requestsource | pass | 5 | 0 | 84.62% |
+| internal/resources/assets | pass | 12 | 0 | 92.42% |
 | internal/resources/mdi | pass | 14 | 0 | 91.09% |
-| internal/resources/templates | no\_tests | 0 | 0 | 0.00% |
+| internal/resources/templates | pass | 3 | 0 | 54.84% |
 | internal/search | pass | 9 | 0 | 94.49% |
 | internal/searchui | pass | 1 | 0 | 87.50% |
-| internal/server | pass | 43 | 0 | 67.86% |
+| internal/security | pass | 37 | 0 | 90.96% |
+| internal/server | pass | 50 | 0 | 77.33% |
 | internal/settings | no\_tests | 0 | 0 | 0.00% |
 | internal/settings/appearance | no\_tests | 0 | 0 | 0.00% |
 | internal/settings/others | no\_tests | 0 | 0 | 0.00% |
-| internal/settings/search | pass | 2 | 0 | 32.74% |
-| internal/settings/theme | pass | 2 | 0 | 87.88% |
-| internal/settings/weather | pass | 16 | 0 | 84.04% |
-| internal/yamlutil | pass | 3 | 0 | 100.00% |
-| tools/baseline | pass | 12 | 0 | 71.43% |
+| internal/settings/search | pass | 4 | 0 | 82.45% |
+| internal/settings/theme | pass | 2 | 0 | 83.33% |
+| internal/settings/weather | pass | 19 | 0 | 89.64% |
+| internal/yamlutil | pass | 8 | 0 | 92.98% |
+| tools/baseline | pass | 14 | 0 | 77.14% |

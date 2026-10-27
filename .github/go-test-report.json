@@ -1,22 +1,22 @@
 {
   "schema_version": "1.0",
   "tests": {
-    "total": 332,
-    "passed": 331,
+    "total": 527,
+    "passed": 525,
     "failed": 0,
-    "skipped": 1
+    "skipped": 2
   },
   "coverage": {
-    "covered_statements": 3653,
-    "total_statements": 4848,
-    "percentage": 75.35,
+    "covered_statements": 6301,
+    "total_statements": 7438,
+    "percentage": 84.71,
     "threshold": 0
   },
   "packages": [
     {
       "name": ".",
-      "status": "no_tests",
-      "tests": 0,
+      "status": "pass",
+      "tests": 1,
       "failed": 0,
       "coverage": 0
     },
@@ -30,30 +30,30 @@
     {
       "name": "build/builder",
       "status": "pass",
-      "tests": 8,
+      "tests": 12,
       "failed": 0,
-      "coverage": 80.51
+      "coverage": 88.45
     },
     {
       "name": "cmd",
       "status": "pass",
-      "tests": 29,
+      "tests": 60,
       "failed": 0,
-      "coverage": 97.79
+      "coverage": 92.08
     },
     {
       "name": "config/data",
       "status": "pass",
-      "tests": 78,
+      "tests": 107,
       "failed": 0,
-      "coverage": 89.91
+      "coverage": 91.71
     },
     {
       "name": "config/define",
       "status": "pass",
       "tests": 1,
       "failed": 0,
-      "coverage": 66.67
+      "coverage": 62.79
     },
     {
       "name": "config/model",
@@ -65,16 +65,16 @@
     {
       "name": "internal/auth",
       "status": "pass",
-      "tests": 31,
+      "tests": 70,
       "failed": 0,
-      "coverage": 87.63
+      "coverage": 91.07
     },
     {
       "name": "internal/bookmarks",
       "status": "pass",
-      "tests": 5,
+      "tests": 6,
       "failed": 0,
-      "coverage": 89.86
+      "coverage": 90.25
     },
     {
       "name": "internal/clock",
@@ -86,9 +86,9 @@
     {
       "name": "internal/fn",
       "status": "pass",
-      "tests": 12,
+      "tests": 13,
       "failed": 0,
-      "coverage": 71.43
+      "coverage": 87.91
     },
     {
       "name": "internal/formvalue",
@@ -135,23 +135,23 @@
     {
       "name": "internal/pages/editor",
       "status": "pass",
-      "tests": 14,
+      "tests": 20,
       "failed": 0,
-      "coverage": 66.16
+      "coverage": 74.59
     },
     {
       "name": "internal/pages/guide",
-      "status": "no_tests",
-      "tests": 0,
+      "status": "pass",
+      "tests": 1,
       "failed": 0,
-      "coverage": 0
+      "coverage": 100
     },
     {
       "name": "internal/pages/home",
       "status": "pass",
-      "tests": 19,
+      "tests": 35,
       "failed": 0,
-      "coverage": 69.36
+      "coverage": 85.25
     },
     {
       "name": "internal/pool",
@@ -161,11 +161,18 @@
       "coverage": 0
     },
     {
+      "name": "internal/requestsource",
+      "status": "pass",
+      "tests": 5,
+      "failed": 0,
+      "coverage": 84.62
+    },
+    {
       "name": "internal/resources/assets",
       "status": "pass",
-      "tests": 10,
+      "tests": 12,
       "failed": 0,
-      "coverage": 83.85
+      "coverage": 92.42
     },
     {
       "name": "internal/resources/mdi",
@@ -176,10 +183,10 @@
     },
     {
       "name": "internal/resources/templates",
-      "status": "no_tests",
-      "tests": 0,
+      "status": "pass",
+      "tests": 3,
       "failed": 0,
-      "coverage": 0
+      "coverage": 54.84
     },
     {
       "name": "internal/search",
@@ -196,11 +203,18 @@
       "coverage": 87.5
     },
     {
+      "name": "internal/security",
+      "status": "pass",
+      "tests": 37,
+      "failed": 0,
+      "coverage": 90.96
+    },
+    {
       "name": "internal/server",
       "status": "pass",
-      "tests": 43,
+      "tests": 50,
       "failed": 0,
-      "coverage": 67.86
+      "coverage": 77.33
     },
     {
       "name": "internal/settings",
@@ -226,37 +240,37 @@
     {
       "name": "internal/settings/search",
       "status": "pass",
-      "tests": 2,
+      "tests": 4,
       "failed": 0,
-      "coverage": 32.74
+      "coverage": 82.45
     },
     {
       "name": "internal/settings/theme",
       "status": "pass",
       "tests": 2,
       "failed": 0,
-      "coverage": 87.88
+      "coverage": 83.33
     },
     {
       "name": "internal/settings/weather",
       "status": "pass",
-      "tests": 16,
+      "tests": 19,
       "failed": 0,
-      "coverage": 84.04
+      "coverage": 89.64
     },
     {
       "name": "internal/yamlutil",
       "status": "pass",
-      "tests": 3,
+      "tests": 8,
       "failed": 0,
-      "coverage": 100
+      "coverage": 92.98
     },
     {
       "name": "tools/baseline",
       "status": "pass",
-      "tests": 12,
+      "tests": 14,
       "failed": 0,
-      "coverage": 71.43
+      "coverage": 77.14
     }
   ],
   "failures": null
