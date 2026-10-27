@@ -3,7 +3,7 @@ import csv
 import gzip
 import hashlib
 import io
-import itertools
+import math
 import json
 from pathlib import Path
 import re
@@ -12,6 +12,7 @@ import sys
 import tarfile
 
 ROOT = Path(__file__).resolve().parent
+TOKEN_VALUE = re.compile(r'''(<input[^>]*name=(?:"csrf-token"|'csrf-token'|csrf-token)[^>]*value=")[^"]*(")''')
 TOKEN = re.compile(r'''<input[^>]*name=(?:"csrf-token"|'csrf-token'|csrf-token)[^>]*>''')
 
 def metrics(row, phase):
@@ -45,11 +46,18 @@ def analyze(rows):
             assert len(TOKEN.findall(x['Body'])) == expected_count
             assert hashlib.sha256(x['Body'].encode()).hexdigest() == x['Hash']
             assert len(x['Body'].encode()) == x['Bytes']
+            normalized = TOKEN_VALUE.sub(r'\g<1>CSRF_TOKEN\g<2>', x['Body'])
+            assert hashlib.sha256(normalized.encode()).hexdigest() == x['NormalizedHash']
         assert r['Pre']['NormalizedHash'] == r['Post']['NormalizedHash']
         assert hashlib.sha256(json.dumps(r['navigation_projection'],sort_keys=True).encode()).hexdigest() == r['projection_sha256']
         for phase in ('Load','Fixed'):
             s = r[phase]
             assert s['Errors'] == 0
+            assert s['Elapsed'] > 0
+            assert math.isclose(s['QPS'], s['Requests']/s['Elapsed'], rel_tol=1e-12)
+            assert s['Bytes'] == s['Requests'] * r['Pre']['Bytes']
+            assert 0 <= s['P50'] <= s['P95'] <= s['P99']
+            assert sum(s['BodyHashes'].values()) == s['Requests']//256
             assert s['Requests'] > 0 and len(s['Samples']) > 0
             for snap in [s['Before'],*s['Samples'],s['After']]:
                 assert not snap['Error'] and snap['RSS'] > 0
@@ -80,7 +88,22 @@ def analyze(rows):
                 deltas = [(y/x-1)*100 if x else 0 for x,y in zip(b,a)]
                 summary[metric] = {'before_median':stats.median(b),'after_median':stats.median(a),'paired_change_median_pct':stats.median(deltas),'paired_change_min_pct':min(deltas),'paired_change_max_pct':max(deltas),'paired_changes_pct':deltas}
             groups.append({'cookie_jar':jar,'size':size,'scenario':scene,'phase':phase,'pairs':n,'metrics':summary})
-    return {'windows':len(rows),'measured_requests':total,'fixed_dropped_requests':sum(r['Fixed']['Dropped'] for r in rows),'fixed_windows_with_drops':sum(r['Fixed']['Dropped']>0 for r in rows),'fixed_schedule_lag_p95_max_ms':max(r['Fixed']['ScheduleLagP95'] for r in rows),'groups':groups}
+    traffic = [{'cookie_jar':jar,
+                'planned':sum(r['Fixed']['Requests']+r['Fixed']['Dropped'] for r in rows if r['cookie_jar']==jar),
+                'completed':sum(r['Fixed']['Requests'] for r in rows if r['cookie_jar']==jar),
+                'dropped':sum(r['Fixed']['Dropped'] for r in rows if r['cookie_jar']==jar)} for jar in (True,False)]
+    return {'fixed_traffic':traffic,'windows':len(rows),'measured_requests':total,'fixed_dropped_requests':sum(r['Fixed']['Dropped'] for r in rows),'fixed_windows_with_drops':sum(r['Fixed']['Dropped']>0 for r in rows),'fixed_schedule_lag_p95_max_ms':max(r['Fixed']['ScheduleLagP95'] for r in rows),'groups':groups}
+
+def csv_text(rows):
+    output = io.StringIO(newline='')
+    writer = csv.writer(output)
+    names = list(metrics(rows[0], 'Load'))
+    writer.writerow(['cookie_jar','bookmarks','scenario','round','version','phase',*names])
+    for r in sorted(rows,key=lambda r:(r['cookie_jar'],r['size'],r['scenario'],r['round'],r['version'])):
+        for phase in ('Fixed','Load'):
+            m=metrics(r,phase)
+            writer.writerow([r['cookie_jar'],r['size'],r['scenario'],r['round'],r['version'],phase,*[m[k] for k in names]])
+    return output.getvalue()
 
 def main():
     if len(sys.argv)>1:
@@ -100,15 +123,10 @@ def main():
     encoded=json.dumps(result,ensure_ascii=False,indent=2)+'\n'
     if len(sys.argv)>1:
         (ROOT/'summary.json').write_text(encoded)
-        with (ROOT/'windows.csv').open('w',newline='') as f:
-            writer=csv.writer(f);names=list(metrics(rows[0],'Load'))
-            writer.writerow(['cookie_jar','bookmarks','scenario','round','version','phase',*names])
-            for r in sorted(rows,key=lambda r:(r['cookie_jar'],r['size'],r['scenario'],r['round'],r['version'])):
-                for phase in ('Fixed','Load'):
-                    m=metrics(r,phase)
-                    writer.writerow([r['cookie_jar'],r['size'],r['scenario'],r['round'],r['version'],phase,*[m[k] for k in names]])
+        (ROOT/'windows.csv').write_bytes(csv_text(rows).encode())
     else:
         assert json.loads((ROOT/'summary.json').read_text())==result
+        assert (ROOT/'windows.csv').read_bytes() == csv_text(rows).encode(), 'windows.csv differs from raw evidence'
     print(f"Verified {len(rows)} windows, {result['measured_requests']} measured requests, paired HTML and summaries.")
 
 if __name__=='__main__':main()

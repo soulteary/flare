@@ -1,8 +1,10 @@
 """Render summary tables from the verified paired statistics."""
 import json
+import sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 summary=json.loads((ROOT/'summary.json').read_text())
+traffic={row['cookie_jar']:row for row in summary['fixed_traffic']}
 labels={'home':'首页 GET','search-get':'搜索 GET','search-last':'搜索 POST'}
 def group_key(g):return (g['size'],['home','search-get','search-last'].index(g['scenario']))
 def change(m):return f"{m['paired_change_median_pct']:+.1f}% [{m['paired_change_min_pct']:+.1f}%, {m['paired_change_max_pct']:+.1f}%]"
@@ -10,7 +12,7 @@ def pair(m,decimals=2):return f"{m['before_median']:.{decimals}f} → {m['after_
 load=sorted([g for g in summary['groups'] if g['cookie_jar'] and g['phase']=='Load'],key=group_key)
 fixed=sorted([g for g in summary['groups'] if g['cookie_jar'] and g['phase']=='Fixed'],key=group_key)
 lines=['## 结果','',f"共 {summary['windows']} 个正式窗口、{summary['measured_requests']:,} 个测量请求；另有每窗口 200 个预热请求，不计入性能统计。每个请求检查状态与正文长度，按每 256 个请求抽查完整正文，并校验阶段前后响应。",'',
-f"固定速率阶段共丢弃 {summary['fixed_dropped_requests']} 个调度请求，涉及 {summary['fixed_windows_with_drops']} 个窗口；逐轮调度 P95 最大值 {summary['fixed_schedule_lag_p95_max_ms']:.3f} ms。主要场景丢弃 3/43,200 个计划请求；不保存 Cookie 的补充组丢弃 61/16,000 个计划请求。丢弃不计为已完成请求，也不被隐藏。",'',
+f"固定速率阶段共丢弃 {summary['fixed_dropped_requests']} 个调度请求，涉及 {summary['fixed_windows_with_drops']} 个窗口；逐轮调度 P95 最大值 {summary['fixed_schedule_lag_p95_max_ms']:.3f} ms。主要场景丢弃 {traffic[True]['dropped']:,}/{traffic[True]['planned']:,} 个计划请求；不保存 Cookie 的补充组丢弃 {traffic[False]['dropped']:,}/{traffic[False]['planned']:,} 个计划请求。丢弃不计为已完成请求，也不被隐藏。",'',
 '以下 `前 → 后` 为各轮中位数，变化列为配对变化中位数及 `[最小值, 最大值]`。','',
 '### 复用 Cookie：闭环吞吐与服务端 CPU','',
 '| 书签数 / 场景 | 吞吐（请求/秒，前 → 后） | 吞吐变化 | CPU（微秒/请求，前 → 后） | CPU 变化 |',
@@ -39,5 +41,9 @@ report=(ROOT/'report.md').read_text()
 start=report.find('## 结果\n')
 end=report.index('## 测量设计')
 if start<0:start=end
-report=report[:start]+text+'\n'+report[end:]
-(ROOT/'report.md').write_text(report)
+updated=report[:start]+text+'\n'+report[end:]
+if '--check' in sys.argv:
+ assert updated == report, 'report tables differ from summary.json'
+ print('Report tables match summary.json.')
+else:
+ (ROOT/'report.md').write_text(updated)

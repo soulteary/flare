@@ -12,5 +12,8 @@
   "reproduced_collector_binary_hash": "identical",
   "reproduced_fixture_hashes": "identical",
   "response_and_summary_validation": "passed (88 windows)",
-  "privacy_scan": "passed"
+  "privacy_scan": "passed",
+  "raw_archive_sha256": "a33918c8ee849565b5f1f203eb005939a84fde9dfc9631049b8bc3863bd39f5c",
+  "derived_evidence_validation": "passed (raw counters, normalized hashes, CSV, summary, report tables)",
+  "integrity_tests": "passed (7 tests, including modified evidence rejection)"
 }

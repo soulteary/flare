@@ -1,4 +1,18 @@
 {
+  "fixed_traffic": [
+    {
+      "cookie_jar": true,
+      "planned": 43200,
+      "completed": 43197,
+      "dropped": 3
+    },
+    {
+      "cookie_jar": false,
+      "planned": 16000,
+      "completed": 15939,
+      "dropped": 61
+    }
+  ],
   "windows": 88,
   "measured_requests": 7803076,
   "fixed_dropped_requests": 64,
