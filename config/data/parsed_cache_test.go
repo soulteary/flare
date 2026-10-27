@@ -121,7 +121,7 @@ func TestNavigationIndexesInvalidateAndKeepExpansionRequestLocal(t *testing.T) {
 func TestIndexedSearchScopeOrderAndInvalidation(t *testing.T) {
 	prepareBookmarkHotPath(t)
 	apps := model.Bookmarks{Items: []model.Bookmark{{Name: "Console", Desc: "Needle", URL: "https://app.example"}, {Name: "Dynamic", URL: "{origin}/panel"}}}
-	bookmarks := model.Bookmarks{Categories: []model.Category{{ID: "known"}}, Items: []model.Bookmark{{Name: "Needle", URL: "https://book.example"}, {Name: "Description only", Desc: "Needle", URL: "https://desc.example"}, {Name: "Needle orphan", URL: "https://orphan.example", Category: "missing"}, {Name: "Needle unsafe", URL: "javascript:alert(1)"}}}
+	bookmarks := model.Bookmarks{Categories: []model.Category{{ID: "known"}}, Items: []model.Bookmark{{Name: "Needle", URL: "https://book.example"}, {Name: "Description only", Desc: "Needle", URL: "https://desc.example"}, {Name: "Needle unsafe", URL: "javascript:alert(1)"}}}
 	if !SaveFavoriteBookmarks(apps) || !SaveNormalBookmarks(bookmarks) {
 		t.Fatal("save fixtures")
 	}

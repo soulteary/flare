@@ -1,0 +1,48 @@
+{
+  "budget_freeze": "docs/requirements/scale-acceptance.md before first launch",
+  "all_pass": true,
+  "gates": {
+    "duration_1800s": true,
+    "real_successful_logins": true,
+    "login_p95_under_10s": true,
+    "pressure_home_p95_under_3s": true,
+    "pressure_sampled_rss_under_1gib": true,
+    "pressure_rss_median_growth_under_256mib": true,
+    "startup_under_30s": true,
+    "cold_home_under_10s": true,
+    "warm_home_p95_under_3s": true,
+    "search_p95_under_1s": true,
+    "import_preview_under_30s": true,
+    "import_commit_under_30s": true,
+    "navigation_kernel_rss_under_1gib": true,
+    "final_anonymous_private_absent": true,
+    "final_administrator_private_present": true,
+    "import_exact_workload": true,
+    "final_short_all_logins_succeeded": true,
+    "final_short_actual_60s": true,
+    "repeated_imports_all200": true,
+    "repeated_import_preview_p95_under_30s": true,
+    "repeated_import_commit_p95_under_30s": true,
+    "repeated_import_privacy_and_unknown_fields": true,
+    "repeated_import_kernel_rss_under_1gib": true
+  },
+  "longrun_first5_median_rss_kib": 127744,
+  "longrun_last5_median_rss_kib": 128096,
+  "longrun_rss_median_growth_kib": 352,
+  "longrun_cpu_ps_sample_mean": 19.117152466367713,
+  "longrun_samples": 892,
+  "longrun_last_sample_seconds": 1799.398894071579,
+  "baseline_acl_equivalent": false,
+  "lowend_nas_measured": false,
+  "notes": [
+    "Longrun uses frozen03966fc0 binary; finalb0ffcb36 gets separate60srepeat and fullHTTP/importsuite.",
+    "Authenticated reads have material durableI/O overhead versus oldtrusted baseline despite passing frozenbudgets.",
+    "RSSpressurepeak is sampled; HTTP/import peaks use kernelchildhighwater."
+  ],
+  "longrun_wallclock_pressure_seconds": 1801.0,
+  "import_repeat_count": 5,
+  "import_pair_qps_excluding_setup": {
+    "baseline": 4.029875749543855,
+    "final": 1.1707304626095985
+  }
+}

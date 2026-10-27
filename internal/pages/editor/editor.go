@@ -53,6 +53,6 @@ func render(c fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return c.Status(http.StatusOK).Render("editor.html", fiber.Map{"EditorAssetVersion": version, "Locale": editorLocale(), "EditorMessages": editorMessageJSON(editorLocale())})
+	return c.Status(http.StatusOK).Render("editor.html", fiber.Map{"EditorAssetVersion": version, "Locale": editorLocale(), "EditorMessages": editorMessageJSON(editorLocale()), "CSRFToken": auth.CSRFToken(c), "TrustedMode": define.AppFlags.DisableLoginMode})
 
 }

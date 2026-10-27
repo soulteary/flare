@@ -11,6 +11,7 @@ test('mobile editor preserves focus and drafts when save outcome is unknown',asy
  const {messages,render:renderEditor}=await require('./fixture.cjs').editorFixture(root);
  const doc={version:'initial',categories:[{ID:'one',Name:'First'},{ID:'two',Name:'Second'}],apps:[{Name:'Original',URL:'http://nas:8080',Category:''}],bookmarks:[]};
  const server=http.createServer(async(req,res)=>{
+  if(req.url==='/editor/csrf'){res.setHeader('content-type','application/json');res.end(JSON.stringify({csrfToken:'fixture-token'}));return;}
   if(req.url==='/editor/document'){res.setHeader('content-type','application/json');res.end(JSON.stringify(doc));return;}
   const pathname=new URL(req.url,'http://flare.test').pathname;
   const file=pathname==='/editor'?path.join(root,'embed/templates/editor.html'):pathname.startsWith('/assets/editor-ui/')?path.join(root,'internal/pages/editor/client',path.basename(pathname)):null;
@@ -22,6 +23,7 @@ test('mobile editor preserves focus and drafts when save outcome is unknown',asy
  try{
   browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox']});
   const page=await browser.newPage({viewport:{width:320,height:640},isMobile:true,hasTouch:true});
+  page.on('dialog',d=>d.accept());
   await page.goto(`http://127.0.0.1:${server.address().port}/editor`);
   await page.waitForFunction(()=>window.FlareEditorUI?.store);
   assert.equal(await page.locator('html').getAttribute('lang'),'zh-CN');
@@ -53,15 +55,17 @@ test('mobile editor preserves focus and drafts when save outcome is unknown',asy
   // Rejected writes and proxy error pages must not be reported as expired sessions.
   for(const response of [
    {status:403,contentType:'application/json',body:JSON.stringify({code:'write_source_rejected',error:'Origin rejected'})},
+   {status:403,contentType:'application/json',body:JSON.stringify({error:{code:'SOURCE_REJECTED',message:'SOURCE_REJECTED'},request_id:'fixture-request'})},
+   {status:503,contentType:'application/json',body:JSON.stringify({error:{code:'STORAGE_UNAVAILABLE',message:'STORAGE_UNAVAILABLE'},request_id:'fixture-storage'}),expected:'STORAGE_UNAVAILABLE'},
    {status:403,contentType:'text/plain',body:'Write request rejected. Use the Flare page on this origin and retry.'},
    {status:502,contentType:'text/html',body:'<h1>Bad gateway</h1>'},
   ]){
    await page.route('**/editor/document',route=>route.request().method()==='POST'?route.fulfill(response):route.continue());
    await page.locator('#save-changes').click();
-   const expected=response.contentType==='application/json'?'来源校验':`HTTP ${response.status}`;
+   const expected=response.expected|| (response.contentType==='application/json'?'来源校验':`HTTP ${response.status}`);
    await page.waitForFunction(text=>document.getElementById('save-status').textContent.includes(text),expected);
    const message=await page.locator('#save-status').textContent();assert.doesNotMatch(message,/登录可能已过期/);
-   if(response.contentType==='application/json')assert.match(message,/Host.*外部端口/);
+   if(response.contentType==='application/json'&&!response.expected)assert.match(message,/Host.*外部端口/);
    assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.dirty),true);
    assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.toJSON().version),'initial');
    assert.equal(await page.locator('#save-changes').isEnabled(),true);

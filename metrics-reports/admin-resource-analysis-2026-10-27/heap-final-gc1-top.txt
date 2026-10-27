@@ -1,0 +1,26 @@
+File: flare-resource-profile-final.test
+Type: inuse_space
+Time: 2026-10-27 10:59:11 CST
+Showing nodes accounting for 11598.52kB, 100% of 11598.52kB total
+Showing top 20 nodes out of 88
+      flat  flat%   sum%        cum   cum%
+ 3077.06kB 26.53% 26.53%  3077.06kB 26.53%  runtime.mallocgc
+ 2131.55kB 18.38% 44.91%  2131.55kB 18.38%  os.readFileContents
+ 2071.14kB 17.86% 62.76%  2071.14kB 17.86%  reflect.unsafe_NewArray
+ 1536.04kB 13.24% 76.01%  1536.04kB 13.24%  go.yaml.in/yaml/v3.(*parser).scalar
+ 1242.04kB 10.71% 86.72%  1242.04kB 10.71%  github.com/soulteary/flare/config/data.FilterNavigation
+  516.64kB  4.45% 91.17%   516.64kB  4.45%  github.com/soulteary/flare/internal/pages/editor.map.init.0
+  512.05kB  4.41% 95.59%   512.05kB  4.41%  text/template/parse.(*Tree).newPipeline (inline)
+  512.01kB  4.41%   100%   512.01kB  4.41%  net/http.(*Server).Serve
+         0     0%   100%  6980.77kB 60.19%  github.com/gofiber/fiber/v3.(*App).defaultRequestHandler
+         0     0%   100%  6980.77kB 60.19%  github.com/gofiber/fiber/v3.(*App).next
+         0     0%   100%  6980.77kB 60.19%  github.com/gofiber/fiber/v3.(*DefaultCtx).Next
+         0     0%   100%  6980.77kB 60.19%  github.com/gofiber/fiber/v3/middleware/recover.New.func1
+         0     0%   100%   512.05kB  4.41%  github.com/soulteary/flare.TestProfileDaemon
+         0     0%   100%   512.01kB  4.41%  github.com/soulteary/flare.TestProfileDaemon.func2
+         0     0%   100%   512.05kB  4.41%  github.com/soulteary/flare.main
+         0     0%   100%  1242.04kB 10.71%  github.com/soulteary/flare/config/data.(*parsedBookmarks).publicSnapshot
+         0     0%   100%  1242.04kB 10.71%  github.com/soulteary/flare/config/data.(*parsedBookmarks).publicSnapshot.func1
+         0     0%   100%  6980.77kB 60.19%  github.com/soulteary/flare/config/data.LoadVisibleNavigationPair
+         0     0%   100%  1242.04kB 10.71%  github.com/soulteary/flare/config/data.cloneVisibleNavigation
+         0     0%   100%  5738.73kB 49.48%  github.com/soulteary/flare/config/data.navigationSnapshotSet

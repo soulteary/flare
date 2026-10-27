@@ -1,0 +1,367 @@
+{
+  "started_utc": "2026-10-27T02:25:54Z",
+  "fixture": {
+    "resources": 20000,
+    "private": 10000,
+    "categories": 100,
+    "sha256": "9537f2d51a70b2944ccbe6945eabdef698d6900326e2ee4d0c444d14c310214b"
+  },
+  "binary_sha256": "4396a134ca328ea60f7ac1ad3bc79701fea366c6aa2c6311096a4fa2e2140d45",
+  "harness_sha256": "fbdb4636559c3f0762741281712189b09571602716e0e83dfed0ae6b93d4e6f8",
+  "acceptance_helper_sha256": "b763de7217b534af8cc1c975d9576d305c46a0d534c4daba4ac5c678039a8739",
+  "instrumented_wrapper": false,
+  "profile_directory": null,
+  "os_before": {
+    "rss_kib": 124064,
+    "cpu_percent": 57.2,
+    "cpu_seconds": 0.3
+  },
+  "resource_samples": [
+    {
+      "rss_kib": 143712,
+      "cpu_percent": 18.3,
+      "cpu_seconds": 0.66,
+      "t": 2.0146458750823513
+    },
+    {
+      "rss_kib": 143968,
+      "cpu_percent": 9.4,
+      "cpu_seconds": 0.98,
+      "t": 4.0226387090515345
+    },
+    {
+      "rss_kib": 144000,
+      "cpu_percent": 7.9,
+      "cpu_seconds": 1.3,
+      "t": 6.044362084008753
+    },
+    {
+      "rss_kib": 144064,
+      "cpu_percent": 11.4,
+      "cpu_seconds": 1.62,
+      "t": 8.058209666982293
+    },
+    {
+      "rss_kib": 126768,
+      "cpu_percent": 9.6,
+      "cpu_seconds": 1.93,
+      "t": 10.069580500014126
+    },
+    {
+      "rss_kib": 129936,
+      "cpu_percent": 9.9,
+      "cpu_seconds": 2.28,
+      "t": 12.082127584028058
+    },
+    {
+      "rss_kib": 122640,
+      "cpu_percent": 11.2,
+      "cpu_seconds": 2.61,
+      "t": 14.093927624984644
+    },
+    {
+      "rss_kib": 122656,
+      "cpu_percent": 9.6,
+      "cpu_seconds": 2.96,
+      "t": 16.10370216704905
+    },
+    {
+      "rss_kib": 122752,
+      "cpu_percent": 10.0,
+      "cpu_seconds": 3.29,
+      "t": 18.114330125041306
+    },
+    {
+      "rss_kib": 124000,
+      "cpu_percent": 9.9,
+      "cpu_seconds": 3.61,
+      "t": 20.122050709091127
+    },
+    {
+      "rss_kib": 124016,
+      "cpu_percent": 9.8,
+      "cpu_seconds": 3.94,
+      "t": 22.13306637504138
+    },
+    {
+      "rss_kib": 124064,
+      "cpu_percent": 11.3,
+      "cpu_seconds": 4.3,
+      "t": 24.144605583976954
+    },
+    {
+      "rss_kib": 124128,
+      "cpu_percent": 9.9,
+      "cpu_seconds": 4.66,
+      "t": 26.151940708979964
+    },
+    {
+      "rss_kib": 125312,
+      "cpu_percent": 8.0,
+      "cpu_seconds": 4.96,
+      "t": 28.160848917090334
+    },
+    {
+      "rss_kib": 125616,
+      "cpu_percent": 23.7,
+      "cpu_seconds": 5.27,
+      "t": 30.167326917056926
+    },
+    {
+      "rss_kib": 125664,
+      "cpu_percent": 25.1,
+      "cpu_seconds": 5.55,
+      "t": 32.17868587502744
+    },
+    {
+      "rss_kib": 118768,
+      "cpu_percent": 23.5,
+      "cpu_seconds": 5.83,
+      "t": 34.18436891702004
+    },
+    {
+      "rss_kib": 122688,
+      "cpu_percent": 24.9,
+      "cpu_seconds": 6.17,
+      "t": 36.19269862503279
+    },
+    {
+      "rss_kib": 123008,
+      "cpu_percent": 24.6,
+      "cpu_seconds": 6.48,
+      "t": 38.20398966700304
+    },
+    {
+      "rss_kib": 107152,
+      "cpu_percent": 34.2,
+      "cpu_seconds": 6.87,
+      "t": 40.21677845902741
+    },
+    {
+      "rss_kib": 110800,
+      "cpu_percent": 24.4,
+      "cpu_seconds": 7.16,
+      "t": 42.22718104207888
+    },
+    {
+      "rss_kib": 113648,
+      "cpu_percent": 30.3,
+      "cpu_seconds": 7.51,
+      "t": 44.23801183397882
+    },
+    {
+      "rss_kib": 114480,
+      "cpu_percent": 23.5,
+      "cpu_seconds": 7.8,
+      "t": 46.250649209017865
+    },
+    {
+      "rss_kib": 116144,
+      "cpu_percent": 26.1,
+      "cpu_seconds": 8.2,
+      "t": 48.26256758405361
+    },
+    {
+      "rss_kib": 110848,
+      "cpu_percent": 24.8,
+      "cpu_seconds": 8.52,
+      "t": 50.27248991699889
+    },
+    {
+      "rss_kib": 116272,
+      "cpu_percent": 26.3,
+      "cpu_seconds": 8.85,
+      "t": 52.28341475001071
+    },
+    {
+      "rss_kib": 116576,
+      "cpu_percent": 22.2,
+      "cpu_seconds": 9.22,
+      "t": 54.29781675001141
+    },
+    {
+      "rss_kib": 116240,
+      "cpu_percent": 25.9,
+      "cpu_seconds": 9.63,
+      "t": 56.310858624987304
+    },
+    {
+      "rss_kib": 115120,
+      "cpu_percent": 24.3,
+      "cpu_seconds": 9.98,
+      "t": 58.31780887499917
+    },
+    {
+      "rss_kib": 114800,
+      "cpu_percent": 25.7,
+      "cpu_seconds": 10.39,
+      "t": 60.32867945905309
+    },
+    {
+      "rss_kib": 107104,
+      "cpu_percent": 21.4,
+      "cpu_seconds": 10.69,
+      "t": 62.33817112504039
+    },
+    {
+      "rss_kib": 114032,
+      "cpu_percent": 25.0,
+      "cpu_seconds": 11.09,
+      "t": 64.34957491699606
+    },
+    {
+      "rss_kib": 114432,
+      "cpu_percent": 22.6,
+      "cpu_seconds": 11.45,
+      "t": 66.36271945899352
+    },
+    {
+      "rss_kib": 115088,
+      "cpu_percent": 21.3,
+      "cpu_seconds": 11.79,
+      "t": 68.37729341699742
+    },
+    {
+      "rss_kib": 118720,
+      "cpu_percent": 23.9,
+      "cpu_seconds": 12.09,
+      "t": 70.39220979204401
+    },
+    {
+      "rss_kib": 118848,
+      "cpu_percent": 25.3,
+      "cpu_seconds": 12.51,
+      "t": 72.40001199999824
+    },
+    {
+      "rss_kib": 118848,
+      "cpu_percent": 23.3,
+      "cpu_seconds": 12.88,
+      "t": 74.41491345898248
+    },
+    {
+      "rss_kib": 117904,
+      "cpu_percent": 20.1,
+      "cpu_seconds": 13.19,
+      "t": 76.4269745000638
+    },
+    {
+      "rss_kib": 102880,
+      "cpu_percent": 19.2,
+      "cpu_seconds": 13.46,
+      "t": 78.43363125005271
+    },
+    {
+      "rss_kib": 103584,
+      "cpu_percent": 25.9,
+      "cpu_seconds": 13.78,
+      "t": 80.45368975005113
+    },
+    {
+      "rss_kib": 103488,
+      "cpu_percent": 23.2,
+      "cpu_seconds": 14.12,
+      "t": 82.46097508398816
+    },
+    {
+      "rss_kib": 115536,
+      "cpu_percent": 21.9,
+      "cpu_seconds": 14.45,
+      "t": 84.47057650005445
+    },
+    {
+      "rss_kib": 115552,
+      "cpu_percent": 28.4,
+      "cpu_seconds": 14.84,
+      "t": 86.48327029205393
+    },
+    {
+      "rss_kib": 115616,
+      "cpu_percent": 26.7,
+      "cpu_seconds": 15.25,
+      "t": 88.49032620899379
+    },
+    {
+      "rss_kib": 116976,
+      "cpu_percent": 24.7,
+      "cpu_seconds": 15.6,
+      "t": 90.50054091704078
+    },
+    {
+      "rss_kib": 117088,
+      "cpu_percent": 16.9,
+      "cpu_seconds": 15.92,
+      "t": 92.51188187499065
+    },
+    {
+      "rss_kib": 117824,
+      "cpu_percent": 29.2,
+      "cpu_seconds": 16.3,
+      "t": 94.52803433407098
+    },
+    {
+      "rss_kib": 117920,
+      "cpu_percent": 22.6,
+      "cpu_seconds": 16.68,
+      "t": 96.54053304204717
+    },
+    {
+      "rss_kib": 116272,
+      "cpu_percent": 20.8,
+      "cpu_seconds": 16.99,
+      "t": 98.54650000005495
+    },
+    {
+      "rss_kib": 116016,
+      "cpu_percent": 23.4,
+      "cpu_seconds": 17.32,
+      "t": 100.55736487498507
+    },
+    {
+      "rss_kib": 113744,
+      "cpu_percent": 14.4,
+      "cpu_seconds": 17.64,
+      "t": 102.56725983403157
+    },
+    {
+      "rss_kib": 114224,
+      "cpu_percent": 18.2,
+      "cpu_seconds": 18.01,
+      "t": 104.57842254207935
+    },
+    {
+      "rss_kib": 117440,
+      "cpu_percent": 15.0,
+      "cpu_seconds": 18.4,
+      "t": 106.59397087502293
+    },
+    {
+      "rss_kib": 117504,
+      "cpu_percent": 19.0,
+      "cpu_seconds": 18.76,
+      "t": 108.60341104201507
+    },
+    {
+      "rss_kib": 126368,
+      "cpu_percent": 19.4,
+      "cpu_seconds": 19.1,
+      "t": 110.61877766705584
+    },
+    {
+      "rss_kib": 126352,
+      "cpu_percent": 18.1,
+      "cpu_seconds": 19.52,
+      "t": 112.63485500006936
+    },
+    {
+      "rss_kib": 105552,
+      "cpu_percent": 11.9,
+      "cpu_seconds": 19.84,
+      "t": 114.6487017920008
+    }
+  ],
+  "kernel_children_peak_rss_kib": 144128.0,
+  "completed_utc": "2026-10-27T02:27:51Z",
+  "measurement_quality": "partial-capacity-calibration-excluded",
+  "reason": "6rps original capacity calibration dropped25reads; paused counterpart to restart strict equal-completion at frozen3rps."
+}

@@ -1,0 +1,86 @@
+{
+  "started_utc": "2026-10-27T00:54:15Z",
+  "host": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+  "fixture": {
+    "resources": 20000,
+    "private": 10000,
+    "categories": 100,
+    "sha256": "9537f2d51a70b2944ccbe6945eabdef698d6900326e2ee4d0c444d14c310214b"
+  },
+  "binary_sha256": "5eef4045d6cdac41a6ad6a9a164d050259b97ceea90f0f4df199fad552692cfc",
+  "harness_sha256": "379ed9d0a148566a4e76a108e60ee1074b5c1c29067b97205c0321b547049d46",
+  "startup_seconds": 0.10493500006850809,
+  "cold_home_ms": 74.92770801763982,
+  "import_samples": [
+    {
+      "login_ms": null,
+      "preview_ms": 86.15274995099753,
+      "commit_ms": 169.814791996032,
+      "added": 20000,
+      "categories": 100,
+      "anonymous_private_absent": false,
+      "public_last_present": true,
+      "source_bytes": 2143719
+    },
+    {
+      "login_ms": null,
+      "preview_ms": 84.04741599224508,
+      "commit_ms": 156.72066691331565,
+      "added": 20000,
+      "categories": 100,
+      "anonymous_private_absent": false,
+      "public_last_present": true,
+      "source_bytes": 2143719
+    },
+    {
+      "login_ms": null,
+      "preview_ms": 85.80891694873571,
+      "commit_ms": 154.46366695687175,
+      "added": 20000,
+      "categories": 100,
+      "anonymous_private_absent": false,
+      "public_last_present": true,
+      "source_bytes": 2143719
+    },
+    {
+      "login_ms": null,
+      "preview_ms": 93.62200007308275,
+      "commit_ms": 173.58941689599305,
+      "added": 20000,
+      "categories": 100,
+      "anonymous_private_absent": false,
+      "public_last_present": true,
+      "source_bytes": 2143719
+    },
+    {
+      "login_ms": null,
+      "preview_ms": 83.13766692299396,
+      "commit_ms": 153.37574994191527,
+      "added": 20000,
+      "categories": 100,
+      "anonymous_private_absent": false,
+      "public_last_present": true,
+      "source_bytes": 2143719
+    }
+  ],
+  "import_preview": {
+    "requests": 5,
+    "statuses": {
+      "200": 5
+    },
+    "p50_ms": 85.80891694873571,
+    "p95_ms": 93.62200007308275
+  },
+  "import_commit": {
+    "requests": 5,
+    "statuses": {
+      "200": 5
+    },
+    "p50_ms": 156.72066691331565,
+    "p95_ms": 173.58941689599305
+  },
+  "kernel_children_peak_rss_kib": 339200.0,
+  "resource_samples": [],
+  "peak_rss_kib": 0,
+  "completed_utc": "2026-10-27T00:54:17Z"
+}

@@ -6,6 +6,12 @@ type Flags struct {
 	ShowVersion bool
 	ShowHelp    bool
 	AccessLog   string
+	// RuntimeInputs captures explicit security settings before env parsing consumes secrets.
+	RuntimeInputs  map[string]string
+	InputSources   map[string]string
+	ConfigError    string
+	StartupStatus  string
+	StartupMessage string
 
 	Port                   int
 	EnableGuide            bool
@@ -26,7 +32,10 @@ type Flags struct {
 	CookieSecret string
 	// CookieSecure forces HTTPS-only session cookies behind a TLS-terminating proxy.
 	// Direct TLS connections use secure cookies even when this flag is false.
-	CookieSecure bool
+	CookieSecure   bool
+	ExternalURL    string
+	AllowedHosts   string
+	TrustedProxies string
 }
 
 // Application Envs Data Model

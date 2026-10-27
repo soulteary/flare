@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-10-27T02:54:25.860Z",
+  "binary_sha256": "ecb66530e0252f551b2bd5a7f6bd68ff49bdb96cc04c5d26d365fa3f57efbc42",
+  "results": [
+    {
+      "engine": "chromium",
+      "scope": "desktop headless, synthetic data, JavaScript disabled; not a physical phone/NAS",
+      "cases": [
+        "private login/footer isolation",
+        "legacy short password + native cookie handshake without JavaScript",
+        "explicit deployment-to-local switch revokes other browser",
+        "password change without JavaScript",
+        "reauthentication without JavaScript",
+        "390px viewport and 200% font no horizontal overflow (emulation)",
+        "logout-all without JavaScript",
+        "YAML byte preservation and no plaintext persisted password"
+      ],
+      "version": "156.0.8078.4",
+      "driver": "1.64.1",
+      "executable_override": false,
+      "status": "PASS"
+    },
+    {
+      "engine": "firefox",
+      "scope": "desktop headless, synthetic data, JavaScript disabled; not a physical phone/NAS",
+      "cases": [
+        "private login/footer isolation",
+        "legacy short password + native cookie handshake without JavaScript",
+        "explicit deployment-to-local switch revokes other browser",
+        "password change without JavaScript",
+        "reauthentication without JavaScript",
+        "390px viewport and 200% font no horizontal overflow (emulation)",
+        "logout-all without JavaScript",
+        "YAML byte preservation and no plaintext persisted password"
+      ],
+      "version": "157.0",
+      "driver": "1.64.1",
+      "executable_override": false,
+      "status": "PASS"
+    },
+    {
+      "engine": "webkit",
+      "scope": "desktop headless, synthetic data, JavaScript disabled; not a physical phone/NAS",
+      "cases": [
+        "private login/footer isolation",
+        "legacy short password + native cookie handshake without JavaScript",
+        "explicit deployment-to-local switch revokes other browser",
+        "password change without JavaScript",
+        "reauthentication without JavaScript",
+        "390px viewport and 200% font no horizontal overflow (emulation)",
+        "logout-all without JavaScript",
+        "YAML byte preservation and no plaintext persisted password"
+      ],
+      "version": "27.2",
+      "driver": "1.64.1",
+      "executable_override": false,
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "timestamp": "2026-10-27T02:54:31.332Z",
+  "binary_sha256": "ecb66530e0252f551b2bd5a7f6bd68ff49bdb96cc04c5d26d365fa3f57efbc42",
+  "results": [
+    {
+      "engine": "chromium",
+      "cases": [
+        "anonymous public home/search/login DOM and intercepted outbound exclude private title/description/URL/icon",
+        "anonymous legacy private redirect returns404 without outbound destination",
+        "public same-origin opaque redirect reaches authorized target with no external Referer",
+        "administrator sees explicit private icon without Referer; private no-icon entry never enters external favicon fallback",
+        "authorized private opaque redirect reaches private target only after explicit click, without external Referer"
+      ],
+      "requests": [
+        {
+          "phase": "anonymous",
+          "url": "https://favicon.yandex.net/favicon/127.0.0.1/",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "anonymous",
+          "url": "https://favicon.yandex.net/favicon/127.0.0.1/",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "anonymous",
+          "url": "http://127.0.0.1:59357/public-url",
+          "type": "navigation-sink",
+          "referer": null
+        },
+        {
+          "phase": "administrator",
+          "url": "https://favicon.yandex.net/favicon/127.0.0.1/",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "administrator",
+          "url": "http://127.0.0.1:59357/private-icon-sentinel.png",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "administrator",
+          "url": "http://127.0.0.1:59357/private-url-sentinel",
+          "type": "navigation-sink",
+          "referer": null
+        }
+      ],
+      "scope": "real desktop browser; external requests route-aborted; redirect destinations additionally intercepted by local loopback HTTP sink; no Internet target fetch; synthetic data",
+      "version": "156.0.8078.4",
+      "driver": "1.64.1",
+      "status": "PASS"
+    },
+    {
+      "engine": "firefox",
+      "cases": [
+        "anonymous public home/search/login DOM and intercepted outbound exclude private title/description/URL/icon",
+        "anonymous legacy private redirect returns404 without outbound destination",
+        "public same-origin opaque redirect reaches authorized target with no external Referer",
+        "administrator sees explicit private icon without Referer; private no-icon entry never enters external favicon fallback",
+        "authorized private opaque redirect reaches private target only after explicit click, without external Referer"
+      ],
+      "requests": [
+        {
+          "phase": "anonymous",
+          "url": "https://favicon.yandex.net/favicon/127.0.0.1/",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "anonymous",
+          "url": "https://favicon.yandex.net/favicon/127.0.0.1/",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "anonymous",
+          "url": "http://127.0.0.1:59374/public-url",
+          "type": "navigation-sink",
+          "referer": null
+        },
+        {
+          "phase": "administrator",
+          "url": "https://favicon.yandex.net/favicon/127.0.0.1/",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "administrator",
+          "url": "http://127.0.0.1:59374/private-icon-sentinel.png",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "administrator",
+          "url": "http://127.0.0.1:59374/private-url-sentinel",
+          "type": "navigation-sink",
+          "referer": null
+        }
+      ],
+      "scope": "real desktop browser; external requests route-aborted; redirect destinations additionally intercepted by local loopback HTTP sink; no Internet target fetch; synthetic data",
+      "version": "157.0",
+      "driver": "1.64.1",
+      "status": "PASS"
+    },
+    {
+      "engine": "webkit",
+      "cases": [
+        "anonymous public home/search/login DOM and intercepted outbound exclude private title/description/URL/icon",
+        "anonymous legacy private redirect returns404 without outbound destination",
+        "public same-origin opaque redirect reaches authorized target with no external Referer",
+        "administrator sees explicit private icon without Referer; private no-icon entry never enters external favicon fallback",
+        "authorized private opaque redirect reaches private target only after explicit click, without external Referer"
+      ],
+      "requests": [
+        {
+          "phase": "anonymous",
+          "url": "https://favicon.yandex.net/favicon/127.0.0.1/",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "anonymous",
+          "url": "https://favicon.yandex.net/favicon/127.0.0.1/",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "anonymous",
+          "url": "http://127.0.0.1:59431/public-url",
+          "type": "navigation-sink",
+          "referer": null
+        },
+        {
+          "phase": "administrator",
+          "url": "https://favicon.yandex.net/favicon/127.0.0.1/",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "administrator",
+          "url": "http://127.0.0.1:59431/private-icon-sentinel.png",
+          "type": "image",
+          "referer": null
+        },
+        {
+          "phase": "administrator",
+          "url": "http://127.0.0.1:59431/private-url-sentinel",
+          "type": "navigation-sink",
+          "referer": null
+        }
+      ],
+      "scope": "real desktop browser; external requests route-aborted; redirect destinations additionally intercepted by local loopback HTTP sink; no Internet target fetch; synthetic data",
+      "version": "27.2",
+      "driver": "1.64.1",
+      "status": "PASS"
+    }
+  ]
+}

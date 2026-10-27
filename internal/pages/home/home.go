@@ -152,6 +152,9 @@ func pageSearch(c fiber.Ctx) error {
 }
 
 func pageBookmark(c fiber.Ctx) error {
+	if selected := c.Query("category"); selected != "" && !readableCategory(selected, auth.CheckUserIsLogin(c)) {
+		return fiber.ErrNotFound
+	}
 	setCSPHeader(c)
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
@@ -176,7 +179,7 @@ func pageBookmark(c fiber.Ctx) error {
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	if options.ShowBookmarks {
-		m["Bookmarks"], m["BookmarksError"] = generateBookmarkNavigation(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options, &requestURL)
+		m["Bookmarks"], m["BookmarksError"] = generateBookmarkNavigationFor(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options, auth.CheckUserIsLogin(c), &requestURL)
 	}
 	m["OptionTitle"] = options.Title
 	m["OptionOpenBookmarkNewTab"] = options.OpenBookmarkNewTab
@@ -205,7 +208,7 @@ func pageApplication(c fiber.Ctx) error {
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	if options.ShowApps {
-		m["Applications"], m["ApplicationsError"] = generateApplications("", &options, &requestURL)
+		m["Applications"], m["ApplicationsError"] = generateApplicationsFor("", &options, auth.CheckUserIsLogin(c), &requestURL)
 	}
 	m["PageName"] = i18n.T(locale, "page_apps")
 	m["SubPage"] = true
@@ -224,10 +227,19 @@ func render(c fiber.Ctx, filter string) error {
 }
 
 func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error {
+	requested := c.Query("category")
+	if c.Method() == http.MethodPost {
+		requested = c.FormValue("category")
+	}
+	if requested != "" && !readableCategory(requested, auth.CheckUserIsLogin(c)) {
+		return fiber.ErrNotFound
+	}
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
+	administrator := auth.CheckUserIsLogin(c)
+	appsView, bookmarksView, viewErr := data.LoadVisibleNavigationPair(options.ShowApps, options.ShowBookmarks, administrator)
 	requestURL := parseRequestURL(c)
 	locale := options.Locale
 	if locale == "" {
@@ -267,7 +279,11 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	var apps template.HTML
 	if options.ShowApps {
-		apps, m["ApplicationsError"] = generateApplications(filter, &options, &requestURL)
+		if viewErr != nil {
+			m["ApplicationsError"] = navigationDataError("applications", options.Locale, viewErr)
+		} else {
+			apps, m["ApplicationsError"] = generateApplicationsSnapshot(filter, &options, appsView, &requestURL)
+		}
 	}
 	selected := c.Query("category")
 	if c.Method() == http.MethodPost {
@@ -276,7 +292,11 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["BookmarkCategory"] = selected
 	var bookmarks template.HTML
 	if options.ShowBookmarks {
-		bookmarks, m["BookmarksError"] = generateBookmarkNavigation(filter, selected, c.Path(), &options, &requestURL)
+		if viewErr != nil {
+			m["BookmarksError"] = navigationDataError("bookmarks", options.Locale, viewErr)
+		} else {
+			bookmarks, m["BookmarksError"] = generateBookmarkSnapshot(filter, selected, c.Path(), &options, bookmarksView, &requestURL)
+		}
 	}
 	m["Applications"] = apps
 	m["Bookmarks"] = bookmarks
@@ -307,6 +327,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 }
 
 func renderClockPage(c fiber.Ctx, m map[string]any, options model.Application, greeting bool) error {
+	m["SecurityCSRFToken"] = auth.CSRFToken(c)
 	if options.Locale == "" {
 		options.Locale = "zh"
 	}
@@ -342,4 +363,9 @@ func searchHasNoResults(m map[string]any, options model.Application, apps, bookm
 
 func isMobileUserAgent(ua string) bool {
 	return strings.Contains(ua, "mobile") || strings.Contains(ua, "android") || strings.Contains(ua, "ipad") || strings.Contains(ua, "iphone")
+}
+
+func readableCategory(id string, administrator bool) bool {
+	readable, err := data.ReadableBookmarkCategory(id, administrator)
+	return err == nil && readable
 }

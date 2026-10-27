@@ -1,0 +1,52 @@
+{
+  "execution_date": "2026-10-27",
+  "candidate_sha256": "74e00c4c36014756d14b3751865233422b50cd8345e661b525a37bcc639923d4",
+  "candidate_image": "flare-phase1-official-final-acceptance:local",
+  "candidate_image_id": "sha256:9d7acca30e84eae984b1f36a7c59164a379e87aa4344cbb014e6d1d401d7c79b",
+  "use_image_binary": true,
+  "browser": {
+    "engine": "chromium",
+    "version": "156.0.8078.4",
+    "javascript": false,
+    "cases": [
+      {
+        "origin": "https://localhost:46771",
+        "passed": "native login/logout; Secure HttpOnly cookies; JavaScript disabled",
+        "writes": [
+          {
+            "path": "/login",
+            "status": 303,
+            "origin": "https://localhost:46771"
+          },
+          {
+            "path": "/logout",
+            "status": 303,
+            "origin": "https://localhost:46771"
+          }
+        ]
+      },
+      {
+        "origin": "https://127.0.0.1:46771",
+        "passed": "native login/logout; Secure HttpOnly cookies; JavaScript disabled",
+        "writes": [
+          {
+            "path": "/login",
+            "status": 303,
+            "origin": "https://127.0.0.1:46771"
+          },
+          {
+            "path": "/logout",
+            "status": 303,
+            "origin": "https://127.0.0.1:46771"
+          }
+        ]
+      }
+    ]
+  },
+  "nginx_image": "sha256:71f44768e348d88b5e3ea14a77e0e082792bc46d283de47ef08249bd7ae2e223",
+  "nginx_digests": [
+    "docker.io/library/nginx@sha256:47928bf67eb62a1863cb08d9ecb52d3e704304ba614eaee17884204677702951",
+    "docker.io/library/nginx@sha256:4f7cab9e1cd018f80e67f31e02dc0c6d18560b19504461c4f3dd37e5c63a74c5"
+  ],
+  "scope": "actual Nginx TLS termination + container backend + Chromium native forms without JavaScript"
+}

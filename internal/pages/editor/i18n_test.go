@@ -24,6 +24,11 @@ func TestEditorMessagesHaveCompleteEnglishAndChineseBundles(t *testing.T) {
 	if err := json.Unmarshal([]byte(editorMessageJSON("en")), &messages); err != nil {
 		t.Fatal(err)
 	}
+	for _, key := range []string{"privacy.private", "privacy.inherited", "privacy.admin_only", "privacy.public_hint"} {
+		if messages[key] != i18n.T("en", key) {
+			t.Errorf("missing privacy client translation: %s", key)
+		}
+	}
 	if messages["editor.save_changes"] != "Save changes" {
 		t.Fatal("missing client translations")
 	}

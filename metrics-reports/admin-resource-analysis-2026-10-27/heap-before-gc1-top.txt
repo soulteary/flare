@@ -1,0 +1,26 @@
+File: flare-resource-profile-before.test
+Type: inuse_space
+Time: 2026-10-27 10:38:40 CST
+Showing nodes accounting for 11908.73kB, 100% of 11908.73kB total
+Showing top 20 nodes out of 113
+      flat  flat%   sum%        cum   cum%
+ 3588.16kB 30.13% 30.13%  3588.16kB 30.13%  runtime.mallocgc
+ 2131.55kB 17.90% 48.03%  2131.55kB 17.90%  os.readFileContents
+ 2071.14kB 17.39% 65.42%  2071.14kB 17.39%  reflect.unsafe_NewArray
+ 1024.02kB  8.60% 74.02%  1024.02kB  8.60%  go.yaml.in/yaml/v3.(*parser).scalar
+  532.26kB  4.47% 78.49%   532.26kB  4.47%  github.com/soulteary/flare/internal/resources/mdi.map.init.0
+  513.31kB  4.31% 82.80%   513.31kB  4.31%  github.com/klauspost/compress/flate.newHuffmanEncoder (inline)
+  512.25kB  4.30% 87.10%   512.25kB  4.30%  text/template/parse.(*ListNode).append (inline)
+  512.02kB  4.30% 91.40%   512.02kB  4.30%  text/template/parse.NewIdentifier (inline)
+  512.01kB  4.30% 95.70%   512.01kB  4.30%  regexp.makeOnePass.func1
+     512kB  4.30%   100%      512kB  4.30%  text/template/parse.(*PipeNode).append (inline)
+         0     0%   100%  5738.73kB 48.19%  github.com/gofiber/fiber/v3.(*App).defaultRequestHandler
+         0     0%   100%  5738.73kB 48.19%  github.com/gofiber/fiber/v3.(*App).next
+         0     0%   100%  5738.73kB 48.19%  github.com/gofiber/fiber/v3.(*DefaultCtx).Next
+         0     0%   100%   512.02kB  4.30%  github.com/gofiber/fiber/v3.(*DefaultRes).Render
+         0     0%   100%   512.02kB  4.30%  github.com/gofiber/fiber/v3.(*DefaultRes).Render-range1 (inline)
+         0     0%   100%   512.02kB  4.30%  github.com/gofiber/fiber/v3.(*DefaultRes).Render-range1.func1
+         0     0%   100%  5738.73kB 48.19%  github.com/gofiber/fiber/v3/middleware/recover.New.func1
+         0     0%   100%   513.31kB  4.31%  github.com/klauspost/compress/flate.init.1
+         0     0%   100%   512.01kB  4.30%  github.com/soulteary/cli-kit/validator.init
+         0     0%   100%  1024.25kB  8.60%  github.com/soulteary/flare.TestProfileDaemon

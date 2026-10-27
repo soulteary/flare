@@ -74,6 +74,10 @@ jobs:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
           EDITOR_SCREENSHOT_DIR: ${{ runner.temp }}/flare-editor-screenshots
         run: node tests/editor/browser.cjs
+      - name: Authenticated editor and import privacy controls
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/security-browser/editor-transfer.cjs
       - name: Editor write-source errors and proxy recovery
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
@@ -81,6 +85,12 @@ jobs:
       - name: Hybrid search browser acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
+          NODE_PATH: ${{ github.workspace }}/tests/clock/node_modules
+        run: node tests/search/hybrid.cjs
+      - name: Private homepage native search and authenticated suggestions
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+          FLARE_SEARCH_PRIVATE_TEST: "1"
           NODE_PATH: ${{ github.workspace }}/tests/clock/node_modules
         run: node tests/search/hybrid.cjs
       - name: Weather location picker browser acceptance

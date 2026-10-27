@@ -21,6 +21,10 @@ func GenerateApplicationsTemplate(filter string, options *model.Application, req
 }
 
 func generateApplications(filter string, options *model.Application, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
+	return generateApplicationsFor(filter, options, false, requestInfo...)
+}
+
+func generateApplicationsFor(filter string, options *model.Application, administrator bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	if options == nil {
 		op, err := data.GetAllSettingsOptions()
 		if err != nil {
@@ -28,34 +32,45 @@ func generateApplications(filter string, options *model.Application, requestInfo
 		}
 		options = &op
 	}
-	appsData, err := data.LoadFavoriteBookmarks()
+	appsData, err := data.LoadVisibleFavoriteBookmarks(administrator)
 	if err != nil {
 		return "", navigationDataError("applications", options.Locale, err)
 	}
+	return generateApplicationsSnapshot(filter, options, appsData, requestInfo...)
+}
+func generateApplicationsSnapshot(filter string, options *model.Application, appsData model.Bookmarks, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	b, ok := builderPool.Get().(*strings.Builder)
 	if !ok {
 		b = &strings.Builder{}
 	}
 	b.Reset()
-	defer builderPool.Put(b)
+	defer releaseNavigationBuilder(b)
 
-	apps := make([]model.Bookmark, 0, len(appsData.Items))
+	info := firstRequestInfo(requestInfo)
 	filterLower := strings.ToLower(filter)
-	for _, app := range appsData.Items {
-		app.URL = fn.ParseDynamicUrlWith(app.URL, firstRequestInfo(requestInfo))
-		if filter != "" && !strings.Contains(strings.ToLower(app.Name), filterLower) && !strings.Contains(strings.ToLower(app.URL), filterLower) && !strings.Contains(strings.ToLower(app.Desc), filterLower) {
+	// Count only matching output before reserving. Search misses must not reserve
+	// a full navigation page, and the builder never retains its large buffer in a pool.
+	estimate := 0
+	matches := make([]int, 0, len(appsData.Items))
+	for index, app := range appsData.Items {
+		link := expandNavigationURL(app.URL, info)
+		if filter != "" && !strings.Contains(strings.ToLower(app.Name), filterLower) && !strings.Contains(strings.ToLower(link), filterLower) && !strings.Contains(strings.ToLower(app.Desc), filterLower) {
 			continue
 		}
-		apps = append(apps, app)
+		matches = append(matches, index)
+		estimate = boundedNavigationEstimate(estimate, 320+len(app.Name)*2+len(link)+len(app.Desc)+len(app.Icon))
 	}
+	growNavigationBuilder(b, estimate)
+	for _, index := range matches {
+		app := appsData.Items[index]
+		app.URL = expandNavigationURL(app.URL, info)
 
-	for _, app := range apps {
 		desc := app.Desc
 		if desc == "" {
 			desc = app.URL
 		}
 		templateURL := navigationHref(app.URL, options.EnableEncryptedLink, firstRequestInfo(requestInfo))
-		templateIcon := navigationIcon(app.Icon, app.URL, options.IconMode)
+		templateIcon := navigationIcon(app.Icon, app.URL, options.IconMode, app.Private)
 		if options.OpenAppNewTab {
 			b.WriteString(`<div class="app-container" data-id="`)
 			b.WriteString(html.EscapeString(app.Icon))
@@ -95,4 +110,31 @@ func firstRequestInfo(info []*fn.DynamicURL) *fn.DynamicURL {
 		return info[0]
 	}
 	return nil
+}
+
+// Reset drops the rendered buffer without changing the already-returned string;
+// pooling builder objects must not pin multi-megabyte navigation responses.
+func releaseNavigationBuilder(b *strings.Builder) { b.Reset(); builderPool.Put(b) }
+
+const maxNavigationPreallocation = 8 << 20
+
+func boundedNavigationEstimate(current, extra int) int {
+	if current >= maxNavigationPreallocation || extra >= maxNavigationPreallocation-current {
+		return maxNavigationPreallocation
+	}
+	return current + extra
+}
+func growNavigationBuilder(b *strings.Builder, estimate int) {
+	if estimate > maxNavigationPreallocation {
+		estimate = maxNavigationPreallocation
+	}
+	if estimate > 0 {
+		b.Grow(estimate)
+	}
+}
+func expandNavigationURL(raw string, info *fn.DynamicURL) string {
+	if info == nil || !strings.ContainsRune(raw, '{') {
+		return raw
+	}
+	return fn.ParseDynamicUrlWith(raw, info)
 }

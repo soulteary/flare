@@ -1,0 +1,27 @@
+File: flare-resource-profile-final.test
+Type: alloc_space
+Time: 2026-10-27 10:56:08 CST
+Showing nodes accounting for 7351.93MB, 99.37% of 7398.30MB total
+Dropped 135 nodes (cum <= 36.99MB)
+Showing top 20 nodes out of 64
+      flat  flat%   sum%        cum   cum%
+    1729MB 23.37% 23.37%     1729MB 23.37%  golang.org/x/crypto/argon2.initBlocks
+ 1333.66MB 18.03% 41.40%  1333.66MB 18.03%  slices.Clone[go.shape.[]github.com/soulteary/flare/config/model.Bookmark,go.shape.struct { Extensions string "yaml:\"-\" json:\"Extensions,omitempty\""; Name string "yaml:\"name\""; URL string "yaml:\"link\""; Icon string "yaml:\"icon,omitempty\""; Desc string "yaml:\"desc,omitempty\""; Private bool "yaml:\"private,omitempty\""; Category string "yaml:\"category,omitempty\"" }] (inline)
+ 1090.49MB 14.74% 56.14%  1090.49MB 14.74%  internal/bytealg.MakeNoZero
+  889.97MB 12.03% 68.17%   889.97MB 12.03%  github.com/valyala/bytebufferpool.(*ByteBuffer).Write (partial-inline)
+  734.10MB  9.92% 78.09%   734.10MB  9.92%  net/url.parse
+  707.93MB  9.57% 87.66%   707.93MB  9.57%  bytes.growSlice
+  697.28MB  9.42% 97.08%   697.28MB  9.42%  fmt.(*buffer).writeString (inline)
+  105.38MB  1.42% 98.51%  1990.09MB 26.90%  github.com/soulteary/flare/internal/pages/home.generateBookmarkSnapshot
+   62.12MB  0.84% 99.35%  1698.20MB 22.95%  github.com/soulteary/flare/internal/pages/home.renderBookmarkIndexGroups
+    1.50MB  0.02% 99.37%  5635.46MB 76.17%  github.com/soulteary/flare/internal/pages/home.renderSearch
+    0.50MB 0.0068% 99.37%  1956.24MB 26.44%  github.com/soulteary/flare/internal/resources/templates.(*Renderer).Render
+         0     0% 99.37%   707.93MB  9.57%  bytes.(*Buffer).Write
+         0     0% 99.37%   543.53MB  7.35%  bytes.(*Buffer).WriteTo
+         0     0% 99.37%   707.93MB  9.57%  bytes.(*Buffer).grow
+         0     0% 99.37%   697.28MB  9.42%  fmt.(*fmt).fmtS
+         0     0% 99.37%   697.28MB  9.42%  fmt.(*fmt).padString
+         0     0% 99.37%   697.28MB  9.42%  fmt.(*pp).doPrint
+         0     0% 99.37%   697.28MB  9.42%  fmt.(*pp).fmtString
+         0     0% 99.37%   697.28MB  9.42%  fmt.(*pp).printArg
+         0     0% 99.37%  1405.21MB 18.99%  fmt.Fprint

@@ -14,13 +14,14 @@ import (
 
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/yamlutil"
-	"go.yaml.in/yaml/v3"
 )
 
 // All in-process bookmark writers share this lock, including the legacy editor.
 var bookmarkMu sync.RWMutex
 
 // ErrBookmarkConflict indicates that a preview no longer matches the on-disk file.
+var ErrBookmarkReadOnly = errors.New("configuration is read-only")
+
 var ErrBookmarkConflict = errors.New("书签已发生变化，请重新预览")
 
 const bookmarkBackupDir = ".flare-bookmark-backups"
@@ -56,7 +57,7 @@ func BookmarkSnapshot(name string) (model.Bookmarks, string, error) {
 		return model.Bookmarks{}, "", err
 	}
 	var src model.Bookmarks
-	if err = yamlutil.UnmarshalStrict(raw, &src); err != nil {
+	if err = yamlutil.DecodeBookmarks(raw, &src, name == "apps"); err != nil {
 		return src, "", err
 	}
 	return src, bookmarkVersion(raw), nil
@@ -88,6 +89,10 @@ func atomicBookmarkWrite(path string, raw []byte, mode os.FileMode) error {
 
 // CommitBookmarkImport backs up and atomically replaces one collection if unchanged.
 func CommitBookmarkImport(name, version string, next model.Bookmarks) error {
+	return CommitBookmarkImportChecked(name, version, next, nil)
+}
+
+func CommitBookmarkImportChecked(name, version string, next model.Bookmarks, check func() error) error {
 	bookmarkMu.Lock()
 	defer bookmarkMu.Unlock()
 	path, prefix, err := bookmarkCollectionPaths(name)
@@ -101,8 +106,12 @@ func CommitBookmarkImport(name, version string, next model.Bookmarks) error {
 	if bookmarkVersion(raw) != version {
 		return ErrBookmarkConflict
 	}
-	out, err := yaml.Marshal(next)
+	out, err := yamlutil.MergeBookmarks(raw, next)
 	if err != nil {
+		return err
+	}
+	var target model.Bookmarks
+	if err = yamlutil.DecodeBookmarks(out, &target, name == "apps"); err != nil {
 		return err
 	}
 	if err = os.MkdirAll(bookmarkBackupDir, 0700); err != nil {
@@ -123,6 +132,14 @@ func CommitBookmarkImport(name, version string, next model.Bookmarks) error {
 	info, err = os.Stat(path)
 	if err != nil {
 		return err
+	}
+	if info.Mode().Perm()&0222 == 0 {
+		return fmt.Errorf("%w: %s", ErrBookmarkReadOnly, name)
+	}
+	if check != nil {
+		if err = check(); err != nil {
+			return err
+		}
 	}
 	if err = atomicBookmarkWrite(path, out, info.Mode().Perm()); err != nil {
 		return err
@@ -160,4 +177,24 @@ func LatestBookmarkBackup(name string) ([]byte, time.Time, error) {
 	}
 	raw, err := os.ReadFile(filepath.Clean(path))
 	return raw, info.ModTime(), err
+}
+
+// RawBookmarkSnapshot returns validated source bytes for lossless YAML export.
+func RawBookmarkSnapshot(name string) ([]byte, error) {
+	bookmarkMu.RLock()
+	defer bookmarkMu.RUnlock()
+	path, _, err := bookmarkCollectionPaths(name)
+	if err != nil {
+		return nil, err
+	}
+	// #nosec G304 -- bookmarkCollectionPaths accepts only the fixed apps/bookmarks collections.
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var value model.Bookmarks
+	if err = yamlutil.DecodeBookmarks(raw, &value, name == "apps"); err != nil {
+		return nil, err
+	}
+	return raw, nil
 }

@@ -1,0 +1,19 @@
+{
+  "fixture_origin": "Manually transcribed pre-optimization HTML literals; independently validated against frozen pre-optimization renderer, never generated from optimized output.",
+  "reference_sources": {
+    "application.go": "3cfaeeffc603b42c44bc0bcc2ae050bb2d1d6e20b7f31a78cd10937c1e247ed3",
+    "bookmark.go": "c1774182c2249a472081df9e75dc9f4d8f6f1111c8674422771dc9a9dd051ded"
+  },
+  "validation": "Temporary renamed copies of both frozen renderer source files compiled in package home; TestFrozenBeforeRendererMatchesIndependentGoldens passed all 7 bookmark fixtures plus application fixture. Temporary source copies removed after validation.",
+  "fixture_sha256": {
+    "all.html": "98ecd3336036948885f4fdc16a0d972c12725e2867b75103d884cedb305a5c3b",
+    "application.html": "ed0ecc91a715fb2b866b80e24f89a776a0efc145bc6083c05ff6e74c4d5f81ca",
+    "collapse.html": "c09aa356aa25d50c1c86a7fe78e05efcef0a67ff84b53e5aac92fda5b51fb12a",
+    "empty-no-categories.html": "4905605810e9a99ad614b294ab99d032a8daeb53879cdad32f17e3d75e71542f",
+    "filtered-collapse.html": "3d910d9395eb565ce25f22f6420b4e99dec08ea1e091fc3d75e373809586e392",
+    "no-categories.html": "537617cbdacf17c7419f6a426817b167f4977a4176275fc6820d0f4f1bf16222",
+    "no-matches.html": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tabs-second.html": "71ae2daa48b879e7e36a653d8764aee4bb86a565c41e5330c8ba5d5cdec72a8d"
+  },
+  "reference_test_exit_code": 0
+}

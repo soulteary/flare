@@ -1,0 +1,70 @@
+{
+  "all_gates_pass": true,
+  "gates": {
+    "native_original_540read_90probe_no_drops": true,
+    "native_original_full180s": true,
+    "native_original_success_and_privacy": true,
+    "native_original_same_fixture_harness_payload": true,
+    "native_original_absolute_budgets": true,
+    "native_requestproof_540read_90probe_no_drops": true,
+    "native_requestproof_full180s": true,
+    "native_requestproof_success_and_privacy": true,
+    "native_requestproof_same_fixture_harness_payload": true,
+    "native_requestproof_absolute_budgets": true,
+    "native_final_540read_90probe_no_drops": true,
+    "native_final_full180s": true,
+    "native_final_success_and_privacy": true,
+    "native_final_same_fixture_harness_payload": true,
+    "native_final_absolute_budgets": true,
+    "profile_before_540read_90probe_no_drops": true,
+    "profile_before_full180s": true,
+    "profile_before_success_and_privacy": true,
+    "profile_before_same_fixture_harness_payload": true,
+    "profile_before_absolute_budgets": true,
+    "profile_final_540read_90probe_no_drops": true,
+    "profile_final_full180s": true,
+    "profile_final_success_and_privacy": true,
+    "profile_final_same_fixture_harness_payload": true,
+    "profile_final_absolute_budgets": true,
+    "saturated_before_180s_all_success_private": true,
+    "saturated_before_absolute_budgets": true,
+    "saturated_final_180s_all_success_private": true,
+    "saturated_final_absolute_budgets": true,
+    "saturated_same_harness_fixture_probe_count": true,
+    "profiler_and_auth_security_sources_unchanged": true,
+    "retention_before_45read_8probe_success": true,
+    "retention_final_45read_8probe_success": true
+  },
+  "calibration_6rps_excluded": true,
+  "intermediate_v1_preserved": true,
+  "native_original_to_requestproof": {
+    "cpu_per_read_reduction_percent": 7.497893850042114,
+    "kernel_rss_increase_mib": 0.484375
+  },
+  "native_requestproof_to_final": {
+    "cpu_per_read_reduction_percent": 33.01457194899818,
+    "kernel_rss_reduction_percent": 4.9020692707757
+  },
+  "profile_before_to_final": {
+    "cpu_per_read_reduction_percent": 28.027177738872687,
+    "alloc_per_read_reduction_percent": 58.556141379580005,
+    "gc_reduction_percent": 69.31279620853081,
+    "pause_reduction_percent": 86.44606737156805
+  },
+  "saturated_before_to_final": {
+    "read_qps_increase_percent": 3.995535025056851,
+    "kernel_rss_reduction_percent": 22.366719356229346
+  },
+  "retained_heap_after_gc3": {
+    "before_bytes": 9194416,
+    "final_bytes": 10289032,
+    "delta_bytes": 1094616
+  },
+  "causality_limits": [
+    "Single paired run on developer hardware; no confidence intervals or NAS claims.",
+    "Native OS CPU versus native, instrumented runtime/alloc versus identical profiler wrapper only.",
+    "CPU/alloc normalized per completed read includes identical login/revoke probes and fixed administrator setup.",
+    "One forced GC does not flush all sync.Pool victims; GC3 stable delta is consistent with intentional public-view cache, not proof of every retained byte.",
+    "Saturated throughput gain is modest; do not sell it as another 2x throughput improvement."
+  ]
+}

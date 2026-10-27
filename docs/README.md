@@ -40,3 +40,10 @@ feature does not publish an image or move `latest`.
 The server-side offline switch does not prevent the browser from opening external
 bookmarks or fetching configured remote images. Encoded links are not encryption,
 a password, or per-bookmark authorization. Category tabs are presentation filters.
+
+
+[登录与私有访问：开发分支升级及回滚](login-private-upgrade.md)。该文档针对阶段一开发实现，不代表已发布稳定版。
+
+[管理员读取性能优化与两轮三分钟配对验收](requirements/admin-performance-optimization.md)：请求内鉴权证据复用、持久化与撤销边界、同机延迟/吞吐及 CPU/RSS 对比。
+
+[管理员 CPU/内存归因与热点优化验收](requirements/admin-resource-analysis.md)：相同到达率、pprof 差分、缓存保留成本及最终四轮三分钟结果。

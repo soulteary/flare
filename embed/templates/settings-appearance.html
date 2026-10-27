@@ -1,7 +1,7 @@
 {{ define "settings-appearance.html" }}
 <div class="setting-group-container">
 
-    <form method="POST" action="{{ .SettingPages.Appearance.Path }}">
+    <form method="POST" action="{{ .SettingPages.Appearance.Path }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <h2>{{ T .Locale "general_settings" }}</h2>
         <div class="form-group">
             <label for="settings-locale">{{ T .Locale "language" }}</label>

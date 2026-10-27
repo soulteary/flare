@@ -1,0 +1,45 @@
+{
+  "all_absolute_budgets_and_assertions_pass": true,
+  "gates": {
+    "same_fixture": true,
+    "same_harness": true,
+    "same_workload": true,
+    "before_full180s": true,
+    "before_privacy_assertions": true,
+    "before_administrator_home_all200": true,
+    "before_administrator_search_all200": true,
+    "before_probes_all303": true,
+    "before_home_budget": true,
+    "before_search_budget": true,
+    "before_rss_budget": true,
+    "after_full180s": true,
+    "after_privacy_assertions": true,
+    "after_administrator_home_all200": true,
+    "after_administrator_search_all200": true,
+    "after_probes_all303": true,
+    "after_home_budget": true,
+    "after_search_budget": true,
+    "after_rss_budget": true
+  },
+  "before_sha256": "b0ffcb369d3f5f149baa46ced5d4ee37c9a1476a89c4ed7b4a61e02d12b072cf",
+  "after_sha256": "4396a134ca328ea60f7ac1ad3bc79701fea366c6aa2c6311096a4fa2e2140d45",
+  "harness_sha256": "b763de7217b534af8cc1c975d9576d305c46a0d534c4daba4ac5c678039a8739",
+  "home_p95_reduction_percent": 43.042552721879645,
+  "search_p95_reduction_percent": 48.618289909861936,
+  "combined_read_qps_ratio": 2.0034130090381277,
+  "cpu_ps_sample_mean": {
+    "before": 22.748314606741573,
+    "after": 40.96404494382023
+  },
+  "sample_count": {
+    "before": 89,
+    "after": 89
+  },
+  "peak_kernel_rss_mib": {
+    "before": 155.09375,
+    "after": 224.484375
+  },
+  "whole_http_commit_count_measured": false,
+  "diagnostic_excluded": true,
+  "lowend_nas_measured": false
+}

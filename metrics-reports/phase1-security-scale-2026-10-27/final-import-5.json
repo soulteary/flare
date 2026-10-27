@@ -1,0 +1,107 @@
+{
+  "started_utc": "2026-10-27T00:54:37Z",
+  "host": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+  "fixture": {
+    "resources": 20000,
+    "private": 10000,
+    "categories": 100,
+    "sha256": "9537f2d51a70b2944ccbe6945eabdef698d6900326e2ee4d0c444d14c310214b"
+  },
+  "binary_sha256": "b0ffcb369d3f5f149baa46ced5d4ee37c9a1476a89c4ed7b4a61e02d12b072cf",
+  "harness_sha256": "d578859dc23869ca9c8393c355f577d1c15045c18ce03bc8e6e20196e751dca3",
+  "startup_seconds": 0.3283978329272941,
+  "cold_home_ms": 88.42354197986424,
+  "import_samples": [
+    {
+      "login_ms": 54.4444170081988,
+      "preview_ms": 258.0348750343546,
+      "commit_ms": 573.9473330322653,
+      "added": 20000,
+      "categories": 100,
+      "anonymous_private_absent": true,
+      "public_last_present": true,
+      "source_bytes": 2143719,
+      "unknown_target_field_preserved": true,
+      "private_true_count": 10000
+    },
+    {
+      "login_ms": 51.967083010822535,
+      "preview_ms": 262.2718750499189,
+      "commit_ms": 590.5608750181273,
+      "added": 20000,
+      "categories": 100,
+      "anonymous_private_absent": true,
+      "public_last_present": true,
+      "source_bytes": 2143719,
+      "unknown_target_field_preserved": true,
+      "private_true_count": 10000
+    },
+    {
+      "login_ms": 48.91200002748519,
+      "preview_ms": 338.9648749725893,
+      "commit_ms": 575.3512920346111,
+      "added": 20000,
+      "categories": 100,
+      "anonymous_private_absent": true,
+      "public_last_present": true,
+      "source_bytes": 2143719,
+      "unknown_target_field_preserved": true,
+      "private_true_count": 10000
+    },
+    {
+      "login_ms": 53.04300005082041,
+      "preview_ms": 252.299707964994,
+      "commit_ms": 574.2639580275863,
+      "added": 20000,
+      "categories": 100,
+      "anonymous_private_absent": true,
+      "public_last_present": true,
+      "source_bytes": 2143719,
+      "unknown_target_field_preserved": true,
+      "private_true_count": 10000
+    },
+    {
+      "login_ms": 49.158915993757546,
+      "preview_ms": 256.98449998162687,
+      "commit_ms": 588.1585829192773,
+      "added": 20000,
+      "categories": 100,
+      "anonymous_private_absent": true,
+      "public_last_present": true,
+      "source_bytes": 2143719,
+      "unknown_target_field_preserved": true,
+      "private_true_count": 10000
+    }
+  ],
+  "import_preview": {
+    "requests": 5,
+    "statuses": {
+      "200": 5
+    },
+    "p50_ms": 258.0348750343546,
+    "p95_ms": 338.9648749725893
+  },
+  "import_commit": {
+    "requests": 5,
+    "statuses": {
+      "200": 5
+    },
+    "p50_ms": 575.3512920346111,
+    "p95_ms": 590.5608750181273
+  },
+  "kernel_children_peak_rss_kib": 352528.0,
+  "resource_samples": [
+    {
+      "t": 2.0404243749799207,
+      "rss_kib": 305472,
+      "cpu_percent": 76.4
+    },
+    {
+      "t": 4.047447082935832,
+      "rss_kib": 339920,
+      "cpu_percent": 74.7
+    }
+  ],
+  "peak_rss_kib": 339920,
+  "completed_utc": "2026-10-27T00:54:42Z"
+}

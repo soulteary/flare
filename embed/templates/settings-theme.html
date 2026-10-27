@@ -1,6 +1,6 @@
 {{ define "settings-theme.html" }}
 <div class="setting-group-container">
-    <form method="POST" action="{{ .SettingPages.Theme.Path }}">
+    <form method="POST" action="{{ .SettingPages.Theme.Path }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <h2>{{ T .Locale "settings_theme" }}</h2>
         <div class="theme-groups clearfix">
             {{range .Themes}}

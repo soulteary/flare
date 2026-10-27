@@ -1,0 +1,107 @@
+{
+  "started_utc": "2026-10-27T00:51:16Z",
+  "host": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+  "fixture": {
+    "resources": 20000,
+    "private": 10000,
+    "categories": 100,
+    "sha256": "9537f2d51a70b2944ccbe6945eabdef698d6900326e2ee4d0c444d14c310214b"
+  },
+  "binary_sha256": "b0ffcb369d3f5f149baa46ced5d4ee37c9a1476a89c4ed7b4a61e02d12b072cf",
+  "harness_sha256": "c8d8dd9f3f19526fe4054f161aa502ef3714453a33314d0f78ed6953d7c90f46",
+  "startup_seconds": 0.32956075004767627,
+  "cold_home_ms": 87.56829204503447,
+  "home": {
+    "requests": 80,
+    "statuses": {
+      "200": 80
+    },
+    "p50_ms": 9.155582985840738,
+    "p95_ms": 11.896500014699996,
+    "qps": 410.6893884747265
+  },
+  "search": {
+    "requests": 80,
+    "statuses": {
+      "200": 80
+    },
+    "p50_ms": 4.375749966129661,
+    "p95_ms": 6.520625087432563,
+    "qps": 868.103444170931
+  },
+  "anonymous_private_absent": true,
+  "administrator_private_present": true,
+  "administrator_home": {
+    "requests": 80,
+    "statuses": {
+      "200": 80
+    },
+    "p50_ms": 381.0455419588834,
+    "p95_ms": 388.61512509174645,
+    "qps": 10.530535161440358
+  },
+  "administrator_search": {
+    "requests": 80,
+    "statuses": {
+      "200": 80
+    },
+    "p50_ms": 386.1552089219913,
+    "p95_ms": 402.58579095825553,
+    "qps": 9.590420655986849
+  },
+  "import": {
+    "login_ms": 66.67262502014637,
+    "preview_ms": 269.39908403437585,
+    "commit_ms": 577.9265830060467,
+    "added": 20000,
+    "categories": 100,
+    "anonymous_private_absent": true,
+    "public_last_present": true,
+    "source_bytes": 2143719
+  },
+  "kernel_children_peak_rss_kib": 316048.0,
+  "resource_samples": [
+    {
+      "t": 2.0447824159637094,
+      "rss_kib": 130496,
+      "cpu_percent": 25.6
+    },
+    {
+      "t": 4.054842166020535,
+      "rss_kib": 132880,
+      "cpu_percent": 22.1
+    },
+    {
+      "t": 6.065792415989563,
+      "rss_kib": 139648,
+      "cpu_percent": 32.9
+    },
+    {
+      "t": 8.077624791068956,
+      "rss_kib": 139680,
+      "cpu_percent": 30.8
+    },
+    {
+      "t": 10.095323250046931,
+      "rss_kib": 141968,
+      "cpu_percent": 7.6
+    },
+    {
+      "t": 12.10799795796629,
+      "rss_kib": 141968,
+      "cpu_percent": 19.5
+    },
+    {
+      "t": 14.123723041033372,
+      "rss_kib": 141968,
+      "cpu_percent": 12.5
+    },
+    {
+      "t": 16.137467207969166,
+      "rss_kib": 141968,
+      "cpu_percent": 13.6
+    }
+  ],
+  "peak_rss_kib": 141968,
+  "completed_utc": "2026-10-27T00:51:34Z"
+}

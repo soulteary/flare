@@ -1,0 +1,15 @@
+{
+  "main.go": "c4bc16d29e1f92001bc34964f8e3f5a6f3d972f9112064f6acd7ce7a2bea8abb",
+  "main_profile_test.go": "4b5c057b99c8d8f39f5d991291727ebbb4325c3acd8b2de7d188d0d320cb1344",
+  "internal/security/store.go": "d5cdc35560a2dea44b1ec0dc74a9570b6d32c103576edf527660ddd066328fc9",
+  "internal/auth/persistent.go": "eb1d606b7c922e9b89aeb2bdbc7499f4be14f0e8ab260f49b61536cac8605928",
+  "internal/auth/auth.go": "231f6bb50dbb85d5819561a81c5c2f4fb99bbd5e3afbc673a986e41c01f16d2a",
+  "config/data/visibility.go": "b80ade09b64c007d0b9f6754dd604f9b00b636c18522b2f948d3a455ab01d990",
+  "config/data/parsed_cache.go": "7d57039cf70acdd52b37dae66271bf9946aa04d6489d480c4c52d73c2c5e65f0",
+  "internal/pages/home/home.go": "88eb70b5eeec3faa2ed798e0711029dd7135f5a9b2878605d9758b623eb26334",
+  "internal/pages/home/bookmark.go": "c1774182c2249a472081df9e75dc9f4d8f6f1111c8674422771dc9a9dd051ded",
+  "internal/pages/home/application.go": "3cfaeeffc603b42c44bc0bcc2ae050bb2d1d6e20b7f31a78cd10937c1e247ed3",
+  "internal/pages/home/search_suggest.go": "5886ee8eadb85472b3542ee2179891db1f0cafd60ad2be4366e358b1107c8d06",
+  "internal/fn/url.go": "7d409d47e2dc2db58daeac71d7ebafeaece19e828e979ed362ad9d0dc017d454",
+  "internal/resources/templates/templates.go": "51529f7e60ec98eb8aadca0f5b789ce1f0ec874213cf06c12b5049bc931441ce"
+}

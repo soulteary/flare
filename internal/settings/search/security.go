@@ -15,6 +15,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/auth"
 )
 
 const searchCSRFCookie = "flare_search_csrf"
@@ -39,12 +40,21 @@ func newSearchSecurity() *searchSecurity {
 
 // attach and protect are route-local so tokens are invalid across app instances.
 func (s *searchSecurity) attach(c fiber.Ctx) error {
+	if auth.PersistentSecurity(c) {
+		return c.Next()
+	}
 	c.Locals(searchSecurityKey{}, s)
 	c.Set("Cache-Control", "no-store")
 	return c.Next()
 }
 
 func (s *searchSecurity) protect(c fiber.Ctx) error {
+	if auth.PersistentSecurity(c) {
+		if !auth.ValidateCSRF(c) {
+			return rejectSearchRequest(c)
+		}
+		return c.Next()
+	}
 	c.Set("Cache-Control", "no-store")
 	if len(c.Request().Header.PeekAll("Sec-Fetch-Site")) > 1 {
 		return rejectSearchRequest(c)

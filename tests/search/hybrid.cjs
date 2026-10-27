@@ -1,5 +1,7 @@
 // FLARE_BINARY=/absolute/path NODE_PATH=/path/to/playwright/node_modules node tests/search/hybrid.cjs
 const {chromium} = require('playwright');
+const browserAuth=require('../browser-auth.cjs');
+const privateSite=process.env.FLARE_SEARCH_PRIVATE_TEST==='1';
 const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
@@ -42,7 +44,7 @@ Search:
  await fs.writeFile(path.join(dir,'apps.yml'),'links:\n- name: Needle application\n  link: "'+base+'/chosen"\n  desc: Find me\n');
  await fs.writeFile(path.join(dir,'bookmarks.yml'),'links:\n- name: "Needle bookmark"\n  link: "https://bookmark.example/"\n');
  const originalConfig=await fs.readFile(path.join(dir,'config.yml'));
- const child = spawn(process.env.FLARE_BINARY, [], {cwd:dir,env:{...process.env,FLARE_PORT:String(port),FLARE_DISABLE_LOGIN:'true',FLARE_OFFLINE:'true',FLARE_BASELINE:'1'}});
+ const child = spawn(process.env.FLARE_BINARY, [], {cwd:dir,env:{...process.env,FLARE_PORT:String(port),FLARE_DISABLE_LOGIN:'true',...(privateSite?{...browserAuth.credentials,FLARE_VISIBILITY:'PRIVATE'}:{}),FLARE_OFFLINE:'true',FLARE_BASELINE:'1'}});
  let logs=''; child.stdout.on('data',b=>logs+=b); child.stderr.on('data',b=>logs+=b);
  let browser;
  try {
@@ -51,8 +53,23 @@ Search:
   const page=await browser.newPage(); const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',message=>{if(message.type()==='error' && /Content Security Policy|Refused to execute|Refused to connect/i.test(message.text())) errors.push(message.text());});
+  if(privateSite)await browserAuth.login(page,base);
   await page.goto(base);
   assert.deepEqual(await fs.readFile(path.join(dir,'config.yml')),originalConfig,'read-only startup must preserve legacy config');
+  if(privateSite){
+   const token=await page.locator('#search-form input[name="csrf-token"]').inputValue();assert.ok(token);
+   for(const endpoint of ['/', '/search/suggest']){
+    for(const csrf of [undefined,'invalid-token']){const form={search:'Needle',target:'local'};if(csrf!==undefined)form['csrf-token']=csrf;const denied=await page.request.post(base+endpoint,{headers:{Origin:base,Accept:'application/json'},form});assert.equal(denied.status(),403);assert.equal((await denied.json()).error.code,'CSRF_INVALID');}
+    const anonymous=await browser.newContext();const denied=await anonymous.request.post(base+endpoint,{headers:{Origin:base,Accept:'application/json'},form:{search:'Needle','csrf-token':token}});assert.equal(denied.status(),401);await anonymous.close();
+   }
+   const native=await browser.newContext({javaScriptEnabled:false,storageState:await page.context().storageState()});const nativePage=await native.newPage();
+   for(const route of ['/help']){
+    await nativePage.goto(base+route);assert.ok(await nativePage.locator('#search-form input[name="csrf-token"]').inputValue());await nativePage.locator('#search').fill('Needle');
+    const result=nativePage.waitForResponse(r=>r.url()===base+'/'&&r.request().method()==='POST');await nativePage.locator('#search').press('Enter');assert.equal((await result).status(),200);await nativePage.waitForLoadState();await nativePage.waitForFunction(()=>document.body.textContent.includes('Needle application')).catch(async e=>{throw Error(e.message+' URL='+nativePage.url()+' body='+await nativePage.locator('body').innerText());});
+   }
+   await native.close();
+  }
+
   const clockBefore=await page.locator('#clock-time').textContent();
   await page.waitForFunction(previous=>document.querySelector('#clock-time').textContent!==previous,clockBefore,{timeout:3000});
   await page.locator('#search').fill('Needle');
@@ -142,6 +159,7 @@ Search:
   await page.waitForURL(base+'/chosen');
   const touchContext=await browser.newContext({hasTouch:true,isMobile:true,viewport:{width:390,height:844}});
   const touchPage=await touchContext.newPage();
+  if(privateSite)await browserAuth.login(touchPage,base);
   await touchPage.goto(base);
   await touchPage.locator('#search').fill('Needle');
   await touchPage.waitForFunction(()=>document.querySelectorAll('#search-suggestions a').length===2);
@@ -166,6 +184,10 @@ Search:
   await page.locator('button.btn-submit').click();
   await page.goto(base);
   assert.equal(await page.locator('#search-target').count(),0);
+  if(privateSite){
+   const native=await browser.newContext({javaScriptEnabled:false,storageState:await page.context().storageState()});const nativePage=await native.newPage();await nativePage.goto(base);assert.ok(await nativePage.locator('#search-form input[name="csrf-token"]').inputValue());await nativePage.locator('#search').fill('Needle');const response=nativePage.waitForResponse(r=>r.url()===base+'/'&&r.request().method()==='POST');await nativePage.locator('#search-submit').click();assert.equal((await response).status(),200);await nativePage.waitForLoadState();await nativePage.waitForFunction(()=>document.body.textContent.includes('Needle application')).catch(async e=>{throw Error(e.message+' URL='+nativePage.url()+' body='+await nativePage.locator('body').innerText());});await native.close();
+  }
+
   await page.locator('#search').fill('Needle');
   await page.waitForFunction(()=>document.querySelectorAll('#search-suggestions a').length===2);
   await page.locator('#search').press('Enter');

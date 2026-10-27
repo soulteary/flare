@@ -1,3 +1,4 @@
+const browserAuth=require('../browser-auth.cjs');
 // Run against a freshly built Flare binary. No credentials or external services.
 const {chromium} = require('playwright');
 const assert = require('node:assert/strict');
@@ -57,7 +58,7 @@ const {spawn} = require('node:child_process');
     assert.equal(await page.locator('#clock-seconds').inputValue(),'0');
     if(process.env.CLOCK_SCREENSHOT_DIR) {await fs.mkdir(process.env.CLOCK_SCREENSHOT_DIR,{recursive:true});await page.locator('#clock-settings').screenshot({path:path.join(process.env.CLOCK_SCREENSHOT_DIR,'settings.png')});}
     const saved=await fs.readFile(path.join(dir,'config.yml'),'utf8');
-    const invalid=await page.request.post(base+'/settings/appearance',{form:{'clock-timezone-mode':'custom','clock-timezone':'Local','clock-dynamic':'1','clock-seconds':'1',title:'must not save'}});
+    const invalid=await browserAuth.post(page,base+'/settings/appearance',{form:{'clock-timezone-mode':'custom','clock-timezone':'Local','clock-dynamic':'1','clock-seconds':'1',title:'must not save'}});
     assert.equal(invalid.status(),400);
     assert.equal(await fs.readFile(path.join(dir,'config.yml'),'utf8'),saved);
     await page.clock.setSystemTime(new Date('2026-12-31T15:59:59Z'));

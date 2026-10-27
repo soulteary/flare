@@ -20,7 +20,6 @@ func TestCategoryBucketsKeepDefaultPlacementAndStoredOrder(t *testing.T) {
 			{Name: "implicit-first", URL: "{origin}/implicit-first"},
 			{Name: "explicit-first", URL: "{origin}/explicit-first", Category: "apps"},
 			{Name: "second-last", URL: "{origin}/second-last", Category: "second"},
-			{Name: "orphan", URL: "{origin}/orphan", Category: "missing"},
 		},
 	}
 	require.True(t, data.SaveNormalBookmarks(fixture))

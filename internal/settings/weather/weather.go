@@ -143,7 +143,14 @@ func updateWeatherOptions(c fiber.Ctx) error {
 	if body.ShowWeather && selected == nil {
 		return renderForm(c, message(c, "weather_choose"), http.StatusBadRequest, &body)
 	}
-	if !data.UpdateSelectedWeather(body.ShowWeather, selected) {
+	if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
+		return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
+	}
+	saved := false
+	if err := auth.AuthorizedWrite(c, func() error { saved = data.UpdateSelectedWeather(body.ShowWeather, selected); return nil }); err != nil {
+		return err
+	}
+	if !saved {
 		return renderForm(c, "", http.StatusInternalServerError, &body)
 	}
 
@@ -179,6 +186,9 @@ func renderForm(c fiber.Ctx, testResult string, status int, submitted *weatherFo
 		locale = "zh"
 	}
 	m := pool.GetTemplateMap()
+	if auth.PersistentSecurity(c) {
+		m["SecurityCSRFToken"] = auth.CSRFToken(c)
+	}
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
 	m["DebugMode"] = define.AppFlags.DebugMode

@@ -6,11 +6,13 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -78,4 +80,56 @@ func TestEditorSaveFailureRecoveryMetadata(t *testing.T) {
 			require.Equal(t, map[bool]string{false: "save_failed", true: "recovery_required"}[recoveryRequired], result.Code)
 		})
 	}
+}
+
+func TestEditorTrustedRejectsPrivateAndPublicChangesDetected(t *testing.T) {
+	t.Chdir(t.TempDir())
+	before := define.AppFlags
+	defer func() { define.AppFlags = before }()
+	define.AppFlags.DisableLoginMode = true
+	app := fiber.New()
+	registerEditorDocument(app)
+	snapshot, err := data.EditorSnapshot()
+	require.NoError(t, err)
+	snapshot.Apps[0].Private = true
+	raw, err := json.Marshal(snapshot)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/editor/document", bytes.NewReader(raw))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Flare-Editor", "1")
+	rec := httptest.NewRecorder()
+	serveTransferHTTP(t, app, rec, req)
+	require.Equal(t, 409, rec.Code)
+	original, err := data.EditorSnapshot()
+	require.NoError(t, err)
+	require.False(t, original.Apps[0].Private)
+	private := original
+	private.Apps = append([]model.Bookmark(nil), original.Apps...)
+	private.Apps[0].Private = true
+	require.True(t, documentRelaxed(private, original))
+	newPublic := original
+	newPublic.Apps = append(append([]model.Bookmark(nil), original.Apps...), model.Bookmark{Name: "New", URL: "https://new.example"})
+	require.True(t, documentRelaxed(original, newPublic))
+	require.False(t, documentRelaxed(original, private))
+}
+
+func TestEditorExtensionsRetainedWhenURLChanges(t *testing.T) {
+	t.Chdir(t.TempDir())
+	require.NoError(t, os.WriteFile("apps.yml", []byte("links:\n- name: App\n  link: https://old.example\n  extension: {nested: retained}\n"), 0600))
+	require.NoError(t, os.WriteFile("bookmarks.yml", []byte("links: []\n"), 0600))
+	doc, err := data.EditorSnapshot()
+	require.NoError(t, err)
+	// HTTP JSON is the editor's actual round trip; extension metadata is optional
+	// and carries no new required user-facing YAML fields.
+	raw, err := json.Marshal(doc)
+	require.NoError(t, err)
+	var submitted data.EditorDocument
+	require.NoError(t, json.Unmarshal(raw, &submitted))
+	submitted.Apps[0].URL = "https://changed.example"
+	_, err = data.CommitEditorDocument(submitted)
+	require.NoError(t, err)
+	saved, err := os.ReadFile("apps.yml")
+	require.NoError(t, err)
+	require.Contains(t, string(saved), "nested: retained")
+	require.Contains(t, string(saved), "https://changed.example")
 }

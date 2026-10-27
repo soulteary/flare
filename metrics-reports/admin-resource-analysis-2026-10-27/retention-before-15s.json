@@ -1,0 +1,226 @@
+{
+  "started_utc": "2026-10-27T02:50:39Z",
+  "fixture": {
+    "resources": 20000,
+    "private": 10000,
+    "categories": 100,
+    "sha256": "9537f2d51a70b2944ccbe6945eabdef698d6900326e2ee4d0c444d14c310214b"
+  },
+  "binary_sha256": "f98d3077d17fc7f28885ea751a0f8ea8929082be0da43d7d477124289e7d29de",
+  "harness_sha256": "cd3733d0df29380f31b6ca3cf0e7ea2b5f60470a44d0f267dcdb8c8bf5b5b92b",
+  "purpose": "short paired1/2/3forcedGCretention diagnostic, noCPUheadline",
+  "runtime_before": {
+    "cpu_system_seconds": 0.044507,
+    "cpu_user_seconds": 0.259056,
+    "frees": 2091772,
+    "goroutines": 11,
+    "heap_alloc_bytes": 18003216,
+    "heap_inuse_bytes": 23126016,
+    "heap_objects": 75003,
+    "heap_released_bytes": 62726144,
+    "heap_sys_bytes": 112525312,
+    "mallocs": 2166775,
+    "num_gc": 13,
+    "pause_total_ns": 727498,
+    "time": "2026-10-27T02:50:39.88869Z",
+    "total_alloc_bytes": 267070728
+  },
+  "load": {
+    "pressure_started_utc": "2026-10-27T02:50:39Z",
+    "read_schedule": {
+      "offered": 45,
+      "admitted": 45,
+      "drops": [],
+      "operation_errors": [],
+      "actual_elapsed_seconds": 15.004051875090227,
+      "offered_rate": 3,
+      "inflight_limit": 4,
+      "waiting_queue_capacity": 0
+    },
+    "probe_schedule": {
+      "offered": 8,
+      "admitted": 8,
+      "drops": [],
+      "operation_errors": [],
+      "actual_elapsed_seconds": 15.003370999940671,
+      "offered_rate": 0.5,
+      "inflight_limit": 1,
+      "waiting_queue_capacity": 0
+    },
+    "pressure_completed_utc": "2026-10-27T02:50:54Z",
+    "duration_seconds": 15,
+    "administrator_home": {
+      "requests": 23,
+      "statuses": {
+        "200": 23
+      },
+      "p50_ms": 82.96862500719726,
+      "p95_ms": 160.41316697373986
+    },
+    "administrator_search": {
+      "requests": 22,
+      "statuses": {
+        "200": 22
+      },
+      "p50_ms": 57.22033302299678,
+      "p95_ms": 70.08362503256649
+    },
+    "probes": [
+      {
+        "login_status": 303,
+        "login_ms": 44.457208015955985,
+        "duration_ms": 211.43166604451835,
+        "private_status": 200,
+        "csrf_status": 200,
+        "logout_status": 303,
+        "replay_status": 200,
+        "privacy_assertions_pass": true
+      },
+      {
+        "login_status": 303,
+        "login_ms": 66.69466698076576,
+        "duration_ms": 247.85808299202472,
+        "private_status": 200,
+        "csrf_status": 200,
+        "logout_status": 303,
+        "replay_status": 200,
+        "privacy_assertions_pass": true
+      },
+      {
+        "login_status": 303,
+        "login_ms": 69.6478330064565,
+        "duration_ms": 240.77954201493412,
+        "private_status": 200,
+        "csrf_status": 200,
+        "logout_status": 303,
+        "replay_status": 200,
+        "privacy_assertions_pass": true
+      },
+      {
+        "login_status": 303,
+        "login_ms": 49.41016691736877,
+        "duration_ms": 217.14766696095467,
+        "private_status": 200,
+        "csrf_status": 200,
+        "logout_status": 303,
+        "replay_status": 200,
+        "privacy_assertions_pass": true
+      },
+      {
+        "login_status": 303,
+        "login_ms": 60.23299996741116,
+        "duration_ms": 228.45295898150653,
+        "private_status": 200,
+        "csrf_status": 200,
+        "logout_status": 303,
+        "replay_status": 200,
+        "privacy_assertions_pass": true
+      },
+      {
+        "login_status": 303,
+        "login_ms": 64.58695803303272,
+        "duration_ms": 235.64383399207145,
+        "private_status": 200,
+        "csrf_status": 200,
+        "logout_status": 303,
+        "replay_status": 200,
+        "privacy_assertions_pass": true
+      },
+      {
+        "login_status": 303,
+        "login_ms": 90.61820793431252,
+        "duration_ms": 232.97866701614112,
+        "private_status": 200,
+        "csrf_status": 200,
+        "logout_status": 303,
+        "replay_status": 200,
+        "privacy_assertions_pass": true
+      },
+      {
+        "login_status": 303,
+        "login_ms": 64.1393749974668,
+        "duration_ms": 240.19424989819527,
+        "private_status": 200,
+        "csrf_status": 200,
+        "logout_status": 303,
+        "replay_status": 200,
+        "privacy_assertions_pass": true
+      }
+    ],
+    "response_payload_bytes": {
+      "home": 62120148,
+      "search": 830170
+    },
+    "privacy_violations": []
+  },
+  "runtime_after_before_gc": {
+    "cpu_system_seconds": 0.458751,
+    "cpu_user_seconds": 1.615245,
+    "frees": 3336155,
+    "goroutines": 12,
+    "heap_alloc_bytes": 21848496,
+    "heap_inuse_bytes": 26935296,
+    "heap_objects": 73764,
+    "heap_released_bytes": 88760320,
+    "heap_sys_bytes": 133431296,
+    "mallocs": 3409919,
+    "num_gc": 100,
+    "pause_total_ns": 15122784,
+    "time": "2026-10-27T02:50:54.939857Z",
+    "total_alloc_bytes": 1909524848
+  },
+  "runtime_after_gc_sequence": [
+    {
+      "cpu_system_seconds": 0.462025,
+      "cpu_user_seconds": 1.6229390000000001,
+      "frees": 3336823,
+      "goroutines": 12,
+      "heap_alloc_bytes": 17382952,
+      "heap_inuse_bytes": 22577152,
+      "heap_objects": 75387,
+      "heap_released_bytes": 96296960,
+      "heap_sys_bytes": 133464064,
+      "mallocs": 3412210,
+      "num_gc": 101,
+      "pause_total_ns": 15282867,
+      "time": "2026-10-27T02:50:54.949039Z",
+      "total_alloc_bytes": 1910802856,
+      "forced_gc_number": 1
+    },
+    {
+      "cpu_system_seconds": 0.464988,
+      "cpu_user_seconds": 1.6318160000000002,
+      "frees": 3339203,
+      "goroutines": 12,
+      "heap_alloc_bytes": 9193216,
+      "heap_inuse_bytes": 14352384,
+      "heap_objects": 75354,
+      "heap_released_bytes": 100286464,
+      "heap_sys_bytes": 133464064,
+      "mallocs": 3414557,
+      "num_gc": 102,
+      "pause_total_ns": 15403700,
+      "time": "2026-10-27T02:50:55.064563Z",
+      "total_alloc_bytes": 1912094736,
+      "forced_gc_number": 2
+    },
+    {
+      "cpu_system_seconds": 0.467025,
+      "cpu_user_seconds": 1.63823,
+      "frees": 3341551,
+      "goroutines": 12,
+      "heap_alloc_bytes": 9194416,
+      "heap_inuse_bytes": 14352384,
+      "heap_objects": 75365,
+      "heap_released_bytes": 108380160,
+      "heap_sys_bytes": 133464064,
+      "mallocs": 3416916,
+      "num_gc": 103,
+      "pause_total_ns": 15510158,
+      "time": "2026-10-27T02:50:55.172254Z",
+      "total_alloc_bytes": 1913380248,
+      "forced_gc_number": 3
+    }
+  ],
+  "completed_utc": "2026-10-27T02:50:55Z"
+}

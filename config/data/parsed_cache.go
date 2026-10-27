@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/soulteary/flare/config/model"
-	"go.yaml.in/yaml/v3"
+	"github.com/soulteary/flare/internal/yamlutil"
 )
 
 type parsedApplication struct {
@@ -15,14 +15,19 @@ type parsedApplication struct {
 	err   error
 }
 type parsedBookmarks struct {
-	raw        []byte
-	value      model.Bookmarks
-	err        error
-	targetOnce sync.Once
-	targets    map[string]struct{}
-	dynamic    []string
-	searchOnce sync.Once
-	search     []searchEntry
+	raw           []byte
+	value         model.Bookmarks
+	err           error
+	publicOnce    sync.Once
+	publicView    *parsedBookmarks
+	handleOnce    sync.Once
+	handles       map[string]string
+	handleTargets map[string]string
+	targetOnce    sync.Once
+	targets       map[string]struct{}
+	dynamic       []string
+	searchOnce    sync.Once
+	search        []searchEntry
 }
 
 type searchEntry struct {
@@ -104,7 +109,7 @@ func parsedBookmarkData(name string, raw []byte) *parsedBookmarks {
 		return snapshot
 	}
 	next := &parsedBookmarks{raw: raw}
-	next.err = yaml.Unmarshal(raw, &next.value)
+	next.err = yamlutil.DecodeBookmarks(raw, &next.value, name == "apps")
 
 	fileCacheMu.Lock()
 	if name == "apps" {
@@ -148,4 +153,11 @@ func (snapshot *parsedBookmarks) prepareSearch(isApp bool) {
 			snapshot.search = append(snapshot.search, searchEntry{index: index, name: strings.ToLower(item.Name), link: strings.ToLower(item.URL), description: description, dynamic: hasDynamicURL(item.URL), visible: visible})
 		}
 	})
+}
+
+// publicSnapshot caches authorization filtering and search normalization once per
+// immutable content snapshot, keeping anonymous reads independent of secret size.
+func (snapshot *parsedBookmarks) publicSnapshot() *parsedBookmarks {
+	snapshot.publicOnce.Do(func() { snapshot.publicView = &parsedBookmarks{value: FilterNavigation(snapshot.value, false)} })
+	return snapshot.publicView
 }

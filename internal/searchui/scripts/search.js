@@ -33,10 +33,13 @@
     var query = input.value.trim(), version = generation;
     timer = setTimeout(function () {
       controller = new AbortController();
+      var fields = new URLSearchParams({search: query});
+      var csrf = form.querySelector('input[name="csrf-token"]');
+      if (csrf) fields.set('csrf-token', csrf.value);
       fetch('/search/suggest', {
         method: 'POST', credentials: 'same-origin', cache: 'no-store', redirect: 'error',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: new URLSearchParams({search: query}).toString(), signal: controller.signal
+        body: fields.toString(), signal: controller.signal
       }).then(function (response) {
         if (!response.ok) throw new Error('suggestions unavailable');
         return response.json();

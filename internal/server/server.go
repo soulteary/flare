@@ -12,14 +12,15 @@ import (
 
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/logger"
+	"github.com/soulteary/flare/internal/security"
 )
 
-func StartDaemon(AppFlags *model.Flags) {
+func StartDaemon(AppFlags *model.Flags, stores ...*security.Store) {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	log := logger.GetLogger()
-	srv, err := newRouter(AppFlags)
+	srv, err := newRouter(AppFlags, stores...)
 	if err != nil {
 		log.Error("路由初始化失败", "error", err.Error())
 		os.Exit(1)

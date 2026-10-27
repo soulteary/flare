@@ -1,0 +1,24 @@
+{
+  "passed": [
+    "0.6.7 runs before upgrade on unchanged YAML",
+    "automatic old-login migration, anonymous filtering and container-recreate session persistence",
+    "upgrade preserves all three YAML files byte-for-byte",
+    "individual read-only YAML binds plus separate persistent security volume recreate",
+    "read-only deployment Secret file input",
+    "trusted-mode/private conflict fails closed",
+    "read-only persisted security directory refuses startup",
+    "real Linux tmpfs ENOSPC refuses migration without exposing content",
+    "HTTPS external port, canonical/alias Host, Secure HttpOnly cookie, CSRF and logout",
+    "untrusted direct forwarding headers cannot override canonical authority or downgrade HTTPS",
+    "trusted-peer normalized forwarding, rewritten internal Host, malformed chain and HTTPS downgrade rejection",
+    "isolated 0.6.7 rollback from original YAML with explicit whole-site PRIVATE protection"
+  ],
+  "daemon": "5.8.3",
+  "candidate_sha256": "74e00c4c36014756d14b3751865233422b50cd8345e661b525a37bcc639923d4",
+  "execution_date": "2026-10-27",
+  "runtime": "macOS arm64 client / Podman 5.8.3 Linux arm64 daemon",
+  "candidate_image": "flare-phase1-official-final-acceptance:local",
+  "candidate_image_id": "sha256:9d7acca30e84eae984b1f36a7c59164a379e87aa4344cbb014e6d1d401d7c79b",
+  "use_image_binary": true,
+  "scope": "Unchanged official arm64 Dockerfile, UPX3.95 compressed executable; Docker-compatible API, real0.6.7 image, PythonHTTPSproxy"
+}

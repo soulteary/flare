@@ -17,7 +17,9 @@ require (
 	github.com/tdewolff/minify/v2 v2.24.23
 	github.com/valyala/fasthttp v1.76.0
 	go.yaml.in/yaml/v3 v3.0.5
+	golang.org/x/crypto v0.58.0
 	golang.org/x/net v0.61.0
+	golang.org/x/sys v0.49.0
 	gopkg.in/ini.v1 v1.67.3
 )
 
@@ -35,7 +37,5 @@ require (
 	github.com/tdewolff/parse/v2 v2.8.20 // indirect
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	golang.org/x/crypto v0.58.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 )

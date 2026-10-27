@@ -12,18 +12,22 @@ const (
 
 // Entry is a source bookmark and its directory path.
 type Entry struct {
-	Bookmark model.Bookmark
-	Path     []string
+	Bookmark           model.Bookmark
+	CategoryPrivate    bool
+	CategoryExtensions string
+	Path               []string
 }
 
 // Options selects target mapping and duplicate behavior.
 type Options struct {
-	Strategy   string `json:"strategy"`
-	Folder     string `json:"folder"`
-	Flatten    bool   `json:"flatten"`
-	StripRoot  bool   `json:"stripRoot"`
-	AllowOther bool   `json:"allowOther"`
-	Apps       bool   `json:"-"`
+	PrivateDefault bool   `json:"privateDefault"`
+	Public         bool   `json:"public"`
+	Strategy       string `json:"strategy"`
+	Folder         string `json:"folder"`
+	Flatten        bool   `json:"flatten"`
+	StripRoot      bool   `json:"stripRoot"`
+	AllowOther     bool   `json:"allowOther"`
+	Apps           bool   `json:"-"`
 }
 
 // Row describes the proposed outcome for one source bookmark.
@@ -39,6 +43,7 @@ type Row struct {
 // Plan contains the preview and its resulting collection.
 type Plan struct {
 	Rows       []Row           `json:"rows"`
+	Public     int             `json:"public"`
 	Added      int             `json:"added"`
 	Updated    int             `json:"updated"`
 	Skipped    int             `json:"skipped"`

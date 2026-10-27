@@ -1,0 +1,1514 @@
+{
+  "started_utc": "2026-10-27T02:28:18Z",
+  "fixture": {
+    "resources": 20000,
+    "private": 10000,
+    "categories": 100,
+    "sha256": "9537f2d51a70b2944ccbe6945eabdef698d6900326e2ee4d0c444d14c310214b"
+  },
+  "binary_sha256": "b0ffcb369d3f5f149baa46ced5d4ee37c9a1476a89c4ed7b4a61e02d12b072cf",
+  "harness_sha256": "fbdb4636559c3f0762741281712189b09571602716e0e83dfed0ae6b93d4e6f8",
+  "acceptance_helper_sha256": "b763de7217b534af8cc1c975d9576d305c46a0d534c4daba4ac5c678039a8739",
+  "instrumented_wrapper": false,
+  "profile_directory": null,
+  "os_before": {
+    "rss_kib": 124096,
+    "cpu_percent": 35.8,
+    "cpu_seconds": 0.3
+  },
+  "pressure_started_utc": "2026-10-27T02:28:19Z",
+  "read_schedule": {
+    "offered": 540,
+    "admitted": 540,
+    "drops": [],
+    "operation_errors": [],
+    "actual_elapsed_seconds": 180.00305683293846,
+    "offered_rate": 3.0,
+    "inflight_limit": 4,
+    "waiting_queue_capacity": 0
+  },
+  "probe_schedule": {
+    "offered": 90,
+    "admitted": 90,
+    "drops": [],
+    "operation_errors": [],
+    "actual_elapsed_seconds": 180.00412112497725,
+    "offered_rate": 0.5,
+    "inflight_limit": 1,
+    "waiting_queue_capacity": 0
+  },
+  "pressure_completed_utc": "2026-10-27T02:31:19Z",
+  "duration_seconds": 180,
+  "administrator_home": {
+    "requests": 270,
+    "statuses": {
+      "200": 270
+    },
+    "p50_ms": 138.98545794654638,
+    "p95_ms": 243.4402919607237
+  },
+  "administrator_search": {
+    "requests": 270,
+    "statuses": {
+      "200": 270
+    },
+    "p50_ms": 119.53170807100832,
+    "p95_ms": 259.79312509298325
+  },
+  "probes": [
+    {
+      "login_status": 303,
+      "login_ms": 94.81762500945479,
+      "duration_ms": 485.13333301525563,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 116.07608303893358,
+      "duration_ms": 581.8906659260392,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 81.2555830925703,
+      "duration_ms": 557.0554590085521,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 70.11049997527152,
+      "duration_ms": 540.5690830666572,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 106.60433291923255,
+      "duration_ms": 547.2647920250893,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 98.73987489845604,
+      "duration_ms": 596.0328750079498,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 84.61062493734062,
+      "duration_ms": 550.5186249502003,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 93.19179190788418,
+      "duration_ms": 483.3821660140529,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 110.50775006879121,
+      "duration_ms": 565.8192089758813,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 67.76587502099574,
+      "duration_ms": 509.9574999185279,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 116.34016700554639,
+      "duration_ms": 560.7716670492664,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 85.72225004900247,
+      "duration_ms": 579.3645000085235,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 134.89266601391137,
+      "duration_ms": 1183.2528329687193,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 68.0893330136314,
+      "duration_ms": 1300.531291984953,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 121.54208298306912,
+      "duration_ms": 560.4680000105873,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 100.52879201248288,
+      "duration_ms": 495.01170904841274,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 107.48929192777723,
+      "duration_ms": 555.3466670680791,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 97.87879104260355,
+      "duration_ms": 496.6775410575792,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 114.97795803006738,
+      "duration_ms": 549.9807499581948,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 101.35937505401671,
+      "duration_ms": 495.44412491377443,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 75.34512504935265,
+      "duration_ms": 544.0637079300359,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 110.24479090701789,
+      "duration_ms": 487.83870798069984,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 87.31895801611245,
+      "duration_ms": 490.7778329215944,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 94.1092079738155,
+      "duration_ms": 493.2986249914393,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 114.92154200095683,
+      "duration_ms": 550.0347920460626,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 76.83295803144574,
+      "duration_ms": 486.7398750502616,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 82.21333404071629,
+      "duration_ms": 538.677665987052,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 88.08837505057454,
+      "duration_ms": 492.58574994746596,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 114.63704099878669,
+      "duration_ms": 1490.464958944358,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 100.0880830688402,
+      "duration_ms": 538.1499170325696,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 114.80225005652755,
+      "duration_ms": 537.0707920519635,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 103.0962080694735,
+      "duration_ms": 543.9119170187041,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 92.26587507873774,
+      "duration_ms": 502.6514999335632,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 102.11216600146145,
+      "duration_ms": 559.2747079208493,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 113.0509169306606,
+      "duration_ms": 566.4978750282899,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 112.5374169787392,
+      "duration_ms": 550.9687920566648,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 103.06679201312363,
+      "duration_ms": 552.4733749916777,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 99.40737497527152,
+      "duration_ms": 495.62183301895857,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 119.63049997575581,
+      "duration_ms": 549.4258330436423,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 68.6693339375779,
+      "duration_ms": 495.15679106116295,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 82.35141704790294,
+      "duration_ms": 557.2397080250084,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 96.391208935529,
+      "duration_ms": 498.99454100523144,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 113.84812497999519,
+      "duration_ms": 556.2239999417216,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 170.08945799898356,
+      "duration_ms": 797.9911250295117,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 97.26758394390345,
+      "duration_ms": 505.01662492752075,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 114.75674994289875,
+      "duration_ms": 560.2047920692712,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 109.48158300016075,
+      "duration_ms": 518.3740000938997,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 104.94666697923094,
+      "duration_ms": 538.3267920697108,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 117.97662498429418,
+      "duration_ms": 540.1615839218721,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 75.2107499865815,
+      "duration_ms": 501.83033396024257,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 90.97891696728766,
+      "duration_ms": 487.8706249874085,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 74.65925009455532,
+      "duration_ms": 509.3735409900546,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 97.33174997381866,
+      "duration_ms": 498.531625024043,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 92.81824994832277,
+      "duration_ms": 491.6787500260398,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 113.6932079680264,
+      "duration_ms": 570.9601669805124,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 103.0331669608131,
+      "duration_ms": 553.1952090095729,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 64.08599996939301,
+      "duration_ms": 497.6764169987291,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 100.42304103262722,
+      "duration_ms": 1481.888125068508,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 74.6320829493925,
+      "duration_ms": 545.7595409825444,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 99.04137498233467,
+      "duration_ms": 492.7646660944447,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 108.06937504094094,
+      "duration_ms": 554.3753339443356,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 73.4277090523392,
+      "duration_ms": 477.31487499549985,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 94.31404201313853,
+      "duration_ms": 509.65904199983925,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 76.79650001227856,
+      "duration_ms": 547.6555420318618,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 111.64954106789082,
+      "duration_ms": 559.1057499404997,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 108.1916670082137,
+      "duration_ms": 545.454541919753,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 113.54454199317843,
+      "duration_ms": 547.9100840166211,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 67.1478749718517,
+      "duration_ms": 497.0830410020426,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 94.03587505221367,
+      "duration_ms": 538.5437499498948,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 91.46208397578448,
+      "duration_ms": 497.9162919335067,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 110.26733403559774,
+      "duration_ms": 545.9896250395104,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 72.43320799898356,
+      "duration_ms": 536.3288749940693,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 117.7569170249626,
+      "duration_ms": 557.232917053625,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 93.04941701702774,
+      "duration_ms": 489.56345790065825,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 104.21150003094226,
+      "duration_ms": 543.2731250766665,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 105.98529106937349,
+      "duration_ms": 557.4213330401108,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 85.5946660740301,
+      "duration_ms": 553.3068330259994,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 100.07225000299513,
+      "duration_ms": 545.2422079397365,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 116.9564169831574,
+      "duration_ms": 548.4083340270445,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 76.21883403044194,
+      "duration_ms": 491.17375002242625,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 114.60970900952816,
+      "duration_ms": 567.8293750388548,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 100.16966599505395,
+      "duration_ms": 544.9617080157623,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 59.973958996124566,
+      "duration_ms": 492.7267499733716,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 64.90362505428493,
+      "duration_ms": 533.4917500149459,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 112.63816698919982,
+      "duration_ms": 546.6697089141235,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 59.43879100959748,
+      "duration_ms": 484.73174998071045,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 77.05545797944069,
+      "duration_ms": 567.7557500312105,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 70.09437493979931,
+      "duration_ms": 484.7495830617845,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 119.91233401931822,
+      "duration_ms": 1500.3107090014964,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    },
+    {
+      "login_status": 303,
+      "login_ms": 94.07033398747444,
+      "duration_ms": 486.95712501648813,
+      "private_status": 200,
+      "csrf_status": 200,
+      "logout_status": 303,
+      "replay_status": 200,
+      "privacy_assertions_pass": true
+    }
+  ],
+  "response_payload_bytes": {
+    "home": 729236520,
+    "search": 10188450
+  },
+  "privacy_violations": [],
+  "os_after": {
+    "rss_kib": 119600,
+    "cpu_percent": 10.4,
+    "cpu_seconds": 24.04
+  },
+  "normalized": {
+    "completed_reads": 540,
+    "cpu_seconds_os": 23.74,
+    "cpu_seconds_per_completed_read_os": 0.04396296296296296,
+    "normalization_scope": "administrator reads plus identically scheduled login/revoke/replay probes; includes scheduler-session setup"
+  },
+  "resource_samples": [
+    {
+      "rss_kib": 143936,
+      "cpu_percent": 9.7,
+      "cpu_seconds": 0.56,
+      "t": 2.0151284580351785
+    },
+    {
+      "rss_kib": 143936,
+      "cpu_percent": 7.7,
+      "cpu_seconds": 0.88,
+      "t": 4.0292665410088375
+    },
+    {
+      "rss_kib": 144080,
+      "cpu_percent": 8.2,
+      "cpu_seconds": 1.18,
+      "t": 6.045747875003144
+    },
+    {
+      "rss_kib": 120992,
+      "cpu_percent": 9.1,
+      "cpu_seconds": 1.44,
+      "t": 8.062978749978356
+    },
+    {
+      "rss_kib": 104720,
+      "cpu_percent": 7.5,
+      "cpu_seconds": 1.71,
+      "t": 10.076557249994949
+    },
+    {
+      "rss_kib": 119856,
+      "cpu_percent": 10.2,
+      "cpu_seconds": 2.0,
+      "t": 12.091430707951076
+    },
+    {
+      "rss_kib": 118608,
+      "cpu_percent": 4.6,
+      "cpu_seconds": 2.24,
+      "t": 14.104920540936291
+    },
+    {
+      "rss_kib": 122144,
+      "cpu_percent": 6.7,
+      "cpu_seconds": 2.51,
+      "t": 16.11996999999974
+    },
+    {
+      "rss_kib": 122816,
+      "cpu_percent": 4.3,
+      "cpu_seconds": 2.82,
+      "t": 18.1308652079897
+    },
+    {
+      "rss_kib": 123392,
+      "cpu_percent": 6.6,
+      "cpu_seconds": 3.09,
+      "t": 20.143929540994577
+    },
+    {
+      "rss_kib": 123360,
+      "cpu_percent": 12.1,
+      "cpu_seconds": 3.36,
+      "t": 22.155295499949716
+    },
+    {
+      "rss_kib": 115440,
+      "cpu_percent": 4.5,
+      "cpu_seconds": 3.58,
+      "t": 24.167930249939673
+    },
+    {
+      "rss_kib": 119936,
+      "cpu_percent": 14.9,
+      "cpu_seconds": 3.87,
+      "t": 26.176504750037566
+    },
+    {
+      "rss_kib": 119952,
+      "cpu_percent": 6.4,
+      "cpu_seconds": 4.17,
+      "t": 28.190471166046336
+    },
+    {
+      "rss_kib": 124512,
+      "cpu_percent": 5.9,
+      "cpu_seconds": 4.42,
+      "t": 30.201955416006967
+    },
+    {
+      "rss_kib": 124944,
+      "cpu_percent": 6.3,
+      "cpu_seconds": 4.71,
+      "t": 32.2129984999774
+    },
+    {
+      "rss_kib": 124864,
+      "cpu_percent": 22.2,
+      "cpu_seconds": 4.97,
+      "t": 34.22558658302296
+    },
+    {
+      "rss_kib": 125328,
+      "cpu_percent": 30.1,
+      "cpu_seconds": 5.24,
+      "t": 36.24091249995399
+    },
+    {
+      "rss_kib": 123088,
+      "cpu_percent": 23.6,
+      "cpu_seconds": 5.47,
+      "t": 38.25507600000128
+    },
+    {
+      "rss_kib": 124400,
+      "cpu_percent": 23.0,
+      "cpu_seconds": 5.73,
+      "t": 40.265596083016135
+    },
+    {
+      "rss_kib": 121136,
+      "cpu_percent": 24.4,
+      "cpu_seconds": 6.03,
+      "t": 42.28324487502687
+    },
+    {
+      "rss_kib": 121168,
+      "cpu_percent": 16.5,
+      "cpu_seconds": 6.21,
+      "t": 44.29182199994102
+    },
+    {
+      "rss_kib": 121344,
+      "cpu_percent": 21.1,
+      "cpu_seconds": 6.43,
+      "t": 46.30135883297771
+    },
+    {
+      "rss_kib": 122192,
+      "cpu_percent": 24.2,
+      "cpu_seconds": 6.72,
+      "t": 48.311906790942885
+    },
+    {
+      "rss_kib": 113920,
+      "cpu_percent": 15.1,
+      "cpu_seconds": 6.95,
+      "t": 50.31905149994418
+    },
+    {
+      "rss_kib": 113984,
+      "cpu_percent": 14.7,
+      "cpu_seconds": 7.21,
+      "t": 52.32757299998775
+    },
+    {
+      "rss_kib": 114464,
+      "cpu_percent": 18.8,
+      "cpu_seconds": 7.43,
+      "t": 54.339118125033565
+    },
+    {
+      "rss_kib": 117248,
+      "cpu_percent": 31.9,
+      "cpu_seconds": 7.72,
+      "t": 56.35289924999233
+    },
+    {
+      "rss_kib": 117232,
+      "cpu_percent": 23.5,
+      "cpu_seconds": 7.95,
+      "t": 58.361255915951915
+    },
+    {
+      "rss_kib": 119888,
+      "cpu_percent": 21.3,
+      "cpu_seconds": 8.24,
+      "t": 60.37476383300964
+    },
+    {
+      "rss_kib": 119888,
+      "cpu_percent": 17.3,
+      "cpu_seconds": 8.49,
+      "t": 62.388340041041374
+    },
+    {
+      "rss_kib": 119888,
+      "cpu_percent": 16.8,
+      "cpu_seconds": 8.75,
+      "t": 64.4038098329911
+    },
+    {
+      "rss_kib": 120240,
+      "cpu_percent": 18.9,
+      "cpu_seconds": 9.03,
+      "t": 66.41294841596391
+    },
+    {
+      "rss_kib": 120384,
+      "cpu_percent": 22.4,
+      "cpu_seconds": 9.31,
+      "t": 68.42451612500008
+    },
+    {
+      "rss_kib": 120416,
+      "cpu_percent": 17.0,
+      "cpu_seconds": 9.58,
+      "t": 70.4365834579803
+    },
+    {
+      "rss_kib": 120416,
+      "cpu_percent": 19.4,
+      "cpu_seconds": 9.85,
+      "t": 72.45443879102822
+    },
+    {
+      "rss_kib": 120416,
+      "cpu_percent": 16.6,
+      "cpu_seconds": 10.11,
+      "t": 74.46904949995223
+    },
+    {
+      "rss_kib": 120384,
+      "cpu_percent": 21.8,
+      "cpu_seconds": 10.4,
+      "t": 76.47847762494348
+    },
+    {
+      "rss_kib": 115440,
+      "cpu_percent": 15.1,
+      "cpu_seconds": 10.65,
+      "t": 78.48608874995261
+    },
+    {
+      "rss_kib": 116064,
+      "cpu_percent": 20.3,
+      "cpu_seconds": 10.93,
+      "t": 80.49420279101469
+    },
+    {
+      "rss_kib": 116640,
+      "cpu_percent": 13.8,
+      "cpu_seconds": 11.2,
+      "t": 82.5099329999648
+    },
+    {
+      "rss_kib": 121184,
+      "cpu_percent": 18.1,
+      "cpu_seconds": 11.52,
+      "t": 84.52762041601818
+    },
+    {
+      "rss_kib": 116416,
+      "cpu_percent": 11.4,
+      "cpu_seconds": 11.72,
+      "t": 86.53675274993293
+    },
+    {
+      "rss_kib": 117840,
+      "cpu_percent": 12.9,
+      "cpu_seconds": 11.99,
+      "t": 88.55109395796899
+    },
+    {
+      "rss_kib": 113344,
+      "cpu_percent": 15.3,
+      "cpu_seconds": 12.28,
+      "t": 90.56361637497321
+    },
+    {
+      "rss_kib": 116128,
+      "cpu_percent": 17.2,
+      "cpu_seconds": 12.56,
+      "t": 92.57074008299969
+    },
+    {
+      "rss_kib": 115616,
+      "cpu_percent": 16.1,
+      "cpu_seconds": 12.81,
+      "t": 94.5781924999319
+    },
+    {
+      "rss_kib": 117184,
+      "cpu_percent": 16.4,
+      "cpu_seconds": 13.11,
+      "t": 96.58474895800464
+    },
+    {
+      "rss_kib": 116688,
+      "cpu_percent": 13.1,
+      "cpu_seconds": 13.38,
+      "t": 98.59523204097059
+    },
+    {
+      "rss_kib": 116432,
+      "cpu_percent": 12.0,
+      "cpu_seconds": 13.61,
+      "t": 100.60925179102924
+    },
+    {
+      "rss_kib": 117104,
+      "cpu_percent": 12.1,
+      "cpu_seconds": 13.85,
+      "t": 102.6186224159319
+    },
+    {
+      "rss_kib": 118336,
+      "cpu_percent": 13.1,
+      "cpu_seconds": 14.08,
+      "t": 104.63489529094659
+    },
+    {
+      "rss_kib": 115152,
+      "cpu_percent": 10.1,
+      "cpu_seconds": 14.31,
+      "t": 106.64546004100703
+    },
+    {
+      "rss_kib": 117168,
+      "cpu_percent": 15.3,
+      "cpu_seconds": 14.62,
+      "t": 108.6550159159815
+    },
+    {
+      "rss_kib": 120496,
+      "cpu_percent": 13.7,
+      "cpu_seconds": 14.86,
+      "t": 110.66519800003152
+    },
+    {
+      "rss_kib": 120672,
+      "cpu_percent": 15.0,
+      "cpu_seconds": 15.14,
+      "t": 112.68207329104189
+    },
+    {
+      "rss_kib": 120416,
+      "cpu_percent": 4.3,
+      "cpu_seconds": 15.37,
+      "t": 114.69310033298098
+    },
+    {
+      "rss_kib": 121824,
+      "cpu_percent": 15.8,
+      "cpu_seconds": 15.72,
+      "t": 116.71120849996805
+    },
+    {
+      "rss_kib": 122128,
+      "cpu_percent": 9.4,
+      "cpu_seconds": 15.97,
+      "t": 118.71755995799322
+    },
+    {
+      "rss_kib": 122208,
+      "cpu_percent": 13.6,
+      "cpu_seconds": 16.24,
+      "t": 120.73006424994674
+    },
+    {
+      "rss_kib": 120912,
+      "cpu_percent": 11.0,
+      "cpu_seconds": 16.49,
+      "t": 122.74795874999836
+    },
+    {
+      "rss_kib": 115728,
+      "cpu_percent": 13.8,
+      "cpu_seconds": 16.76,
+      "t": 124.75874158297665
+    },
+    {
+      "rss_kib": 117456,
+      "cpu_percent": 11.9,
+      "cpu_seconds": 17.0,
+      "t": 126.76763808296528
+    },
+    {
+      "rss_kib": 117936,
+      "cpu_percent": 12.3,
+      "cpu_seconds": 17.27,
+      "t": 128.77574829093646
+    },
+    {
+      "rss_kib": 117712,
+      "cpu_percent": 12.1,
+      "cpu_seconds": 17.52,
+      "t": 130.7839436660288
+    },
+    {
+      "rss_kib": 118576,
+      "cpu_percent": 12.9,
+      "cpu_seconds": 17.81,
+      "t": 132.7939876250457
+    },
+    {
+      "rss_kib": 115968,
+      "cpu_percent": 10.5,
+      "cpu_seconds": 18.07,
+      "t": 134.80809249996673
+    },
+    {
+      "rss_kib": 120992,
+      "cpu_percent": 7.7,
+      "cpu_seconds": 18.33,
+      "t": 136.824501749943
+    },
+    {
+      "rss_kib": 121248,
+      "cpu_percent": 9.4,
+      "cpu_seconds": 18.59,
+      "t": 138.83636579103768
+    },
+    {
+      "rss_kib": 121328,
+      "cpu_percent": 12.2,
+      "cpu_seconds": 18.9,
+      "t": 140.84444562497083
+    },
+    {
+      "rss_kib": 120304,
+      "cpu_percent": 8.4,
+      "cpu_seconds": 19.16,
+      "t": 142.85784366598818
+    },
+    {
+      "rss_kib": 120704,
+      "cpu_percent": 14.8,
+      "cpu_seconds": 19.45,
+      "t": 144.86893008300103
+    },
+    {
+      "rss_kib": 121200,
+      "cpu_percent": 7.3,
+      "cpu_seconds": 19.67,
+      "t": 146.87571504095104
+    },
+    {
+      "rss_kib": 121200,
+      "cpu_percent": 14.5,
+      "cpu_seconds": 19.98,
+      "t": 148.8886910410365
+    },
+    {
+      "rss_kib": 121152,
+      "cpu_percent": 16.4,
+      "cpu_seconds": 20.25,
+      "t": 150.89749254100025
+    },
+    {
+      "rss_kib": 121184,
+      "cpu_percent": 13.2,
+      "cpu_seconds": 20.54,
+      "t": 152.90661120798904
+    },
+    {
+      "rss_kib": 121968,
+      "cpu_percent": 15.5,
+      "cpu_seconds": 20.79,
+      "t": 154.92330812499858
+    },
+    {
+      "rss_kib": 122112,
+      "cpu_percent": 16.3,
+      "cpu_seconds": 21.06,
+      "t": 156.93491212499794
+    },
+    {
+      "rss_kib": 121024,
+      "cpu_percent": 15.6,
+      "cpu_seconds": 21.31,
+      "t": 158.9471353329718
+    },
+    {
+      "rss_kib": 119744,
+      "cpu_percent": 15.9,
+      "cpu_seconds": 21.61,
+      "t": 160.9656496249372
+    },
+    {
+      "rss_kib": 118720,
+      "cpu_percent": 10.4,
+      "cpu_seconds": 21.87,
+      "t": 162.9756055829348
+    },
+    {
+      "rss_kib": 119168,
+      "cpu_percent": 16.7,
+      "cpu_seconds": 22.14,
+      "t": 164.98947829101235
+    },
+    {
+      "rss_kib": 117776,
+      "cpu_percent": 12.3,
+      "cpu_seconds": 22.37,
+      "t": 167.00187008304056
+    },
+    {
+      "rss_kib": 118800,
+      "cpu_percent": 10.3,
+      "cpu_seconds": 22.65,
+      "t": 169.01476658298634
+    },
+    {
+      "rss_kib": 118832,
+      "cpu_percent": 11.7,
+      "cpu_seconds": 22.89,
+      "t": 171.0273406660417
+    },
+    {
+      "rss_kib": 118832,
+      "cpu_percent": 13.7,
+      "cpu_seconds": 23.18,
+      "t": 173.0459870409686
+    },
+    {
+      "rss_kib": 114928,
+      "cpu_percent": 9.9,
+      "cpu_seconds": 23.41,
+      "t": 175.05725433293264
+    },
+    {
+      "rss_kib": 115648,
+      "cpu_percent": 4.8,
+      "cpu_seconds": 23.65,
+      "t": 177.06790491600987
+    },
+    {
+      "rss_kib": 119600,
+      "cpu_percent": 8.9,
+      "cpu_seconds": 23.93,
+      "t": 179.08103979099542
+    }
+  ],
+  "kernel_children_peak_rss_kib": 144096.0,
+  "completed_utc": "2026-10-27T02:31:19Z"
+}

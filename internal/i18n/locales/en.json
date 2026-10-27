@@ -452,5 +452,16 @@
   "transfer.invalid_collection": "Invalid collection.",
   "transfer.unknown_error": "Operation failed. Check the file and options, or consult the server logs.",
   "editor.write_source_rejected": "The save request was rejected by origin protection. Retry from this Flare page. If using a reverse proxy, preserve the original Host header including the public port. Disabling login does not disable origin protection.",
-  "editor.unexpected_save_response": "Unexpected save response (HTTP {status}). Check the server or reverse proxy configuration."
+  "editor.unexpected_save_response": "Unexpected save response (HTTP {status}). Check the server or reverse proxy configuration.",
+  "privacy.private": "Private",
+  "privacy.inherited": "Inherited private category",
+  "privacy.admin_only": "Administrator only",
+  "privacy.public_hint": "Anonymous visitors can read after saving",
+  "privacy.save_confirm": "Save visibility changes? Public content is readable anonymously.",
+  "privacy.import_default": "Imports are private by default when login is enabled.",
+  "privacy.import_public": "Public import (confirm anonymous visibility)",
+  "privacy.export_confirm": "Export may contain private data. HTML loses permissions.",
+  "privacy.new_public_count": "New anonymously visible entries: {0}",
+  "privacy.trusted_import": "Trusted mode: anonymous visitors can read and edit after saving.",
+  "privacy.verify_retry": "Verify password in another tab, then submit again (no automatic save)"
 }

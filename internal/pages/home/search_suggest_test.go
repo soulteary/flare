@@ -16,7 +16,6 @@ func TestSuggestionsMatchExistingSearchAndVisibleModules(t *testing.T) {
 	bookmarks := model.Bookmarks{Categories: []model.Category{{ID: "known"}}, Items: []model.Bookmark{
 		{Name: "Needle", URL: "https://book.example"},
 		{Name: "Only description", URL: "https://desc.example", Desc: "Needle"},
-		{Name: "Needle orphan", URL: "https://orphan.example", Category: "missing"},
 		{Name: "Needle unsafe", URL: "javascript:alert(1)"},
 	}}
 	t.Chdir(t.TempDir())
@@ -45,7 +44,7 @@ func TestSuggestionsBoundedAndPreserveLinkSemantics(t *testing.T) {
 	result, err := collectSearchSuggestions(opts, "home.example", &info)
 	require.NoError(t, err)
 	require.Len(t, result, 8)
-	require.True(t, strings.HasPrefix(result[0].URL, "/redir/url?go="))
+	require.True(t, strings.HasPrefix(result[0].URL, "/redir/url?id="))
 }
 
 func TestSuggestionURLs(t *testing.T) {

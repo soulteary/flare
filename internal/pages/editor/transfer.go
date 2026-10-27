@@ -20,10 +20,12 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/bookmarks"
 	"github.com/soulteary/flare/internal/i18n"
-	"go.yaml.in/yaml/v3"
+	"github.com/soulteary/flare/internal/security"
+	"github.com/soulteary/flare/internal/yamlutil"
 )
 
 const transferPath = "/editor/transfer"
@@ -44,7 +46,7 @@ type transferTicket struct {
 
 func registerTransfers(e *fiber.App) {
 	e.Get(transferPath, auth.AuthRequired, func(c fiber.Ctx) error {
-		return c.Status(http.StatusOK).Render("transfer.html", fiber.Map{"Locale": editorLocale(), "HTMLLang": i18n.HTMLLang(editorLocale())})
+		return c.Status(http.StatusOK).Render("transfer.html", fiber.Map{"Locale": editorLocale(), "HTMLLang": i18n.HTMLLang(editorLocale()), "CSRFToken": auth.CSRFToken(c), "TrustedMode": define.AppFlags.DisableLoginMode})
 	})
 	e.Post(transferPath+"/preview", auth.AuthRequired, transferRequest, previewTransfer)
 	e.Post(transferPath+"/commit", auth.AuthRequired, transferRequest, commitTransfer)
@@ -54,6 +56,9 @@ func registerTransfers(e *fiber.App) {
 
 // A custom header cannot be sent by cross-origin forms. No CORS access is granted.
 func transferRequest(c fiber.Ctx) error {
+	if auth.PersistentSecurity(c) && !auth.ValidateCSRF(c) {
+		return c.SendStatus(http.StatusForbidden)
+	}
 	if c.Get("X-Flare-Transfer") != "1" || c.Get("Sec-Fetch-Site") == "cross-site" {
 		return c.Status(http.StatusForbidden).SendString(transferText("请从 Flare 管理页面操作"))
 	}
@@ -144,6 +149,8 @@ func previewTransfer(c fiber.Ctx) error {
 	format := r.FormValue("format")
 	collection := r.FormValue("collection")
 	options := bookmarks.Options{Strategy: r.FormValue("strategy"), Folder: r.FormValue("folder"), Flatten: r.FormValue("flatten") == "1", StripRoot: r.FormValue("stripRoot") == "1", AllowOther: r.FormValue("allowOther") == "1", Apps: collection == "apps"}
+	options.Public = r.FormValue("public") == "1"
+	options.PrivateDefault = auth.PersistentSecurity(c) && !define.AppFlags.DisableLoginMode && !options.Public
 	entries, err := bookmarks.Parse(raw, format)
 	if err != nil {
 		return transferError(c, http.StatusBadRequest, err)
@@ -152,11 +159,18 @@ func previewTransfer(c fiber.Ctx) error {
 	if err != nil {
 		return transferError(c, http.StatusBadRequest, err)
 	}
+	if define.AppFlags.DisableLoginMode {
+		for _, e := range entries {
+			if e.Bookmark.Private {
+				return transferError(c, 409, fmt.Errorf("私有内容需要先开启登录"))
+			}
+		}
+	}
 	plan, err := bookmarks.Build(current, entries, options)
 	if err != nil {
 		return transferError(c, http.StatusBadRequest, err)
 	}
-	ticket := transferTicket{Raw: raw, Format: format, Collection: collection, Options: options, Version: version, User: auth.GetUserName(c), Expires: time.Now().Add(15 * time.Minute).Unix()}
+	ticket := transferTicket{Raw: raw, Format: format, Collection: collection, Options: options, Version: version, User: transferBinding(c), Expires: time.Now().Add(15 * time.Minute).Unix()}
 	token, err := signTicket(ticket)
 	if err != nil {
 		return transferError(c, http.StatusInternalServerError, err)
@@ -174,7 +188,7 @@ func commitTransfer(c fiber.Ctx) error {
 	if err := json.NewDecoder(bodyReader).Decode(&body); err != nil {
 		return transferError(c, http.StatusBadRequest, err)
 	}
-	ticket, err := readTicket(body.Token, auth.GetUserName(c))
+	ticket, err := readTicket(body.Token, transferBinding(c))
 	if err != nil {
 		return transferError(c, http.StatusBadRequest, err)
 	}
@@ -193,9 +207,41 @@ func commitTransfer(c fiber.Ctx) error {
 	if err != nil {
 		return transferError(c, http.StatusBadRequest, err)
 	}
+	if define.AppFlags.DisableLoginMode {
+		for _, b := range plan.Result.Items {
+			if b.Private {
+				return transferError(c, 409, fmt.Errorf("私有内容需要先开启登录"))
+			}
+		}
+	}
+	if auth.PersistentSecurity(c) && !define.AppFlags.DisableLoginMode && ticket.Options.Public {
+		if !auth.RecentAuthentication(c) {
+			return auth.RequireRecentAuthentication(c)
+		}
+	}
 	if plan.Added+plan.Updated > 0 {
-		if err = data.CommitBookmarkImport(ticket.Collection, ticket.Version, plan.Result); err != nil {
+		if err = auth.AuthorizedWrite(c, func() error {
+			return data.CommitBookmarkImportChecked(ticket.Collection, ticket.Version, plan.Result, func() error {
+				if auth.PersistentSecurity(c) && !define.AppFlags.DisableLoginMode && ticket.Options.Public && !auth.RecentAuthentication(c) {
+					return fiber.NewError(403, "REAUTH_REQUIRED")
+				}
+				if !auth.Revalidate(c) {
+					return fmt.Errorf("session revoked")
+				}
+				return nil
+			})
+		}); err != nil {
 			status := http.StatusInternalServerError
+			var httpErr *fiber.Error
+			if errors.As(err, &httpErr) {
+				return err
+			}
+			if errors.Is(err, security.ErrInvalidSession) {
+				status = http.StatusUnauthorized
+			}
+			if errors.Is(err, data.ErrBookmarkReadOnly) || errors.Is(err, os.ErrPermission) || errors.Is(err, yamlutil.ErrBookmarkAliasesReadOnly) {
+				status = http.StatusServiceUnavailable
+			}
 			if errors.Is(err, data.ErrBookmarkConflict) {
 				status = http.StatusConflict
 			}
@@ -208,6 +254,12 @@ func commitTransfer(c fiber.Ctx) error {
 }
 
 func transferDownload(c fiber.Ctx, name, mime string, raw []byte) error {
+	if !auth.Revalidate(c) {
+		return fiber.NewError(401, "AUTH_REQUIRED")
+	}
+	if auth.PersistentSecurity(c) && !define.AppFlags.DisableLoginMode && !auth.RecentAuthentication(c) {
+		return auth.RequireRecentAuthentication(c)
+	}
 	c.Set("Content-Disposition", `attachment; filename="`+name+`"`)
 	c.Set("Cache-Control", "no-store")
 	c.Set("X-Content-Type-Options", "nosniff")
@@ -216,6 +268,14 @@ func transferDownload(c fiber.Ctx, name, mime string, raw []byte) error {
 }
 
 func exportTransfer(c fiber.Ctx) error {
+	if auth.PersistentSecurity(c) && !define.AppFlags.DisableLoginMode {
+		if !auth.RecentAuthentication(c) {
+			return auth.RequireRecentAuthentication(c)
+		}
+		if c.Query("confirm") != "1" {
+			return transferError(c, 409, fmt.Errorf("请确认导出私有内容；HTML 重新导入不会保留权限"))
+		}
+	}
 	collection := c.Query("collection")
 	current, _, err := data.BookmarkSnapshot(collection)
 	if err != nil {
@@ -223,7 +283,7 @@ func exportTransfer(c fiber.Ctx) error {
 	}
 	switch c.Query("format") {
 	case "yaml":
-		raw, err := yaml.Marshal(current)
+		raw, err := data.RawBookmarkSnapshot(collection)
 		if err != nil {
 			return transferError(c, http.StatusInternalServerError, err)
 		}
@@ -240,6 +300,14 @@ func exportTransfer(c fiber.Ctx) error {
 }
 
 func backupTransfer(c fiber.Ctx) error {
+	if auth.PersistentSecurity(c) && !define.AppFlags.DisableLoginMode {
+		if !auth.RecentAuthentication(c) {
+			return auth.RequireRecentAuthentication(c)
+		}
+		if c.Query("confirm") != "1" {
+			return transferError(c, 409, fmt.Errorf("请确认下载可能含私有内容的备份"))
+		}
+	}
 	collection := c.Query("collection")
 	raw, when, err := data.LatestBookmarkBackup(collection)
 	if err != nil {
@@ -316,4 +384,11 @@ func localizeTransferPlanWithLocale(plan *bookmarks.Plan, locale string) {
 	for index := range plan.Rows {
 		plan.Rows[index].Reason = transferTextWithLocale(locale, plan.Rows[index].Reason)
 	}
+}
+
+func transferBinding(c fiber.Ctx) string {
+	if auth.PersistentSecurity(c) {
+		return auth.SessionBinding(c)
+	}
+	return auth.GetUserName(c)
 }

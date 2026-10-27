@@ -43,7 +43,7 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
    const [settings]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/settings/appearance')),page.locator('input.btn-submit').click()]);
    assert.equal(settings.status(),test.status);
    assert.equal((await fs.readFile(path.join(dir,'config.yml'),'utf8')).includes(name),test.status===200);
-   if(test.status===403){const result=await settings.json();assert.equal(result.code,'write_source_rejected');assert.match(result.error,/Host header including the public port/);}
+   if(test.status===403){const result=await settings.json();assert.equal(result.error.code,'SOURCE_REJECTED');assert.ok(result.request_id);assert.equal(settings.headers()['cache-control'],'private, no-store');}
    await page.goto(test.base+'/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);
    await page.locator('#new-entry').click();await page.locator('#entry-name').fill(name);await page.locator('#entry-url').fill('https://example.com/'+test.name);
    await page.locator('#entry-location').selectOption('apps');await page.locator('#entry-form .dialog-actions button.primary').click();
@@ -54,7 +54,7 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
    if(test.status===200)assert.equal(message,'All changes saved');
    else{
     assert.match(message,/origin protection.*Host header.*public port/);assert.doesNotMatch(message,/session.*expired/i);
-    assert.equal((await saved.json()).code,'write_source_rejected');
+    assert.equal((await saved.json()).error.code,'SOURCE_REJECTED');
     assert.equal((await fs.readFile(path.join(dir,'apps.yml'),'utf8')).includes(name),false);
     assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.dirty),true);
     assert.equal(await page.getByRole('button',{name,exact:true}).count(),1);
