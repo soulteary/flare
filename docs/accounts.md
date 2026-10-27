@@ -13,43 +13,87 @@ or supply a strong `FLARE_COOKIE_SECRET`. Those legacy cookie settings are not
 the current-main persistent-session mechanism. Old instructions and measurements
 remain available through the [archive](archive/README.md).
 
-## Initialize 0.6.8 or current source
+## Current source: start without account initialization
 
-New installations default to login enabled and whole-site PRIVATE visibility
-unless explicitly configured. Missing credentials, contradictory access settings
-or damaged security state never silently enable anonymous access. A non-ready
-instance serves a generic HTTP 503 page; inspect its terminal diagnostics.
+Current source restores the 0.4.0 access defaults: login is disabled and navigation
+is public (`FLARE_DISABLE_LOGIN=true`, `FLARE_VISIBILITY=DEFAULT`). A new instance
+starts immediately and automatically prepares its persistent internal security
+state; no administrator, password, or maintenance command is required. Anyone
+who can reach the instance can browse and modify content when the editor is enabled.
+Setting a password alone does not enable login: set `FLARE_DISABLE_LOGIN=false`.
 
-Use the 0.6.8 release binary, or build following [development instructions](development.md). Run maintenance in
-the same working directory and effective environment as the service, while the
-service is stopped:
-
-```sh
-flare security migration-check --json
-flare security init --username your_user
-```
-
-Initialization asks for a password twice, with hidden input on a terminal.
-New passwords require 15–128 Unicode code points, at most 512 UTF-8 bytes, and
-must pass the bundled weak/repeated-password checks. Existing nonempty deployment
-passwords can migrate without this new-password strength requirement.
-Alternatively, supply an initial `FLARE_PASS` or `FLARE_PASS_FILE` at startup.
-The new startup path does not print generated passwords in logs.
+Existing installations created with the previous private-default policy retain
+that recorded policy unless explicitly overridden. This change does not silently
+publish an already protected installation. The published 0.6.8 release used login
+enabled and PRIVATE defaults for new installations; use a build containing this
+change for the new behavior, rather than assuming an existing image has changed.
 
 ### 从源码运行
 
-如果 `go run .` 输出 `Flare security: new`，浏览器显示“Flare 尚未就绪”，说明需要先初始化管理员。在运行终端按 Ctrl+C 停止服务，然后在同一个项目目录、相同环境变量下执行：
+按[开发说明](development.md)准备好环境后，在项目目录直接运行：
 
 ```sh
-go run . security init --username admin
 go run .
 ```
 
-按提示输入两次密码（终端不回显）。密码要求见上文。启动后访问 <http://localhost:5005>，使用 `admin` 和设置的密码登录；自定义端口时使用实际端口。后续启动无需再次初始化。
+打开 <http://localhost:5005> 即可浏览、调整设置和编辑书签，无需初始化账户。
+内部安全状态自动写入 `.flare-security/`，后续重启继续使用，不要删除。
 
 ### Docker Compose 部署
 
-在原 Compose 项目目录执行，下面假设服务名为 `flare`：
+使用包含本次变更的镜像，并持久化整个 `/app`（服务配置中的
+`volumes: ["./app:/app"]`），在原 Compose 项目目录运行：
+
+```sh
+docker compose up -d flare
+```
+
+服务名不同则替换 `flare`。默认即可访问映射的端口并编辑，内部状态自动保存到
+宿主机的 `./app/.flare-security/`。只挂载 YAML 文件时，应另加
+`./security:/app/.flare-security`；自定义 `FLARE_STATE_DIR` 时须持久化对应目录。
+
+### docker run 部署
+
+假设已将包含本次变更的镜像构建或标记为 `flare:local`：
+
+```sh
+docker run -d --name flare -p 5005:5005 \
+  -v "$PWD/app:/app" \
+  flare:local
+```
+
+无需另外启动初始化容器。已有部署继续使用原来的数据挂载、命名卷、工作目录
+和相关环境变量；重建时不要换成空卷。默认工作目录是 `/app`。
+
+## Optional: enable login
+
+Enable `FLARE_DISABLE_LOGIN=false` to require authentication for management.
+Keep `FLARE_VISIBILITY=DEFAULT` for public navigation, or set it to `PRIVATE`
+to require login for the whole site. On first account setup, supply `FLARE_PASS`
+or `FLARE_PASS_FILE` at startup to initialize automatically, without a separate
+maintenance command. Startup does not print passwords or silently enable anonymous
+access when login is requested but credentials are missing.
+
+Alternatively, before the first start, initialize interactively from the same
+working directory and effective environment, while the service is stopped:
+
+```sh
+go run . security init --username admin
+FLARE_DISABLE_LOGIN=false go run .
+```
+
+A fresh interactive `security init` retains the protected private-default setup.
+New passwords require 15–128 Unicode code points, at most 512 UTF-8 bytes, and
+must pass the bundled weak/repeated-password checks. Terminal input is hidden
+and asks twice. Existing nonempty deployment passwords can migrate without this
+new-password strength requirement.
+
+If the instance has already started in trusted mode, its internal state is already
+initialized. To create a locally managed administrator, stop the service and use
+`security set-credentials --mode local --username admin` instead of `security init`,
+then enable login in the deployment configuration and restart.
+
+For Docker Compose, the interactive first-account alternative is:
 
 ```sh
 docker compose stop flare
@@ -57,26 +101,29 @@ docker compose run --rm --no-deps flare flare security init --username admin
 docker compose up -d flare
 ```
 
-临时容器会沿用该服务的数据挂载和环境变量，并交互式询问两次密码。使用原来的 Compose 文件、项目名及其他 Compose 参数；服务名不同则替换 `flare`。初始化命令成功后再启动服务并登录。
+Configure `FLARE_DISABLE_LOGIN: "false"` under the service's `environment` before
+starting. For an already initialized trusted instance, replace the middle command
+with `docker compose run --rm --no-deps flare flare security set-credentials --mode local --username admin`.
+Use the original Compose files, project name, mounts and environment throughout.
 
-必须先配置持久化，例如服务包含 `volumes: ["./app:/app"]`。默认工作目录是 `/app`，账户状态保存于宿主机的 `./app/.flare-security/`。只挂载 YAML 文件时，应额外挂载安全目录，例如 `./security:/app/.flare-security`。自定义 `FLARE_STATE_DIR` 时须持久化对应目录。
-
-### docker run 部署
-
-下面假设容器名为 `flare`，原挂载为当前目录的 `./app:/app`，镜像为 `soulteary/flare:0.6.8`：
+For `docker run`, stop the existing service and use a temporary container with the
+same image, mounts, working directory and relevant environment:
 
 ```sh
 docker stop flare
-docker run --rm -it \
+docker run --rm -it -e FLARE_DISABLE_LOGIN=false \
   -v "$PWD/app:/app" \
-  soulteary/flare:0.6.8 \
-  flare security init --username admin
-docker start flare
+  flare:local flare security init --username admin
 ```
 
-仅在初始化成功后执行最后一行。已有部署必须替换为原来的镜像版本、数据挂载、工作目录和相关环境变量（包括自定义 `FLARE_STATE_DIR`）；命名卷继续使用原卷，不能新建空卷代替。初始化完成后访问映射的服务端口登录。
+Use `security set-credentials --mode local --username admin` for existing trusted
+state. Only after success, recreate the service with login enabled, preserving its
+original data. `docker start` alone cannot change an existing container's environment.
+Do not run maintenance with `docker exec` while the service holds the state lock.
 
-不要通过 `docker exec` 在仍运行的服务中初始化：服务持有安全状态的独占锁。停止后使用共享原数据的临时容器维护。重建容器时保留安全目录，且不要通过删除该目录重置密码。
+Contradictory access settings, private content in trusted mode, and damaged or
+unwritable security state still block startup with HTTP 503. Check terminal or
+container logs; do not delete security state to bypass the error.
 
 Persist `.flare-security/` (or `FLARE_STATE_DIR`) on writable local storage. The
 process holds an exclusive lock; stop it before maintenance commands. Only a

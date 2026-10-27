@@ -119,9 +119,14 @@ For 0.6.7, use `FLARE_DISABLE_LOGIN=false` to protect administration and also
 alone do not protect data in 0.6.7. Preserve `.flare-cookie-secret` and configure
 `FLARE_COOKIE_SECURE=true` when HTTPS terminates at a reverse proxy.
 
-For 0.6.8 and current source, new installations require administrator initialization and
-use private-site defaults unless explicitly configured otherwise. Persist the
-security directory as well as YAML. Read [accounts](docs/accounts.md),
+Current source restores the 0.4.0 defaults: login disabled, public navigation,
+and immediate use without administrator initialization. Internal security state
+is prepared automatically. Anyone who can access the instance can modify content
+when the editor is enabled. Enable `FLARE_DISABLE_LOGIN=false` for protected
+management; add `FLARE_VISIBILITY=PRIVATE` for whole-site protection. Previously
+recorded private defaults remain effective. Published 0.6.8 used private defaults
+for new installations; use a build containing this change for the restored behavior.
+Persist the security directory as well as YAML. Read [accounts](docs/accounts.md),
 [configuration](docs/configuration.md), [upgrade/rollback](docs/login-private-upgrade.md),
 [backup/restore](docs/backup-restore.md) and [reverse proxies](docs/reverse-proxy.md)
 before changing an existing deployment.

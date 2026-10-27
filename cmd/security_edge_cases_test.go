@@ -93,7 +93,7 @@ func TestNewInstallationCredentialPolicyAndModeTransitions(t *testing.T) {
 	for _, password := range []string{"short", "a unique initial administrator phrase 42"} {
 		t.Run(password, func(t *testing.T) {
 			t.Chdir(t.TempDir())
-			inputs := map[string]string{"FLARE_PASS": password}
+			inputs := map[string]string{"FLARE_DISABLE_LOGIN": "false", "FLARE_PASS": password}
 			p := PrepareSecurity(startupFlags(inputs))
 			defer closePreparation(t, p)
 			if password == "short" {

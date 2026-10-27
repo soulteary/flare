@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/soulteary/flare/cmd"
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
@@ -172,4 +173,66 @@ func TestPhase1SettingsFormsUseSessionCSRF(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Exercise the real startup gate and HTTP stack together, without preinitializing
+// a store or creating an administrator. Trusted writes still require CSRF proof.
+func TestDefaultStartupAllowsAnonymousEditingWithCSRF(t *testing.T) {
+	original := define.AppFlags
+	t.Cleanup(func() { define.AppFlags = original })
+	t.Chdir(t.TempDir())
+	t.Setenv("FLARE_BASELINE", "1")
+	flags := &model.Flags{Port: 5005, CookieName: "default-startup", Visibility: define.DEFAULT_VISIBILITY, DisableLoginMode: define.DEFAULT_DISABLE_LOGIN, EnableEditor: true, EnableOfflineMode: true, RuntimeInputs: map[string]string{}}
+	prepared := cmd.PrepareSecurity(flags)
+	require.Equal(t, "ready", prepared.Status, prepared.Message)
+	t.Cleanup(func() { prepared.Store.Close() })
+	require.Equal(t, security.ModeTrusted, prepared.Store.Info().Mode)
+	app, err := NewFiberApp(flags, prepared.Store)
+	require.NoError(t, err)
+	cookies := map[string]*http.Cookie{}
+	request := func(method, path string, values url.Values, origin string) (int, string) {
+		var body io.Reader
+		if values != nil {
+			body = strings.NewReader(values.Encode())
+		}
+		req := httptest.NewRequest(method, "http://flare.test"+path, body)
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		for _, cookie := range cookies {
+			req.AddCookie(cookie)
+		}
+		if origin != "" {
+			req.Header.Set("Origin", origin)
+		}
+		res, err := app.Test(req)
+		require.NoError(t, err)
+		defer res.Body.Close()
+		for _, cookie := range res.Cookies() {
+			cookies[cookie.Name] = cookie
+		}
+		raw, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+		return res.StatusCode, string(raw)
+	}
+	for _, path := range []string{"/", "/editor", "/settings/appearance"} {
+		status, _ := request("GET", path, nil, "")
+		require.Equal(t, 200, status, path)
+	}
+	status, page := request("GET", "/settings/appearance", nil, "")
+	require.Equal(t, 200, status)
+	match := regexp.MustCompile(`name="?csrf-token"? value="?([A-Za-z0-9_.-]+)`).FindStringSubmatch(page)
+	require.Len(t, match, 2)
+	before, err := os.ReadFile("config.yml")
+	require.NoError(t, err)
+	status, _ = request("POST", "/settings/appearance", url.Values{"title": {"must not save"}}, "")
+	require.Equal(t, 403, status)
+	status, _ = request("POST", "/settings/appearance", url.Values{"csrf-token": {match[1]}, "title": {"must not save"}}, "https://evil.example")
+	require.Equal(t, 403, status)
+	after, err := os.ReadFile("config.yml")
+	require.NoError(t, err)
+	require.Equal(t, before, after)
+	status, _ = request("POST", "/settings/appearance", url.Values{"csrf-token": {match[1]}, "title": {"anonymous saved title"}}, "")
+	require.Equal(t, 200, status)
+	after, err = os.ReadFile("config.yml")
+	require.NoError(t, err)
+	require.Contains(t, string(after), "anonymous saved title")
 }

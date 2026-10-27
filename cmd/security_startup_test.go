@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"golang.org/x/sys/unix"
 	"io"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/security"
 	"github.com/stretchr/testify/require"
@@ -32,16 +34,72 @@ func closePreparation(t *testing.T, p SecurityPreparation) {
 		require.NoError(t, p.Store.Close())
 	}
 }
-func TestSecurityStartupEmptyDoesNotServe(t *testing.T) {
+func TestSecurityStartupDefaultsPrepareTrustedState(t *testing.T) {
+	for _, content := range []string{"empty", "samples", "existing"} {
+		for _, explicit := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/explicit=%v", content, explicit), func(t *testing.T) {
+				t.Chdir(t.TempDir())
+				if content == "existing" {
+					writeStartupFiles(t, startupPublic)
+				} else if content == "samples" {
+					_, err := data.LoadFavoriteBookmarks()
+					require.NoError(t, err)
+					_, err = data.LoadNormalBookmarks()
+					require.NoError(t, err)
+				}
+				inputs := map[string]string{}
+				if explicit {
+					inputs["FLARE_DISABLE_LOGIN"] = "true"
+				}
+				var instance string
+				for i := 0; i < 2; i++ {
+					f := startupFlags(inputs)
+					p := PrepareSecurity(f)
+					require.Equal(t, "ready", p.Status, p.Message)
+					require.True(t, f.DisableLoginMode)
+					require.Equal(t, "DEFAULT", f.Visibility)
+					require.True(t, p.Store.Info().Initialized)
+					require.Equal(t, security.ModeTrusted, p.Store.Info().Mode)
+					if i == 0 {
+						instance = p.Store.Info().InstanceID
+					} else {
+						require.Equal(t, instance, p.Store.Info().InstanceID)
+					}
+					closePreparation(t, p)
+				}
+			})
+		}
+	}
+}
+
+func TestSecurityStartupExplicitLoginRequiresCredentials(t *testing.T) {
 	t.Chdir(t.TempDir())
-	f := startupFlags(nil)
+	f := startupFlags(map[string]string{"FLARE_DISABLE_LOGIN": "false"})
 	p := PrepareSecurity(f)
 	defer closePreparation(t, p)
-	require.NotEqual(t, "ready", p.Status)
+	require.Equal(t, "new", p.Status)
 	require.False(t, f.DisableLoginMode)
-	require.Equal(t, "PRIVATE", f.Visibility)
+	require.Equal(t, "DEFAULT", f.Visibility)
 	require.False(t, p.Store.Info().Initialized)
 }
+
+func TestSecurityStartupPreservesExistingPrivateDefaults(t *testing.T) {
+	t.Chdir(t.TempDir())
+	p := PrepareSecurity(startupFlags(map[string]string{"FLARE_DISABLE_LOGIN": "false", "FLARE_PASS": "A strong initial administrator phrase 42!"}))
+	require.Equal(t, "ready", p.Status, p.Message)
+	closePreparation(t, p)
+	meta, _, err := readInstallation(".flare-security")
+	require.NoError(t, err)
+	meta.DefaultPrivate = true // Metadata written by the previous startup policy.
+	require.NoError(t, writePrivateJSON(".flare-security/installation.json", meta))
+	f := startupFlags(nil)
+	p = PrepareSecurity(f)
+	defer closePreparation(t, p)
+	require.Equal(t, "ready", p.Status, p.Message)
+	require.False(t, f.DisableLoginMode)
+	require.Equal(t, "PRIVATE", f.Visibility)
+}
+
 func TestSecurityStartupLegacyCredentialsAndYAMLRemainExact(t *testing.T) {
 	for _, visibility := range []string{"DEFAULT", "PRIVATE"} {
 		t.Run(visibility, func(t *testing.T) {
@@ -275,4 +333,33 @@ func TestSecurityPasswordFilesRejectFIFOAllowProjectedSymlink(t *testing.T) {
 	_, pass, e := readCredential(startupFlags(map[string]string{"FLARE_PASS_FILE": "secret-link"}))
 	require.NoError(t, e)
 	require.Equal(t, "projected password", pass)
+}
+
+func TestTrustedStartupStillRejectsPrivateContentAndDamagedState(t *testing.T) {
+	for _, fixture := range []struct{ name, file, content string }{
+		{"bookmark", "bookmarks.yml", startupPrivate},
+		{"category", "bookmarks.yml", "categories:\n  - id: secret\n    title: Secret\n    private: true\nlinks: []\n"},
+		{"application", "apps.yml", "links:\n  - name: secret\n    link: https://secret.example.com\n    private: true\n"},
+	} {
+		t.Run(fixture.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			require.NoError(t, os.WriteFile(fixture.file, []byte(fixture.content), 0600))
+			p := PrepareSecurity(startupFlags(nil))
+			defer closePreparation(t, p)
+			require.Equal(t, "attention_required", p.Status)
+			require.False(t, p.Store.Info().Initialized)
+		})
+	}
+	for _, name := range []string{"state.json", "complete", "installation.json"} {
+		t.Run("missing/"+name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			p := PrepareSecurity(startupFlags(nil))
+			require.Equal(t, "ready", p.Status, p.Message)
+			closePreparation(t, p)
+			require.NoError(t, os.Remove(filepath.Join(".flare-security", name)))
+			p = PrepareSecurity(startupFlags(nil))
+			defer closePreparation(t, p)
+			require.Equal(t, "faulted", p.Status)
+		})
+	}
 }
