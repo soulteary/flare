@@ -1,0 +1,33 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/soulteary/flare/internal/pages/home
+cpu: Apple M5
+BenchmarkNavigationFragmentCache/entries-100/uncached-10         	   26066	     21985 ns/op	   67323 B/op	     104 allocs/op
+BenchmarkNavigationFragmentCache/entries-100/uncached-10         	   27558	     22272 ns/op	   67323 B/op	     104 allocs/op
+BenchmarkNavigationFragmentCache/entries-100/uncached-10         	   22515	     28774 ns/op	   67324 B/op	     104 allocs/op
+BenchmarkNavigationFragmentCache/entries-100/cold-10             	   22144	     25579 ns/op	   68413 B/op	     114 allocs/op
+BenchmarkNavigationFragmentCache/entries-100/cold-10             	   23679	     24657 ns/op	   68413 B/op	     114 allocs/op
+BenchmarkNavigationFragmentCache/entries-100/cold-10             	   24517	     25479 ns/op	   68414 B/op	     114 allocs/op
+BenchmarkNavigationFragmentCache/entries-100/hot-10              	 9871017	        55.93 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNavigationFragmentCache/entries-100/hot-10              	11236936	        52.89 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNavigationFragmentCache/entries-100/hot-10              	11334476	        52.85 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNavigationFragmentCache/entries-1000/uncached-10        	    2896	    199612 ns/op	  627766 B/op	    1004 allocs/op
+BenchmarkNavigationFragmentCache/entries-1000/uncached-10        	    2697	    206011 ns/op	  627761 B/op	    1004 allocs/op
+BenchmarkNavigationFragmentCache/entries-1000/uncached-10        	    2817	    201493 ns/op	  627769 B/op	    1004 allocs/op
+BenchmarkNavigationFragmentCache/entries-1000/cold-10            	    2760	    221530 ns/op	  628921 B/op	    1014 allocs/op
+BenchmarkNavigationFragmentCache/entries-1000/cold-10            	    2676	    240622 ns/op	  628920 B/op	    1014 allocs/op
+BenchmarkNavigationFragmentCache/entries-1000/cold-10            	    2272	    258507 ns/op	  628926 B/op	    1014 allocs/op
+BenchmarkNavigationFragmentCache/entries-1000/hot-10             	 9810219	        57.38 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNavigationFragmentCache/entries-1000/hot-10             	10778974	        53.95 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNavigationFragmentCache/entries-1000/hot-10             	11387602	        53.04 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNavigationFragmentCache/entries-10000/uncached-10       	     319	   1903426 ns/op	 6225333 B/op	   10005 allocs/op
+BenchmarkNavigationFragmentCache/entries-10000/uncached-10       	     303	   2006113 ns/op	 6225332 B/op	   10005 allocs/op
+BenchmarkNavigationFragmentCache/entries-10000/uncached-10       	     289	   2085349 ns/op	 6225336 B/op	   10005 allocs/op
+BenchmarkNavigationFragmentCache/entries-10000/cold-10           	     282	   2101990 ns/op	 6225925 B/op	   10012 allocs/op
+BenchmarkNavigationFragmentCache/entries-10000/cold-10           	     284	   2034111 ns/op	 6225920 B/op	   10012 allocs/op
+BenchmarkNavigationFragmentCache/entries-10000/cold-10           	     303	   1971294 ns/op	 6225924 B/op	   10012 allocs/op
+BenchmarkNavigationFragmentCache/entries-10000/oversize-bypass-10         	     289	   2162795 ns/op	 6225625 B/op	   10008 allocs/op
+BenchmarkNavigationFragmentCache/entries-10000/oversize-bypass-10         	     290	   2074418 ns/op	 6225622 B/op	   10008 allocs/op
+BenchmarkNavigationFragmentCache/entries-10000/oversize-bypass-10         	     277	   2075915 ns/op	 6225622 B/op	   10008 allocs/op
+PASS
+ok  	github.com/soulteary/flare/internal/pages/home	22.691s

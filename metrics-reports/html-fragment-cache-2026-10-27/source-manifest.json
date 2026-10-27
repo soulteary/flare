@@ -1,0 +1,21 @@
+{
+  "recorded_at_utc": "2026-10-27T05:40:30.351600+00:00",
+  "go": "go version go1.27.3 darwin/arm64",
+  "head_at_start": "d02ed39",
+  "head_at_finish": "421b1f12d2349949600efa8ce598d5486a0e3c44",
+  "note": "Runtime source is the listed working-tree files, not HEAD alone. Concurrent commits changed CI files; no CI changes are included in this work.",
+  "sha256": {
+    "config/data/navigation_view.go": "9bfebf01bef9d47353a3d7db245781730296a7f1c249a23d789dc1a626c9f757",
+    "config/data/parsed_cache.go": "f284bb71ed4b99119ee70f5808a3b8da6e1e8bff5302acb7d860fe41e1a66a30",
+    "config/define/theme.go": "c1c6c393c217fd2cd664437d11162bde54a64c16f1b23f09b67b94c55053f7dc",
+    "internal/pages/home/application.go": "afc46c9bbad8fa737d2eab243d14db33c6d68431fa65533df7d40c4abd5dc9f9",
+    "internal/pages/home/bookmark.go": "77e100406cf9dd22b5e5bd202ca43de193fac400fa3e5a7a6af13e822e4f87aa",
+    "internal/pages/home/home.go": "97bf987c34ee9ef72d1ab1070d55d1be69f847759ef8ac7d249d77e5e382d0ff",
+    "internal/pages/home/read_mode.go": "5c16d1a79639b76939d62e6790b2a47377f4f946b163ad635a8376eb4c23d218",
+    "internal/pages/home/weather_cache.go": "cb18ed2fdfaaee36ba4c70013f068110b6352f83f4d0f0fcfe33fecc50fe2659",
+    "internal/pages/home/navigation_cache.go": "609e2f724db7d4a8bb9d61db11a55ef115b9e20abf558ef8ad9bf67bf3ab0ee9",
+    "internal/pages/home/navigation_cache_test.go": "e539e5e73bee2c79478e513de0c685ecdab410a4fad82b2fc22ce1c00599a898",
+    "internal/pages/home/navigation_cache_benchmark_test.go": "9ae2371aefe8763032c3e98d7b70d2adc37a541004eda3180c0c4d5fed38e70b",
+    "config/data/navigation_view_test.go": "c9f7d87b264fabea97b71c9efa88025a54cfc2d20e1e4a4f9091c815fc44daf0"
+  }
+}

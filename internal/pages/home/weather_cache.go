@@ -43,8 +43,22 @@ func GetWeatherData() model.Weather {
 	if define.AppFlags.EnableOfflineMode {
 		return model.Weather{}
 	}
-	location, enabled := data.GetLocationAndWeatherShow()
-	if !enabled || location == "" {
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return model.Weather{}
+	}
+	return weatherForSettings(options)
+}
+
+func weatherForSettings(options model.Application) model.Weather {
+	if define.AppFlags.EnableOfflineMode {
+		return model.Weather{}
+	}
+	location := options.Location
+	if options.WeatherLocation != nil {
+		location = options.WeatherLocation.String()
+	}
+	if !options.ShowWeather || location == "" {
 		return model.Weather{}
 	}
 	return homepageWeather.get(location)

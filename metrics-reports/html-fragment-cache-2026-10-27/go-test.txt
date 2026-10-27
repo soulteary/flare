@@ -1,0 +1,37 @@
+ok  	github.com/soulteary/flare	(cached)
+?   	github.com/soulteary/flare/build	[no test files]
+ok  	github.com/soulteary/flare/build/builder	(cached)
+ok  	github.com/soulteary/flare/cmd	(cached)
+ok  	github.com/soulteary/flare/config/data	(cached)
+ok  	github.com/soulteary/flare/config/define	(cached)
+ok  	github.com/soulteary/flare/config/model	(cached)
+ok  	github.com/soulteary/flare/internal/auth	(cached)
+ok  	github.com/soulteary/flare/internal/bookmarks	(cached)
+ok  	github.com/soulteary/flare/internal/clock	(cached)
+ok  	github.com/soulteary/flare/internal/fn	(cached)
+ok  	github.com/soulteary/flare/internal/formvalue	(cached)
+ok  	github.com/soulteary/flare/internal/i18n	(cached)
+ok  	github.com/soulteary/flare/internal/logger	(cached)
+?   	github.com/soulteary/flare/internal/misc/deprecated	[no test files]
+ok  	github.com/soulteary/flare/internal/misc/health	(cached)
+?   	github.com/soulteary/flare/internal/misc/redir	[no test files]
+ok  	github.com/soulteary/flare/internal/pages/editor	(cached)
+?   	github.com/soulteary/flare/internal/pages/guide	[no test files]
+ok  	github.com/soulteary/flare/internal/pages/home	(cached)
+?   	github.com/soulteary/flare/internal/pool	[no test files]
+ok  	github.com/soulteary/flare/internal/requestsource	(cached)
+ok  	github.com/soulteary/flare/internal/resources/assets	(cached)
+ok  	github.com/soulteary/flare/internal/resources/mdi	(cached)
+ok  	github.com/soulteary/flare/internal/resources/templates	(cached)
+ok  	github.com/soulteary/flare/internal/search	(cached)
+ok  	github.com/soulteary/flare/internal/searchui	(cached)
+ok  	github.com/soulteary/flare/internal/security	(cached)
+ok  	github.com/soulteary/flare/internal/server	(cached)
+?   	github.com/soulteary/flare/internal/settings	[no test files]
+?   	github.com/soulteary/flare/internal/settings/appearance	[no test files]
+?   	github.com/soulteary/flare/internal/settings/others	[no test files]
+ok  	github.com/soulteary/flare/internal/settings/search	(cached)
+ok  	github.com/soulteary/flare/internal/settings/theme	(cached)
+ok  	github.com/soulteary/flare/internal/settings/weather	(cached)
+ok  	github.com/soulteary/flare/internal/yamlutil	(cached)
+ok  	github.com/soulteary/flare/tools/baseline	0.671s
