@@ -99,3 +99,19 @@ The controlled same-commit cold/warm comparison is recorded in
 Both complete runs passed ARM v6/v7 acceptance. Warm Go module and compiler
 cache restores were exact hits in all 13 consuming jobs; all four UPX layers
 were cached, with identical executable hashes for all seven targets.
+
+## Browser and runner stall diagnostics
+
+The editor transfer acceptance test applies operation/navigation deadlines to
+its shared BrowserContext so verification popups inherit them. It logs each
+reauthentication phase, bounds download completion and popup/browser closure,
+and limits the whole script to 120 seconds. All authentication, privacy,
+manual-retry and downloaded-content assertions still execute. Readiness HTTP
+requests also have a deadline; child cleanup handles signal exits and has a
+kill fallback. The main test/coverage job has a 15-minute limit, preventing an
+unresponsive hosted runner from consuming the default six-hour allowance.
+
+A post-merge run stopped during manual reauthentication; both full remote
+Clock attempts with popup deadlines passed, as did five consecutive local
+runs. These checks improve failure diagnostics and prevent indefinite waits;
+passing samples do not prove every intermittent browser issue is eliminated.

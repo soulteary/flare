@@ -14,8 +14,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=req
  const child=spawn(path.resolve(process.env.FLARE_BINARY),[],{cwd:root,env:{...env,FLARE_PORT:String(port),FLARE_USER:'admin',FLARE_PASS:'regression-password',FLARE_DISABLE_LOGIN:'false',FLARE_OFFLINE:'true'},stdio:['ignore','pipe','pipe']});let logs='',browser;
  child.stdout.on('data',b=>logs+=b);child.stderr.on('data',b=>logs+=b);
  try{
-  let ready=false;for(let i=0;i<200;i++){if(child.exitCode!==null)throw Error(logs);try{if((await fetch(base+'/login')).status===200){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,100));}assert(ready,logs);
-  browser=await chromium.launch({headless:true,env});const page=await browser.newPage();page.setDefaultTimeout(15000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  let ready=false;for(let i=0;i<200;i++){if(child.exitCode!==null)throw Error(logs);try{if((await fetch(base+'/login',{signal:AbortSignal.timeout(1000)})).status===200){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,100));}assert(ready,logs);
+  browser=await chromium.launch({headless:true,env});const context=await browser.newContext();context.setDefaultTimeout(15000);context.setDefaultNavigationTimeout(15000);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   progress('login and editor privacy');await page.goto(base+'/login');await page.locator('[name=username]').fill('admin');await page.locator('[name=password]').fill('regression-password');await Promise.all([page.waitForURL(base+'/'),page.getByRole('button',{name:'Login / 登录',exact:true}).click()]);
   await page.goto(base+'/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);await page.locator('#new-entry').click();
   assert(await page.locator('#entry-private').isChecked());await page.locator('#entry-name').fill('Editor private');await page.locator('#entry-url').fill('https://editor.example/');await page.locator('#entry-location').selectOption('apps');
@@ -34,7 +34,20 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=req
   const beforeDenied=await fs.readFile(path.join(root,'bookmarks.yml'),'utf8');let deniedCommits=0;
   await page.route('**/editor/transfer/commit',r=>{deniedCommits++;return r.fulfill(reauthResponse);});
   await page.locator('#commit').click();await verifyGuidance();assert.equal(await page.locator('#commit').isDisabled(),true);assert.equal(await page.locator('#import-public').isChecked(),true);assert.equal(await fs.readFile(path.join(root,'bookmarks.yml'),'utf8'),beforeDenied);
-  progress('manual reauthentication');const popupPromise=page.waitForEvent('popup');await page.locator('#verify-session').click();const account=await popupPromise;const verifyForm=account.locator('form[action="/account/reauthenticate"]');await verifyForm.waitFor();assert.equal(deniedCommits,1,'opening verification must not auto-submit');await verifyForm.locator('[name=password]').fill('regression-password');const verified=account.waitForResponse(r=>r.request().method()==='POST'&&r.url()===base+'/account/reauthenticate');await verifyForm.locator('button').click();assert.equal((await verified).status(),303);await account.close();assert.equal(deniedCommits,1,'verification must not auto-submit the pending import');
+  progress('open verification popup');
+  const [account]=await Promise.all([page.waitForEvent('popup'),page.locator('#verify-session').click()]);
+  progress('verification form');
+  const verifyForm=account.locator('form[action="/account/reauthenticate"]');await verifyForm.waitFor();
+  assert.equal(deniedCommits,1,'opening verification must not auto-submit');
+  await verifyForm.locator('[name=password]').fill('regression-password');
+  progress('submit verification');
+  const [verified]=await Promise.all([
+   account.waitForResponse(r=>r.request().method()==='POST'&&r.url()===base+'/account/reauthenticate'),
+   verifyForm.locator('button').click(),
+  ]);
+  assert.equal(verified.status(),303);
+  progress('close verified popup');await bounded(account.close(),'verification popup close');
+  assert.equal(deniedCommits,1,'verification must not auto-submit the pending import');
   await page.unroute('**/editor/transfer/commit');await page.locator('#preview-button').click();await page.locator('#preview').waitFor();await page.locator('#commit').click();await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Import complete:'));assert.equal(await page.locator('#verify-session').isHidden(),true);
   progress('export and backup downloads');for(const selector of ['#export-html','#export-yaml','#backup']){
    progress('denied download '+selector);await page.reload();let downloads=0;const record=()=>downloads++;page.on('download',record);
