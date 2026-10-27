@@ -91,3 +91,11 @@ Push filtering includes dependencies, config, generators and embedded assets.
 Actual GitHub cache hit rate and end-to-end improvement require post-deployment
 CI measurements. Local compilation and container checks do not measure GHA
 cache transfer, hosted runner startup, or matrix scheduling.
+
+## Hosted-runner measurements
+
+The controlled same-commit cold/warm comparison is recorded in
+[the 2026-10-27 measurement report](../metrics-reports/ci-cache-comparison-2026-10-27.md).
+Both complete runs passed ARM v6/v7 acceptance. Warm Go module and compiler
+cache restores were exact hits in all 13 consuming jobs; all four UPX layers
+were cached, with identical executable hashes for all seven targets.

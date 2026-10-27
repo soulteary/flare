@@ -86,7 +86,7 @@ class ArchiveTests(unittest.TestCase):
             entry = {'target': target, 'archive': archive.name,
                      'sha256': preflight.sha(archive),
                      'binary_sha256': hashlib.sha256(binary).hexdigest(),
-                     'build_info': f'GOOS={goos} GOARCH={arch} GOARM={arm} CGO_ENABLED=0 {self.commit} {self.version}'}
+                     'build_info': f'GOOS={goos} GOARCH={arch} GOARM={arm} CGO_ENABLED=0'}
             (directory / f'{target}-verification.json').write_text(json.dumps(
                 {'version': self.version, 'commit': self.commit,
                  'production_assets_generated_in_snapshot': True, 'archives': [entry]}))
