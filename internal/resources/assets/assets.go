@@ -52,6 +52,9 @@ func RegisterRouting(e *fiber.App) {
 // files. Only static assets use this adapter; application routes use Fiber
 // directly, including routing, middleware, and template rendering.
 func ServeContent(c fiber.Ctx, name, contentType string, data []byte) error {
+	// This handler serves public resource bytes, so override the authentication
+	// middleware's default. Do not relax policy merely from an /assets/ prefix.
+	c.Set("Cache-Control", "public, max-age=0, must-revalidate")
 	return serveReader(c, name, contentType, fmt.Sprintf(`"%x"`, sha256.Sum256(data)), bytes.NewReader(data))
 }
 

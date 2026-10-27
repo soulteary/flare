@@ -1,16 +1,157 @@
 package server
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"regexp"
 	"testing"
 
+	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/resources/assets"
 	"github.com/soulteary/flare/internal/resources/mdi"
+	"github.com/soulteary/flare/internal/security"
 	"github.com/stretchr/testify/require"
 )
+
+func TestPersistentStorePublicAssetCacheAndPrivateResponses(t *testing.T) {
+	for _, mode := range []struct {
+		name                    string
+		disabled, authenticated bool
+	}{
+		{name: "login disabled", disabled: true},
+		{name: "anonymous"},
+		{name: "authenticated", authenticated: true},
+	} {
+		t.Run(mode.name, func(t *testing.T) {
+			original := define.AppFlags
+			t.Cleanup(func() { define.AppFlags = original })
+			t.Chdir(t.TempDir())
+			t.Setenv("FLARE_BASELINE", "1")
+			require.NoError(t, os.WriteFile("config.yml", []byte("ShowApps: true\nShowBookmarks: true\nShowWeather: false\nTheme: blackboard\n"), 0600))
+			fixture := model.Bookmarks{Items: []model.Bookmark{
+				{Name: "PUBLIC-CACHE-FIXTURE", URL: "https://example.com/public"},
+				{Name: "PRIVATE-CACHE-SENTINEL", URL: "https://example.com/private", Private: true},
+			}}
+			require.True(t, data.SaveFavoriteBookmarks(fixture))
+			require.True(t, data.SaveNormalBookmarks(fixture))
+			// Navigation caches are process-wide. Invalidate the fixture before
+			// t.Chdir restores the directory used by the next HTTP test.
+			t.Cleanup(func() {
+				require.True(t, data.SaveFavoriteBookmarks(model.Bookmarks{}))
+				require.True(t, data.SaveNormalBookmarks(model.Bookmarks{}))
+			})
+			store, err := security.Open(t.TempDir())
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, store.Close()) })
+			require.NoError(t, store.Initialize("admin", "cache integration password", "local"))
+			flags := &model.Flags{Port: 5005, CookieName: "cache-test", DisableLoginMode: mode.disabled, EnableOfflineMode: true, EnableEditor: true}
+			app, err := NewFiberApp(flags, store)
+			require.NoError(t, err)
+			cookie := &http.Cookie{Name: auth.RequestHandleSessionName(flags.CookieName, flags.Port) + "_" + store.Info().InstanceID}
+			if mode.authenticated {
+				cookie.Value, err = store.Authenticate("admin", "cache integration password")
+				require.NoError(t, err)
+			}
+			request := func(method, path string, headers map[string]string) *httptest.ResponseRecorder {
+				req := httptest.NewRequest(method, "http://flare.test"+path, nil)
+				if cookie.Value != "" {
+					req.AddCookie(cookie)
+				}
+				for name, value := range headers {
+					req.Header.Set(name, value)
+				}
+				response, err := app.Test(req)
+				require.NoError(t, err)
+				defer response.Body.Close()
+				rec := httptest.NewRecorder()
+				for name, values := range response.Header {
+					rec.Header()[name] = values
+				}
+				rec.WriteHeader(response.StatusCode)
+				_, err = io.Copy(rec.Body, response.Body)
+				require.NoError(t, err)
+				return rec
+			}
+			require.NotEmpty(t, mdi.GetIconByName("server"))
+			paths := []string{"/favicon.ico", "/assets/editor-ui/editor.css", "/assets/editor-ui/app.js", "/assets/mdi/" + define.ThemeCurrent + "-server.svg", assets.ThemeFaviconURL()}
+			for _, path := range paths {
+				policy := "public, max-age=0, must-revalidate"
+				if path == assets.ThemeFaviconURL() {
+					policy = "public, max-age=31536000, immutable"
+				}
+				get := request(http.MethodGet, path, nil)
+				require.Equal(t, http.StatusOK, get.Code, path)
+				require.Equal(t, policy, get.Header().Get("Cache-Control"), path)
+				require.Empty(t, get.Header().Values("Set-Cookie"), path)
+				require.NotContains(t, get.Body.String(), "PRIVATE-CACHE-SENTINEL", path)
+				etag := get.Header().Get("ETag")
+				require.NotEmpty(t, etag, path)
+				for _, method := range []string{http.MethodGet, http.MethodHead} {
+					conditional := request(method, path, map[string]string{"If-None-Match": etag})
+					require.Equal(t, http.StatusNotModified, conditional.Code, path)
+					require.Equal(t, policy, conditional.Header().Get("Cache-Control"), path)
+					require.Equal(t, etag, conditional.Header().Get("ETag"), path)
+					require.Empty(t, conditional.Body.String(), path)
+				}
+				head := request(http.MethodHead, path, nil)
+				require.Equal(t, http.StatusOK, head.Code, path)
+				require.Equal(t, policy, head.Header().Get("Cache-Control"), path)
+				require.Empty(t, head.Body.String(), path)
+				partial := request(http.MethodGet, path, map[string]string{"Range": "bytes=0-3"})
+				require.Equal(t, http.StatusPartialContent, partial.Code, path)
+				require.Equal(t, policy, partial.Header().Get("Cache-Control"), path)
+				require.Equal(t, get.Body.String()[:4], partial.Body.String(), path)
+				invalid := request(http.MethodGet, path, map[string]string{"Range": "bytes=999999999-"})
+				require.Equal(t, http.StatusRequestedRangeNotSatisfiable, invalid.Code, path)
+				require.Equal(t, "no-store", invalid.Header().Get("Cache-Control"), path)
+				require.Empty(t, invalid.Header().Get("ETag"), path)
+			}
+			missing := request(http.MethodGet, "/assets/editor-ui/missing.js", map[string]string{"If-None-Match": "*"})
+			require.Equal(t, http.StatusNotFound, missing.Code)
+			require.Equal(t, "no-store", missing.Header().Get("Cache-Control"))
+			require.Empty(t, missing.Header().Get("ETag"))
+			for _, path := range []string{"/", "/applications", "/bookmarks"} {
+				page := request(http.MethodGet, path, map[string]string{"If-None-Match": "*"})
+				require.Equal(t, http.StatusOK, page.Code, path)
+				require.Equal(t, "private, no-store", page.Header().Get("Cache-Control"), path)
+				require.Contains(t, page.Body.String(), "PUBLIC-CACHE-FIXTURE", path)
+				if mode.disabled || mode.authenticated {
+					require.Contains(t, page.Body.String(), "PRIVATE-CACHE-SENTINEL", path)
+				} else {
+					require.NotContains(t, page.Body.String(), "PRIVATE-CACHE-SENTINEL", path)
+				}
+			}
+			if mode.disabled || mode.authenticated {
+				preview := request(http.MethodGet, "/editor/icon?name=server", nil)
+				require.Equal(t, http.StatusOK, preview.Code)
+				require.Equal(t, "no-store", preview.Header().Get("Cache-Control"))
+			}
+			for _, path := range []string{"/editor", "/editor/csrf", "/editor/document"} {
+				page := request(http.MethodGet, path, map[string]string{"If-None-Match": "*"})
+				if mode.disabled || mode.authenticated {
+					require.Equal(t, http.StatusOK, page.Code, path)
+				} else {
+					require.NotEqual(t, http.StatusOK, page.Code, path)
+					require.NotContains(t, page.Body.String(), "PRIVATE-CACHE-SENTINEL", path)
+				}
+				require.Contains(t, page.Header().Get("Cache-Control"), "no-store", path)
+				require.NotContains(t, page.Header().Get("Cache-Control"), "public", path)
+				require.Empty(t, page.Header().Get("ETag"), path)
+			}
+			if mode.authenticated {
+				require.NoError(t, store.RevokeAll())
+				page := request(http.MethodGet, "/", nil)
+				require.Equal(t, "private, no-store", page.Header().Get("Cache-Control"))
+				require.NotContains(t, page.Body.String(), "PRIVATE-CACHE-SENTINEL")
+			}
+		})
+	}
+}
 
 func TestEditorAssetsUseVersionedURLsAndRevalidate(t *testing.T) {
 	original := define.AppFlags
