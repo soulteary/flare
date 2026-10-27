@@ -29,7 +29,7 @@ func TestPhase1StartupGuardBlocksAllBusinessSurfaces(t *testing.T) {
 	t.Setenv("FLARE_BASELINE", "1")
 	require.NoError(t, os.WriteFile("bookmarks.yml", []byte("links:\n  - name: DO-NOT-LEAK-SENTINEL\n    link: https://private.example.com\n"), 0600))
 	for _, status := range []string{"new", "attention_required", "faulted", "migrating"} {
-		app, e := NewFiberApp(&model.Flags{StartupStatus: status, EnableEditor: true, EnableOfflineMode: true})
+		app, e := NewFiberApp(&model.Flags{StartupStatus: status, StartupMessage: "INTERNAL-DIAGNOSTIC-SENTINEL", EnableEditor: true, EnableOfflineMode: true})
 		require.NoError(t, e)
 		for _, path := range []string{"/", "/login", "/editor", "/settings/others", "/search?keyword=DO-NOT-LEAK-SENTINEL", "/health", "/bookmarks.yml", "/logout"} {
 			response, e := app.Test(httptest.NewRequest("GET", "http://flare.test"+path, nil))
@@ -40,6 +40,11 @@ func TestPhase1StartupGuardBlocksAllBusinessSurfaces(t *testing.T) {
 			require.Equal(t, 503, response.StatusCode, status+path)
 			require.Equal(t, "private, no-store", response.Header.Get("Cache-Control"))
 			require.NotContains(t, string(raw), "DO-NOT-LEAK-SENTINEL")
+			require.NotContains(t, string(raw), "INTERNAL-DIAGNOSTIC-SENTINEL")
+			require.Contains(t, string(raw), "go run . security init --username admin")
+			require.Contains(t, string(raw), "docker compose stop flare")
+			require.Contains(t, string(raw), "docker compose run --rm --no-deps flare flare security init --username admin")
+			require.Contains(t, string(raw), "不要重复初始化或删除安全状态目录")
 		}
 	}
 }

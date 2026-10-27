@@ -36,6 +36,48 @@ passwords can migrate without this new-password strength requirement.
 Alternatively, supply an initial `FLARE_PASS` or `FLARE_PASS_FILE` at startup.
 The new startup path does not print generated passwords in logs.
 
+### 从源码运行
+
+如果 `go run .` 输出 `Flare security: new`，浏览器显示“Flare 尚未就绪”，说明需要先初始化管理员。在运行终端按 Ctrl+C 停止服务，然后在同一个项目目录、相同环境变量下执行：
+
+```sh
+go run . security init --username admin
+go run .
+```
+
+按提示输入两次密码（终端不回显）。密码要求见上文。启动后访问 <http://localhost:5005>，使用 `admin` 和设置的密码登录；自定义端口时使用实际端口。后续启动无需再次初始化。
+
+### Docker Compose 部署
+
+在原 Compose 项目目录执行，下面假设服务名为 `flare`：
+
+```sh
+docker compose stop flare
+docker compose run --rm --no-deps flare flare security init --username admin
+docker compose up -d flare
+```
+
+临时容器会沿用该服务的数据挂载和环境变量，并交互式询问两次密码。使用原来的 Compose 文件、项目名及其他 Compose 参数；服务名不同则替换 `flare`。初始化命令成功后再启动服务并登录。
+
+必须先配置持久化，例如服务包含 `volumes: ["./app:/app"]`。默认工作目录是 `/app`，账户状态保存于宿主机的 `./app/.flare-security/`。只挂载 YAML 文件时，应额外挂载安全目录，例如 `./security:/app/.flare-security`。自定义 `FLARE_STATE_DIR` 时须持久化对应目录。
+
+### docker run 部署
+
+下面假设容器名为 `flare`，原挂载为当前目录的 `./app:/app`，镜像为 `soulteary/flare:0.6.8`：
+
+```sh
+docker stop flare
+docker run --rm -it \
+  -v "$PWD/app:/app" \
+  soulteary/flare:0.6.8 \
+  flare security init --username admin
+docker start flare
+```
+
+仅在初始化成功后执行最后一行。已有部署必须替换为原来的镜像版本、数据挂载、工作目录和相关环境变量（包括自定义 `FLARE_STATE_DIR`）；命名卷继续使用原卷，不能新建空卷代替。初始化完成后访问映射的服务端口登录。
+
+不要通过 `docker exec` 在仍运行的服务中初始化：服务持有安全状态的独占锁。停止后使用共享原数据的临时容器维护。重建容器时保留安全目录，且不要通过删除该目录重置密码。
+
 Persist `.flare-security/` (or `FLARE_STATE_DIR`) on writable local storage. The
 process holds an exclusive lock; stop it before maintenance commands. Only a
 single writer on a local POSIX filesystem is supported. Sharing cookie keys does
