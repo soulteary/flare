@@ -48,7 +48,10 @@ tablet columns and desktop column choices retain their existing behavior.
 
 Compact bookmark rows have a 28px minimum height. This is an explicit density
 choice; the default phone layout retains its 44px minimum touch targets. Long
-names still wrap and enlarged navigation text still grows the rows. Settings and
+application and bookmark names still wrap and enlarged navigation text still grows
+the rows. App icons and text use aligned columns; long app descriptions use a
+single line with an ellipsis. On compact phones and tablets, settings/help buttons follow the
+content so they cannot obscure bookmarks. Settings and
 editor controls are unaffected. Viewports wider than 1024px retain their density.
 
 The production layout suite compares compact and default heights for the same

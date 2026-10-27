@@ -4,7 +4,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=req
 (async()=>{
  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'flare-layout-'));const listener=net.createServer();await new Promise(r=>listener.listen(0,'127.0.0.1',r));const port=listener.address().port;await new Promise(r=>listener.close(r));
  await fs.writeFile(path.join(dir,'config.yml'),'Title: Layout\nShowTitle: true\nShowDateTime: true\nShowBookmarks: true\nShowApps: true\nGreetings: A very long greeting that must not overlap weather at tablet widths\nHomepage:\n  MobileBookmarkLayout: compact\n');
- await fs.writeFile(path.join(dir,'apps.yml'),'links:\n'+Array.from({length:8},(_,i)=>`- name: App ${i}\n  link: https://example.com/${i}\n  desc: Description\n`).join(''));
+ await fs.writeFile(path.join(dir,'apps.yml'),'links:\n'+Array.from({length:8},(_,i)=>`- name: App ${i}\n  link: https://example.com/${i}\n  icon: home\n  desc: HTTPS://LINK.EXAMPLE.COM/LongAddressWithoutSpaces\n`).join(''));
  await fs.writeFile(path.join(dir,'bookmarks.yml'),'categories:\n- id: a\n  title: First\n- id: b\n  title: Second\nlinks:\n'+Array.from({length:12},(_,i)=>`- name: Bookmark ${i}\n  link: https://example.com/${i}\n  category: ${i<10?'a':'b'}\n`).join(''));
  const child=spawn(process.env.FLARE_BINARY,[],{cwd:dir,env:{...process.env,FLARE_PORT:String(port),FLARE_DISABLE_LOGIN:'true',FLARE_OFFLINE:'true',FLARE_BASELINE:'1'}});let browser;
  try {const base=`http://127.0.0.1:${port}`;for(let i=0;i<100;i++){try{if((await fetch(base+'/ping')).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
@@ -15,6 +15,23 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=req
  // Compare the same production document with only its opt-in class changed.
  const measureDensity=()=>page.locator('#container-bookmarks').evaluate(el=>({apps:document.querySelector('.apps-container').getBoundingClientRect().height,height:el.getBoundingClientRect().height,row:el.querySelector('a.bookmark').getBoundingClientRect().height}));
  const compact=await measureDensity();
+ if(width<=1024){
+  const descriptions=await page.locator('.app-desc').evaluateAll(els=>els.map(el=>({height:el.getBoundingClientRect().height,line:parseFloat(getComputedStyle(el).lineHeight),overflow:getComputedStyle(el).textOverflow})));
+  for(const desc of descriptions){assert.ok(desc.height<=desc.line+1,'description must stay on one line');assert.equal(desc.overflow,'ellipsis');}
+  assert.equal(await page.locator('.app-icon svg, .app-icon img').count(),8,'real icons must render');
+  const cards=await page.locator('.app-item').evaluateAll(els=>els.map(el=>{const icon=el.querySelector('.app-icon').getBoundingClientRect(),text=el.querySelector('.app-text').getBoundingClientRect();return {iconRight:icon.right,textLeft:text.left};}));
+  for(const card of cards)assert.ok(card.textLeft>=card.iconRight+7,'icons and text need a consistent gutter');
+ }
+ if(width<=1024){
+  const toolbar=await page.locator('.toolbar-container').boundingBox();
+  const content=await page.locator('#container-bookmarks').boundingBox();
+  assert.ok(toolbar.y>=content.y+content.height,'utility buttons must not cover bookmarks');
+ }
+ if(process.env.MOBILE_SCREENSHOT_DIR&&[390,744].includes(width)){
+  await fs.mkdir(process.env.MOBILE_SCREENSHOT_DIR,{recursive:true});
+  await page.screenshot({path:path.join(process.env.MOBILE_SCREENSHOT_DIR,`compact-${width}.png`),fullPage:true});
+ }
+
  await page.locator('body').evaluate(el=>el.classList.remove('mobile-bookmarks-compact'));
  const standard=await measureDensity();
  if(width<=1024){assert.ok(compact.apps<standard.apps,JSON.stringify({width,compact,standard}));assert.ok(compact.row<=standard.row,JSON.stringify({width,compact,standard}));assert.ok(compact.height<standard.height,JSON.stringify({width,compact,standard}));}

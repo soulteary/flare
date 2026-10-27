@@ -127,7 +127,19 @@
  .mobile-bookmarks-compact #container-bookmarks .bookmark-list { margin: 3px 0; }
  .mobile-bookmarks-compact #container-bookmarks .bookmark-list a.bookmark { min-height: 28px; padding: 2px 0; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
  .mobile-bookmarks-compact #container-bookmarks .bookmark-group-container { margin-bottom: 12px; }
- .mobile-bookmarks-compact #container-apps .apps-container .app-item { height: auto; min-height: 44px; padding: 4px; margin: 2px 0; }
- .mobile-bookmarks-compact #container-apps .apps-container .app-title,
- .mobile-bookmarks-compact #container-apps .apps-container .app-desc { white-space: normal; overflow-wrap: anywhere; margin-bottom: 0; }
+ .mobile-bookmarks-compact #container-apps .apps-container { column-gap: 16px; row-gap: 4px; }
+ .mobile-bookmarks-compact #container-apps .apps-container .app-item { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 8px; height: auto; min-height: 44px; padding: 4px 0; margin: 0; }
+ .mobile-bookmarks-compact #container-apps .apps-container .app-icon { position: static; width: 28px; height: 28px; }
+ .mobile-bookmarks-compact #container-apps .apps-container .app-icon > * { display: block; width: 28px; height: 28px; object-fit: contain; }
+ .mobile-bookmarks-compact #container-apps .apps-container .app-text { margin-left: 0; min-width: 0; }
+ .mobile-bookmarks-compact #container-apps .apps-container .app-title { white-space: normal; overflow-wrap: anywhere; margin-bottom: 0; line-height: 1.4; }
+ /* Descriptions are secondary: keep long addresses on one line, not broken URL fragments. */
+ .mobile-bookmarks-compact #container-apps .apps-container .app-desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; line-height: 1.4; }
+}
+
+/* Compact utility buttons follow the content instead of covering links. */
+@media (max-width: 1024px) {
+ .mobile-bookmarks-compact #page-home .toolbar-container { position: static; display: flex; width: auto; gap: 8px; justify-content: flex-end; margin: 16px 0; }
+ .mobile-bookmarks-compact #page-home .toolbar-btn-settings { margin: 0; }
+ .mobile-bookmarks-compact #page-home.pageview .container { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 }
