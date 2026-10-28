@@ -88,6 +88,14 @@ Some route-local failures are generic HTTP 403 rather than a structured code.
 Use response status/code, request ID when supplied and terminal logs together.
 An invalid configured/request authority may return `INVALID_INPUT` with HTTP 400.
 
+Source rejection responses include a stable `error.reason`, a human-readable
+`error.message`, an actionable `error.hint`, and a `request_id`. The editor shows
+all four values while preserving the current draft. Logs record the same reason
+and request ID without copying untrusted Origin or Referer values. Common reasons
+include `ORIGIN_SCHEME_MISMATCH` (often HTTP access with an HTTPS-only policy),
+`ORIGIN_HOST_MISMATCH`, `ORIGIN_PORT_MISMATCH`, `ORIGIN_OPAQUE`, and
+`FETCH_SITE_NOT_SAME_ORIGIN`. Include the reason and request ID in support reports.
+
 Current development settings documents explicitly declare a `same-origin`
 referrer policy. This preserves a non-opaque Origin on native form submissions
 even when a proxy overrides the HTTP response policy with `no-referrer`.

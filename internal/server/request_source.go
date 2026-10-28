@@ -74,24 +74,28 @@ func NewWriteSourceProtection() (fiber.Handler, error) {
 		return nil, err
 	}
 	return func(c fiber.Ctx) error {
-		reject := func(status int, code string) error {
+		reject := func(status int, code string, diagnostic *requestsource.Diagnostic) error {
 			raw := make([]byte, 12)
 			_, _ = rand.Read(raw)
 			id := hex.EncodeToString(raw)
 			c.Set("X-Request-ID", id)
 			c.Set("Cache-Control", "private, no-store")
-			logger.GetLogger().Warn("request source rejected", "code", code, "status", status, "request_id", id)
-			return c.Status(status).JSON(fiber.Map{"error": fiber.Map{"code": code, "message": code}, "request_id": id})
+			reason, message, hint := "REQUEST_AUTHORITY_INVALID", "The request authority is invalid.", "Check the public URL, Host header and reverse-proxy settings."
+			if diagnostic != nil {
+				reason, message, hint = diagnostic.Reason, diagnostic.Message, diagnostic.Hint
+			}
+			logger.GetLogger().Warn("request source rejected", "code", code, "reason", reason, "status", status, "request_id", id)
+			return c.Status(status).JSON(fiber.Map{"error": fiber.Map{"code": code, "reason": reason, "message": message, "hint": hint}, "request_id": id})
 		}
 		if _, err := policy.External(c); err != nil {
-			return reject(400, "INVALID_INPUT")
+			return reject(400, "INVALID_INPUT", nil)
 		}
 		switch c.Method() {
 		case http.MethodGet, http.MethodHead, http.MethodOptions:
 			return c.Next()
 		}
-		if !policy.Valid(c) {
-			return reject(403, "SOURCE_REJECTED")
+		if diagnostic := policy.Diagnose(c); diagnostic != nil {
+			return reject(403, "SOURCE_REJECTED", diagnostic)
 		}
 		return c.Next()
 	}, nil

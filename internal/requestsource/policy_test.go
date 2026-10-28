@@ -13,11 +13,12 @@ func TestCanonicalSourcePolicy(t *testing.T) {
 		name, external, hosts, proxies, target, origin, forwardedHost, forwardedProto string
 		secure                                                                        bool
 		want                                                                          int
+		reason                                                                        string
 	}{
 		{name: "default HTTP port", target: "http://flare.test/write", origin: "http://flare.test:80", want: 200},
-		{name: "wrong scheme", target: "http://flare.test/write", origin: "https://flare.test", want: 403},
+		{name: "wrong scheme", target: "http://flare.test/write", origin: "https://flare.test", want: 403, reason: "ORIGIN_SCHEME_MISMATCH"},
 		{name: "secure default port", target: "http://flare.test/write", origin: "https://flare.test:443", secure: true, want: 200},
-		{name: "secure downgrade", target: "http://flare.test/write", origin: "http://flare.test", secure: true, want: 403},
+		{name: "secure downgrade", target: "http://flare.test/write", origin: "http://flare.test", secure: true, want: 403, reason: "ORIGIN_SCHEME_MISMATCH"},
 		{name: "ipv6", target: "http://[::1]:5005/write", origin: "http://[::1]:5005", want: 200},
 		{name: "ipv6 wrong port", target: "http://[::1]:5005/write", origin: "http://[::1]", want: 403},
 		{name: "spoofed headers", target: "http://flare.test/write", origin: "https://evil.test", forwardedHost: "evil.test", forwardedProto: "https", want: 403},
@@ -34,7 +35,12 @@ func TestCanonicalSourcePolicy(t *testing.T) {
 			require.NoError(t, err)
 			app := fiber.New()
 			app.Post("/write", func(c fiber.Ctx) error {
-				if !p.Valid(c) {
+				if diagnosis := p.Diagnose(c); diagnosis != nil {
+					if tc.reason != "" {
+						require.Equal(t, tc.reason, diagnosis.Reason)
+						require.NotEmpty(t, diagnosis.Message)
+						require.NotEmpty(t, diagnosis.Hint)
+					}
 					return c.SendStatus(403)
 				}
 				return c.SendStatus(200)

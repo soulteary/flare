@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
@@ -21,9 +22,13 @@ func TestPersistentWriteSourcePolicy(t *testing.T) {
 	app := fiber.New()
 	app.Use(middleware)
 	app.Post("/write", func(c fiber.Ctx) error { return c.SendStatus(200) })
-	for _, origin := range []string{"http://flare.test", "https://evil.test", "null"} {
+	for _, tc := range []struct{ origin, reason string }{
+		{origin: "http://flare.test", reason: "ORIGIN_SCHEME_MISMATCH"},
+		{origin: "https://evil.test", reason: "ORIGIN_HOST_MISMATCH"},
+		{origin: "null", reason: "ORIGIN_OPAQUE"},
+	} {
 		req := httptest.NewRequest("POST", "http://flare.test/write", nil)
-		req.Header.Set("Origin", origin)
+		req.Header.Set("Origin", tc.origin)
 		req.Header.Set("X-Forwarded-Host", "evil.test")
 		req.Header.Set("X-Forwarded-Proto", "http")
 		r, e := app.Test(req)
@@ -31,6 +36,18 @@ func TestPersistentWriteSourcePolicy(t *testing.T) {
 		require.Equal(t, 403, r.StatusCode)
 		require.NotEmpty(t, r.Header.Get("X-Request-ID"))
 		require.Equal(t, "private, no-store", r.Header.Get("Cache-Control"))
+		var result struct {
+			Error     struct{ Code, Reason, Message, Hint string } `json:"error"`
+			RequestID string                                       `json:"request_id"`
+		}
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&result))
+		require.Equal(t, "SOURCE_REJECTED", result.Error.Code)
+		require.Equal(t, tc.reason, result.Error.Reason)
+		require.NotEmpty(t, result.Error.Message)
+		require.NotEmpty(t, result.Error.Hint)
+		require.NotEmpty(t, result.RequestID)
+		require.NotContains(t, result.Error.Message, tc.origin)
+		require.NotContains(t, result.Error.Hint, tc.origin)
 	}
 	req := httptest.NewRequest("POST", "http://flare.test/write", nil)
 	req.Header.Set("Origin", "https://flare.test:443")

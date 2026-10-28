@@ -19,6 +19,19 @@ type Policy struct {
 	secure   bool
 }
 
+// Diagnostic is a stable, safe explanation for a rejected browser source. It
+// deliberately avoids echoing request headers, which may contain attacker input
+// or sensitive Referer paths. Callers can expose these fields to users and logs.
+type Diagnostic struct {
+	Reason  string `json:"reason"`
+	Message string `json:"message"`
+	Hint    string `json:"hint"`
+}
+
+func diagnostic(reason, message, hint string) *Diagnostic {
+	return &Diagnostic{Reason: reason, Message: message, Hint: hint}
+}
+
 func New(external, hosts, proxies string, secure bool) (*Policy, error) {
 	p := &Policy{secure: secure}
 	if external != "" {
@@ -203,19 +216,22 @@ func (p *Policy) active(c fiber.Ctx) (*url.URL, error) {
 
 	return effective, nil
 }
-func (p *Policy) Valid(c fiber.Ctx) bool {
+
+// Diagnose validates browser source metadata and returns an actionable, safe
+// explanation on failure. A nil result means that the request is acceptable.
+func (p *Policy) Diagnose(c fiber.Ctx) *Diagnostic {
 	external, e := p.active(c)
 	if e != nil {
-		return false
+		return diagnostic("REQUEST_AUTHORITY_INVALID", "The request Host does not match Flare's configured public origin.", "Preserve the original Host header (including a non-default port), or review FLARE_EXTERNAL_URL, FLARE_ALLOWED_HOSTS and FLARE_TRUSTED_PROXIES.")
 	}
 	sites := c.Request().Header.PeekAll("Sec-Fetch-Site")
 	if len(sites) > 1 {
-		return false
+		return diagnostic("FETCH_METADATA_AMBIGUOUS", "The request contains duplicate browser source metadata.", "Check the reverse proxy for duplicated Sec-Fetch-Site headers and retry from a newly opened Flare page.")
 	}
 	if len(sites) == 1 {
 		site := string(sites[0])
 		if site != "same-origin" && site != "none" {
-			return false
+			return diagnostic("FETCH_SITE_NOT_SAME_ORIGIN", "The browser marked this write as cross-origin.", "Open Flare and submit the change from the same scheme, hostname and port; do not submit management forms through an embedded or sibling site.")
 		}
 	}
 	for _, header := range []string{"Origin", "Referer"} {
@@ -224,18 +240,39 @@ func (p *Policy) Valid(c fiber.Ctx) bool {
 			continue
 		}
 		if len(values) != 1 {
-			return false
+			return diagnostic(strings.ToUpper(header)+"_AMBIGUOUS", "The request contains duplicate "+header+" headers.", "Check the reverse proxy for duplicated source headers and retry from a newly opened Flare page.")
 		}
 		raw := string(values[0])
 		u, e := url.Parse(raw)
-		if e != nil || strings.TrimSpace(raw) != raw || !validURL(u) || !same(u, external) {
-			return false
+		if raw == "null" {
+			return diagnostic(strings.ToUpper(header)+"_OPAQUE", "The browser sent an opaque "+header+" value, so Flare cannot verify the page source.", "Open the Flare page directly. If a proxy overrides Referrer-Policy, remove that override or use same-origin.")
+		}
+		if e != nil || strings.TrimSpace(raw) != raw || !validURL(u) {
+			return diagnostic(strings.ToUpper(header)+"_INVALID", "The request contains an invalid "+header+" value.", "Retry from a newly opened Flare page and check whether the reverse proxy rewrites browser source headers.")
+		}
+		prefix := strings.ToUpper(header)
+		if !strings.EqualFold(u.Scheme, external.Scheme) {
+			hint := "Use one public protocol consistently and ensure X-Forwarded-Proto is supplied only by a configured trusted proxy."
+			if p.secure && external.Scheme == "https" && u.Scheme == "http" {
+				hint = "FLARE_COOKIE_SECURE or FLARE_EXTERNAL_URL requires HTTPS. Open the HTTPS public URL, or disable FLARE_COOKIE_SECURE if this deployment is intentionally HTTP-only."
+			}
+			return diagnostic(prefix+"_SCHEME_MISMATCH", "The page protocol does not match Flare's effective public protocol.", hint)
+		}
+		if !strings.EqualFold(u.Hostname(), external.Hostname()) {
+			return diagnostic(prefix+"_HOST_MISMATCH", "The page hostname does not match the Host received by Flare.", "Configure the reverse proxy with 'proxy_set_header Host $http_host;' or set a canonical FLARE_EXTERNAL_URL with a narrowly scoped FLARE_TRUSTED_PROXIES value.")
+		}
+		if port(u) != port(external) {
+			return diagnostic(prefix+"_PORT_MISMATCH", "The page port does not match the public port received by Flare.", "Preserve the public port in Host; for Nginx use $http_host rather than $host.")
 		}
 		if header == "Origin" && (u.Path != "" || u.RawQuery != "" || u.ForceQuery) {
-			return false
+			return diagnostic("ORIGIN_INVALID", "The Origin header contains a path or query and is not a valid browser origin.", "Check whether a proxy or browser extension rewrites the Origin header.")
 		}
 	}
-	return true
+	return nil
+}
+
+func (p *Policy) Valid(c fiber.Ctx) bool {
+	return p.Diagnose(c) == nil
 }
 func (p *Policy) Secure(c fiber.Ctx) bool {
 	u, e := p.External(c)
