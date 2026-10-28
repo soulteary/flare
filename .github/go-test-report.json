@@ -7,9 +7,9 @@
     "skipped": 2
   },
   "coverage": {
-    "covered_statements": 6396,
-    "total_statements": 7521,
-    "percentage": 85.04,
+    "covered_statements": 6413,
+    "total_statements": 7538,
+    "percentage": 85.08,
     "threshold": 0
   },
   "packages": [
@@ -46,7 +46,7 @@
       "status": "pass",
       "tests": 108,
       "failed": 0,
-      "coverage": 91.24
+      "coverage": 91.3
     },
     {
       "name": "config/define",
@@ -165,7 +165,7 @@
       "status": "pass",
       "tests": 5,
       "failed": 0,
-      "coverage": 84.62
+      "coverage": 85.29
     },
     {
       "name": "internal/resources/assets",
@@ -214,7 +214,7 @@
       "status": "pass",
       "tests": 54,
       "failed": 0,
-      "coverage": 77.33
+      "coverage": 77.78
     },
     {
       "name": "internal/settings",
