@@ -54,18 +54,21 @@ test('mobile editor preserves focus and drafts when save outcome is unknown',asy
   await page.unroute('**/editor/document');
   // Rejected writes and proxy error pages must not be reported as expired sessions.
   for(const response of [
-   {status:403,contentType:'application/json',body:JSON.stringify({code:'write_source_rejected',error:'Origin rejected'})},
-   {status:403,contentType:'application/json',body:JSON.stringify({error:{code:'SOURCE_REJECTED',message:'SOURCE_REJECTED'},request_id:'fixture-request'})},
+   {status:403,contentType:'application/json',body:JSON.stringify({code:'write_source_rejected',error:'Origin rejected'}),expected:'来源校验',legacy:true},
+   {status:403,contentType:'application/json',body:JSON.stringify({error:{code:'SOURCE_REJECTED',message:'SOURCE_REJECTED'},request_id:'fixture-request'}),expected:'来源校验',legacy:true},
+   {status:403,contentType:'application/json',body:JSON.stringify({error:{code:'SOURCE_REJECTED',reason:'ORIGIN_SCHEME_MISMATCH',message:'The page protocol does not match Flare.',hint:'Open the HTTPS public URL.'},request_id:'fixture-detailed'}),expected:'The page protocol'},
    {status:503,contentType:'application/json',body:JSON.stringify({error:{code:'STORAGE_UNAVAILABLE',message:'STORAGE_UNAVAILABLE'},request_id:'fixture-storage'}),expected:'STORAGE_UNAVAILABLE'},
    {status:403,contentType:'text/plain',body:'Write request rejected. Use the Flare page on this origin and retry.'},
    {status:502,contentType:'text/html',body:'<h1>Bad gateway</h1>'},
   ]){
    await page.route('**/editor/document',route=>route.request().method()==='POST'?route.fulfill(response):route.continue());
+   const previous=await page.locator('#save-status').textContent();
    await page.locator('#save-changes').click();
-   const expected=response.expected|| (response.contentType==='application/json'?'来源校验':`HTTP ${response.status}`);
-   await page.waitForFunction(text=>document.getElementById('save-status').textContent.includes(text),expected);
-   const message=await page.locator('#save-status').textContent();assert.doesNotMatch(message,/登录可能已过期/);
-   if(response.contentType==='application/json'&&!response.expected)assert.match(message,/Host.*外部端口/);
+   const expected=response.expected||`HTTP ${response.status}`;
+   await page.waitForFunction(text=>{const current=document.getElementById('save-status').textContent;return current!==text&&!current.includes('正在保存');},previous);
+   const message=await page.locator('#save-status').textContent();assert.match(message,new RegExp(expected));assert.doesNotMatch(message,/登录可能已过期/);
+   if(response.legacy)assert.match(message,/Host.*外部端口/);
+   if(response.expected==='The page protocol')assert.match(message,/Open the HTTPS public URL.*ORIGIN_SCHEME_MISMATCH.*fixture-detailed/);
    assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.dirty),true);
    assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.toJSON().version),'initial');
    assert.equal(await page.locator('#save-changes').isEnabled(),true);

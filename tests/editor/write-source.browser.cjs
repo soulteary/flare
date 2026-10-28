@@ -34,16 +34,16 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
   for(const test of [
    {name:'direct',base:direct,mode:'preserve',status:200},
    {name:'proxy-preserve',base:proxied,mode:'preserve',status:200},
-   {name:'proxy-rewrite',base:proxied,mode:'rewrite',status:403},
-   {name:'proxy-drop-port',base:proxied,mode:'drop-port',status:403},
-   {name:'proxy-forwarded-only',base:proxied,mode:'forwarded-only',status:403},
+   {name:'proxy-rewrite',base:proxied,mode:'rewrite',status:403,reason:'ORIGIN_HOST_MISMATCH'},
+   {name:'proxy-drop-port',base:proxied,mode:'drop-port',status:403,reason:'ORIGIN_PORT_MISMATCH'},
+   {name:'proxy-forwarded-only',base:proxied,mode:'forwarded-only',status:403,reason:'ORIGIN_HOST_MISMATCH'},
   ]){
    mode=test.mode;const name=`Issue195-${test.name}`;
    await page.goto(test.base+'/settings/appearance');await page.locator('#settings-title').fill(name);
    const [settings]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/settings/appearance')),page.locator('input.btn-submit').click()]);
    assert.equal(settings.status(),test.status);
    assert.equal((await fs.readFile(path.join(dir,'config.yml'),'utf8')).includes(name),test.status===200);
-   if(test.status===403){const result=await settings.json();assert.equal(result.error.code,'SOURCE_REJECTED');assert.ok(result.request_id);assert.equal(settings.headers()['cache-control'],'private, no-store');}
+   if(test.status===403){const result=await settings.json();assert.equal(result.error.code,'SOURCE_REJECTED');assert.equal(result.error.reason,test.reason);assert.ok(result.error.message);assert.ok(result.error.hint);assert.ok(result.request_id);assert.equal(settings.headers()['cache-control'],'private, no-store');}
    await page.goto(test.base+'/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);
    await page.locator('#new-entry').click();await page.locator('#entry-name').fill(name);await page.locator('#entry-url').fill('https://example.com/'+test.name);
    await page.locator('#entry-location').selectOption('apps');await page.locator('#entry-form .dialog-actions button.primary').click();
@@ -53,8 +53,8 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
    const message=await page.locator('#save-status').textContent();
    if(test.status===200)assert.equal(message,'All changes saved');
    else{
-    assert.match(message,/origin protection.*Host header.*public port/);assert.doesNotMatch(message,/session.*expired/i);
-    assert.equal((await saved.json()).error.code,'SOURCE_REJECTED');
+    assert.match(message,new RegExp(`${test.reason}.*Request ID:`));assert.match(message,/proxy_set_header Host|\$http_host/);assert.doesNotMatch(message,/session.*expired/i);
+    const rejection=await saved.json();assert.equal(rejection.error.code,'SOURCE_REJECTED');assert.equal(rejection.error.reason,test.reason);
     assert.equal((await fs.readFile(path.join(dir,'apps.yml'),'utf8')).includes(name),false);
     assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.dirty),true);
     assert.equal(await page.getByRole('button',{name,exact:true}).count(),1);
