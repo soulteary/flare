@@ -8,7 +8,7 @@
 | Passed | 536 |
 | Failed | 0 |
 | Skipped | 2 |
-| Coverage | 85.08% |
+| Coverage | 85.06% |
 | Threshold | 0.00% |
 
 ### Packages
@@ -19,7 +19,7 @@
 | build | no\_tests | 0 | 0 | 0.00% |
 | build/builder | pass | 12 | 0 | 88.45% |
 | cmd | pass | 64 | 0 | 92.18% |
-| config/data | pass | 108 | 0 | 91.30% |
+| config/data | pass | 108 | 0 | 91.24% |
 | config/define | pass | 1 | 0 | 62.79% |
 | config/model | pass | 5 | 0 | 82.35% |
 | internal/auth | pass | 70 | 0 | 91.07% |

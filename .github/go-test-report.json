@@ -7,9 +7,9 @@
     "skipped": 2
   },
   "coverage": {
-    "covered_statements": 6413,
+    "covered_statements": 6412,
     "total_statements": 7538,
-    "percentage": 85.08,
+    "percentage": 85.06,
     "threshold": 0
   },
   "packages": [
@@ -46,7 +46,7 @@
       "status": "pass",
       "tests": 108,
       "failed": 0,
-      "coverage": 91.3
+      "coverage": 91.24
     },
     {
       "name": "config/define",
