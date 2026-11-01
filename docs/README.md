@@ -2,22 +2,21 @@
 
 ## Choose your version
 
-The latest published stable release is [0.6.8](https://github.com/soulteary/flare/releases/tag/0.6.8)
-(verified 2026-10-27, Asia/Shanghai). It includes persistent single-administrator
-accounts, revocable sessions, per-entry/category privacy and navigation caching.
-Read the [release and upgrade notes](release-0.6.8.md) before updating, especially
-the security-directory persistence and rollback requirements.
+The current release is [0.6.13](https://github.com/soulteary/flare/releases/tag/0.6.13),
+a dependency maintenance patch over 0.6.12. Read the [release and upgrade notes](release-0.6.13.md).
+The older [0.6.8 security migration notes](release-0.6.8.md) remain relevant when
+upgrading from 0.6.7 or earlier; current releases retain the restored public,
+login-disabled defaults introduced after 0.6.8. Existing private settings remain effective.
 
-Guides below describe 0.6.8 and current source, with explicit legacy 0.6.7
-differences. Use [0.6.7 tagged documentation](https://github.com/soulteary/flare/tree/0.6.7/docs)
-for an unchanged older deployment. Physical-device acceptance remains limited;
-see the release record. Merging later features does not publish an image or move `latest`.
+Use tagged documentation for older deployments. Physical-device acceptance remains
+limited; desktop browser and QEMU checks do not establish physical-device support.
+Merging changes does not itself publish an image or move `latest`.
 
 ## Install and operate
 
-- [Deployment examples](https://github.com/soulteary/docker-flare#快速上手) and [0.6.8 release notes](release-0.6.8.md)
+- [Deployment examples](https://github.com/soulteary/docker-flare#快速上手) and [0.6.13 release notes](release-0.6.13.md)
 - [Configuration, precedence and access models](configuration.md)
-- [Accounts, initialization and private resources](accounts.md) — 0.6.8 and current source; includes legacy-version differences
+- [Accounts, initialization and private resources](accounts.md) — current release and source; includes legacy-version differences
 - [Upgrade from 0.6.7 and rollback](login-private-upgrade.md)
 - [Backups and restore](backup-restore.md), [editor recovery](editor-recovery.md)
 - [Reverse proxies and deployment boundaries](reverse-proxy.md)
