@@ -29,62 +29,62 @@
 
 ### gocyclo
 
-- `internal/security/recovery_process_test.go`
-  - Line 16: cyclomatic complexity 29 for function TestRecoveryKilledWriter
-- `internal/security/inspect.go`
-  - Line 56: cyclomatic complexity 20 for function Inspect
-- `internal/pages/home/home.go`
-  - Line 235: cyclomatic complexity 20 for function renderSearch
+- `internal/yamlutil/bookmarks.go`
+  - Line 13: cyclomatic complexity 24 for function DecodeBookmarks
+  - Line 101: cyclomatic complexity 23 for function MergeBookmarks
+- `internal/pages/editor/document.go`
+  - Line 38: cyclomatic complexity 23 for function saveEditorDocument
 - `config/data/editor_document.go`
   - Line 148: cyclomatic complexity 19 for function commitEditorDocumentChecked
+- `cmd/cli.go`
+  - Line 98: cyclomatic complexity 19 for function parseCLI
 - `config/data/navigation_view.go`
   - Line 94: cyclomatic complexity 17 for function (NavigationView).Matches
+- `internal/settings/appearance/appearance.go`
+  - Line 106: cyclomatic complexity 16 for function pageAppearance
+- `internal/pages/home/bookmark.go`
+  - Line 129: cyclomatic complexity 38 for function renderBookmarkIndexGroupsRead
+- `internal/security/recovery_process_test.go`
+  - Line 16: cyclomatic complexity 29 for function TestRecoveryKilledWriter
+- `internal/pages/editor/transfer.go`
+  - Line 183: cyclomatic complexity 27 for function commitTransfer
+- `internal/security/inspect_test.go`
+  - Line 11: cyclomatic complexity 22 for function TestInspectReadOnlyValidation
+- `internal/security/buffered_read_test.go`
+  - Line 198: cyclomatic complexity 21 for function TestBufferedReadKilledTentativeProcess
+  - Line 105: cyclomatic complexity 20 for function TestBufferedReadFinalDecisionRejectsRevocationExpiryRollbackAndFault
+- `internal/pages/home/home.go`
+  - Line 235: cyclomatic complexity 20 for function renderSearch
+- `internal/server/asset_cache_test.go`
+  - Line 21: cyclomatic complexity 18 for function TestPersistentStorePublicAssetCacheAndPrivateResponses
+- `internal/bookmarks/transfer.go`
+  - Line 159: cyclomatic complexity 18 for function Build
+- `cmd/security_startup.go`
+  - Line 390: cyclomatic complexity 47 for function PrepareSecurity
+  - Line 268: cyclomatic complexity 32 for function migrationSnapshot
+  - Line 53: cyclomatic complexity 17 for function inspectContent
+  - Line 166: cyclomatic complexity 16 for function readCredential
 - `internal/requestsource/policy.go`
   - Line 136: cyclomatic complexity 34 for function (*Policy).active
   - Line 222: cyclomatic complexity 23 for function (*Policy).Diagnose
   - Line 35: cyclomatic complexity 21 for function New
 - `internal/auth/login_footer.go`
   - Line 13: cyclomatic complexity 27 for function loginFooter
-- `internal/pages/editor/document.go`
-  - Line 38: cyclomatic complexity 23 for function saveEditorDocument
-- `internal/server/asset_cache_test.go`
-  - Line 21: cyclomatic complexity 18 for function TestPersistentStorePublicAssetCacheAndPrivateResponses
-- `internal/bookmarks/transfer.go`
-  - Line 159: cyclomatic complexity 18 for function Build
 - `internal/yamlutil/bookmark_aliases.go`
   - Line 63: cyclomatic complexity 17 for function (*permissionResolver).value
+- `internal/security/store.go`
+  - Line 132: cyclomatic complexity 40 for function Open
+  - Line 591: cyclomatic complexity 16 for function (*Store).GuardSession
+- `internal/security/inspect.go`
+  - Line 56: cyclomatic complexity 20 for function Inspect
 - `internal/settings/weather/weather.go`
   - Line 111: cyclomatic complexity 16 for function updateWeatherOptions
 - `internal/pages/home/navigation_cache_benchmark_test.go`
   - Line 64: cyclomatic complexity 16 for function BenchmarkNativeHomepageFragmentCache
-- `internal/yamlutil/bookmarks.go`
-  - Line 13: cyclomatic complexity 24 for function DecodeBookmarks
-  - Line 101: cyclomatic complexity 23 for function MergeBookmarks
-- `internal/security/inspect_test.go`
-  - Line 11: cyclomatic complexity 22 for function TestInspectReadOnlyValidation
-- `cmd/cli.go`
-  - Line 98: cyclomatic complexity 19 for function parseCLI
-- `internal/settings/appearance/appearance.go`
-  - Line 106: cyclomatic complexity 16 for function pageAppearance
-- `internal/security/store.go`
-  - Line 132: cyclomatic complexity 40 for function Open
-  - Line 591: cyclomatic complexity 16 for function (*Store).GuardSession
-- `internal/pages/home/bookmark.go`
-  - Line 129: cyclomatic complexity 38 for function renderBookmarkIndexGroupsRead
-- `internal/pages/editor/transfer.go`
-  - Line 183: cyclomatic complexity 27 for function commitTransfer
-- `internal/security/buffered_read_test.go`
-  - Line 198: cyclomatic complexity 21 for function TestBufferedReadKilledTentativeProcess
-  - Line 105: cyclomatic complexity 20 for function TestBufferedReadFinalDecisionRejectsRevocationExpiryRollbackAndFault
 - `config/data/visible_navigation_test.go`
   - Line 75: cyclomatic complexity 16 for function TestVisibleNavigationPairRemainsCoherentDuringEditorPublish
 - `cmd/security_command.go`
   - Line 21: cyclomatic complexity 86 for function ExecuteSecurityCommand
-- `cmd/security_startup.go`
-  - Line 390: cyclomatic complexity 47 for function PrepareSecurity
-  - Line 268: cyclomatic complexity 32 for function migrationSnapshot
-  - Line 53: cyclomatic complexity 17 for function inspectContent
-  - Line 166: cyclomatic complexity 16 for function readCredential
 - `internal/auth/persistent.go`
   - Line 61: cyclomatic complexity 45 for function RequestHandleWithSecurity
 
