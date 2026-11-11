@@ -14,7 +14,7 @@ require (
 	github.com/soulteary/version-kit/v4 v4.0.3
 	github.com/spf13/pflag v1.1.0
 	github.com/stretchr/testify v1.12.1
-	github.com/tdewolff/minify/v2 v2.24.24
+	github.com/tdewolff/minify/v2 v2.24.25
 	github.com/valyala/fasthttp v1.77.0
 	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/crypto v0.58.0
