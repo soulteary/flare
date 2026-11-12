@@ -1,17 +1,17 @@
 module github.com/soulteary/flare
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/fatih/color v1.19.0
 	github.com/gofiber/fiber/v3 v3.7.0
 	github.com/gorilla/sessions v1.4.0
-	github.com/soulteary/cli-kit v1.9.3
+	github.com/soulteary/cli-kit v1.9.4
 	github.com/soulteary/funny-china-weather v0.4.0
-	github.com/soulteary/i18n-kit/v4 v4.0.4
-	github.com/soulteary/memfs-kit v1.1.1
-	github.com/soulteary/version-kit/v4 v4.0.3
+	github.com/soulteary/i18n-kit/v4 v4.0.5
+	github.com/soulteary/memfs-kit v1.1.2
+	github.com/soulteary/version-kit/v4 v4.0.4
 	github.com/spf13/pflag v1.1.0
 	github.com/stretchr/testify v1.12.1
 	github.com/tdewolff/minify/v2 v2.24.25
