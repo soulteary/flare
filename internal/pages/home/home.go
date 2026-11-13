@@ -346,7 +346,12 @@ func renderClockPage(c fiber.Ctx, m map[string]any, options model.Application, g
 	}
 	resolved := clock.Populate(m, options, time.Now(), greeting)
 	populateHybridSearch(m, options)
-	applyHomeScriptPolicy(c, resolved.Enhance, m["SearchHybrid"] == true)
+	if assets := guideAssetsURI(c); assets != "" {
+		m["GuideAssetsURI"] = assets
+		applyGuideScriptPolicy(c, resolved.Enhance, m["SearchHybrid"] == true)
+	} else {
+		applyHomeScriptPolicy(c, resolved.Enhance, m["SearchHybrid"] == true)
+	}
 	return c.Status(http.StatusOK).Render("home.html", m)
 }
 

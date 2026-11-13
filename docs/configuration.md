@@ -39,7 +39,7 @@ credentials or initialization, and invalid security inputs still block startup.
 | `FLARE_ALLOWED_HOSTS` | — | Unset | Current main: comma-separated allowed host/port authorities |
 | `FLARE_TRUSTED_PROXIES` | — | Unset | Current main: comma-separated peer IPs/CIDRs allowed to supply supported forwarding headers |
 | `FLARE_EDITOR` | `--enable_editor`, `-e` | `true` | Boolean; expose editor and transfer routes |
-| `FLARE_GUIDE` | `--guide`, `-g` | `true` | Boolean; expose guide |
+| `FLARE_GUIDE` | `--guide`, `-g` | `true` | Boolean; expose the guide at `/guide`, a walkthrough rendered on the visitor's own homepage |
 | `FLARE_OFFLINE` | `--offline`, `-o` | `false` | Boolean; disable server-side weather/location activity |
 | `FLARE_MINI_REQUEST` | `--mini_request`, `-m` | `false` | Boolean; inline icon SVGs, trade fewer HTTP requests for larger HTML |
 | `FLARE_DEPRECATED_NOTICE` | `--enable_notice`, `-n` | `true` | Boolean; deprecated-feature notices |

@@ -3,16 +3,13 @@ package guide
 import (
 	"embed"
 	"io/fs"
-	"net/http"
-	"regexp"
-	"strconv"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/internal/resources/assets"
 
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/auth"
-	"github.com/soulteary/flare/internal/fn"
+	"github.com/soulteary/flare/internal/pages/home"
 )
 
 const _ASSETS_WEB_URI = "/assets/guide"
@@ -31,21 +28,9 @@ func RegisterRouting(e *fiber.App) {
 	}
 }
 
+// render shows the visitor's own homepage with the guide assets enabled. The
+// page is rendered within this request instead of being fetched over loopback
+// HTTP, so the visitor's session, visibility rules and Host policy still apply.
 func render(c fiber.Ctx) error {
-	return c.Status(http.StatusOK).Type("html", "utf-8").Send([]byte(getUserHomePage()))
-}
-
-func getUserHomePage() string {
-	port := strconv.Itoa(define.AppFlags.Port)
-	body, err := fn.GetHTML("http://localhost:" + port + "/")
-	if err != nil {
-		return ""
-	}
-	ruleHead := regexp.MustCompile("</head>")
-	ruleBody := regexp.MustCompile("</body>")
-	rulePageView := regexp.MustCompile(`class="pageview"`)
-	content := ruleHead.ReplaceAllString(body, `<link rel="stylesheet" href="/assets/guide/introjs.min.css"><link rel="stylesheet" href="/assets/guide/app.css"><script src="/assets/guide/intro.min.js"></script></head>`)
-	content = ruleBody.ReplaceAllString(content, `<script src="/assets/guide/app.js"></script></head>`)
-	content = rulePageView.ReplaceAllString(content, `class="pageview" style="position:inherit;"`)
-	return content
+	return home.RenderGuide(c, _ASSETS_WEB_URI)
 }

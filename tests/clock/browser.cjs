@@ -74,6 +74,16 @@ const {spawn} = require('node:child_process');
     assert.equal(await page.locator('#clock-day').textContent(),'Friday');
     assert.equal(await page.locator('#plugin-greetings').textContent(),'night');
     if(process.env.CLOCK_SCREENSHOT_DIR)await page.locator('#hero-container').screenshot({path:path.join(process.env.CLOCK_SCREENSHOT_DIR,'clock.png')});
+    // The guide renders this homepage within the request: its own scripts run, the authorized clock keeps working and footer script stays blocked.
+    response=await page.goto(base+'/guide');
+    assert.match(response.headers()['content-security-policy'],/^script-src 'self' 'sha256-[^']+'; script-src-attr 'none'; /);
+    const guideSource=await response.text();
+    assert.match(guideSource,/<script src="\/assets\/guide\/app\.js"><\/script><\/body><\/html>\s*$/);assert.equal(guideSource.split('</head>').length,2);
+    await page.clock.runFor(1000);
+    assert.equal(await page.locator('.introjs-tooltip').isVisible(),true);
+    assert.equal(await page.locator('#page-home').evaluate(e=>e.style.position),'inherit');
+    assert.equal(await page.locator('#clock').getAttribute('data-initialized'),'true');
+    assert.equal(await page.evaluate(()=>window.__unexpectedScript),undefined);
     await page.goto(base+'/help');
     const help=await page.locator('#plugin-greetings').textContent();
     await page.clock.runFor(61000);
