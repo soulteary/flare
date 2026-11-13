@@ -75,20 +75,30 @@
 }
 
 
+/* Classic phone layout (the default): two equal columns of desktop-sized cards.
+   Cards keep the 40px height at the default text size and grow, instead of
+   clipping, when the device enlarges text; the grid keeps such rows aligned. */
 @media (max-width: 767px) {
-  #container-apps .apps-container .app-container {
-    width: 50%;
-  }
-}
-@media (max-width: 768px) {
-  #container-apps .apps-container { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  #container-apps .apps-container { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #container-apps .apps-container .app-container { float: none; width: auto; min-width: 0; }
-  #container-apps .apps-container .app-item { height: auto; min-height: 52px; padding: 8px 4px; margin: 4px 0; }
-  #container-apps .apps-container .app-title,
-  #container-apps .apps-container .app-desc { white-space: normal; overflow-wrap: anywhere; margin-bottom: 0; }
+  #container-apps .apps-container .app-item { height: auto; min-height: 40px; }
+}
+/* Opt-in single-column and compact layouts use taller cards and wrap long text. */
+@media (max-width: 768px) {
+  .mobile-bookmarks-single-column #container-apps .apps-container,
+  .mobile-bookmarks-compact #container-apps .apps-container { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .mobile-bookmarks-single-column #container-apps .apps-container .app-container,
+  .mobile-bookmarks-compact #container-apps .apps-container .app-container { float: none; width: auto; min-width: 0; }
+  .mobile-bookmarks-single-column #container-apps .apps-container .app-item,
+  .mobile-bookmarks-compact #container-apps .apps-container .app-item { height: auto; min-height: 52px; padding: 8px 4px; margin: 4px 0; }
+  .mobile-bookmarks-single-column #container-apps .apps-container .app-title,
+  .mobile-bookmarks-compact #container-apps .apps-container .app-title,
+  .mobile-bookmarks-single-column #container-apps .apps-container .app-desc,
+  .mobile-bookmarks-compact #container-apps .apps-container .app-desc { white-space: normal; overflow-wrap: anywhere; margin-bottom: 0; }
 }
 @media (max-width: 359px) {
-  #container-apps .apps-container { grid-template-columns: minmax(0, 1fr); }
+  .mobile-bookmarks-single-column #container-apps .apps-container,
+  .mobile-bookmarks-compact #container-apps .apps-container { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Rem-based sizes respect device font preferences without scaling settings/editor UI. */

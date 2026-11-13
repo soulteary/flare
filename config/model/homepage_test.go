@@ -3,21 +3,35 @@ package model
 import "testing"
 
 func TestHomepageLayoutChoices(t *testing.T) {
-	for _, value := range []string{"", "single", "compact"} {
+	// "single" is the value 0.6.5–0.6.14 stored for an untouched default.
+	for value, want := range map[string]struct{ layout, classes string }{
+		"":              {"classic", ""},
+		"classic":       {"classic", ""},
+		"single":        {"classic", ""},
+		"single-column": {"single-column", "mobile-bookmarks-single-column "},
+		"compact":       {"compact", "mobile-bookmarks-compact "},
+	} {
 		options := &HomepageOptions{MobileBookmarkLayout: value}
 		if err := options.Validate(); err != nil {
 			t.Fatal(err)
 		}
+		if got := options.MobileLayout(); got != want.layout {
+			t.Fatalf("%q resolved to %q", value, got)
+		}
+		if got := options.Classes(); got != want.classes {
+			t.Fatalf("%q produced classes %q", value, got)
+		}
 	}
-	if (&HomepageOptions{MobileBookmarkLayout: "injected"}).Validate() == nil {
+	injected := &HomepageOptions{MobileBookmarkLayout: "injected"}
+	if injected.Validate() == nil {
 		t.Fatal("invalid layout accepted")
 	}
-	var absent *HomepageOptions
-	if absent.Classes() != "" {
-		t.Fatal("old configurations must keep sequential layout")
+	if injected.MobileLayout() != "classic" || injected.Classes() != "" {
+		t.Fatal("invalid layout must fall back to the default")
 	}
-	if (&HomepageOptions{MobileBookmarkLayout: "compact"}).Classes() != "mobile-bookmarks-compact " {
-		t.Fatal("compact class missing")
+	var absent *HomepageOptions
+	if absent.Classes() != "" || absent.MobileLayout() != "classic" {
+		t.Fatal("configurations without homepage options must keep the classic layout")
 	}
 }
 

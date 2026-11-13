@@ -43,6 +43,7 @@ const {spawn} = require('node:child_process');
     for (const base of [direct, proxied]) {
       await page.goto(base + '/settings/appearance');
       const name = base === direct ? 'Saved directly' : 'Saved through proxy';
+      assert.equal(await page.locator('#mobile-bookmark-layout').inputValue(), base === direct ? 'classic' : 'single-column');
       await page.locator('#settings-title').fill(name);
       await page.locator('#mobile-bookmark-layout').selectOption('compact');
       const [saved] = await Promise.all([
@@ -55,9 +56,9 @@ const {spawn} = require('node:child_process');
       await page.reload();
       assert.equal(await page.locator('#settings-title').inputValue(), name);
       assert.equal(await page.locator('#mobile-bookmark-layout').inputValue(), 'compact');
-      await page.locator('#mobile-bookmark-layout').selectOption('single');
+      await page.locator('#mobile-bookmark-layout').selectOption('single-column');
       await Promise.all([page.waitForNavigation(), page.locator('input.btn-submit').click()]);
-      assert.equal(await page.locator('#mobile-bookmark-layout').inputValue(), 'single');
+      assert.equal(await page.locator('#mobile-bookmark-layout').inputValue(), 'single-column');
       assert.match(await fs.readFile(dir + '/config.yml', 'utf8'), new RegExp(name));
     }
     // Theme and search use different native submit controls and token paths.

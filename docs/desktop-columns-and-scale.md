@@ -7,7 +7,7 @@ Automatic mode fits readable columns to the available width. Explicit 4/5/6/8
 choices are maximum counts, not a promise to squeeze that many columns into every
 window. Columns use a minimum 11.25rem width and reduce their count as space runs
 out. Above 768px the setting applies to both application cards and bookmark groups;
-mobile single/compact layouts remain independent. The same appearance classes
+mobile classic/single-column/compact layouts remain independent. The same appearance classes
 apply on the homepage, /bookmarks and /applications, including letter-case
 preferences. The category navigation spans
 the full grid width. CSS Grid preserves stored order and aligns group tops; it is
@@ -87,8 +87,9 @@ DOM nodes. It is not a masonry layout.
 
 At 600–768 CSS pixels the list adapts to the available width with a default maximum
 of four columns. From 769px `DesktopColumns` limits columns within each category;
-it continues to control application card columns as before. Below 600px existing
-single/compact phone preferences remain independent. Category links, collapsible
+it continues to control application card columns as before. Below 600px the
+classic/single-column/compact phone preference applies independently and each
+category keeps its own row. Category links, collapsible
 groups, search expansion, and uncategorized lists retain their existing behavior.
 
 Column counts depend on content width, not screenshot resolution. The desktop

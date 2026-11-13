@@ -32,10 +32,32 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=req
   await page.screenshot({path:path.join(process.env.MOBILE_SCREENSHOT_DIR,`compact-${width}.png`),fullPage:true});
  }
 
- await page.locator('body').evaluate(el=>el.classList.remove('mobile-bookmarks-compact'));
+ // Compact is measured against the single-column layout whose spacing it reduces.
+ await page.locator('body').evaluate(el=>el.classList.replace('mobile-bookmarks-compact','mobile-bookmarks-single-column'));
  const standard=await measureDensity();
  if(width<=1024){assert.ok(compact.apps<standard.apps,JSON.stringify({width,compact,standard}));assert.ok(compact.row<=standard.row,JSON.stringify({width,compact,standard}));assert.ok(compact.height<standard.height,JSON.stringify({width,compact,standard}));}
  else assert.deepEqual(compact,standard,'desktop density unchanged');
+ // Without a layout class the classic default applies: one line per link (28px
+ // line height, slightly taller with an inline icon), groups side by side on
+ // phones and desktop-sized app cards.
+ await page.locator('body').evaluate(el=>el.classList.remove('mobile-bookmarks-single-column'));
+ const classic=await measureDensity();
+ if(width<=768){
+  assert.ok(classic.row>=28&&classic.row<30,JSON.stringify({width,classic}));
+  assert.ok(classic.height<standard.height,JSON.stringify({width,classic,standard}));
+  assert.ok(classic.apps<standard.apps,JSON.stringify({width,classic,standard}));
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'classic overflow at '+width);
+  const pitch=await page.locator('.app-container').evaluateAll(els=>els.map(el=>el.getBoundingClientRect().top));
+  assert.equal(new Set(pitch).size,width<=767?4:2,'classic app rows at '+width);
+  const rowPitch=pitch.find(top=>top>pitch[0])-pitch[0];
+  assert.ok(rowPitch>=64&&rowPitch<=66,'classic app row pitch at '+width+': '+rowPitch);
+ }else assert.deepEqual(classic,standard,'classic matches the wider layouts above 768px');
+ if(width<600){
+  const groups=await page.locator('.bookmark-group-container').evaluateAll(els=>els.map(el=>{const b=el.getBoundingClientRect();return {top:b.top,left:b.left,width:b.width};}));
+  assert.equal(groups[0].top,groups[1].top,'classic groups share a row at '+width);
+  assert.ok(groups[1].left>=groups[0].left+groups[0].width-1,'classic groups sit side by side at '+width);
+ }
+ if(process.env.MOBILE_SCREENSHOT_DIR&&[390,744].includes(width))await page.screenshot({path:path.join(process.env.MOBILE_SCREENSHOT_DIR,`classic-${width}.png`),fullPage:true});
  await page.locator('body').evaluate(el=>el.classList.add('mobile-bookmarks-compact'));
  for(const fontSize of ['125%','200%']){
   await page.locator('html').evaluate((el,size)=>el.style.fontSize=size,fontSize);
@@ -49,6 +71,6 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=req
  const boxes=await page.locator('#hero-container').evaluate(el=>{const a=el.querySelector('#plugin-datetime').getBoundingClientRect(),b=el.querySelector('#plugin-weather').getBoundingClientRect();return {a:{left:a.left,right:a.right,top:a.top,bottom:a.bottom},b:{left:b.left,right:b.right,top:b.top,bottom:b.bottom}};});
  assert.ok(boxes.a.right<=boxes.b.left+1||boxes.b.right<=boxes.a.left+1||boxes.a.bottom<=boxes.b.top+1||boxes.b.bottom<=boxes.a.top+1,'greeting/weather overlap at '+width);
 }
- console.log('PASS: compact phone/tablet density, default/desktop preservation, enlarged text, narrow fallback and category order');
+ console.log('PASS: compact phone/tablet density, classic default, single-column/desktop preservation, enlarged text, narrow fallback and category order');
  }finally{if(browser)await browser.close();child.kill();await fs.rm(dir,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exitCode=1;});
