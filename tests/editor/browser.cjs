@@ -61,6 +61,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   const second=await context.newPage();second.setDefaultTimeout(8000);await loaded(second);
   await edit('Application','Application saved');await save();await edit('Application','Other window',second);second.once('dialog',d=>d.accept());await second.locator('#save-changes').click();await second.waitForFunction(()=>document.getElementById('export-draft').hidden===false);assert.match(await second.locator('#save-status').textContent(),/已变化/);
   const download=second.waitForEvent('download');await second.locator('#export-draft').click();const file=await download;const draft=JSON.parse(await fs.readFile(await file.path(),'utf8'));assert.equal(draft.apps[0].Name,'Other window');await second.close({runBeforeUnload:false});
+  // Declining the save confirmation sends nothing and must not report a completed save.
+  await edit('Application saved','Declined save');let savePosts=0,declinedDialog='';const countSavePosts=request=>{if(request.method()==='POST'&&new URL(request.url()).pathname==='/editor/document')savePosts++;};page.on('request',countSavePosts);
+  page.once('dialog',d=>{declinedDialog=d.type();d.dismiss();});await page.locator('#save-changes').click();await page.waitForFunction(()=>!window.FlareEditorUI.saving);
+  assert.equal(declinedDialog,'confirm');assert.equal(await page.locator('#save-status').textContent(),'有未保存的更改');assert.equal(await page.locator('.savebar').getAttribute('data-error'),'false');assert.equal(await page.locator('#save-changes').isDisabled(),false);assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.dirty),true);
+  assert.equal(savePosts,0);doc=await(await page.request.get(base+'/editor/document')).json();assert.equal(doc.apps[0].Name,'Application saved');
+  await save();assert.equal(savePosts,1);doc=await(await page.request.get(base+'/editor/document')).json();assert.equal(doc.apps[0].Name,'Declined save');
+  await edit('Declined save','Application saved');await save();page.off('request',countSavePosts);
   // Failed writes retain working data and can be retried.
   await edit('Application saved','Retry me');await page.route('**/editor/document',route=>route.request().method()==='POST'?route.fulfill({status:500,contentType:'application/json',body:'{"error":"模拟失败"}'}):route.continue());page.once('dialog',d=>d.accept());await page.locator('#save-changes').click();await page.waitForFunction(()=>document.getElementById('save-status').textContent.includes('模拟失败'));assert.equal(await page.getByRole('button',{name:'Retry me',exact:true}).count(),1);await page.unroute('**/editor/document');await save();
   await loaded();assert.equal(await page.getByRole('button',{name:'Retry me',exact:true}).count(),1);
