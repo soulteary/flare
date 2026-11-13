@@ -92,9 +92,15 @@ func TestPersistentLoginRequiresCSRFAndSameOrigin(t *testing.T) {
 	require.Equal(t, 403, r.StatusCode)
 	require.Equal(t, 401, b.request("GET", "/protected", nil, nil).StatusCode)
 	token := b.csrf()
-	for _, origin := range []string{"null", "http://evil.test", "https://flare.test"} {
-		r = b.request("POST", "/login", url.Values{"username": {"admin"}, "password": {"legacy short"}, "csrf-token": {token}}, map[string]string{"Origin": origin})
-		require.Equal(t, 403, r.StatusCode)
+	for _, headers := range []map[string]string{
+		{"Origin": "null"},
+		{"Origin": "http://evil.test"},
+		{"Origin": "http://flare.test:8080"},
+		{"Origin": "http://flare.test", "Sec-Fetch-Site": "cross-site"},
+		{"Origin": "http://flare.test", "Sec-Fetch-Site": "same-site"},
+	} {
+		r = b.request("POST", "/login", url.Values{"username": {"admin"}, "password": {"legacy short"}, "csrf-token": {token}}, headers)
+		require.Equal(t, 403, r.StatusCode, headers)
 	}
 	r = b.request("POST", "/login", url.Values{"username": {"admin"}, "password": {"legacy short"}, "csrf-token": {token}, "return_to": {"//evil.test"}}, map[string]string{"Origin": "http://flare.test"})
 	require.Equal(t, 303, r.StatusCode)
@@ -109,6 +115,23 @@ func TestPersistentLoginRequiresCSRFAndSameOrigin(t *testing.T) {
 		require.Equal(t, http.SameSiteLaxMode, cookie.SameSite)
 		require.Empty(t, cookie.Domain)
 		require.Contains(t, cookie.Name, "flare_5005_")
+	}
+}
+
+// A TLS-terminating proxy forwards plain HTTP, so the browser origin is HTTPS
+// while this process sees HTTP. The login must not depend on proxy settings.
+func TestPersistentLoginBehindTLSTermination(t *testing.T) {
+	for _, headers := range []map[string]string{
+		{"Origin": "https://flare.test"},
+		{"Origin": "https://flare.test", "Sec-Fetch-Site": "same-origin"},
+		{"Origin": "https://public.test", "Sec-Fetch-Site": "same-origin"},
+	} {
+		_, b := persistentFixture(t, "local")
+		token := b.csrf()
+		r := b.request("POST", "/login", url.Values{"username": {"admin"}, "password": {"legacy short"}, "csrf-token": {token}}, headers)
+		require.Equal(t, 303, r.StatusCode, headers)
+		require.Equal(t, 303, b.request("GET", r.Header.Get("Location"), nil, nil).StatusCode)
+		require.Equal(t, 200, b.request("GET", "/protected", nil, nil).StatusCode)
 	}
 }
 func TestPersistentCurrentAndAllLogout(t *testing.T) {

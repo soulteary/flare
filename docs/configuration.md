@@ -35,8 +35,8 @@ credentials or initialization, and invalid security inputs still block startup.
 | `FLARE_PASS_FILE` | — | Unset | Current main: password file, conflicts with nonempty effective `FLARE_PASS`; see format below |
 | `FLARE_STATE_DIR` | — | `.flare-security` | Current main: writable persistent security directory, relative to working directory unless absolute |
 | `FLARE_CREDENTIAL_MODE` | — | Login disabled: `trusted`; new login account: `local`; migrated credentials: `deployment` | Current main: `local` or `deployment`; existing mode changes require explicit account/maintenance action |
-| `FLARE_EXTERNAL_URL` | — | Unset | Current main: canonical HTTP(S) origin without credentials, query or application subpath |
-| `FLARE_ALLOWED_HOSTS` | — | Unset | Current main: comma-separated allowed host/port authorities |
+| `FLARE_EXTERNAL_URL` | — | Unset | Current main: public HTTP(S) origin without credentials, query or application subpath; accepted as a write source when a proxy rewrites Host, and an HTTPS value enforces Secure cookies. Current source no longer rejects other Host values; 0.6.8–0.6.14 do |
+| `FLARE_ALLOWED_HOSTS` | — | Unset | Current main: comma-separated host/port authorities; when set, any other Host (except the one in `FLARE_EXTERNAL_URL`) receives HTTP 400 |
 | `FLARE_TRUSTED_PROXIES` | — | Unset | Current main: comma-separated peer IPs/CIDRs allowed to supply supported forwarding headers |
 | `FLARE_EDITOR` | `--enable_editor`, `-e` | `true` | Boolean; expose editor and transfer routes |
 | `FLARE_GUIDE` | `--guide`, `-g` | `true` | Boolean; expose the guide at `/guide`, a walkthrough rendered on the visitor's own homepage |
@@ -46,7 +46,7 @@ credentials or initialization, and invalid security inputs still block startup.
 | `FLARE_DISABLE_CSP` | `--disable_csp`, `-c` | `false` | Boolean; disabling the page script policy reduces browser protection |
 | `FLARE_COOKIE_NAME` | `--cookie_name`, `-k` | `flare` | Session cookie prefix; current main also includes the instance identity |
 | `FLARE_COOKIE_SECRET` | `--cookie_secret`, `-r` | Legacy: secure initialized key | Stable/legacy signed-cookie setting (at least 32 bytes); does not replace current-main security state |
-| `FLARE_COOKIE_SECURE` | `--cookie_secure` | `false` | Boolean; force HTTPS-only cookies behind TLS termination; direct TLS is secure automatically |
+| `FLARE_COOKIE_SECURE` | `--cookie_secure` | `false` | Boolean; force HTTPS-only cookies behind TLS termination, after which pages opened over HTTP cannot sign in or save; direct TLS is secure automatically. Current source no longer needs it for writes behind TLS termination; 0.6.8–0.6.14 do |
 | `FLARE_DEBUG` | — | Unset | Environment-only application log level; literal `on` enables DEBUG; independent of development assets |
 | `FLARE_ACCESS_LOG` | `--access_log` | `errors` | `errors`, `all`, `off`; since 0.6.4; invalid mode warns and uses errors |
 

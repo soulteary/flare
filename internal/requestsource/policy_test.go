@@ -16,19 +16,27 @@ func TestCanonicalSourcePolicy(t *testing.T) {
 		reason                                                                        string
 	}{
 		{name: "default HTTP port", target: "http://flare.test/write", origin: "http://flare.test:80", want: 200},
-		{name: "wrong scheme", target: "http://flare.test/write", origin: "https://flare.test", want: 403, reason: "ORIGIN_SCHEME_MISMATCH"},
+		// TLS terminated upstream: this process sees HTTP while the page is HTTPS.
+		{name: "TLS terminated upstream", target: "http://flare.test/write", origin: "https://flare.test", want: 200},
+		{name: "TLS terminated upstream explicit port", target: "http://flare.test:8443/write", origin: "https://flare.test:8443", want: 200},
+		{name: "TLS terminated upstream wrong port", target: "http://flare.test/write", origin: "https://flare.test:8443", want: 403, reason: "ORIGIN_PORT_MISMATCH"},
 		{name: "secure default port", target: "http://flare.test/write", origin: "https://flare.test:443", secure: true, want: 200},
 		{name: "secure downgrade", target: "http://flare.test/write", origin: "http://flare.test", secure: true, want: 403, reason: "ORIGIN_SCHEME_MISMATCH"},
 		{name: "ipv6", target: "http://[::1]:5005/write", origin: "http://[::1]:5005", want: 200},
-		{name: "ipv6 wrong port", target: "http://[::1]:5005/write", origin: "http://[::1]", want: 403},
-		{name: "spoofed headers", target: "http://flare.test/write", origin: "https://evil.test", forwardedHost: "evil.test", forwardedProto: "https", want: 403},
+		{name: "ipv6 wrong port", target: "http://[::1]:5005/write", origin: "http://[::1]", want: 403, reason: "ORIGIN_PORT_MISMATCH"},
+		{name: "spoofed headers", target: "http://flare.test/write", origin: "https://evil.test", forwardedHost: "evil.test", forwardedProto: "https", want: 403, reason: "ORIGIN_HOST_MISMATCH"},
 		{name: "explicit canonical", external: "https://flare.test", target: "http://flare.test/write", origin: "https://flare.test:443", want: 200},
-		{name: "canonical arbitrary host", external: "https://flare.test", target: "http://evil.test/write", origin: "https://flare.test", want: 403},
+		// A proxy may rewrite Host; the configured external origin remains a known source.
+		{name: "canonical origin with rewritten host", external: "https://flare.test", target: "http://backend:5005/write", origin: "https://flare.test", want: 200},
+		{name: "foreign origin with rewritten host", external: "https://flare.test", target: "http://backend:5005/write", origin: "https://evil.test", want: 403, reason: "ORIGIN_HOST_MISMATCH"},
+		{name: "external URL alone does not restrict Host", external: "https://flare.test", target: "http://other.test/write", origin: "https://other.test", want: 200},
 		{name: "allowed host", hosts: "flare.test", target: "http://flare.test/write", origin: "http://flare.test", want: 200},
-		{name: "unlisted host", hosts: "flare.test", target: "http://evil.test/write", origin: "http://evil.test", want: 403},
-		{name: "opaque origin", target: "http://flare.test/write", origin: "null", want: 403},
-		{name: "same-site rejected", target: "http://flare.test/write", origin: "http://sibling.test", want: 403},
-		{name: "origin path", target: "http://flare.test/write", origin: "http://flare.test/path", want: 403},
+		{name: "unlisted host", hosts: "flare.test", target: "http://evil.test/write", origin: "http://evil.test", want: 403, reason: "HOST_NOT_ALLOWED"},
+		{name: "opaque origin", target: "http://flare.test/write", origin: "null", want: 403, reason: "ORIGIN_OPAQUE"},
+		{name: "same-site rejected", target: "http://flare.test/write", origin: "http://sibling.test", want: 403, reason: "ORIGIN_HOST_MISMATCH"},
+		{name: "origin path", target: "http://flare.test/write", origin: "http://flare.test/path", want: 403, reason: "ORIGIN_INVALID"},
+		{name: "origin credentials", target: "http://flare.test/write", origin: "http://user@flare.test", want: 403, reason: "ORIGIN_INVALID"},
+		{name: "host case", target: "http://Flare.Test/write", origin: "http://flare.test", want: 200},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			p, err := New(tc.external, tc.hosts, tc.proxies, tc.secure)
@@ -124,8 +132,9 @@ func TestFixedCanonicalOriginWithExplicitAliases(t *testing.T) {
 		{"canonical.test", "https://canonical.test", 200},
 		{"alias.test", "https://alias.test", 200},
 		{"alias.test:8443", "https://alias.test:8443", 200},
-		{"alias.test", "https://canonical.test", 403},
-		{"canonical.test", "https://alias.test", 403},
+		// Every configured authority is a known source for this instance.
+		{"alias.test", "https://canonical.test", 200},
+		{"canonical.test", "https://alias.test", 200},
 		{"alias.test", "https://foreign.test", 403},
 		{"alias.test", "http://alias.test", 403},
 		{"wrong.test", "https://wrong.test", 400},
@@ -160,7 +169,8 @@ func TestTrustedProxyAliasKeepsCanonicalOrigin(t *testing.T) {
 	}{
 		{"alias.test", "https://alias.test", 200},
 		{"canonical.test", "https://canonical.test", 200},
-		{"alias.test", "https://canonical.test", 403},
+		{"alias.test", "https://canonical.test", 200},
+		{"alias.test", "https://foreign.test", 403},
 		{"evil.test", "https://evil.test", 400},
 		{"", "https://canonical.test", 200},
 	} {

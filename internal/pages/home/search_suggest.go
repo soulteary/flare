@@ -47,6 +47,9 @@ func applyHomeScriptPolicy(c fiber.Ctx, withClock, withSearch bool) {
 	c.Set("Content-Security-Policy", "script-src "+hashes+"; script-src-attr 'none'; connect-src 'self'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script';")
 }
 
+// SearchSuggestPath is the route of the homepage search suggestions.
+const SearchSuggestPath = "/search/suggest"
+
 func registerSearchSuggestions(e *fiber.App) {
 	noStore := func(c fiber.Ctx) error {
 		c.Set("Cache-Control", "no-store")
@@ -54,9 +57,9 @@ func registerSearchSuggestions(e *fiber.App) {
 		return c.Next()
 	}
 	if define.AppFlags.Visibility == "PRIVATE" {
-		e.Post("/search/suggest", noStore, auth.AuthRequired, pageSearchSuggestions)
+		e.Post(SearchSuggestPath, noStore, auth.AuthRequired, pageSearchSuggestions)
 	} else {
-		e.Post("/search/suggest", noStore, pageSearchSuggestions)
+		e.Post(SearchSuggestPath, noStore, pageSearchSuggestions)
 	}
 }
 
@@ -66,6 +69,8 @@ type searchSuggestion struct {
 	NewTab bool   `json:"newTab"`
 }
 
+// pageSearchSuggestions must remain read-only: the write-source protection
+// does not diagnose the browser source of this POST route.
 func pageSearchSuggestions(c fiber.Ctx) error {
 	c.Set("Cache-Control", "no-store")
 	c.Set("X-Content-Type-Options", "nosniff")

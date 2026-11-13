@@ -9,9 +9,12 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
  await fs.writeFile(path.join(dir,'apps.yml'),'links:\n- name: Original\n  link: https://example.com/original\n');
  await fs.writeFile(path.join(dir,'bookmarks.yml'),'links: []\n');
  const child=spawn(process.env.FLARE_BINARY,[],{cwd:dir,env:{...process.env,FLARE_PORT:String(port),FLARE_DISABLE_LOGIN:'true',FLARE_OFFLINE:'true',FLARE_BASELINE:'1'}});
- let log='',mode='preserve',browser;child.stdout.on('data',data=>log+=data);child.stderr.on('data',data=>log+=data);
+ let log='',mode='preserve',strip=false,browser;child.stdout.on('data',data=>log+=data);child.stderr.on('data',data=>log+=data);
  const proxy=http.createServer((request,response)=>{
   const headers={...request.headers};
+  // Browsers send Fetch Metadata only to trustworthy URLs (HTTPS and loopback).
+  // Dropping it reproduces plain HTTP on a LAN address and pre-2023 browsers.
+  if(strip)for(const name of Object.keys(headers))if(name.startsWith('sec-fetch-'))delete headers[name];
   if(mode==='forwarded-only')headers['x-forwarded-host']=headers.host;
   if(mode==='rewrite'||mode==='forwarded-only')headers.host='flare:5005';
   if(mode==='drop-port')headers.host='127.0.0.1';
@@ -34,16 +37,28 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
   for(const test of [
    {name:'direct',base:direct,mode:'preserve',status:200},
    {name:'proxy-preserve',base:proxied,mode:'preserve',status:200},
-   {name:'proxy-rewrite',base:proxied,mode:'rewrite',status:403,reason:'ORIGIN_HOST_MISMATCH'},
-   {name:'proxy-drop-port',base:proxied,mode:'drop-port',status:403,reason:'ORIGIN_PORT_MISMATCH'},
-   {name:'proxy-forwarded-only',base:proxied,mode:'forwarded-only',status:403,reason:'ORIGIN_HOST_MISMATCH'},
+   // The browser reports a same-origin request, so a rewritten Host does not matter.
+   {name:'proxy-rewrite',base:proxied,mode:'rewrite',status:200},
+   {name:'proxy-drop-port',base:proxied,mode:'drop-port',status:200},
+   {name:'proxy-forwarded-only',base:proxied,mode:'forwarded-only',status:200},
+   // Without Fetch Metadata the Origin authority must match one this instance answers to.
+   {name:'legacy-preserve',base:proxied,mode:'preserve',strip:true,status:200},
+   {name:'legacy-rewrite',base:proxied,mode:'rewrite',strip:true,status:403,reason:'ORIGIN_HOST_MISMATCH'},
+   {name:'legacy-drop-port',base:proxied,mode:'drop-port',strip:true,status:403,reason:'ORIGIN_PORT_MISMATCH'},
+   {name:'legacy-forwarded-only',base:proxied,mode:'forwarded-only',strip:true,status:403,reason:'ORIGIN_HOST_MISMATCH'},
   ]){
-   mode=test.mode;const name=`Issue195-${test.name}`;
+   mode=test.mode;strip=!!test.strip;const name=`Issue195-${test.name}`;
    await page.goto(test.base+'/settings/appearance');await page.locator('#settings-title').fill(name);
    const [settings]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/settings/appearance')),page.locator('input.btn-submit').click()]);
    assert.equal(settings.status(),test.status);
    assert.equal((await fs.readFile(path.join(dir,'config.yml'),'utf8')).includes(name),test.status===200);
-   if(test.status===403){const result=await settings.json();assert.equal(result.error.code,'SOURCE_REJECTED');assert.equal(result.error.reason,test.reason);assert.ok(result.error.message);assert.ok(result.error.hint);assert.ok(result.request_id);assert.equal(settings.headers()['cache-control'],'private, no-store');}
+   if(test.status===403){
+    // A rejected form submission is a page navigation and receives an explanation page.
+    const rejected=await settings.text(),requestID=settings.headers()['x-request-id'];
+    assert.match(settings.headers()['content-type'],/^text\/html/);assert.equal(settings.headers()['cache-control'],'private, no-store');
+    assert.ok(requestID);assert.ok(rejected.includes(requestID));assert.ok(rejected.includes(test.reason));assert.match(rejected,/proxy_set_header Host|\$http_host/);
+    assert.doesNotMatch(rejected,/<script|127\.0\.0\.1/);
+   }
    await page.goto(test.base+'/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);
    await page.locator('#new-entry').click();await page.locator('#entry-name').fill(name);await page.locator('#entry-url').fill('https://example.com/'+test.name);
    await page.locator('#entry-location').selectOption('apps');await page.locator('#entry-form .dialog-actions button.primary').click();
