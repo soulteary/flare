@@ -9,8 +9,9 @@ Runtime switches use command-line flags > the application's working-directory
 input and is not automatically forwarded into the container: use `environment`
 or `env_file`. UI/YAML appearance and search preferences live in `config.yml`.
 UI saves apply to subsequent requests. Stop writers before external YAML edits.
-Restart after changing `apps.yml` or `bookmarks.yml`. Stable 0.6.5 also caches
-`config.yml`; 0.6.6 checks that file on each configuration
+Current source observes external edits to `apps.yml` and `bookmarks.yml` on the next
+request; releases up to 0.6.14 require a restart after changing them. Stable 0.6.5
+also caches `config.yml`; 0.6.6 checks that file on each configuration
 read. See [cache boundaries](navigation-cache.md).
 Recreate a container after changing its image, Compose environment, or log driver.
 

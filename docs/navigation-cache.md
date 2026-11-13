@@ -78,10 +78,21 @@ snapshot. It is regenerated only when no retained editor recovery copies exist;
 otherwise normal reads, target lookups, search and import previews leave it missing
 and require manual recovery instead of creating example data. Editor revisions and import previews continue reading
 exact on-disk bytes and strict-decoding them; the display cache never replaces
-those external-edit/conflict checks. Restart after externally editing `apps.yml`
-or `bookmarks.yml`. On 0.6.5 this also applies to `config.yml`; the 0.6.6
-observes external `config.yml` changes on the next configuration read. Stop writers
-before making external edits to avoid racing in-process saves.
+those external-edit/conflict checks.
+
+Current source observes external edits to `apps.yml` and `bookmarks.yml` on the
+next read. Each read of a collection stats its file once and compares the
+modification time and size with those recorded for the cached bytes. A difference,
+or a modification time less than two seconds old, causes a reread; the two-second
+window covers filesystems with coarse timestamps, where a second edit can keep
+both values. Reread bytes that are unchanged keep the parsed snapshot and its
+indexes, so only an actual content change is decoded again. An edit that preserves
+both the size and a modification time older than two seconds is not detected:
+update the file's modification time or restart. Releases up to 0.6.14 require a
+restart after externally editing `apps.yml` or `bookmarks.yml`. On 0.6.5 this also
+applies to `config.yml`; the 0.6.6 observes external `config.yml` changes on the
+next configuration read. Stop writers before making external edits to avoid racing
+in-process saves.
 
 Redirect lookup builds a static URL set and a separate list of dynamic templates
 on first use. Request-expanded URLs are never cached globally. The route keeps
@@ -106,5 +117,7 @@ go test ./config/data -run '^$' \
 
 The benchmark process does not include an HTTP client or browser. Its scope is
 warm collection reads and index queries, not complete HTTP requests, latency under
-network load, startup, or steady-state resident memory. Preserve environment and
+network load, startup, or steady-state resident memory. Current-source fixtures are
+backdated so the timed loops measure the in-memory path, including its one stat
+per collection read, rather than the reread applied to a just-modified file. Preserve environment and
 raw rounds when comparing versions.

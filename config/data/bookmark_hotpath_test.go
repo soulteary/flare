@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/soulteary/flare/config/model"
 )
@@ -151,6 +152,8 @@ func BenchmarkLoadFavoriteBookmarks(b *testing.B) {
 			if _, err := initBookmarks(getConfigPath("apps"), true); err != nil {
 				b.Fatal(err)
 			}
+			// Time the settled path: a just-modified file is reread on each access.
+			settleNavigationFile(b, "apps", time.Hour)
 			if _, err := LoadFavoriteBookmarks(); err != nil {
 				b.Fatal(err)
 			}
