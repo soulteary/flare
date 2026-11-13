@@ -173,9 +173,10 @@
     if(batch?.active && !batch.flush())return;
     if(!store.dirty){syncStatus();return;}
     const invalid=validateDocument();if(invalid){locateError(invalid);setStatus(invalid.error,true);return;}
+    // Ask before entering the saving state: a declined confirmation sends nothing, so the status keeps reporting the unsaved draft.
+    if(!confirm(t('privacy.save_confirm'))){syncStatus();return;}
     busy(true);setStatus(t('editor.saving'));let message=t('editor.all_changes_saved'),error=false, responseParsed=false, serverInvalid=null;
     try {
-      if(!confirm(t('privacy.save_confirm')))return;
  const response=await fetch('/editor/document',{method:'POST',headers:{'Content-Type':'application/json','X-Flare-Editor':'1','X-CSRF-Token':await refreshCSRF(),'X-Flare-Confirm-Public':'1'},body:JSON.stringify(store.toJSON()),signal:AbortSignal.timeout(30000)});
       if(response.redirected)throw Error(t('editor.your_session_may_have_expired_sign_in_in_another'));
       if(!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('editor.unexpected_save_response',{status:response.status}));
