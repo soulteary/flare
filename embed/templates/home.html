@@ -19,9 +19,10 @@
   <style type="text/css">{{.PageInlineStyle}}</style>
   {{ end }}
   <meta name="description" content="Flare - self-hosted startpage for your server"/>
+  {{ if .GuideAssetsURI }}<link rel="stylesheet" href="{{.GuideAssetsURI}}/introjs.min.css"><link rel="stylesheet" href="{{.GuideAssetsURI}}/app.css"><script src="{{.GuideAssetsURI}}/intro.min.js"></script>{{ end }}
 </head>
 <body style="{{.PageAppearance}}" class="{{.BodyClassName}}">
-  <div class="pageview" id="page-home">
+  <div class="pageview" id="page-home" {{ if .GuideAssetsURI }}style="position:inherit;"{{ end }}>
     <div class="container no-select">
 
       {{ if .ShowSearchComponent }}
@@ -148,5 +149,6 @@
 
   {{ if .ClockEnhance }}<script>{{ template "clock-script" }}</script>{{ end }}
   {{ if .SearchHybrid }}<script>{{ template "search-hybrid-script" }}</script>{{ end }}
+  {{ if .GuideAssetsURI }}<script src="{{.GuideAssetsURI}}/app.js"></script>{{ end }}
 </body>
 </html>
