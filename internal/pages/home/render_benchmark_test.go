@@ -26,6 +26,7 @@ func BenchmarkCategorizedNavigation(b *testing.B) {
 				if !data.SaveNormalBookmarks(fixture) {
 					b.Fatal("save fixture")
 				}
+				settleNavigationFixtures(b)
 				options := &model.Application{Locale: "en", ShowBookmarks: true}
 				if len(GenerateBookmarkTemplate("", options)) == 0 {
 					b.Fatal("empty output")

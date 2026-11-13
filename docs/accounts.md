@@ -188,7 +188,8 @@ links:
 ```
 
 The entry remains private because its category is private. Stop writers before
-manual YAML edits and restart after editing navigation files. This example alone
+manual YAML edits. Current source observes edited navigation files on the next
+request; releases up to 0.6.14 need a restart. This example alone
 does not protect an old 0.6.7 public deployment.
 
 Private navigation icons may still contact a configured remote host when an

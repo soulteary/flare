@@ -3,11 +3,14 @@ package data
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/soulteary/flare/config/model"
 )
 
 // These benchmarks cover server-side data loading only: no HTTP client or browser.
+// Fixtures are backdated because a file modified within the last two seconds is
+// reread on every access; the timed loops measure the settled in-memory path.
 func BenchmarkNavigationSnapshotScale(b *testing.B) {
 	for _, count := range []int{1000, 5000, 10000} {
 		b.Run(fmt.Sprint(count), func(b *testing.B) {
@@ -19,6 +22,7 @@ func BenchmarkNavigationSnapshotScale(b *testing.B) {
 			if !SaveNormalBookmarks(fixture) {
 				b.Fatal("save fixture")
 			}
+			settleNavigationFile(b, "bookmarks", time.Hour)
 			if _, err := LoadNormalBookmarks(); err != nil {
 				b.Fatal(err)
 			}
@@ -45,6 +49,8 @@ func BenchmarkNavigationTargetIndexScale(b *testing.B) {
 			if !SaveFavoriteBookmarks(model.Bookmarks{}) || !SaveNormalBookmarks(fixture) {
 				b.Fatal("save")
 			}
+			settleNavigationFile(b, "apps", time.Hour)
+			settleNavigationFile(b, "bookmarks", time.Hour)
 			target := fixture.Items[count-1].URL
 			if !MatchNavigationTarget(target, nil) {
 				b.Fatal("warm lookup")
@@ -71,6 +77,7 @@ func BenchmarkNavigationSearchIndexScale(b *testing.B) {
 			if !SaveNormalBookmarks(fixture) {
 				b.Fatal("save")
 			}
+			settleNavigationFile(b, "bookmarks", time.Hour)
 			query := fmt.Sprintf("Entry %d", count-1)
 			if _, err := SearchNavigationMatches(query, false, true, 8, nil, nil); err != nil {
 				b.Fatal(err)

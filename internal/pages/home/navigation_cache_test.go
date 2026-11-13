@@ -12,6 +12,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/data"
@@ -23,6 +24,19 @@ import (
 	"github.com/soulteary/flare/internal/security"
 	"github.com/stretchr/testify/require"
 )
+
+// settleNavigationFixtures backdates the fixture files. A file modified within
+// the last two seconds is reread on every access; these tests and benchmarks
+// exercise the steady state of a server whose files were not just edited.
+func settleNavigationFixtures(tb testing.TB) {
+	tb.Helper()
+	settled := time.Now().Add(-time.Hour)
+	for _, name := range []string{"apps.yml", "bookmarks.yml"} {
+		if err := os.Chtimes(name, settled, settled); err != nil && !os.IsNotExist(err) {
+			tb.Fatal(err)
+		}
+	}
+}
 
 func fragmentFixture(tb testing.TB, size int) {
 	tb.Helper()
@@ -38,6 +52,7 @@ func fragmentFixture(tb testing.TB, size int) {
 	}
 	require.True(tb, data.SaveFavoriteBookmarks(apps))
 	require.True(tb, data.SaveNormalBookmarks(fixture))
+	settleNavigationFixtures(tb)
 	tb.Cleanup(func() {
 		require.True(tb, data.SaveFavoriteBookmarks(model.Bookmarks{}))
 		require.True(tb, data.SaveNormalBookmarks(model.Bookmarks{}))
