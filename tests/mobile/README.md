@@ -56,5 +56,6 @@ The sections suite checks generated production resources, per-category columns,
 column choices, long names, enlarged fonts, constrained parents, category/search
 combinations, collapse visibility, and uncategorized lists. It also runs in CI.
 
-The production layout suite also compares compact/default content heights through
-1024px, the 1024/1025px density boundary, and enlarged-text link overlap.
+The production layout suite also compares compact/single-column content heights
+through 1024px, checks the classic default, the 1024/1025px density boundary, and
+enlarged-text link overlap.

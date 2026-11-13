@@ -38,7 +38,7 @@ then repeat affected cases with those overrides explicitly documented.
 1. On home, applications, bookmarks and settings, confirm no page-level sideways
    scrolling. Confirm long text remains readable and links can be tapped. Check
    the title/date/weather at 767/768/769 CSS pixels or the closest split-view
-   sizes the device permits. Single-column groups must preserve data order;
+   sizes the device permits. Groups must preserve data order in every phone layout;
    double-column masonry is a separate optional feature, not this gate.
 2. Set Via's native font size to 110%, then 125%; repeat the original #158
    navigation. Repeat Safari/Chrome with available OS/browser text enlargement.

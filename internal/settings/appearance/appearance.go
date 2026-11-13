@@ -144,10 +144,7 @@ func pageAppearance(c fiber.Ctx) error {
 		}
 		m["OptionHideAppDescriptions"] = options.Homepage.HideAppDescriptions
 	}
-	m["OptionMobileBookmarkLayout"] = "single"
-	if options.Homepage != nil && options.Homepage.MobileBookmarkLayout == "compact" {
-		m["OptionMobileBookmarkLayout"] = "compact"
-	}
+	m["OptionMobileBookmarkLayout"] = options.Homepage.MobileLayout()
 	m["OptionTitle"] = options.Title
 	m["OptionFooter"] = template.HTML(options.Footer)
 	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
@@ -213,6 +210,11 @@ func updateHomepageTypography(c fiber.Ctx, update *model.Application) *fiber.Err
 			homepage = *existing.Homepage
 		}
 		if layout != "" {
+			// Forms rendered by 0.6.5–0.6.14 submit "single" for an untouched
+			// default; store the current name of that default instead.
+			if layout == model.MobileBookmarkLayoutLegacySingle {
+				layout = model.MobileBookmarkLayoutClassic
+			}
 			homepage.MobileBookmarkLayout = layout
 		}
 		if textSize != "" {

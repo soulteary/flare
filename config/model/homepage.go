@@ -14,6 +14,28 @@ type HomepageOptions struct {
 	HideAppDescriptions  bool   `yaml:"HideAppDescriptions"`
 }
 
+// Phone and tablet bookmark layouts. Classic is the default and needs no class.
+const (
+	MobileBookmarkLayoutClassic      = "classic"
+	MobileBookmarkLayoutSingleColumn = "single-column"
+	MobileBookmarkLayoutCompact      = "compact"
+	// MobileBookmarkLayoutLegacySingle was stored by 0.6.5–0.6.14 whenever the
+	// appearance form was saved, whether or not the choice had been changed. It
+	// cannot express a preference and is therefore read as the default.
+	MobileBookmarkLayoutLegacySingle = "single"
+)
+
+// MobileLayout resolves absent, legacy and unsupported values to the default.
+func (o *HomepageOptions) MobileLayout() string {
+	if o != nil {
+		switch o.MobileBookmarkLayout {
+		case MobileBookmarkLayoutSingleColumn, MobileBookmarkLayoutCompact:
+			return o.MobileBookmarkLayout
+		}
+	}
+	return MobileBookmarkLayoutClassic
+}
+
 // Validate rejects unsupported choices instead of accepting arbitrary CSS values.
 func (o HomepageOptions) Validate() error {
 	switch o.BookmarkLayout {
@@ -32,7 +54,7 @@ func (o HomepageOptions) Validate() error {
 		return fmt.Errorf("invalid category navigation: %q", o.CategoryNavigation)
 	}
 	switch o.MobileBookmarkLayout {
-	case "", "single", "compact":
+	case "", MobileBookmarkLayoutClassic, MobileBookmarkLayoutLegacySingle, MobileBookmarkLayoutSingleColumn, MobileBookmarkLayoutCompact:
 	default:
 		return fmt.Errorf("invalid mobile bookmark layout: %q", o.MobileBookmarkLayout)
 	}
@@ -49,7 +71,7 @@ func (o HomepageOptions) Validate() error {
 	return nil
 }
 
-// Classes resolves absent and invalid legacy options to the sequential default.
+// Classes resolves absent, legacy and invalid options to the default presentation.
 func (o *HomepageOptions) Classes() string {
 	if o == nil {
 		return ""
@@ -62,7 +84,10 @@ func (o *HomepageOptions) Classes() string {
 	case "auto", "4", "5", "6", "8":
 		classes += "desktop-columns-" + o.DesktopColumns + " "
 	}
-	if o.MobileBookmarkLayout == "compact" {
+	switch o.MobileLayout() {
+	case MobileBookmarkLayoutSingleColumn:
+		classes += "mobile-bookmarks-single-column "
+	case MobileBookmarkLayoutCompact:
 		classes += "mobile-bookmarks-compact "
 	}
 	switch o.NavigationTextSize {

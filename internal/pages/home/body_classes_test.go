@@ -37,4 +37,15 @@ func TestHomepageBodyClassesRemainPlainText(t *testing.T) {
 	if got := homepageBodyClasses(options); got != "desktop-columns-6 mobile-bookmarks-compact app-content-uppercase " {
 		t.Fatalf("unexpected classes: %q", got)
 	}
+	options.Homepage.MobileBookmarkLayout = "single-column"
+	if got := homepageBodyClasses(options); got != "desktop-columns-6 mobile-bookmarks-single-column app-content-uppercase " {
+		t.Fatalf("unexpected classes: %q", got)
+	}
+	// The classic default, including the legacy "single" value, adds no layout class.
+	for _, layout := range []string{"", "classic", "single"} {
+		options.Homepage.MobileBookmarkLayout = layout
+		if got := homepageBodyClasses(options); got != "desktop-columns-6 app-content-uppercase " {
+			t.Fatalf("%q produced classes %q", layout, got)
+		}
+	}
 }

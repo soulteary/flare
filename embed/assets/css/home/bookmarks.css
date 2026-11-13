@@ -63,15 +63,30 @@
   width: 24px;
 }
 
-/* Phones retain sequential groups; tablets use the available content width. */
+/* Classic phone layout (the default): three groups per row, one line per link.
+   Group tops are aligned, a lone group uses the full width, and the sections
+   layout keeps each category on its own row. */
 @media (max-width: 599px) {
-  #container-bookmarks .bookmark-group-container { display: block; float: none; width: 100%; margin-bottom: 20px; }
+  #container-bookmarks .bookmark-group-container { float: none; width: 30%; vertical-align: top; }
+  #container-bookmarks .bookmark-group-container:only-of-type { width: 100%; }
+  .bookmark-layout-sections #container-bookmarks .bookmark-group-container { display: block; width: 100%; margin-bottom: 20px; }
+}
+
+/* Opt-in single-column and compact layouts stack groups on phones and wrap long
+   names through tablet widths. Compact replaces the row metrics further below,
+   so the 44px rows are limited to the single-column layout. */
+@media (max-width: 599px) {
+  .mobile-bookmarks-single-column #container-bookmarks .bookmark-group-container,
+  .mobile-bookmarks-compact #container-bookmarks .bookmark-group-container { display: block; float: none; width: 100%; margin-bottom: 20px; }
 }
 @media (max-width: 768px) {
-  #container-bookmarks .bookmark-group-container h3,
-  #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark { white-space: normal; overflow-wrap: anywhere; }
-  #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark { min-height: 44px; padding: 8px 0; line-height: 1.6; }
-  #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark:hover { padding-left: 0; }
+  .mobile-bookmarks-single-column #container-bookmarks .bookmark-group-container h3,
+  .mobile-bookmarks-compact #container-bookmarks .bookmark-group-container h3,
+  .mobile-bookmarks-single-column #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark,
+  .mobile-bookmarks-compact #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark { white-space: normal; overflow-wrap: anywhere; }
+  .mobile-bookmarks-single-column #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark { min-height: 44px; padding: 8px 0; line-height: 1.6; }
+  .mobile-bookmarks-single-column #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark:hover,
+  .mobile-bookmarks-compact #container-bookmarks .bookmark-group-container .bookmark-list a.bookmark:hover { padding-left: 0; }
 }
 
 /* Opt-in newspaper flow preserves DOM order and keeps each group together. */
