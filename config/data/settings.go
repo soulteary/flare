@@ -39,6 +39,35 @@ func SaveThemeName(theme string) error {
 	return saveAppConfig("config", options)
 }
 
+// GetThemeSelection returns the stored theme name and the stored custom
+// palette. The palette may be nil, and it is not validated here: config.yml
+// can be edited by hand.
+func GetThemeSelection() (string, *model.Palette) {
+	opts, err := GetAllSettingsOptions()
+	if err != nil {
+		return "", nil
+	}
+	return opts.Theme, opts.ThemeCustom
+}
+
+// SaveThemeCustom stores a custom palette and selects it in a single write.
+// Choosing a built-in theme afterwards keeps the stored palette.
+func SaveThemeCustom(palette model.Palette) error {
+	palette = palette.Normalized()
+	if err := palette.Validate(); err != nil {
+		return saveError(SaveFailureInvalidInput, err)
+	}
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		return saveError(SaveFailureConfigUnreadable, err)
+	}
+	options.Theme = model.ThemeCustomName
+	options.ThemeCustom = &palette
+	return saveAppConfig("config", options)
+}
+
 func GetLocationAndWeatherShow() (string, bool) {
 	options, err := GetAllSettingsOptions()
 	if err != nil {

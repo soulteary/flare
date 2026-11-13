@@ -24,6 +24,7 @@ type Application struct {
 	HideVersion             bool             `yaml:"HideVersion"`
 	HideHelpButton          bool             `yaml:"HideHelpButton"`
 	Theme                   string           `yaml:"Theme"`
+	ThemeCustom             *Palette         `yaml:"ThemeCustom,omitempty"`
 	ShowWeather             bool             `yaml:"ShowWeather"`
 	WeatherLocation         *WeatherLocation `yaml:"WeatherLocation,omitempty"`
 	Location                string           `yaml:"Location"`

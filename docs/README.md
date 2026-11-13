@@ -29,6 +29,7 @@ Merging changes does not itself publish an image or move `latest`.
 - [Search engines](search.md), [search modes and suggestions](search-hybrid.md)
 - [Clock and time zones](clock.md), [weather and location selection](weather.md)
 - [Category navigation](category-navigation.md), [mobile layout](mobile-layout.md), [desktop and category columns](desktop-columns-and-scale.md)
+- [Themes and custom colors](theme-colors.md)
 - [Interface language](i18n.md)
 
 ## Develop and verify
