@@ -29,6 +29,8 @@ func main() {
 密码需输入两次，终端不回显；要求 15–128 个字符且不能是弱密码。
 维护命令必须使用原数据目录、挂载和环境变量；持久化 .flare-security/ 或 FLARE_STATE_DIR。
 完整步骤（含 docker run）：docs/accounts.md`)
+		} else if flags.StartupDiagnostic != "" {
+			fmt.Fprintln(os.Stderr, "请修正上面指出的配置项后重新启动；现有数据无需改动。可接受的写法见 docs/configuration.md。\nCorrect the configuration input named above and restart; existing data does not need to change. See docs/configuration.md for accepted values.")
 		} else {
 			fmt.Fprintln(os.Stderr, "请根据上方诊断检查配置、目录权限或完整备份；维护前先停止服务，保留原数据目录、挂载和环境变量。不要删除安全状态目录。参见 docs/accounts.md 和 docs/backup-restore.md。")
 		}
