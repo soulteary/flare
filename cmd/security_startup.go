@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -111,27 +110,38 @@ func applyExplicit(f *model.Flags) error {
 	f.ExternalURL = f.RuntimeInputs["FLARE_EXTERNAL_URL"]
 	f.AllowedHosts = f.RuntimeInputs["FLARE_ALLOWED_HOSTS"]
 	f.TrustedProxies = f.RuntimeInputs["FLARE_TRUSTED_PROXIES"]
-	if f.ConfigError != "" {
-		return errors.New(f.ConfigError)
-	}
-	if err := validateSecurityInputs(f.RuntimeInputs); err != nil {
+	// Every rejection below is fixed text. It may name an input or a flag but
+	// never repeats a supplied value, so the not-ready page can show it.
+	f.StartupDiagnostic = ""
+	reject := func(err error) error {
+		f.StartupDiagnostic = err.Error()
 		return err
 	}
-	if raw, ok := f.RuntimeInputs["FLARE_DISABLE_LOGIN"]; ok {
-		parsed, parseErr := strconv.ParseBool(raw)
-		if parseErr != nil {
-			return errors.New("FLARE_DISABLE_LOGIN must be a boolean")
+	if f.ConfigError != "" {
+		return reject(errors.New(f.ConfigError))
+	}
+	if err := validateSecurityInputs(f.RuntimeInputs); err != nil {
+		var invalid *inputError
+		if errors.As(err, &invalid) {
+			invalid.source = f.InputSources[invalid.key]
 		}
-		f.DisableLoginMode = parsed
+		return reject(err)
+	}
+	if raw, ok := f.RuntimeInputs["FLARE_DISABLE_LOGIN"]; ok {
+		f.DisableLoginMode, _ = parseBoolInput(raw)
 	}
 	if raw, ok := f.RuntimeInputs["FLARE_VISIBILITY"]; ok {
-		f.Visibility = strings.ToUpper(strings.TrimSpace(raw))
+		f.Visibility = normalizeVisibility(raw)
+	}
+	if raw, ok := f.RuntimeInputs["FLARE_CREDENTIAL_MODE"]; ok {
+		// Later startup steps compare and store this value as supplied.
+		f.RuntimeInputs["FLARE_CREDENTIAL_MODE"] = normalizeCredentialMode(raw)
 	}
 	if f.Visibility != "DEFAULT" && f.Visibility != "PRIVATE" {
-		return errors.New("FLARE_VISIBILITY must be DEFAULT or PRIVATE")
+		return reject(&inputError{key: "FLARE_VISIBILITY", accepted: "DEFAULT or PRIVATE"})
 	}
 	if f.DisableLoginMode && f.Visibility == "PRIVATE" {
-		return errors.New("FLARE_DISABLE_LOGIN conflicts with PRIVATE visibility; enable login")
+		return reject(errors.New("FLARE_DISABLE_LOGIN conflicts with PRIVATE visibility; enable login"))
 	}
 	return nil
 }

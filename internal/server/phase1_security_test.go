@@ -42,9 +42,14 @@ func TestPhase1StartupGuardBlocksAllBusinessSurfaces(t *testing.T) {
 			require.Equal(t, "private, no-store", response.Header.Get("Cache-Control"))
 			require.NotContains(t, string(raw), "DO-NOT-LEAK-SENTINEL")
 			require.NotContains(t, string(raw), "INTERNAL-DIAGNOSTIC-SENTINEL")
-			require.Contains(t, string(raw), "go run . security init --username admin")
-			require.Contains(t, string(raw), "docker compose stop flare")
-			require.Contains(t, string(raw), "docker compose run --rm --no-deps flare flare security init --username admin")
+			if status == "new" {
+				require.Contains(t, string(raw), "go run . security init --username admin")
+				require.Contains(t, string(raw), "docker compose stop flare")
+				require.Contains(t, string(raw), "docker compose run --rm --no-deps flare flare security init --username admin")
+			} else {
+				// Initialization steps apply only when no administrator exists yet.
+				require.NotContains(t, string(raw), "security init")
+			}
 			require.Contains(t, string(raw), "不要重复初始化或删除安全状态目录")
 		}
 	}

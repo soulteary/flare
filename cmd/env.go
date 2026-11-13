@@ -61,15 +61,23 @@ func ParseEnvVars() (stor model.Flags) {
 		valid := true
 		switch field.Type.Kind() {
 		case reflect.Bool:
-			_, err := strconv.ParseBool(value)
-			valid = err == nil
+			parsed, ok := parseBoolInput(value)
+			valid = ok
+			if ok {
+				environment[key] = strconv.FormatBool(parsed)
+			}
 		case reflect.Int:
 			n, err := strconv.Atoi(value)
 			valid = err == nil && n > 0 && n <= 65535
 		}
 		if !valid {
 			delete(environment, key)
-			log.Warn(fmt.Sprintf("%s is invalid; retaining this field's default without discarding other settings", key))
+			// The effective FLARE_DISABLE_LOGIN is validated after .env and
+			// command-line overrides; an uninterpretable value there blocks
+			// readiness with its own diagnostic instead of using a default.
+			if key != "FLARE_DISABLE_LOGIN" {
+				log.Warn(fmt.Sprintf("%s is invalid; retaining this field's default without discarding other settings", key))
+			}
 		}
 	}
 	if err := env.Parse(&defaults, env.Options{Environment: environment}); err != nil {

@@ -32,10 +32,18 @@ func GetDotEnvFileStringOrDefault(envs *ini.File, key string, def string) string
 }
 
 func GetDotEnvFileBoolOrDefault(envs *ini.File, key string, def bool) bool {
-	value, err := envs.Section("").Key(key).Bool()
-	if err != nil {
+	raw := strings.TrimSpace(envs.Section("").Key(key).String())
+	if raw == "" {
+		return def
+	}
+	value, ok := parseBoolInput(raw)
+	if !ok {
 		log := logger.GetLogger()
-		log.Debug(fmt.Sprintf("%s 配置文件值异常，使用默认值。", key))
+		// FLARE_DISABLE_LOGIN is validated again on its effective value, where an
+		// uninterpretable entry blocks readiness with its own diagnostic.
+		if key != "FLARE_DISABLE_LOGIN" {
+			log.Warn(fmt.Sprintf("%s 在 .env 中不是有效的布尔值，沿用环境变量或默认值。", key))
+		}
 		return def
 	}
 	return value

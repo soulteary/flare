@@ -28,8 +28,8 @@ credentials or initialization, and invalid security inputs still block startup.
 | Environment | CLI | Default | Values and meaning |
 | --- | --- | --- | --- |
 | `FLARE_PORT` | `--port`, `-p` | `5005` | Integer 1–65535; configure the container port and published mapping consistently |
-| `FLARE_DISABLE_LOGIN` | `--disable_login`, `-l` | `true` (current source) | Boolean; false requires administrator authentication; recorded private defaults are preserved |
-| `FLARE_VISIBILITY` | `--visibility`, `-s` | `DEFAULT` (current source) | `DEFAULT` (public visible resources) or `PRIVATE` (whole-site authentication); never use `0`/`1` |
+| `FLARE_DISABLE_LOGIN` | `--disable_login`, `-l` | `true` (current source) | Boolean; false requires administrator authentication; recorded private defaults are preserved; a value that is not a boolean blocks startup |
+| `FLARE_VISIBILITY` | `--visibility`, `-s` | `DEFAULT` (current source) | `DEFAULT` (public visible resources) or `PRIVATE` (whole-site authentication), in any letter case; never use `0`/`1`; any other value blocks startup |
 | `FLARE_USER` | — | `flare` | Login username |
 | `FLARE_PASS` | — | No persistent password supplied | Initial/deployment password; current startup does not print a generated password; local mode retains stored credentials |
 | `FLARE_PASS_FILE` | — | Unset | Current main: password file, conflicts with nonempty effective `FLARE_PASS`; see format below |
@@ -50,9 +50,14 @@ credentials or initialization, and invalid security inputs still block startup.
 | `FLARE_DEBUG` | — | Unset | Environment-only application log level; literal `on` enables DEBUG; independent of development assets |
 | `FLARE_ACCESS_LOG` | `--access_log` | `errors` | `errors`, `all`, `off`; since 0.6.4; invalid mode warns and uses errors |
 
-Booleans accept the parser's standard true/false and 1/0 forms. Prefer literal
-`"true"`/`"false"` strings in Compose. Legacy `--nologin` and `--mr` are deprecated;
-use the names above. `FLARE_DEBUG=on` enables application DEBUG logs but does not enable development asset mode.
+Releases through 0.6.14 accept only the standard true/false and 1/0 forms from
+the environment and the command line, and treat a quoted environment value as
+invalid. Current source reads booleans the same way from the environment, `.env`
+and the command line: `true`/`false`, `1`/`0`, `yes`/`no` and `on`/`off` in any
+letter case. Surrounding whitespace and one pair of matching quotes are ignored
+for booleans, `FLARE_VISIBILITY` and `FLARE_CREDENTIAL_MODE`, so the Compose list
+form `- FLARE_DISABLE_LOGIN="true"` is read as `true`. Legacy `--nologin` and
+`--mr` are deprecated; use the names above. `FLARE_DEBUG=on` enables application DEBUG logs but does not enable development asset mode.
 Check `flare --help` for the executable you actually run.
 
 Do not rely on an invalid configuration to select a safe access mode. Use explicit
@@ -60,6 +65,16 @@ valid values and verify anonymous access after startup. Kubernetes can inject
 `FLARE_PORT=tcp://...`; explicitly set a numeric `FLARE_PORT` or disable Service
 injection with `enableServiceLinks: false`. Inspect startup warnings and the actual
 running version rather than assuming malformed values preserve access controls.
+
+In current source, a `FLARE_DISABLE_LOGIN`, `FLARE_VISIBILITY` or
+`FLARE_CREDENTIAL_MODE` value that cannot be interpreted, and an unknown or
+malformed command-line flag, keep the instance not ready (HTTP 503) instead of
+selecting a default. The not-ready page and the startup log name the rejected
+input, its source and the accepted values; neither repeats the supplied value.
+Administrator initialization steps appear on that page only when login is enabled
+and no administrator exists. Other boolean switches set through the environment
+or `.env` that cannot be interpreted keep their default or earlier value and log
+a warning.
 
 ## Access models
 

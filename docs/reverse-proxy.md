@@ -111,7 +111,8 @@ proxy response-policy overrides, persisted reloads and hostile Origin rejection.
 Correct the public origin/proxy configuration, reopen the page on that origin and
 obtain fresh tokens. Never reuse tokens across sessions or put them in query URLs.
 Use Compose mapping syntax (`FLARE_DISABLE_LOGIN: "true"`); list syntax such as
-`- FLARE_DISABLE_LOGIN="true"` includes literal quotes and is invalid.
+`- FLARE_DISABLE_LOGIN="true"` includes literal quotes, which releases through
+0.6.14 reject as invalid. Current source ignores one pair of surrounding quotes.
 
 ## Verify
 

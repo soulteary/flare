@@ -12,6 +12,10 @@ type Flags struct {
 	ConfigError    string
 	StartupStatus  string
 	StartupMessage string
+	// StartupDiagnostic explains a rejected configuration input in fixed text that
+	// never contains supplied values or file content. Unlike StartupMessage, it is
+	// safe to show on the not-ready page.
+	StartupDiagnostic string
 
 	Port                   int
 	EnableGuide            bool
