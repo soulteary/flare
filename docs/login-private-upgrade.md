@@ -31,7 +31,7 @@
 
 ## 需要处理的少数情况
 
-免登录与任意分类/条目 private=true 同时存在时，全业务暂停。选择在原配置启用登录并提供密码，或停机逐项检查并去掉不需要的私有标记，再重启。程序不会替用户清除 private。
+免登录与任意分类/条目 private=true 同时存在时，0.6.8 到 0.6.14 会暂停全部业务。0.6.15 起实例照常启动，但含有 private 分类或条目的集合（`apps.yml` 或 `bookmarks.yml`）整体不提供，其中的公开条目也一并不显示：首页对应区域显示提示，搜索建议、跳转、编辑器和导入导出都拒绝该集合，含有 private 条目或无法解析的导入备份也不提供下载。选择在原配置启用登录并提供密码，或逐项检查并去掉不需要的私有标记；0.6.15 起修改文件后下一次请求即生效，更早的版本需要重启。程序不会替用户清除 private，也不会显示这些条目。
 
 PRIVATE 与免登录并存、Visibility/布尔值非法或同时提供密码明文和文件时，修正报告指出的源配置；不回落公开。优先级仍是 CLI > 工作目录 .env > 进程环境 > 默认。
 
@@ -61,7 +61,7 @@ PRIVATE 与免登录并存、Visibility/布尔值非法或同时提供密码明�
 
 - `FLARE_PASS_FILE`：只读密码文件，最多 514 字节输入，只移除一次末尾 LF/CRLF；其他空白保留。有效源不能与非空 FLARE_PASS 并用。
 - `FLARE_CREDENTIAL_MODE=local|deployment`：新初始化或明确来源切换的高级选项；已存模式矛盾时要求显式切换，不静默重置。
-- `FLARE_EXTERNAL_URL`：规范 HTTP(S) origin；`FLARE_ALLOWED_HOSTS` 逗号分隔主机/端口；`FLARE_TRUSTED_PROXIES` 逗号分隔 IP/CIDR。普通保留 Host 反代无需全填；只有受信代理头影响来源，HTTPS Cookie 不因故障自动降级。
+- `FLARE_EXTERNAL_URL`：规范 HTTP(S) origin；`FLARE_ALLOWED_HOSTS` 逗号分隔主机/端口；`FLARE_TRUSTED_PROXIES` 逗号分隔 IP/CIDR。普通保留 Host 反代无需全填；只有受信代理头影响来源，HTTPS Cookie 不因故障自动降级。0.6.15 起，在终止 TLS 的反向代理之后使用默认配置即可登录和保存，这三项都不是必需的；`FLARE_EXTERNAL_URL` 不再限制访问的 Host，需要限制时使用 `FLARE_ALLOWED_HOSTS`，详见[反向代理说明](reverse-proxy.md)。
 - `config.yml` 的可选 `LoginFooter`：文本或经过安全过滤的 HTTP(S) 链接 HTML，默认空；不继承原 Footer，不允许脚本/图片/iframe。原 Footer 仍在原已授权导航使用。
 
 详细交付与验收边界见[需求](requirements/login-private-access.md)和[阶段一规格](requirements/login-private-access-phase1.md)。
