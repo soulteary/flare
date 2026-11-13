@@ -8,6 +8,7 @@ import (
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/logger"
 )
 
 // 程序运行默认使用内置的主题配色
@@ -15,13 +16,18 @@ var themeMu sync.RWMutex
 var themeGeneration uint64
 
 var ThemePalettes = getDefaultThemePalettes()
+
+// The custom palette is kept apart from ThemePalettes: every entry of that
+// list has a favicon generated at build time. themeCustom is only read when
+// themeCustomSet is true, and it has passed Palette.Validate before being stored.
+var themeCustom model.Palette
+var themeCustomSet bool
 var ThemeCurrent = ""
 var ThemePrimaryColor = ""
 
 func Init() {
 	initPageInlineStyle()
 	UpdatePagePalettes()
-	initPagePrimaryColorCache()
 }
 
 // 页面内缓存
@@ -40,10 +46,6 @@ func initPageInlineStyle() {
 	}
 
 	_CACHE_PAGE_INLINE_STYLE = template.CSS(PAGE_INLINE_STYLE)
-}
-
-func initPagePrimaryColorCache() {
-	SetTheme(data.GetThemeName())
 }
 
 // 页面 body cssvar 样式
@@ -69,20 +71,49 @@ func ThemeRenderSnapshot() (string, string, uint64) {
 	return ThemeCurrent, ThemePrimaryColor, themeGeneration
 }
 
+// IsKnownTheme reports whether a theme can be selected: a built-in theme, or
+// the custom theme once a palette has been stored for it.
 func IsKnownTheme(theme string) bool {
-	for _, item := range ThemePalettes {
-		if item.Name == theme {
-			return true
-		}
-	}
-	return false
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	_, known := themePalette(theme)
+	return known
 }
 
 func GetThemePrimaryColor(theme string) string {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	return themePrimaryColor(theme)
+}
+
+// CurrentThemePalette returns the colors in use. An unknown theme name has no
+// palette of its own, so the first built-in palette is returned for it.
+func CurrentThemePalette() model.Palette {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	if palette, known := themePalette(ThemeCurrent); known {
+		return palette
+	}
+	return ThemePalettes[0].Colors
+}
+
+// themePalette resolves a theme name. Callers hold themeMu.
+func themePalette(theme string) (model.Palette, bool) {
+	if theme == model.ThemeCustomName {
+		return themeCustom, themeCustomSet
+	}
 	for _, item := range ThemePalettes {
 		if item.Name == theme {
-			return item.Colors.Primary
+			return item.Colors, true
 		}
+	}
+	return model.Palette{}, false
+}
+
+// themePrimaryColor is GetThemePrimaryColor for callers that hold themeMu.
+func themePrimaryColor(theme string) string {
+	if palette, known := themePalette(theme); known {
+		return palette.Primary
 	}
 	return ThemePalettes[0].Colors.Primary
 }
@@ -93,21 +124,60 @@ const emptyPageBodyStyle = template.CSS(``)
 func SetTheme(theme string) {
 	themeMu.Lock()
 	defer themeMu.Unlock()
+	applyTheme(theme)
+}
+
+// SetCustomTheme stores a custom palette and selects it. The colors are
+// written into style attributes and icon markup without further escaping, so a
+// palette that does not pass Palette.Validate is rejected and nothing changes.
+func SetCustomTheme(palette model.Palette) error {
+	palette = palette.Normalized()
+	if err := palette.Validate(); err != nil {
+		return err
+	}
+	themeMu.Lock()
+	defer themeMu.Unlock()
+	themeCustom, themeCustomSet = palette, true
+	applyTheme(model.ThemeCustomName)
+	return nil
+}
+
+// applyTheme publishes one theme. Callers hold themeMu for writing.
+func applyTheme(theme string) {
 	themeGeneration++
 	ThemeCurrent = theme
-	ThemePrimaryColor = GetThemePrimaryColor(theme)
+	ThemePrimaryColor = themePrimaryColor(theme)
 	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor
 	_CACHE_PAGE_BODY_THEME_NAME = emptyPageBodyStyle
-	for _, item := range ThemePalettes {
-		if item.Name == theme {
-			// #nosec G203 -- CSS values come exclusively from the bundled palette; the request only selects a known name.
-			_CACHE_PAGE_BODY_THEME_NAME = template.CSS(`--color-background:` + item.Colors.Background + `;--color-primary:` + item.Colors.Primary + `;--color-accent:` + item.Colors.Accent + `;`)
-			return
-		}
+	if palette, known := themePalette(theme); known {
+		// #nosec G203 -- CSS values come from the bundled palettes or from the custom palette, which is stored only after Palette.Validate accepted it (#RRGGBB only).
+		_CACHE_PAGE_BODY_THEME_NAME = template.CSS(`--color-background:` + palette.Background + `;--color-primary:` + palette.Primary + `;--color-accent:` + palette.Accent + `;`)
 	}
 }
 
-func UpdatePagePalettes() { SetTheme(data.GetThemeName()) }
+// UpdatePagePalettes applies the theme stored in config.yml. The file can be
+// edited by hand, so the custom palette is validated again here; a custom
+// theme without a usable palette falls back to the first built-in theme
+// instead of rendering unstyled pages.
+func UpdatePagePalettes() {
+	theme, custom := data.GetThemeSelection()
+	themeMu.Lock()
+	defer themeMu.Unlock()
+	themeCustom, themeCustomSet = model.Palette{}, false
+	if custom != nil {
+		palette := custom.Normalized()
+		if err := palette.Validate(); err != nil {
+			logger.GetLogger().Warn("ThemeCustom in config.yml is ignored", "reason", err.Error())
+		} else {
+			themeCustom, themeCustomSet = palette, true
+		}
+	}
+	if theme == model.ThemeCustomName && !themeCustomSet {
+		logger.GetLogger().Warn("Theme custom has no usable ThemeCustom palette; using a bundled theme", "theme", ThemePalettes[0].Name)
+		theme = ThemePalettes[0].Name
+	}
+	applyTheme(theme)
+}
 
 func getDefaultThemePalettes() []model.Theme {
 	return []model.Theme{

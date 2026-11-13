@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/config/model"
 )
 
 //go:embed favicons/*.ico
@@ -19,6 +20,11 @@ func ThemeFaviconURL() string {
 	theme, _ := define.ThemeSnapshot()
 	if icon, ok := themeFavicons[theme]; ok {
 		return icon.url
+	}
+	// Themed favicons exist only for the bundled palettes. A custom palette
+	// uses the default icon instead of borrowing another theme's colors.
+	if theme == model.ThemeCustomName {
+		return FaviconURL()
 	}
 	return themeFavicons[define.ThemePalettes[0].Name].url
 }

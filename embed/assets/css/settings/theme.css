@@ -77,3 +77,47 @@
     height: 30px;
   }
 }
+
+.theme-custom-form {
+  margin-top: 28px;
+}
+
+.theme-custom-form .theme-help {
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 0 0 16px;
+  opacity: 0.8;
+}
+
+.theme-custom-form .theme-notice {
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-background));
+  overflow-wrap: anywhere;
+}
+
+.theme-custom-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+}
+
+.theme-custom-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+
+.theme-custom-field input[type="color"] {
+  width: 48px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid silver;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}

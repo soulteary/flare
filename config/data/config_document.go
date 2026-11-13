@@ -27,6 +27,12 @@ func readConfigDocument(raw []byte) (*yaml.Node, model.Application, error) {
 	if err := doc.Decode(&app); err != nil {
 		return nil, app, err
 	}
+	// A ThemeCustom block without any color, which includes one of the wrong
+	// shape, counts as absent. Saving other settings then leaves its text in
+	// the file as it is instead of rewriting it as an empty block.
+	if app.ThemeCustom != nil && *app.ThemeCustom == (model.Palette{}) {
+		app.ThemeCustom = nil
+	}
 	return &doc, app, nil
 }
 

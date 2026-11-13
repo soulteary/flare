@@ -70,6 +70,10 @@ func cloneApplication(value model.Application) model.Application {
 		copy.Engines = slices.Clone(copy.Engines)
 		value.Search = &copy
 	}
+	if value.ThemeCustom != nil {
+		copy := *value.ThemeCustom
+		value.ThemeCustom = &copy
+	}
 	return value
 }
 func cloneBookmarks(value model.Bookmarks) model.Bookmarks {

@@ -72,6 +72,32 @@ const {spawn} = require('node:child_process');
       assert.equal(saved.request().headers().origin, proxied);
       await page.waitForLoadState('load');
     }
+    // The custom color form is a second native form on the theme page.
+    await page.goto(proxied + '/settings/theme');
+    assert.equal(await page.locator('.theme-custom input.theme-choose').count(), 0);
+    for (const [field, color] of [['background', '#10241b'], ['primary', '#e8f1e4'], ['accent', '#f2b84b']]) {
+      await page.locator('#theme-custom-' + field).fill(color);
+    }
+    const [customSaved] = await Promise.all([
+      page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/settings/theme')),
+      page.locator('.theme-custom-form input.btn-submit').click(),
+    ]);
+    assert.equal(customSaved.status(), 200, await customSaved.text());
+    assert.equal(customSaved.request().headers().origin, proxied);
+    await page.waitForLoadState('load');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgb(16, 36, 27)');
+    assert.equal(await page.locator('.theme-custom input.theme-choose').count(), 1);
+    assert.match(await fs.readFile(dir + '/config.yml', 'utf8'), /Theme: custom[\s\S]*Background: '#10241b'/);
+    // An unreadable palette is rejected and the saved colors stay in use.
+    await page.locator('#theme-custom-primary').fill('#12261d');
+    const [customRejected] = await Promise.all([
+      page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/settings/theme')),
+      page.locator('.theme-custom-form input.btn-submit').click(),
+    ]);
+    assert.equal(customRejected.status(), 400);
+    await page.waitForLoadState('load');
+    assert.equal(await page.locator('.theme-notice[role="alert"]').count(), 1);
+    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('h2')).color), 'rgb(232, 241, 228)');
     // The shared document policy covers every settings form, including search actions.
     for (const route of ['theme', 'weather', 'search', 'appearance', 'application']) {
       await page.goto(proxied + '/settings/' + route);
@@ -86,7 +112,7 @@ const {spawn} = require('node:child_process');
       assert.equal((await response.json()).error.code, 'SOURCE_REJECTED');
     }
     assert.equal(await fs.readFile(dir + '/config.yml', 'utf8'), before);
-    console.log('PASS: native settings save, proxy no-referrer override, persisted reload, all settings policies and hostile origin rejection');
+    console.log('PASS: native settings save, proxy no-referrer override, persisted reload, custom theme colors, all settings policies and hostile origin rejection');
   } finally {
     await browser?.close();
     if (proxy.listening) await new Promise(resolve => proxy.close(resolve));
