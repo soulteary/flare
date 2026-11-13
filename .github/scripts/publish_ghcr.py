@@ -16,6 +16,11 @@ TARGET = f"ghcr.io/{REPOSITORY}"
 PLATFORMS = {"linux/amd64", "linux/arm64", "linux/arm/v7", "linux/arm/v6"}
 DIGEST_PATTERN = re.compile(r"sha256:[0-9a-f]{64}\Z")
 TAG_PATTERN = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\Z")
+# A release candidate of a stable version. It is mirrored under its own
+# version tag and never becomes latest.
+CANDIDATE_PATTERN = re.compile(
+    r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-rc\.[1-9][0-9]*\Z"
+)
 
 
 def run(*args, env=None):
@@ -32,6 +37,17 @@ def version_tuple(tag):
     if not TAG_PATTERN.fullmatch(tag):
         raise ValueError(f"Expected a stable version such as 0.6.1, got {tag!r}")
     return tuple(int(part) for part in tag.split("."))
+
+
+def is_candidate(tag):
+    """Classify a tag as a release candidate (True) or a stable version (False)."""
+    if TAG_PATTERN.fullmatch(tag):
+        return False
+    if CANDIDATE_PATTERN.fullmatch(tag):
+        return True
+    raise ValueError(
+        f"Expected a version such as 0.6.1 or 0.6.2-rc.1, got {tag!r}"
+    )
 
 
 def require_digest(digest):
@@ -94,6 +110,9 @@ def verify_image(reference, tag, commit, env=None):
 
 
 def promote_latest(tag, digest):
+    # latest is a stable channel: a release candidate is rejected here even
+    # if a caller requests promotion.
+    version_tuple(tag)
     # Re-read the release and source latest immediately before promotion.
     # A historical backfill must not roll the rolling tag back.
     if api("releases/latest")["tag_name"] != tag:
@@ -131,10 +150,17 @@ def verify_public(tag, digest, commit, latest):
 
 
 def publish(tag, expected_commit="", update_latest=False, check_only=False):
-    version_tuple(tag)
+    candidate = is_candidate(tag)
     release = api(f"releases/tags/{tag}")
-    if release["tag_name"] != tag or release["draft"] or release["prerelease"]:
-        raise ValueError("Only published stable releases can be mirrored")
+    if release["tag_name"] != tag or release["draft"]:
+        raise ValueError("Only published releases can be mirrored")
+    # The tag form and the GitHub prerelease flag must agree. Otherwise a
+    # candidate could be reported as the latest stable release, or a stable
+    # version could be withheld from latest.
+    if candidate and not release["prerelease"]:
+        raise ValueError("A release candidate tag must be published as a GitHub prerelease")
+    if release["prerelease"] and not candidate:
+        raise ValueError("A stable version tag must not be published as a prerelease")
     commit = tag_commit(tag)
     if expected_commit and commit != expected_commit:
         raise ValueError("The release tag moved or does not match the triggering commit")
@@ -167,11 +193,15 @@ def publish(tag, expected_commit="", update_latest=False, check_only=False):
             "publication, open https://github.com/users/soulteary/packages/container/flare/settings "
             "and set the package visibility to Public, then rerun this workflow."
         ) from error
-    latest = update_latest and promote_latest(tag, digest)
+    latest = False
+    if update_latest and candidate:
+        print("Skipping latest: release candidates never move latest")
+    elif update_latest:
+        latest = promote_latest(tag, digest)
     if latest:
         verify_public(tag, digest, commit, latest=True)
     result = {"tag": tag, "commit": commit, "digest": digest, "latest_updated": latest,
-              "platforms": sorted(PLATFORMS), "public": True}
+              "prerelease": candidate, "platforms": sorted(PLATFORMS), "public": True}
     print(json.dumps(result))
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
@@ -180,6 +210,7 @@ def publish(tag, expected_commit="", update_latest=False, check_only=False):
                 f"- Image: `{TARGET}:{tag}`\n- Source commit: `{commit}`\n"
                 f"- Source and destination digest: `{digest}`\n"
                 f"- Platforms: {', '.join(sorted(PLATFORMS))}\n"
+                f"- Release candidate: {candidate}\n"
                 f"- Updated `latest`: {latest}\n- Anonymous access: verified\n"
             )
 

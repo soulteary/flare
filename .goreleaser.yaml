@@ -6,6 +6,18 @@ before:
   hooks:
     - go run build/build.go
 
+# A stable tag is normally pushed on the commit of its last release candidate.
+# Sort a candidate below the stable tag that shares its commit; without this,
+# 0.7.0-rc.1 sorts above 0.7.0 and would be selected as the tag to release.
+git:
+  prerelease_suffix: "-"
+
+# A tag with a semantic-version prerelease part, such as 0.7.0-rc.1, is a
+# release candidate: its GitHub Release is marked as a prerelease and it
+# publishes version-tagged images only. Stable tags are unaffected.
+release:
+  prerelease: auto
+
 builds:
   - <<: &build_defaults
       env:
@@ -25,10 +37,13 @@ builds:
       - "6"
 
 dockers:
+  # Each entry pushes a version tag and a floating architecture tag. For a
+  # release candidate the floating tag renders to an empty template, which
+  # GoReleaser skips, so it keeps pointing at the latest stable release.
 
   - image_templates:
       - "soulteary/flare:linux-amd64-{{ .Tag }}"
-      - "soulteary/flare:linux-amd64"
+      - "{{ if not .Prerelease }}soulteary/flare:linux-amd64{{ end }}"
     dockerfile: docker/goreleaser/Dockerfile.amd64
     use: buildx
     goarch: amd64
@@ -46,7 +61,7 @@ dockers:
 
   - image_templates:
       - "soulteary/flare:linux-arm64-{{ .Tag }}"
-      - "soulteary/flare:linux-arm64"
+      - "{{ if not .Prerelease }}soulteary/flare:linux-arm64{{ end }}"
     dockerfile: docker/goreleaser/Dockerfile.arm64v8
     use: buildx
     goos: linux
@@ -66,7 +81,7 @@ dockers:
 
   - image_templates:
       - "soulteary/flare:linux-armv7-{{ .Tag }}"
-      - "soulteary/flare:linux-armv7"
+      - "{{ if not .Prerelease }}soulteary/flare:linux-armv7{{ end }}"
     dockerfile: docker/goreleaser/Dockerfile.arm32v7
     use: buildx
     goos: linux
@@ -86,7 +101,7 @@ dockers:
 
   - image_templates:
       - "soulteary/flare:linux-armv6-{{ .Tag }}"
-      - "soulteary/flare:linux-armv6"
+      - "{{ if not .Prerelease }}soulteary/flare:linux-armv6{{ end }}"
     dockerfile: docker/goreleaser/Dockerfile.arm32v6
     use: buildx
     goos: linux
@@ -114,10 +129,12 @@ docker_manifests:
       - "soulteary/flare:linux-armv6-{{ .Tag }}"
     skip_push: "false"
 
+  # auto skips this manifest when the tag has a prerelease part, so a release
+  # candidate never moves latest. For stable tags it behaves like "false".
   - name_template: "soulteary/flare:latest"
     image_templates:
       - "soulteary/flare:linux-amd64-{{ .Tag }}"
       - "soulteary/flare:linux-arm64-{{ .Tag }}"
       - "soulteary/flare:linux-armv7-{{ .Tag }}"
       - "soulteary/flare:linux-armv6-{{ .Tag }}"
-    skip_push: "false"
+    skip_push: auto

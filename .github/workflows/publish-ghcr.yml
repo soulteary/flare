@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: Published stable Flare version, without a v prefix
+        description: Published Flare version (0.x.y or 0.x.y-rc.N), without a v prefix
         required: true
         type: string
       expected_commit:
@@ -12,17 +12,17 @@ on:
         required: true
         type: string
       update_latest:
-        description: Promote only if this is still the latest stable release
+        description: Promote only if this is still the latest stable release; never applies to release candidates
         default: false
         type: boolean
   workflow_dispatch:
     inputs:
       version:
-        description: Published stable Flare version to mirror, such as 0.6.1
+        description: Published Flare version to mirror, such as 0.6.1 or 0.6.2-rc.1
         required: true
         type: string
       update_latest:
-        description: Also update latest if this is still the latest stable release
+        description: Also update latest if this is still the latest stable release; ignored for release candidates
         default: false
         type: boolean
 
