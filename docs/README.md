@@ -2,8 +2,8 @@
 
 ## Choose your version
 
-The current release is [0.6.13](https://github.com/soulteary/flare/releases/tag/0.6.13),
-a dependency maintenance patch over 0.6.12. Read the [release and upgrade notes](release-0.6.13.md).
+The current release is [0.6.14](https://github.com/soulteary/flare/releases/tag/0.6.14),
+a Go toolchain and dependency maintenance patch over 0.6.13. Read the [release and upgrade notes](release-0.6.14.md).
 The older [0.6.8 security migration notes](release-0.6.8.md) remain relevant when
 upgrading from 0.6.7 or earlier; current releases retain the restored public,
 login-disabled defaults introduced after 0.6.8. Existing private settings remain effective.
@@ -14,7 +14,7 @@ Merging changes does not itself publish an image or move `latest`.
 
 ## Install and operate
 
-- [Deployment examples](https://github.com/soulteary/docker-flare#快速上手) and [0.6.13 release notes](release-0.6.13.md)
+- [Deployment examples](https://github.com/soulteary/docker-flare#快速上手) and [0.6.14 release notes](release-0.6.14.md)
 - [Configuration, precedence and access models](configuration.md)
 - [Accounts, initialization and private resources](accounts.md) — current release and source; includes legacy-version differences
 - [Upgrade from 0.6.7 and rollback](login-private-upgrade.md)
