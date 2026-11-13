@@ -255,8 +255,16 @@ func (a *persistentAuth) identity(c fiber.Ctx) *requestIdentity {
 	return identity
 }
 func (a *persistentAuth) token(c fiber.Ctx) string { return a.identity(c).token }
+
+// sessionCookieMaxAge keeps the session cookie for as long as the server-side
+// session can last, so closing the browser does not sign the administrator
+// out. The store remains authoritative. Reauthentication rotates the token
+// without extending the original deadline, so a rotated cookie can outlive
+// its session; the store then rejects it like any other expired token.
+const sessionCookieMaxAge = int(security.AbsoluteTimeout / time.Second)
+
 func (a *persistentAuth) cookie(c fiber.Ctx, token string) {
-	cookie := &fiber.Cookie{Name: a.name, Value: token, Path: "/", HTTPOnly: true, Secure: a.source.Secure(c), SameSite: "Lax"}
+	cookie := &fiber.Cookie{Name: a.name, Value: token, Path: "/", HTTPOnly: true, Secure: a.source.Secure(c), SameSite: "Lax", MaxAge: sessionCookieMaxAge}
 	if token == "" {
 		cookie.MaxAge = -1
 		cookie.Expires = time.Unix(1, 0)
@@ -630,7 +638,7 @@ func (a *persistentAuth) page(c fiber.Ctx) error {
 		if u, e := a.source.External(c); e == nil {
 			origin = u.Scheme + "://" + u.Host
 		}
-		body += `<section aria-label="Diagnostics"><h2>Diagnostics / 诊断</h2><dl><dt>Site visibility / 站点范围</dt><dd>` + html.EscapeString(define.AppFlags.Visibility) + `</dd><dt>Visibility source / 范围来源</dt><dd>` + html.EscapeString(define.AppFlags.InputSources["FLARE_VISIBILITY"]) + `</dd><dt>Login source / 登录配置来源</dt><dd>` + html.EscapeString(define.AppFlags.InputSources["FLARE_DISABLE_LOGIN"]) + `</dd><dt>External origin / 外部来源</dt><dd>` + html.EscapeString(origin) + `</dd><dt>Cookie</dt><dd>host-only; Path=/; HttpOnly; SameSite=Lax; Secure=` + strconv.FormatBool(a.source.Secure(c)) + `</dd><dt>Instance / 实例</dt><dd>` + html.EscapeString(info.InstanceID) + `</dd><dt>Security state / 安全状态</dt><dd>ready; writable / 已就绪；可写</dd><dt>Version / 版本</dt><dd>` + html.EscapeString(version.Version) + ` / ` + html.EscapeString(version.Commit) + `</dd></dl></section>`
+		body += `<section aria-label="Diagnostics"><h2>Diagnostics / 诊断</h2><dl><dt>Site visibility / 站点范围</dt><dd>` + html.EscapeString(define.AppFlags.Visibility) + `</dd><dt>Visibility source / 范围来源</dt><dd>` + html.EscapeString(define.AppFlags.InputSources["FLARE_VISIBILITY"]) + `</dd><dt>Login source / 登录配置来源</dt><dd>` + html.EscapeString(define.AppFlags.InputSources["FLARE_DISABLE_LOGIN"]) + `</dd><dt>External origin / 外部来源</dt><dd>` + html.EscapeString(origin) + `</dd><dt>Cookie</dt><dd>host-only; Path=/; HttpOnly; SameSite=Lax; Secure=` + strconv.FormatBool(a.source.Secure(c)) + `; Max-Age=` + strconv.Itoa(sessionCookieMaxAge) + `</dd><dt>Instance / 实例</dt><dd>` + html.EscapeString(info.InstanceID) + `</dd><dt>Security state / 安全状态</dt><dd>ready; writable / 已就绪；可写</dd><dt>Version / 版本</dt><dd>` + html.EscapeString(version.Version) + ` / ` + html.EscapeString(version.Commit) + `</dd></dl></section>`
 
 		for _, p := range []struct{ url, label string }{{"/logout", "Logout / 退出当前"}, {"/logout-all", "Logout all / 退出全部"}} {
 			body += `<form method="post" action="` + p.url + `">` + hidden + `<button>` + p.label + `</button></form>`
