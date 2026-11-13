@@ -7,9 +7,9 @@ In 0.6.5, sequential single-column layout is the default through 768 CSS pixels;
 opt-in compact columns apply from 360 through 768px. Desktop columns start at
 769px. Below 360px both choices use a single column.
 
-## Current development: classic default
+## 0.6.15: classic default
 
-> Applies to current source. Releases 0.6.4 through 0.6.14 use the single-column
+> Applies to 0.6.15 and later. Releases 0.6.4 through 0.6.14 use the single-column
 > default described in the version sections below.
 
 The default phone and tablet layout is again the classic presentation used

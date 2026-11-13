@@ -1,6 +1,6 @@
 # Reverse proxies and support boundaries
 
-> Scope: current source, with differences for stable 0.6.8–0.6.14 and legacy
+> Scope: stable 0.6.15 and current source, with differences for stable 0.6.8–0.6.14 and legacy
 > 0.6.7. Explicit trusted-proxy and canonical-origin settings ship in 0.6.8 and
 > are absent in 0.6.7.
 
