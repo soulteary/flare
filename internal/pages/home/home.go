@@ -118,6 +118,8 @@ func renderHelp(c fiber.Ctx) error {
 	return renderClockPage(c, m, options, false)
 }
 
+// pageSearch must remain read-only: the write-source protection does not
+// diagnose the browser source of this POST route.
 func pageSearch(c fiber.Ctx) error {
 	options, err := requestSettings(c)
 	if err != nil {
