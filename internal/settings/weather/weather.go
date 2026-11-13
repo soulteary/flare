@@ -15,6 +15,7 @@ import (
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/pool"
+	"github.com/soulteary/flare/internal/settings"
 	weather "github.com/soulteary/funny-china-weather"
 )
 
@@ -115,7 +116,7 @@ func updateWeatherOptions(c fiber.Ctx) error {
 	}
 	options, readErr := data.GetAllSettingsOptions()
 	if readErr != nil {
-		return renderForm(c, "", http.StatusInternalServerError, &body)
+		return renderSaveFailure(c, settings.ConfigUnreadable(readErr), &body)
 	}
 	var selected *model.WeatherLocation
 	if !body.ShowWeather {
@@ -146,15 +147,22 @@ func updateWeatherOptions(c fiber.Ctx) error {
 	if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
 		return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
 	}
-	saved := false
-	if err := auth.AuthorizedWrite(c, func() error { saved = data.UpdateSelectedWeather(body.ShowWeather, selected); return nil }); err != nil {
+	var saveErr error
+	if err := auth.AuthorizedWrite(c, func() error { saveErr = data.SaveSelectedWeather(body.ShowWeather, selected); return nil }); err != nil {
 		return err
 	}
-	if !saved {
-		return renderForm(c, "", http.StatusInternalServerError, &body)
+	if saveErr != nil {
+		return renderSaveFailure(c, saveErr, &body)
 	}
 
 	return render(c, "")
+}
+
+// renderSaveFailure keeps the submitted form. The page's own notice says that
+// nothing was saved; the cause is shown in the message slot below the form.
+func renderSaveFailure(c fiber.Ctx, err error, submitted *weatherForm) error {
+	failure := settings.ExplainSaveFailure(err)
+	return renderForm(c, failure.Detail, failure.Status, submitted)
 }
 
 type weatherTestKey struct{}

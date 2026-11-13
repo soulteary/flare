@@ -82,44 +82,49 @@ Locale: "zh"
 }
 
 func saveAppConfigToYamlFile(name string, result model.Application) bool {
+	return reportSave(saveAppConfig(name, result))
+}
+
+// saveAppConfig is saveAppConfigToYamlFile with the classified failure.
+func saveAppConfig(name string, result model.Application) error {
 	path := getConfigPath(name)
 	raw, err := readFile(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return createAppConfig(name, path, result)
+		if !createAppConfig(name, path, result) {
+			return saveError(SaveFailureWrite, fmt.Errorf("initial configuration could not be created"))
+		}
+		return nil
 	}
 	if err != nil {
-		return false
+		return saveError(SaveFailureConfigUnreadable, err)
 	}
 	doc, original, err := readConfigDocument(raw)
 	if err != nil {
-		return false
+		return saveError(SaveFailureConfigUnreadable, err)
 	}
 	if result.ConfigRevision != "" && result.ConfigRevision != backupDigest(raw) {
-		return false
+		return saveError(SaveFailureConfigChanged, fmt.Errorf("configuration changed since it was loaded; reload before saving"))
 	}
 	if sameAppSettings(original, result) {
-		return true
+		return nil
 	}
 	writer, err := versionForSave(original)
 	if err != nil {
-		log.Println(err)
-		return false
+		return err
 	}
 	if err = rejectSharedConfigNodes(doc); err != nil {
-		log.Println(err)
-		return false
+		return err
 	}
 	out, err := encodeAppConfig(doc, original, result, writer)
 	if err != nil {
-		return false
+		return err
 	}
 	state := ConfigurationVersionState(original.AppVersion)
 	if err = commitConfigDocument(path, raw, out, state == "upgrade" || state == "legacy"); err != nil {
-		log.Println(err)
-		return false
+		return err
 	}
 	invalidateFileCache(name)
-	return true
+	return nil
 }
 
 func loadAppConfigFromYaml(name string) (model.Application, error) {

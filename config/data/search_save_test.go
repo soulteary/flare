@@ -147,19 +147,30 @@ func TestSearchBackupRetentionAndNoOp(t *testing.T) {
 		require.NoError(t, readErr)
 		require.Equal(t, "user-owned", string(data))
 	}
-	// A file changed by the user ceases to be replaceable by rotation.
+	// A file changed by the user ceases to be replaceable by rotation: it stays,
+	// untouched, in the directory that is set aside, and the save continues.
+	captureBackupWarnings(t)
 	require.NoError(t, os.WriteFile(latestPath, []byte("user replacement"), 0600))
-	require.Error(t, UpdateSearchOptions(false, false, &opts))
+	require.NoError(t, UpdateSearchOptions(false, false, &opts))
 	after, err = os.ReadFile("config.yml")
 	require.NoError(t, err)
-	require.Equal(t, before, after)
-	userCopy, err := os.ReadFile(latestPath)
+	require.NotEqual(t, before, after)
+	moved := setAsideBackups(t)
+	require.Len(t, moved, 1)
+	userCopy, err := os.ReadFile(filepath.Join(moved[0], "latest.bak"))
 	require.NoError(t, err)
 	require.Equal(t, "user replacement", string(userCopy))
 	require.NotEqual(t, string(latestBefore), string(userCopy))
+	permanent, err := os.ReadFile(filepath.Join(moved[0], "first-upgrade-to-dev.bak"))
+	require.NoError(t, err)
+	require.Equal(t, raw, permanent)
+	latest, err := os.ReadFile(latestPath)
+	require.NoError(t, err)
+	require.Equal(t, before, latest)
 }
 
-func TestSearchBackupRefusesUnownedDirectory(t *testing.T) {
+func TestSearchBackupSetsAsideUnownedDirectory(t *testing.T) {
+	captureBackupWarnings(t)
 	t.Chdir(t.TempDir())
 	invalidateFileCache("config")
 	defer invalidateFileCache("config")
@@ -167,23 +178,37 @@ func TestSearchBackupRefusesUnownedDirectory(t *testing.T) {
 	require.NoError(t, os.WriteFile("config.yml", raw, 0600))
 	require.NoError(t, os.Mkdir(searchBackupDir, 0700))
 	require.NoError(t, os.WriteFile(filepath.Join(searchBackupDir, "latest.bak"), []byte("my backup"), 0600))
-	require.Error(t, UpdateSearchOptions(false, false, nil))
+	require.NoError(t, UpdateSearchOptions(false, false, nil))
 	after, err := os.ReadFile("config.yml")
 	require.NoError(t, err)
-	require.Equal(t, raw, after)
-	mine, err := os.ReadFile(filepath.Join(searchBackupDir, "latest.bak"))
+	require.Contains(t, string(after), "ShowSearchComponent: false")
+	moved := setAsideBackups(t)
+	require.Len(t, moved, 1)
+	mine, err := os.ReadFile(filepath.Join(moved[0], "latest.bak"))
 	require.NoError(t, err)
 	require.Equal(t, "my backup", string(mine))
+	managed, err := os.ReadFile(filepath.Join(searchBackupDir, "first-upgrade-to-dev.bak"))
+	require.NoError(t, err)
+	require.Equal(t, raw, managed)
 }
 
-func TestSearchBackupRefusesSymlinkReplacement(t *testing.T) {
+func TestSearchBackupNeverWritesThroughSymlink(t *testing.T) {
+	captureBackupWarnings(t)
 	t.Chdir(t.TempDir())
 	require.NoError(t, retainSearchBackup([]byte("initial"), false))
 	require.NoError(t, os.WriteFile("user.bak", []byte("precious"), 0600))
 	require.NoError(t, os.Remove(filepath.Join(searchBackupDir, "latest.bak")))
 	require.NoError(t, os.Symlink("../user.bak", filepath.Join(searchBackupDir, "latest.bak")))
-	require.Error(t, retainSearchBackup([]byte("replacement"), false))
+	require.NoError(t, retainSearchBackup([]byte("replacement"), false))
 	got, err := os.ReadFile("user.bak")
 	require.NoError(t, err)
 	require.Equal(t, "precious", string(got))
+	moved := setAsideBackups(t)
+	require.Len(t, moved, 1)
+	target, err := os.Readlink(filepath.Join(moved[0], "latest.bak"))
+	require.NoError(t, err)
+	require.Equal(t, "../user.bak", target)
+	latest, err := os.ReadFile(filepath.Join(searchBackupDir, "latest.bak"))
+	require.NoError(t, err)
+	require.Equal(t, "replacement", string(latest))
 }

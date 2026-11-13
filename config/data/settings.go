@@ -24,14 +24,19 @@ func GetThemeName() string {
 }
 
 func UpdateThemeName(theme string) bool {
+	return reportSave(SaveThemeName(theme))
+}
+
+// SaveThemeName is UpdateThemeName with the classified failure.
+func SaveThemeName(theme string) error {
 	settingsUpdateMu.Lock()
 	defer settingsUpdateMu.Unlock()
 	options, err := GetAllSettingsOptions()
 	if err != nil {
-		return false
+		return saveError(SaveFailureConfigUnreadable, err)
 	}
 	options.Theme = theme
-	return saveAppConfigToYamlFile("config", options)
+	return saveAppConfig("config", options)
 }
 
 func GetLocationAndWeatherShow() (string, bool) {
@@ -71,15 +76,20 @@ func UpdateLocation(location string) bool {
 }
 
 func UpdateSearch(showSearchComponent bool, disabledSearchAutoFocus bool) bool {
+	return reportSave(SaveSearch(showSearchComponent, disabledSearchAutoFocus))
+}
+
+// SaveSearch is UpdateSearch with the classified failure.
+func SaveSearch(showSearchComponent bool, disabledSearchAutoFocus bool) error {
 	settingsUpdateMu.Lock()
 	defer settingsUpdateMu.Unlock()
 	options, err := GetAllSettingsOptions()
 	if err != nil {
-		return false
+		return saveError(SaveFailureConfigUnreadable, err)
 	}
 	options.ShowSearchComponent = showSearchComponent
 	options.DisabledSearchAutoFocus = disabledSearchAutoFocus
-	return saveSearchConfigPreservingData(options) == nil
+	return saveSearchConfigPreservingData(options)
 }
 
 // UpdateSearchOptions validates and atomically saves search settings without changing other settings.
@@ -90,13 +100,13 @@ func UpdateSearchOptions(showSearchComponent, disabledSearchAutoFocus bool, upda
 	if update != nil {
 		normalized := search.Normalize(update)
 		if err := search.Validate(normalized); err != nil {
-			return err
+			return saveError(SaveFailureInvalidInput, err)
 		}
 		next = &normalized
 	}
 	options, err := GetAllSettingsOptions()
 	if err != nil {
-		return err
+		return saveError(SaveFailureConfigUnreadable, err)
 	}
 	options.ShowSearchComponent = showSearchComponent
 	options.DisabledSearchAutoFocus = disabledSearchAutoFocus
@@ -133,17 +143,26 @@ func ReadExistingSettingsOptions() (model.Application, error) {
 }
 
 func UpdateAppearance(update model.Application) bool {
+	return reportSave(SaveAppearance(update))
+}
+
+// SaveAppearance is UpdateAppearance with the classified failure.
+func SaveAppearance(update model.Application) error {
 	settingsUpdateMu.Lock()
 	defer settingsUpdateMu.Unlock()
-	if update.Homepage != nil && update.Homepage.Validate() != nil {
-		return false
+	if update.Homepage != nil {
+		if err := update.Homepage.Validate(); err != nil {
+			return saveError(SaveFailureInvalidInput, err)
+		}
 	}
-	if update.Clock != nil && clock.Validate(*update.Clock) != nil {
-		return false
+	if update.Clock != nil {
+		if err := clock.Validate(*update.Clock); err != nil {
+			return saveError(SaveFailureInvalidInput, err)
+		}
 	}
 	options, err := GetAllSettingsOptions()
 	if err != nil {
-		return false
+		return saveError(SaveFailureConfigUnreadable, err)
 	}
 
 	if update.Clock != nil {
@@ -170,28 +189,33 @@ func UpdateAppearance(update model.Application) bool {
 	if update.Locale != "" {
 		locale, ok := i18n.ParseLocale(update.Locale)
 		if !ok {
-			return false
+			return saveError(SaveFailureInvalidInput, fmt.Errorf("unsupported locale %q", update.Locale))
 		}
 		options.Locale = locale
 	}
 
-	return saveAppConfigToYamlFile("config", options)
+	return saveAppConfig("config", options)
 }
 
 // UpdateSelectedWeather atomically saves the display address and provider fields.
 func UpdateSelectedWeather(enable bool, location *model.WeatherLocation) bool {
+	return reportSave(SaveSelectedWeather(enable, location))
+}
+
+// SaveSelectedWeather is UpdateSelectedWeather with the classified failure.
+func SaveSelectedWeather(enable bool, location *model.WeatherLocation) error {
 	settingsUpdateMu.Lock()
 	defer settingsUpdateMu.Unlock()
 	options, err := GetAllSettingsOptions()
 	if err != nil {
-		return false
+		return saveError(SaveFailureConfigUnreadable, err)
 	}
 	options.ShowWeather = enable
 	options.WeatherLocation = location
 	if location != nil {
 		options.Location = location.String()
 	}
-	return saveAppConfigToYamlFile("config", options)
+	return saveAppConfig("config", options)
 }
 
 // MigrateWeatherLocation never overwrites a concurrent manual selection.

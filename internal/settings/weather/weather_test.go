@@ -7,10 +7,12 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/i18n"
 )
 
 type capturedWeatherView struct{ values map[string]any }
@@ -59,6 +61,9 @@ func TestWeatherSaveFailurePreservesInputAndReportsError(t *testing.T) {
 	if view.values["SaveFailed"] != true || view.values["Location"] != "Pending city" || view.values["ShowWeather"] != true {
 		t.Fatalf("submitted input lost: %+v", view.values)
 	}
+	if got, want := view.values["TestResult"], i18n.T("zh", "settings_save_failed_config_unreadable"); got != want {
+		t.Fatalf("cause not explained: %q", got)
+	}
 	if _, readErr := data.GetAllSettingsOptions(); readErr == nil {
 		t.Fatal("directory error was hidden by cached configuration")
 	}
@@ -74,5 +79,39 @@ func TestWeatherSaveFailurePreservesInputAndReportsError(t *testing.T) {
 	}
 	if options.Location != "Saved city" {
 		t.Fatal("failed save changed original configuration")
+	}
+}
+
+func TestWeatherSaveFailureExplainsTheCause(t *testing.T) {
+	t.Chdir(t.TempDir())
+	flags := define.AppFlags
+	defer func() { define.AppFlags = flags }()
+	define.AppFlags.DisableLoginMode = true
+	// Shared YAML nodes cannot be edited safely from the settings page.
+	raw := "Locale: en\nShowWeather: true\nLocation: &city Saved city\nTitle: *city\n"
+	if err := os.WriteFile("config.yml", []byte(raw), 0600); err != nil {
+		t.Fatal(err)
+	}
+	view := &capturedWeatherView{}
+	app := fiber.New(fiber.Config{Views: view})
+	app.Post("/weather", updateWeatherOptions)
+	request := httptest.NewRequest(http.MethodPost, "/weather", strings.NewReader("location=Saved+city&show=0"))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	response, err := app.Test(request, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusConflict {
+		t.Fatalf("failure reported %d", response.StatusCode)
+	}
+	if view.values["SaveFailed"] != true || view.values["Location"] != "Saved city" || view.values["ShowWeather"] != false {
+		t.Fatalf("submitted input lost: %+v", view.values)
+	}
+	if got, want := view.values["TestResult"], i18n.T("en", "settings_save_failed_yaml_aliases"); got != want {
+		t.Fatalf("cause not explained: %q", got)
+	}
+	if after, readErr := os.ReadFile("config.yml"); readErr != nil || string(after) != raw {
+		t.Fatalf("failed save changed the configuration: %q %v", after, readErr)
 	}
 }

@@ -8,9 +8,11 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/define"
+	"github.com/soulteary/flare/internal/i18n"
 	"github.com/valyala/fasthttp"
 )
 
@@ -101,5 +103,41 @@ func TestFailedThemeSavePreservesRuntimeState(t *testing.T) {
 	current, _ := define.ThemeSnapshot()
 	if res.StatusCode != 500 || current != "blackboard" || define.GetAppBodyStyle() != originalStyle {
 		t.Fatalf("failed save status=%d current=%q", res.StatusCode, current)
+	}
+}
+
+func TestFailedThemeSaveExplainsTheCause(t *testing.T) {
+	t.Chdir(t.TempDir())
+	flags := define.AppFlags
+	defer func() { define.AppFlags = flags }()
+	define.AppFlags.DisableLoginMode = true
+	// Shared YAML nodes cannot be edited safely from the settings page.
+	raw := "Theme: &shared blackboard\nOtherData: *shared\n"
+	if err := os.WriteFile("config.yml", []byte(raw), 0600); err != nil {
+		t.Fatal(err)
+	}
+	define.SetTheme("blackboard")
+	app := fiber.New(fiber.Config{Views: themeTestViews{}})
+	RegisterRouting(app)
+	req := httptest.NewRequest("POST", define.SettingPages.Theme.Path, strings.NewReader("theme=cloud"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := app.Test(req, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := i18n.T("zh", "settings_save_failed") + " " + i18n.T("zh", "settings_save_failed_yaml_aliases")
+	if res.StatusCode != http.StatusConflict || string(body) != want {
+		t.Fatalf("status=%d body=%q", res.StatusCode, body)
+	}
+	if current, _ := define.ThemeSnapshot(); current != "blackboard" {
+		t.Fatalf("failed save changed the active theme to %q", current)
+	}
+	if after, readErr := os.ReadFile("config.yml"); readErr != nil || string(after) != raw {
+		t.Fatalf("failed save changed the configuration: %q %v", after, readErr)
 	}
 }

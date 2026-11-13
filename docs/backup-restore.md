@@ -14,7 +14,7 @@ configuration files. Keep the original volume/project identity during upgrades.
 | Flare YAML export | One navigation collection | Preview and merge, or replace that collection while stopped | Merge is not full replacement or full-site restore |
 | `.flare-bookmark-backups/` | Import-before copies | Download recent backup or inspect filesystem copies | Import backups only; not all ordinary edits or `config.yml` |
 | `.flare-editor-recovery/save-*` | Original pair before an editor replacement (since 0.6.5) | Follow [recovery instructions](editor-recovery.md) for the exact reported directory | Not a new draft; no automatic merge; do not blindly choose a directory |
-| `.flare-search-backups/` (0.6.6) | Full `config.yml` before managed settings changes, including permanent first-upgrade backup, rotating `latest.bak` and ownership/hash `manifest.json` | Preserve the entire directory; follow the configuration recovery steps below | Contains secrets; shared by configuration settings pages, not only search; not a full deployment backup |
+| `.flare-search-backups/` (0.6.6) | Full `config.yml` before managed settings changes, including permanent first-upgrade backup, rotating `latest.bak` and ownership/hash `manifest.json` | Preserve the entire directory; follow the configuration recovery steps below | Contains secrets; shared by configuration settings pages, not only search; not a full deployment backup; best effort, see below |
 | Editor JSON draft | Unsaved editor document (since 0.6.5) | Restore into working state, inspect, then explicitly save | Not browser import, not full site/account backup |
 
 For a default bind mount, preserve `./app` on the host, mounted as `/app` in the
@@ -52,10 +52,29 @@ and interrupted-rotation state. Preserve this directory in full backups.
 To recover, stop Flare and other writers, preserve the complete current data
 directory, and inspect the intended backup. Restore the selected configuration
 with the deployment's ownership and private permissions. Keep the managed backup
-files and manifest together and unchanged; do not edit their hashes to bypass a
-save failure. A missing, modified, symlinked or insecure managed backup can block
-settings writes. Resolve the reported condition from a known-good full backup
-before resuming writes. See [configuration backup safeguards](search-hybrid.md#legacy-configuration-safety).
+files and manifest together and unchanged. See [configuration backup safeguards](search-hybrid.md#legacy-configuration-safety).
+
+Current main treats this backup as best effort: it never blocks a settings
+save. Releases 0.6.6 to 0.6.14 refuse the save instead.
+
+- Permissions widened by a copy or restore are set back to owner-only (`0700` on
+  the directory, `0600` on its files). On a filesystem that cannot store
+  permission bits the directory is still used and the condition is logged once;
+  restrict access to the data directory by other means.
+- A directory that cannot be trusted or continued is renamed, unchanged, to
+  `.flare-search-backups.quarantined-<UTC timestamp>` and a new directory is
+  started. This applies when the manifest is missing, unreadable or not
+  recognized, or when a managed backup is missing, was modified, is not a regular
+  file or is not recorded in the manifest. Nothing is deleted. Review such
+  directories and remove them when no longer needed; they hold earlier copies of
+  the full configuration.
+- A symbolic link or a non-directory at the backup path is left alone. Nothing is
+  written through it and the save continues without a backup.
+- When the backup cannot be written for another reason, such as a full disk, the
+  save continues without it.
+
+Each case is logged as `settings backup` with the absolute path, the reason and
+the action taken. A repeated condition is logged once per process.
 
 For a version rollback, restore the entire pre-upgrade data directory and external
 configuration with the old binary. Restoring only `config.yml` does not establish

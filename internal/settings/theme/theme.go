@@ -11,6 +11,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/pool"
+	"github.com/soulteary/flare/internal/settings"
 )
 
 func RegisterRouting(e *fiber.App) {
@@ -38,12 +39,14 @@ func updateThemes(c fiber.Ctx) error {
 	if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
 		return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
 	}
-	saved := false
-	if err := auth.AuthorizedWrite(c, func() error { saved = data.UpdateThemeName(theme); return nil }); err != nil {
+	var saveErr error
+	if err := auth.AuthorizedWrite(c, func() error { saveErr = data.SaveThemeName(theme); return nil }); err != nil {
 		return err
 	}
-	if !saved {
-		return c.Status(http.StatusInternalServerError).SendString("Unable to save theme; previous theme remains active")
+	if saveErr != nil {
+		// The previous theme remains active.
+		failure := settings.ExplainSaveFailure(saveErr)
+		return c.Status(failure.Status).SendString(failure.Text())
 	}
 	define.SetTheme(theme)
 	return pageTheme(c)

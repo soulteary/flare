@@ -5,11 +5,16 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sync"
+	"time"
+
+	"github.com/soulteary/flare/internal/logger"
 )
 
 const searchBackupDir = ".flare-search-backups"
@@ -33,14 +38,87 @@ var upgradeBackupName = regexp.MustCompile(`^first-upgrade-to-[A-Za-z0-9._+-]+\.
 
 func backupDigest(raw []byte) string { sum := sha256.Sum256(raw); return hex.EncodeToString(sum[:]) }
 
+// unusableBackups marks an existing backup directory whose contents cannot be
+// trusted or continued. Such a directory is set aside under another name and a
+// new one is started; nothing in it is modified or deleted.
+type unusableBackups struct{ err error }
+
+func (e *unusableBackups) Error() string { return e.err.Error() }
+func (e *unusableBackups) Unwrap() error { return e.err }
+
+func unusable(err error) error { return &unusableBackups{err} }
+
+// errBackupLocationOccupied means the backup path is a symbolic link or not a
+// directory. It is left alone and nothing is written through it.
+var errBackupLocationOccupied = errors.New("backup path is a symbolic link or not a directory")
+
+// Tests replace these to observe warnings, to simulate filesystems that ignore
+// or refuse permission changes and renames, and to fix the set-aside timestamp.
+var (
+	backupWarn = func(path, reason, action string) {
+		logger.GetLogger().Warn("settings backup", "path", path, "reason", reason, "action", action)
+	}
+	backupChmod  = os.Chmod
+	backupRename = os.Rename
+	backupNow    = time.Now
+)
+
+var backupWarned sync.Map
+
+func searchBackupPath(configPath string) string {
+	return filepath.Join(filepath.Dir(configPath), searchBackupDir)
+}
+
+func absoluteBackupPath(path string) string {
+	if abs, err := filepath.Abs(path); err == nil {
+		return abs
+	}
+	return path
+}
+
+// warnBackupOnce reports each distinct condition once per process, so a
+// persistent one (a filesystem without permission bits, a read-only backup
+// directory) is not repeated on every save.
+func warnBackupOnce(path, reason, action string) {
+	path = absoluteBackupPath(path)
+	if _, seen := backupWarned.LoadOrStore(path+"\x00"+reason, struct{}{}); seen {
+		return
+	}
+	backupWarn(path, reason, action)
+}
+
+// keepBackupPrivate restores owner-only access on a managed directory or file.
+// Access by group or others is repaired instead of refused: copying or
+// restoring the data directory and filesystems without permission bits all
+// produce it, and refusing blocked every settings save. Callers pass only
+// paths already verified not to be symbolic links.
+func keepBackupPrivate(path string, info os.FileInfo, want os.FileMode) {
+	if info.Mode().Perm() == want {
+		return
+	}
+	chmodErr := backupChmod(path, want)
+	if current, err := os.Lstat(path); err == nil {
+		info = current
+	}
+	if info.Mode().Perm()&0077 == 0 {
+		return
+	}
+	reason := fmt.Sprintf("mode %04o still allows group or other access", info.Mode().Perm())
+	if chmodErr != nil {
+		reason += ": " + chmodErr.Error()
+	}
+	warnBackupOnce(path, reason, "kept using it; restrict access to the data directory if this filesystem does not support permissions")
+}
+
 func regularBackupFile(path string) error {
 	info, err := os.Lstat(path)
 	if err != nil {
 		return err
 	}
-	if !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
+	if !info.Mode().IsRegular() {
 		return fmt.Errorf("managed backup is not a regular file: %s", path)
 	}
+	keepBackupPrivate(path, info, 0600)
 	return nil
 }
 
@@ -51,20 +129,57 @@ func retainSearchBackup(raw []byte, upgrading bool) error {
 }
 
 func retainSearchBackupWithWriter(raw []byte, upgrading bool, write func(string, []byte) bool) error {
-	dir := filepath.Join(filepath.Dir(getConfigPath("config")), searchBackupDir)
+	dir := searchBackupPath(getConfigPath("config"))
+	err := writeSearchBackup(dir, raw, upgrading, write)
+	var rejected *unusableBackups
+	if !errors.As(err, &rejected) {
+		return err
+	}
+	// Keep the rejected directory intact for the operator and start again, so
+	// one damaged or foreign file does not disable backups for good.
+	moved, moveErr := setAsideSearchBackups(dir)
+	if moveErr != nil {
+		return fmt.Errorf("%w; the directory could not be set aside: %w", err, moveErr)
+	}
+	backupWarn(absoluteBackupPath(dir), rejected.Error(), "moved it unchanged to "+absoluteBackupPath(moved)+" and started a new backup directory")
+	return writeSearchBackup(dir, raw, upgrading, write)
+}
+
+// setAsideSearchBackups renames the directory to an unused sibling name. It
+// never replaces an existing path and never removes anything.
+func setAsideSearchBackups(dir string) (string, error) {
+	base := dir + ".quarantined-" + backupNow().UTC().Format("20060102T150405Z")
+	target := base
+	for attempt := 0; attempt < 5; attempt++ {
+		_, err := os.Lstat(target)
+		if os.IsNotExist(err) {
+			if err = backupRename(dir, target); err != nil {
+				return "", err
+			}
+			return target, nil
+		}
+		if err != nil {
+			return "", err
+		}
+		target = base + "-" + GenerateRandomString(6)
+	}
+	return "", fmt.Errorf("no unused name for the set-aside backup directory")
+}
+
+func writeSearchBackup(dir string, raw []byte, upgrading bool, write func(string, []byte) bool) error {
 	manifestPath := filepath.Join(dir, "manifest.json")
 	state := searchBackupManifest{Owner: "flare-search-backups-v1"}
 	if err := initializeSearchBackup(dir, manifestPath, &state, write); err != nil {
 		return err
 	}
 	if state.UpgradeFile != "" && state.Upgrade == "" {
-		return fmt.Errorf("incomplete upgrade backup metadata")
+		return unusable(fmt.Errorf("incomplete upgrade backup metadata"))
 	}
 	if err := recoverSearchBackup(dir, &state); err != nil {
-		return err
+		return unusable(err)
 	}
 	if err := validateSearchBackups(dir, state); err != nil {
-		return err
+		return unusable(err)
 	}
 	name := "latest.bak"
 	if upgrading && state.Upgrade == "" {
@@ -72,7 +187,7 @@ func retainSearchBackupWithWriter(raw []byte, upgrading bool, write func(string,
 		name = "first-upgrade-to-" + safeVersion + ".bak"
 		// Do not overwrite a user file that happens to use the new name.
 		if _, e := os.Lstat(filepath.Join(dir, name)); !os.IsNotExist(e) {
-			return fmt.Errorf("unowned upgrade backup: %s", name)
+			return unusable(fmt.Errorf("unowned upgrade backup: %s", name))
 		}
 	}
 	state.Pending = &searchPendingBackup{Name: name, Hash: backupDigest(raw), Version: applicationVersion()}
@@ -114,18 +229,19 @@ func initializeSearchBackup(dir, manifestPath string, state *searchBackupManifes
 		if e != nil {
 			return e
 		}
-		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 || info.Mode().Perm()&0077 != 0 {
-			return fmt.Errorf("unsafe backup directory")
+		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+			return errBackupLocationOccupied
 		}
+		keepBackupPrivate(dir, info, 0700)
 		if e = regularBackupFile(manifestPath); e != nil {
-			return fmt.Errorf("unrecognized backup directory: %w", e)
+			return unusable(fmt.Errorf("unrecognized backup directory: %w", e))
 		}
 		data, e := readFile(manifestPath)
 		if e != nil {
-			return e
+			return unusable(e)
 		}
 		if err := decodeSearchBackupManifest(data, state); err != nil {
-			return err
+			return unusable(err)
 		}
 	} else {
 		// Claim the newly created directory before adding any backup.
@@ -216,9 +332,10 @@ func recoverPendingBackup(dir string, state *searchBackupManifest, pending *sear
 	p := filepath.Join(dir, pending.Name)
 	info, e := os.Lstat(p)
 	if e == nil {
-		if !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
+		if !info.Mode().IsRegular() {
 			return fmt.Errorf("unsafe pending backup")
 		}
+		keepBackupPrivate(p, info, 0600)
 		contents, readErr := readFile(p)
 		if readErr != nil {
 			return readErr

@@ -16,6 +16,7 @@ import (
 	"github.com/soulteary/flare/internal/formvalue"
 	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/pool"
+	"github.com/soulteary/flare/internal/settings"
 )
 
 func RegisterRouting(e *fiber.App) {
@@ -93,12 +94,13 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 	if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
 		return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
 	}
-	saved := false
-	if err := auth.AuthorizedWrite(c, func() error { saved = data.UpdateAppearance(update); return nil }); err != nil {
+	var saveErr error
+	if err := auth.AuthorizedWrite(c, func() error { saveErr = data.SaveAppearance(update); return nil }); err != nil {
 		return err
 	}
-	if !saved {
-		return c.Status(http.StatusInternalServerError).SendString("unable to save appearance settings")
+	if saveErr != nil {
+		failure := settings.ExplainSaveFailure(saveErr)
+		return c.Status(failure.Status).SendString(failure.Text())
 	}
 	return pageAppearance(c)
 }
