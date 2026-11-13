@@ -29,23 +29,6 @@
 
 ### gocyclo
 
-- `internal/yamlutil/bookmarks.go`
-  - Line 13: cyclomatic complexity 24 for function DecodeBookmarks
-  - Line 101: cyclomatic complexity 23 for function MergeBookmarks
-- `internal/pages/editor/document.go`
-  - Line 38: cyclomatic complexity 23 for function saveEditorDocument
-- `config/data/editor_document.go`
-  - Line 148: cyclomatic complexity 19 for function commitEditorDocumentChecked
-- `cmd/cli.go`
-  - Line 98: cyclomatic complexity 19 for function parseCLI
-- `config/data/navigation_view.go`
-  - Line 94: cyclomatic complexity 17 for function (NavigationView).Matches
-- `internal/settings/appearance/appearance.go`
-  - Line 106: cyclomatic complexity 16 for function pageAppearance
-- `internal/pages/home/bookmark.go`
-  - Line 129: cyclomatic complexity 38 for function renderBookmarkIndexGroupsRead
-- `internal/security/recovery_process_test.go`
-  - Line 16: cyclomatic complexity 29 for function TestRecoveryKilledWriter
 - `internal/pages/editor/transfer.go`
   - Line 183: cyclomatic complexity 27 for function commitTransfer
 - `internal/security/inspect_test.go`
@@ -57,8 +40,6 @@
   - Line 235: cyclomatic complexity 20 for function renderSearch
 - `internal/server/asset_cache_test.go`
   - Line 21: cyclomatic complexity 18 for function TestPersistentStorePublicAssetCacheAndPrivateResponses
-- `internal/bookmarks/transfer.go`
-  - Line 159: cyclomatic complexity 18 for function Build
 - `cmd/security_startup.go`
   - Line 390: cyclomatic complexity 47 for function PrepareSecurity
   - Line 268: cyclomatic complexity 32 for function migrationSnapshot
@@ -68,30 +49,47 @@
   - Line 136: cyclomatic complexity 34 for function (*Policy).active
   - Line 222: cyclomatic complexity 23 for function (*Policy).Diagnose
   - Line 35: cyclomatic complexity 21 for function New
-- `internal/auth/login_footer.go`
-  - Line 13: cyclomatic complexity 27 for function loginFooter
+- `internal/security/recovery_process_test.go`
+  - Line 16: cyclomatic complexity 29 for function TestRecoveryKilledWriter
+- `internal/pages/editor/document.go`
+  - Line 38: cyclomatic complexity 23 for function saveEditorDocument
+- `cmd/cli.go`
+  - Line 98: cyclomatic complexity 19 for function parseCLI
+- `internal/bookmarks/transfer.go`
+  - Line 159: cyclomatic complexity 18 for function Build
 - `internal/yamlutil/bookmark_aliases.go`
   - Line 63: cyclomatic complexity 17 for function (*permissionResolver).value
-- `internal/security/store.go`
-  - Line 132: cyclomatic complexity 40 for function Open
-  - Line 591: cyclomatic complexity 16 for function (*Store).GuardSession
-- `internal/security/inspect.go`
-  - Line 56: cyclomatic complexity 20 for function Inspect
-- `internal/settings/weather/weather.go`
-  - Line 111: cyclomatic complexity 16 for function updateWeatherOptions
 - `internal/pages/home/navigation_cache_benchmark_test.go`
   - Line 64: cyclomatic complexity 16 for function BenchmarkNativeHomepageFragmentCache
+- `internal/auth/persistent.go`
+  - Line 61: cyclomatic complexity 45 for function RequestHandleWithSecurity
+- `internal/pages/home/bookmark.go`
+  - Line 129: cyclomatic complexity 38 for function renderBookmarkIndexGroupsRead
+- `internal/security/inspect.go`
+  - Line 56: cyclomatic complexity 20 for function Inspect
+- `config/data/editor_document.go`
+  - Line 148: cyclomatic complexity 19 for function commitEditorDocumentChecked
+- `config/data/navigation_view.go`
+  - Line 94: cyclomatic complexity 17 for function (NavigationView).Matches
 - `config/data/visible_navigation_test.go`
   - Line 75: cyclomatic complexity 16 for function TestVisibleNavigationPairRemainsCoherentDuringEditorPublish
 - `cmd/security_command.go`
   - Line 21: cyclomatic complexity 86 for function ExecuteSecurityCommand
-- `internal/auth/persistent.go`
-  - Line 61: cyclomatic complexity 45 for function RequestHandleWithSecurity
+- `internal/security/store.go`
+  - Line 132: cyclomatic complexity 40 for function Open
+  - Line 591: cyclomatic complexity 16 for function (*Store).GuardSession
+- `internal/auth/login_footer.go`
+  - Line 13: cyclomatic complexity 27 for function loginFooter
+- `internal/yamlutil/bookmarks.go`
+  - Line 13: cyclomatic complexity 24 for function DecodeBookmarks
+  - Line 101: cyclomatic complexity 23 for function MergeBookmarks
+- `internal/settings/weather/weather.go`
+  - Line 111: cyclomatic complexity 16 for function updateWeatherOptions
+- `internal/settings/appearance/appearance.go`
+  - Line 106: cyclomatic complexity 16 for function pageAppearance
 
 ### misspell
 
-- `.github/GO-REPORTS.md`
-  - Line 58: "stange" is a misspelling of "strange"
 - `docs/requirements/login-private-access-phase1.md`
   - Line 51: "privte" is a misspelling of "private"
 - `internal/resources/mdi/mdi-cheat-sheets/css/materialdesignicons.min.css`
@@ -100,6 +98,8 @@
   - Line 87: "privte" is a misspelling of "private"
 - `internal/resources/mdi/mdi-cheat-sheets/index.html`
   - Line 688: "stange" is a misspelling of "strange"
+- `.github/GO-REPORTS.md`
+  - Line 58: "stange" is a misspelling of "strange"
 
 ---
 
