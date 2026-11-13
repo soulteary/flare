@@ -19,6 +19,9 @@ import (
 	"github.com/soulteary/flare/internal/yamlutil"
 )
 
+// privateContentCode identifies a document withheld because login is disabled.
+const privateContentCode = "PRIVATE_CONTENT_REQUIRES_LOGIN"
+
 func registerEditorDocument(e *fiber.App) {
 	e.Get("/editor/csrf", auth.AuthRequired, func(c fiber.Ctx) error {
 		c.Set("Cache-Control", "private, no-store")
@@ -31,6 +34,9 @@ func getEditorDocument(c fiber.Ctx) error {
 	c.Set("Cache-Control", "no-store")
 	doc, err := data.EditorSnapshot()
 	if err != nil {
+		if errors.Is(err, data.ErrPrivateContentRequiresLogin) {
+			return c.Status(http.StatusConflict).JSON(map[string]string{"code": privateContentCode, "error": privateContentText()})
+		}
 		return c.Status(http.StatusInternalServerError).JSON(map[string]string{"error": editorText(editorLocale(), "无法读取导航数据，请检查配置文件及日志。")})
 	}
 	return c.Status(http.StatusOK).JSON(doc)
@@ -117,6 +123,11 @@ func editorSaveFailure(c fiber.Ctx, err error) error {
 			result["code"] = "recovery_required"
 			result["error"] = editorText(editorLocale(), "保存失败且恢复未完成，请检查服务端恢复副本。") + ": " + recovery.Cause.Error()
 		}
+	}
+	if errors.Is(err, data.ErrPrivateContentRequiresLogin) {
+		result["code"] = privateContentCode
+		result["error"] = privateContentText()
+		return c.Status(http.StatusConflict).JSON(result)
 	}
 	if errors.Is(err, yamlutil.ErrBookmarkAliasesReadOnly) {
 		result["code"] = "READ_ONLY"

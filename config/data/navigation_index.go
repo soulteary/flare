@@ -16,11 +16,11 @@ func MatchNavigationTarget(target string, matchDynamic func(string) bool) bool {
 
 // MatchNavigationTargetFor authorizes current YAML membership before redirecting.
 func MatchNavigationTargetFor(target string, administrator bool, matchDynamic func(string) bool) bool {
-	snapshots, err := navigationSnapshotSet([]string{"apps", "bookmarks"})
-	if err != nil {
-		return false
-	}
-	for _, snapshot := range snapshots {
+	snapshots, errs := navigationSnapshotEach([]string{"apps", "bookmarks"})
+	for i, snapshot := range snapshots {
+		if errs[i] != nil {
+			continue
+		}
 		if !administrator {
 			snapshot = snapshot.publicSnapshot()
 		}

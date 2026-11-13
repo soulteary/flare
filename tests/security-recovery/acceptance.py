@@ -87,17 +87,27 @@ with tempfile.TemporaryDirectory(prefix='flare-recovery-') as tmp:
    finally:s.stop()
   assert json.loads((d/'.flare-security/installation.json').read_text())['committed']
  record('trusted-old-to-new-restart',trusted)
- for problem in ('missing-password','trusted-private-conflict'):
-  def bad(problem=problem):
-   d=root/problem;d.mkdir();fixture(d)
-   env={'FLARE_DISABLE_LOGIN': 'true' if problem=='trusted-private-conflict' else 'false'}
-   before=hashes(d);s=Server(NEW,d,env,port)
-   try:
-    for path in ('/','/editor','/health'):
-     code,body=request(browser(),s.base,path);assert code==503,(path,code);assert 'PRIVATE-SENTINEL' not in body
-    assert hashes(d)==before
-   finally:s.stop()
-  record(problem+'-fails-closed',bad)
+ def missingpassword():
+  d=root/'missing-password';d.mkdir();fixture(d)
+  before=hashes(d);s=Server(NEW,d,{'FLARE_DISABLE_LOGIN':'false'},port)
+  try:
+   for path in ('/','/editor','/health'):
+    code,body=request(browser(),s.base,path);assert code==503,(path,code);assert 'PRIVATE-SENTINEL' not in body
+   assert hashes(d)==before
+  finally:s.stop()
+ record('missing-password-fails-closed',missingpassword)
+ def trustedprivate():
+  # Login disabled with private entries: the instance stays up and withholds the
+  # whole collection instead of refusing every route.
+  d=root/'trusted-private-content';d.mkdir();fixture(d)
+  before=hashes(d);s=Server(NEW,d,{'FLARE_DISABLE_LOGIN':'true'},port)
+  try:
+   for path,want in (('/',200),('/bookmarks',200),('/applications',200),('/editor/document',409),('/editor/transfer/export?collection=bookmarks&format=yaml',409),('/ping',200)):
+    code,body=request(browser(),s.base,path);assert code==want,(path,code)
+    assert 'PRIVATE-SENTINEL' not in body and 'PUBLIC-SENTINEL' not in body,path
+   assert hashes(d)==before
+  finally:s.stop()
+ record('trusted-private-content-is-withheld',trustedprivate)
  def localreset():
   d=root/'localreset';d.mkdir();fixture(d);env={'FLARE_DISABLE_LOGIN':'false','FLARE_PASS':'short'}
   s=Server(NEW,d,env,port);s.stop()

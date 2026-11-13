@@ -12,7 +12,7 @@ func OpaqueNavigationHandle(target string, matchDynamic func(string) bool) strin
 	snapshots := []*parsedBookmarks{cachedFavorite, cachedNormal}
 	fileCacheMu.RUnlock()
 	for _, snapshot := range snapshots {
-		if snapshot == nil || snapshot.err != nil {
+		if snapshot == nil || snapshot.err != nil || snapshot.withheld() {
 			continue
 		}
 		snapshot.prepareHandles()
@@ -39,7 +39,9 @@ func MatchOpaqueNavigationTarget(id string, administrator bool) (string, bool) {
 	for _, name := range []string{"apps", "bookmarks"} {
 		snapshot, err := navigationSnapshot(name)
 		if err != nil {
-			return "", false
+			// An unreadable or withheld collection must not disable handles
+			// that belong to the other one.
+			continue
 		}
 		snapshot.prepareHandles()
 		target, ok := snapshot.handleTargets[id]

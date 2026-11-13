@@ -213,6 +213,7 @@
   "navigation.categories": "Bookmark categories",
   "navigation.bookmarks_error": "Unable to load saved bookmarks. Check the configuration and server logs.",
   "navigation.applications_error": "Unable to load saved applications. Check the configuration and server logs.",
+  "navigation.private_requires_login": "Private entries exist while login is disabled. Enable login, or remove the private flags from the YAML files.",
   "auth.retry": "Go back and retry",
   "auth.report": "Report a problem. Thank you!",
   "auth.save_error": "An internal error prevented saving your login session.",

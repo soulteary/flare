@@ -172,6 +172,27 @@ func ReadableExistingBookmarkCategory(id string, administrator bool) (bool, erro
 	return false, nil
 }
 
+// navigationSnapshotEach reports every requested collection on its own, under
+// the same reader lock, so one unreadable or withheld collection does not stop
+// redirects to entries of the other.
+func navigationSnapshotEach(names []string) ([]*parsedBookmarks, []error) {
+	snapshots, errs := make([]*parsedBookmarks, len(names)), make([]error, len(names))
+	// Initialization, if needed, writes outside the shared read lock.
+	for i, name := range names {
+		if !checkExists(name + ".yml") {
+			_, errs[i] = navigationSnapshot(name)
+		}
+	}
+	bookmarkMu.RLock()
+	defer bookmarkMu.RUnlock()
+	for i, name := range names {
+		if errs[i] == nil {
+			snapshots[i], errs[i] = readExistingBookmarkSnapshot(name)
+		}
+	}
+	return snapshots, errs
+}
+
 func navigationSnapshotSet(names []string) ([]*parsedBookmarks, error) {
 	// Initialization, if needed, writes outside the shared read lock.
 	for _, name := range names {

@@ -135,6 +135,10 @@ func readExistingBookmarkSnapshot(name string) (*parsedBookmarks, error) {
 	if snapshot.err != nil {
 		return nil, fmt.Errorf("解析配置文件 %s 错误，请检查配置文件内容: %w", name, snapshot.err)
 	}
+	// Every display, search, redirect and handle reader passes through here.
+	if snapshot.withheld() {
+		return nil, fmt.Errorf("读取配置文件 %s: %w", name, ErrPrivateContentRequiresLogin)
+	}
 	return snapshot, nil
 }
 

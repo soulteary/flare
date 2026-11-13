@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/adaptor"
 	"github.com/gofiber/fiber/v3/middleware/recover"
 
+	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/auth"
@@ -125,6 +126,9 @@ func NewFiberApp(appFlags *model.Flags, stores ...*security.Store) (*fiber.App, 
 	} else {
 		e.Use(protectWriteSource)
 	}
+	// With login disabled no visitor can be authorized to read private entries.
+	// Embedders without a persistent store keep the legacy behaviour.
+	data.RequireLoginForPrivateContent(len(stores) > 0 && define.AppFlags.DisableLoginMode)
 	if err := auth.RequestHandle(e, stores...); err != nil {
 		return nil, fmt.Errorf("初始化认证: %w", err)
 	}

@@ -25,6 +25,8 @@ type parsedBookmarks struct {
 	err               error
 	publicOnce        sync.Once
 	publicView        *parsedBookmarks
+	privateOnce       sync.Once
+	private           bool
 	handleOnce        sync.Once
 	handles           map[string]string
 	handleTargets     map[string]string

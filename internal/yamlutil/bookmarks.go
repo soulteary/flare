@@ -35,9 +35,11 @@ func DecodeBookmarks(raw []byte, out *model.Bookmarks, apps bool) error {
 	if err := validateEffectivePermissions(&doc, out); err != nil {
 		return err
 	}
+	var links, categories *yaml.Node
 	if len(doc.Content) > 0 {
 		root := doc.Content[0]
-		if seq := mappingValue(root, "links"); seq != nil {
+		links, categories = mappingValue(root, "links"), mappingValue(root, "categories")
+		if seq := links; seq != nil {
 			for i, n := range seq.Content {
 				if i < len(out.Items) {
 					extensions, err := extensionYAML(n, "links")
@@ -48,7 +50,7 @@ func DecodeBookmarks(raw []byte, out *model.Bookmarks, apps bool) error {
 				}
 			}
 		}
-		if seq := mappingValue(root, "categories"); seq != nil {
+		if seq := categories; seq != nil {
 			for i, n := range seq.Content {
 				if i < len(out.Categories) {
 					extensions, err := extensionYAML(n, "categories")
@@ -60,19 +62,46 @@ func DecodeBookmarks(raw []byte, out *model.Bookmarks, apps bool) error {
 			}
 		}
 	}
+	// Locate the offending entry by position and source line. Entry names are
+	// user content and stay out of the message.
 	ids := map[string]bool{}
-	for _, c := range out.Categories {
-		if c.ID == "" || ids[c.ID] {
-			return fmt.Errorf("missing or duplicate category ID")
+	for i, c := range out.Categories {
+		if c.ID == "" {
+			return fmt.Errorf("missing or duplicate category ID: category %d%s has no id", i+1, sequenceLocation(categories, i))
+		}
+		if ids[c.ID] {
+			return fmt.Errorf("missing or duplicate category ID: %q is defined more than once%s", c.ID, sequenceLocation(categories, i))
 		}
 		ids[c.ID] = true
 	}
-	for _, b := range out.Items {
-		if b.Category != "" && (apps || !ids[b.Category]) {
-			return fmt.Errorf("invalid category reference")
+	for i, b := range out.Items {
+		if b.Category == "" {
+			continue
+		}
+		if apps {
+			return fmt.Errorf("invalid category reference: application %d%s must not set a category", i+1, sequenceLocation(links, i))
+		}
+		if !ids[b.Category] {
+			return fmt.Errorf("invalid category reference: link %d%s uses undefined category %q", i+1, sequenceLocation(links, i), b.Category)
 		}
 	}
 	return nil
+}
+
+// sequenceLocation reports the source line of a sequence element when the
+// collection is written inline; merged or aliased collections have none.
+func sequenceLocation(seq *yaml.Node, index int) string {
+	if seq == nil || seq.Kind != yaml.SequenceNode || index >= len(seq.Content) {
+		return ""
+	}
+	return nodeLocation(seq.Content[index])
+}
+
+func nodeLocation(n *yaml.Node) string {
+	if n == nil || n.Line == 0 {
+		return ""
+	}
+	return fmt.Sprintf(" (line %d)", n.Line)
 }
 func validateBookmarkNode(n *yaml.Node) error {
 
@@ -81,7 +110,7 @@ func validateBookmarkNode(n *yaml.Node) error {
 		for i := 0; i < len(n.Content); i += 2 {
 			k := n.Content[i]
 			if seen[k.Value] {
-				return fmt.Errorf("duplicate YAML key %q", k.Value)
+				return fmt.Errorf("duplicate YAML key %q%s", k.Value, nodeLocation(k))
 			}
 			seen[k.Value] = true
 			if k.Value == "privte" || k.Value == "pirvate" || k.Value == "Private" {

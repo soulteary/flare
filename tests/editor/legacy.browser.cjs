@@ -42,6 +42,23 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   // Nonempty missing IDs are still rejected; compatibility is not a blanket bypass.
   doc.bookmarks[0].Category='missing';const invalid=await browserAuth.post(page,base+'/editor/document',{headers:{'X-Flare-Editor':'1'},data:doc});assert.equal(invalid.status(),422);
   const yaml=await fs.readFile(path.join(dir,'bookmarks.yml'),'utf8');assert.equal(/\n\s+category:/.test(yaml),false);
-  assert.deepEqual(errors,[]);console.log('PASS: category ID apps, implicit first-group filtering, unclassified links, no groups, app-only edits, add/edit preservation and unknown-ID rejection');
+  // With login disabled, a collection holding private entries is withheld: the
+  // editor explains why instead of loading it, and the homepage shows no entry.
+  const trustedDir=await fs.mkdtemp('/tmp/flare-editor-withheld-'),trustedSocket=net.createServer();await new Promise(r=>trustedSocket.listen(0,'127.0.0.1',r));const trustedPort=trustedSocket.address().port;await new Promise(r=>trustedSocket.close(r));const trustedBase=`http://127.0.0.1:${trustedPort}`;
+  await fs.writeFile(path.join(trustedDir,'config.yml'),'Locale: en\nShowApps: true\nShowBookmarks: true\nShowWeather: false\n');
+  await fs.writeFile(path.join(trustedDir,'apps.yml'),'links:\n- name: Withheld application\n  link: http://nas:8080\n  private: true\n');
+  await fs.writeFile(path.join(trustedDir,'bookmarks.yml'),'links:\n- name: Visible bookmark\n  link: http://nas/visible\n');
+  const trustedEnv={...process.env,FLARE_PORT:String(trustedPort),FLARE_OFFLINE:'true',FLARE_BASELINE:'1'};for(const name of Object.keys(browserAuth.credentials))delete trustedEnv[name];
+  const trusted=spawn(process.env.FLARE_BINARY,[],{cwd:trustedDir,env:trustedEnv});let trustedLog='';trusted.stdout.on('data',b=>trustedLog+=b);trusted.stderr.on('data',b=>trustedLog+=b);
+  try{
+   for(let i=0;i<100;i++){if(trusted.exitCode!==null)throw Error(trustedLog);try{if((await fetch(trustedBase+'/ping')).ok)break}catch{}await new Promise(r=>setTimeout(r,100));}
+   const withheld=await browser.newPage();withheld.on('pageerror',e=>errors.push(e.message));const notice='Private entries exist while login is disabled. Enable login, or remove the private flags from the YAML files.';
+   await withheld.goto(trustedBase+'/');const home=await withheld.locator('body').innerText();assert.ok(home.toLowerCase().includes(notice.toLowerCase()));assert.ok(home.toLowerCase().includes('visible bookmark'));assert.equal(home.toLowerCase().includes('withheld application'),false);
+   const refused=await withheld.request.get(trustedBase+'/editor/document');assert.equal(refused.status(),409);assert.equal((await refused.json()).code,'PRIVATE_CONTENT_REQUIRES_LOGIN');
+   await withheld.goto(trustedBase+'/editor');await withheld.waitForFunction(text=>window.document.getElementById('save-status').textContent===text,notice);
+   assert.equal(await withheld.locator('#workspace').evaluate(element=>element.inert),true);assert.equal((await withheld.locator('body').innerText()).includes('Withheld application'),false);
+   assert.match(trustedLog,/private navigation entries exist while login is disabled/);await withheld.close();
+  }finally{trusted.kill();await fs.rm(trustedDir,{recursive:true,force:true});}
+  assert.deepEqual(errors,[]);console.log('PASS: category ID apps, implicit first-group filtering, unclassified links, no groups, app-only edits, add/edit preservation, unknown-ID rejection and withheld private content without login');
  }finally{if(browser)await browser.close();child.kill();await fs.rm(dir,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exitCode=1;});

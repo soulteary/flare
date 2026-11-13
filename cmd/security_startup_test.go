@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"golang.org/x/sys/unix"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/logger"
 	"github.com/soulteary/flare/internal/security"
 	"github.com/stretchr/testify/require"
 )
@@ -27,6 +29,14 @@ func writeStartupFiles(t *testing.T, content string) {
 	require.NoError(t, os.WriteFile("bookmarks.yml", []byte(content), 0600))
 	require.NoError(t, os.WriteFile("apps.yml", []byte("links: []\n"), 0600))
 	require.NoError(t, os.WriteFile("config.yml", []byte("title: existing deployment\n"), 0600))
+}
+func captureStartupLogs(t *testing.T) *bytes.Buffer {
+	t.Helper()
+	previous := logger.GetLogger()
+	t.Cleanup(func() { logger.SetLogger(previous) })
+	var logs bytes.Buffer
+	logger.SetLogger(slog.New(logger.NewPrettyHandler(&logs, logger.PrettyHandlerOptions{})))
+	return &logs
 }
 func closePreparation(t *testing.T, p SecurityPreparation) {
 	t.Helper()
@@ -133,7 +143,10 @@ func TestSecurityStartupLegacyCredentialsAndYAMLRemainExact(t *testing.T) {
 		})
 	}
 }
-func TestSecurityStartupTrustedAndPrivateConflict(t *testing.T) {
+
+// Private entries no longer stop a login-disabled instance from starting; the
+// data layer withholds the affected collections at request time instead.
+func TestSecurityStartupTrustedStartsWithPrivateContent(t *testing.T) {
 	for _, private := range []bool{false, true} {
 		t.Run(map[bool]string{false: "public", true: "private"}[private], func(t *testing.T) {
 			t.Chdir(t.TempDir())
@@ -145,13 +158,8 @@ func TestSecurityStartupTrustedAndPrivateConflict(t *testing.T) {
 			f := startupFlags(map[string]string{"FLARE_DISABLE_LOGIN": "true"})
 			p := PrepareSecurity(f)
 			defer closePreparation(t, p)
-			if private {
-				require.Equal(t, "attention_required", p.Status)
-				require.False(t, p.Store.Info().Initialized)
-			} else {
-				require.Equal(t, "ready", p.Status, p.Message)
-				require.Equal(t, security.ModeTrusted, p.Store.Info().Mode)
-			}
+			require.Equal(t, "ready", p.Status, p.Message)
+			require.Equal(t, security.ModeTrusted, p.Store.Info().Mode)
 			raw, e := os.ReadFile("bookmarks.yml")
 			require.NoError(t, e)
 			require.Equal(t, content, string(raw))
@@ -336,7 +344,7 @@ func TestSecurityPasswordFilesRejectFIFOAllowProjectedSymlink(t *testing.T) {
 	require.Equal(t, "projected password", pass)
 }
 
-func TestTrustedStartupStillRejectsPrivateContentAndDamagedState(t *testing.T) {
+func TestTrustedStartupReportsPrivateContentAndRejectsDamagedState(t *testing.T) {
 	for _, fixture := range []struct{ name, file, content string }{
 		{"bookmark", "bookmarks.yml", startupPrivate},
 		{"category", "bookmarks.yml", "categories:\n  - id: secret\n    title: Secret\n    private: true\nlinks: []\n"},
@@ -344,11 +352,15 @@ func TestTrustedStartupStillRejectsPrivateContentAndDamagedState(t *testing.T) {
 	} {
 		t.Run(fixture.name, func(t *testing.T) {
 			t.Chdir(t.TempDir())
+			logs := captureStartupLogs(t)
 			require.NoError(t, os.WriteFile(fixture.file, []byte(fixture.content), 0600))
 			p := PrepareSecurity(startupFlags(nil))
 			defer closePreparation(t, p)
-			require.Equal(t, "attention_required", p.Status)
-			require.False(t, p.Store.Info().Initialized)
+			require.Equal(t, "ready", p.Status, p.Message)
+			require.Equal(t, security.ModeTrusted, p.Store.Info().Mode)
+			require.Contains(t, logs.String(), "private navigation entries exist while login is disabled")
+			require.Contains(t, logs.String(), `"private_entries":1`)
+			require.NotContains(t, logs.String(), "secret.example.com")
 		})
 	}
 	for _, name := range []string{"state.json", "complete", "installation.json"} {
@@ -361,6 +373,40 @@ func TestTrustedStartupStillRejectsPrivateContentAndDamagedState(t *testing.T) {
 			p = PrepareSecurity(startupFlags(nil))
 			defer closePreparation(t, p)
 			require.Equal(t, "faulted", p.Status)
+		})
+	}
+}
+
+// The startup gate tolerates a navigation file that cannot be decoded: its raw
+// bytes still reach the migration snapshot, and maintenance commands that use
+// the strict inspection keep refusing it.
+func TestSecurityStartupContinuesWithUndecodableNavigationFile(t *testing.T) {
+	for _, fixture := range []struct{ name, file, content, detail string }{
+		{"syntax", "apps.yml", "links: [broken", "yaml:"},
+		{"undefined category", "bookmarks.yml", "categories:\n  - id: known\n    title: Known\nlinks:\n  - name: orphan-sentinel\n    link: https://orphan.example.com\n    category: missing\n", `link 1 (line 5) uses undefined category "missing"`},
+		{"application category", "apps.yml", "links:\n  - name: app-sentinel\n    link: https://app.example.com\n    category: any\n", "application 1 (line 2) must not set a category"},
+		{"duplicate key", "bookmarks.yml", "links:\n  - name: first\n    name: second\n    link: https://duplicate.example.com\n", `duplicate YAML key "name" (line 3)`},
+		{"private spelling", "bookmarks.yml", "links:\n  - name: flag-sentinel\n    link: https://flag.example.com\n    private: yes\n", "private must be true or false (line 4)"},
+	} {
+		t.Run(fixture.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			logs := captureStartupLogs(t)
+			require.NoError(t, os.WriteFile(fixture.file, []byte(fixture.content), 0600))
+			_, _, _, strictErr := inspectContent()
+			require.ErrorContains(t, strictErr, "invalid "+fixture.file)
+			p := PrepareSecurity(startupFlags(nil))
+			defer closePreparation(t, p)
+			require.Equal(t, "ready", p.Status, p.Message)
+			require.Equal(t, security.ModeTrusted, p.Store.Info().Mode)
+			require.Contains(t, logs.String(), "navigation file cannot be decoded")
+			require.Contains(t, logs.String(), `"file":"`+fixture.file+`"`)
+			require.Contains(t, logs.String(), strings.ReplaceAll(fixture.detail, `"`, `\"`))
+			for _, name := range []string{"orphan-sentinel", "app-sentinel", "flag-sentinel"} {
+				require.NotContains(t, logs.String(), name, "entry names stay out of diagnostics")
+			}
+			backup, readErr := os.ReadFile(filepath.Join(".flare-security", "migration-backups", "initial", fixture.file))
+			require.NoError(t, readErr)
+			require.Equal(t, fixture.content, string(backup))
 		})
 	}
 }

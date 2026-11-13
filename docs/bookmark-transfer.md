@@ -49,7 +49,9 @@ visibility and inherited category restrictions. Choosing public import requires
 recent password verification; changing the public option invalidates the old
 preview and requires a fresh preview before confirmation. The server rechecks
 recent authentication on public commit. Existing private flags are not erased by
-duplicate updates. Trusted anonymous mode rejects private input/results.
+duplicate updates. Trusted anonymous mode rejects private input/results, and
+refuses import, export and backup download for a collection or backup that
+already contains private entries.
 
 A private category cannot be made public by importing a child with `private: false`.
 YAML containing anchors/aliases can be read and exported as exact original YAML,

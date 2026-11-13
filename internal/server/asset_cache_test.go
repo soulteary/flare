@@ -119,8 +119,16 @@ func TestPersistentStorePublicAssetCacheAndPrivateResponses(t *testing.T) {
 				page := request(http.MethodGet, path, map[string]string{"If-None-Match": "*"})
 				require.Equal(t, http.StatusOK, page.Code, path)
 				require.Equal(t, "private, no-store", page.Header().Get("Cache-Control"), path)
+				if mode.disabled {
+					// Without login a collection that holds a private entry is
+					// withheld as a whole; the module reports why.
+					require.Regexp(t, `class="?navigation-data-error"? role="?alert"?`, page.Body.String(), path)
+					require.NotContains(t, page.Body.String(), "PUBLIC-CACHE-FIXTURE", path)
+					require.NotContains(t, page.Body.String(), "PRIVATE-CACHE-SENTINEL", path)
+					continue
+				}
 				require.Contains(t, page.Body.String(), "PUBLIC-CACHE-FIXTURE", path)
-				if mode.disabled || mode.authenticated {
+				if mode.authenticated {
 					require.Contains(t, page.Body.String(), "PRIVATE-CACHE-SENTINEL", path)
 				} else {
 					require.NotContains(t, page.Body.String(), "PRIVATE-CACHE-SENTINEL", path)
@@ -133,7 +141,10 @@ func TestPersistentStorePublicAssetCacheAndPrivateResponses(t *testing.T) {
 			}
 			for _, path := range []string{"/editor", "/editor/csrf", "/editor/document"} {
 				page := request(http.MethodGet, path, map[string]string{"If-None-Match": "*"})
-				if mode.disabled || mode.authenticated {
+				if mode.disabled && path == "/editor/document" {
+					require.Equal(t, http.StatusConflict, page.Code, path)
+					require.NotContains(t, page.Body.String(), "PRIVATE-CACHE-SENTINEL", path)
+				} else if mode.disabled || mode.authenticated {
 					require.Equal(t, http.StatusOK, page.Code, path)
 				} else {
 					require.NotEqual(t, http.StatusOK, page.Code, path)

@@ -251,6 +251,14 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	if auth.BufferedReadTentative(c) && viewErr != nil {
 		return c.Status(http.StatusInternalServerError).SendString("navigation unavailable")
 	}
+	appsErr, bookmarksErr := viewErr, viewErr
+	if viewErr != nil && options.ShowApps && options.ShowBookmarks {
+		// The pair is selected under one lock for consistency. When that fails,
+		// read each collection on its own so that one unreadable file does not
+		// also hide the other module.
+		appsView, _, appsErr = data.LoadNavigationViews(true, false, administrator, false)
+		_, bookmarksView, bookmarksErr = data.LoadNavigationViews(false, true, administrator, false)
+	}
 	requestURL := parseRequestURL(c)
 	locale := options.Locale
 	if locale == "" {
@@ -290,8 +298,8 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	var apps template.HTML
 	if options.ShowApps {
-		if viewErr != nil {
-			m["ApplicationsError"] = navigationDataError("applications", options.Locale, viewErr)
+		if appsErr != nil {
+			m["ApplicationsError"] = navigationDataError("applications", options.Locale, appsErr)
 		} else {
 			apps = navigationFragment(appsView, &options, true, filter, "", c.Path(), &requestURL)
 		}
@@ -303,8 +311,8 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["BookmarkCategory"] = selected
 	var bookmarks template.HTML
 	if options.ShowBookmarks {
-		if viewErr != nil {
-			m["BookmarksError"] = navigationDataError("bookmarks", options.Locale, viewErr)
+		if bookmarksErr != nil {
+			m["BookmarksError"] = navigationDataError("bookmarks", options.Locale, bookmarksErr)
 		} else {
 			bookmarks = navigationFragment(bookmarksView, &options, false, filter, selected, c.Path(), &requestURL)
 		}
