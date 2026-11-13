@@ -14,6 +14,19 @@ import (
 // their storage and can safely outlive the request. Parse errors are ignored,
 // as with net/http.Request.FormValue.
 func Get(c fiber.Ctx, key string) string {
+	value, _ := lookup(c, key)
+	return value
+}
+
+// Has reports whether key was submitted at all, including with an empty value.
+// It consults the same sources in the same order as Get, so a handler can tell
+// a field that a form omitted from one that the user cleared.
+func Has(c fiber.Ctx, key string) bool {
+	_, found := lookup(c, key)
+	return found
+}
+
+func lookup(c fiber.Ctx, key string) (string, bool) {
 	request := c.Request()
 	contentType := string(request.Header.ContentType())
 	mediaType, params, err := mime.ParseMediaType(contentType)
@@ -29,24 +42,24 @@ func Get(c fiber.Ctx, key string) string {
 	if err == nil && mediaType == fiber.MIMEApplicationForm &&
 		(method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch) {
 		if args := request.PostArgs(); args.Has(key) {
-			return string(args.Peek(key))
+			return string(args.Peek(key)), true
 		}
 	}
 	if args := request.URI().QueryArgs(); args.Has(key) {
-		return string(args.Peek(key))
+		return string(args.Peek(key)), true
 	}
 	if err == nil && mediaType == fiber.MIMEMultipartForm {
 		return multipartValue(c, key)
 	}
-	return ""
+	return "", false
 }
 
-func multipartValue(c fiber.Ctx, key string) string {
+func multipartValue(c fiber.Ctx, key string) (string, bool) {
 	form, err := c.Request().MultipartFormWithLimit(c.App().Config().BodyLimit)
 	if err == nil {
 		if values := form.Value[key]; len(values) > 0 {
-			return values[0]
+			return values[0], true
 		}
 	}
-	return ""
+	return "", false
 }

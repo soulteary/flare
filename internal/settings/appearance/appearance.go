@@ -73,6 +73,15 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 	update.OpenBookmarkNewTab = body.OptionOpenBookmarkNewTab
 	update.ShowTitle = body.OptionShowTitle
 	update.Greetings = body.OptionGreetings
+	// The greetings field is rendered only while the title is shown. A form
+	// without it keeps the stored text; a submitted empty value clears it.
+	if !formvalue.Has(c, "greetings") {
+		existing, err := data.GetAllSettingsOptions()
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).SendString("config error")
+		}
+		update.Greetings = existing.Greetings
+	}
 	update.ShowDateTime = body.OptionShowDateTime
 	update.ShowApps = body.OptionShowApps
 	update.ShowBookmarks = body.OptionShowBookmarks
