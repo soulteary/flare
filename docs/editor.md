@@ -31,7 +31,9 @@ Keep normal filesystem backups and do not edit files concurrently during saves.
 New entries/categories in the authenticated editor default to private. A private
 category keeps its children private even when an individual entry is unchecked.
 The form explains inherited visibility; changing a presentation filter never
-changes permissions. Trusted-network mode cannot save private resources.
+changes permissions. Trusted-network mode cannot save private resources, and
+does not open a document that already contains them: the editor shows the reason
+and the files must be corrected, or login enabled, first.
 
 Saving requires the current session/browser-bound CSRF token in addition to
 `X-Flare-Editor: 1` and the document revision. Programmatic clients can GET

@@ -114,6 +114,9 @@ func readTicket(token, user string) (transferTicket, error) {
 
 func transferError(c fiber.Ctx, status int, err error) error {
 	log.Printf("bookmark transfer failed: %v", err)
+	if errors.Is(err, data.ErrPrivateContentRequiresLogin) {
+		return c.Status(http.StatusConflict).JSON(map[string]string{"code": privateContentCode, "error": privateContentText()})
+	}
 	return c.Status(status).JSON(map[string]string{"error": transferText(err.Error())})
 }
 
@@ -311,6 +314,9 @@ func backupTransfer(c fiber.Ctx) error {
 	collection := c.Query("collection")
 	raw, when, err := data.LatestBookmarkBackup(collection)
 	if err != nil {
+		if errors.Is(err, data.ErrPrivateContentRequiresLogin) {
+			return transferError(c, http.StatusConflict, err)
+		}
 		status := http.StatusInternalServerError
 		if errors.Is(err, os.ErrNotExist) {
 			status = http.StatusNotFound

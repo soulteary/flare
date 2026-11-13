@@ -202,6 +202,7 @@
   "navigation.categories": "书签分类",
   "navigation.bookmarks_error": "无法读取书签数据，请检查配置文件和服务日志。",
   "navigation.applications_error": "无法读取应用数据，请检查配置文件和服务日志。",
+  "navigation.private_requires_login": "存在私有条目，但登录已关闭。请启用登录，或去掉 YAML 文件中的 private 标记。",
   "auth.retry": "返回重试",
   "auth.report": "反馈使用中的问题，谢谢！",
   "auth.save_error": "程序内部错误，保存登陆状态失败",

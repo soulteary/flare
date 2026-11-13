@@ -130,7 +130,7 @@ func validateEffectivePermissions(doc *yaml.Node, out *model.Bookmarks) error {
 				return err
 			}
 			if v != nil && (v.Kind != yaml.ScalarNode || v.Tag != "!!bool" || (v.Value != "true" && v.Value != "false")) {
-				return fmt.Errorf("private must be true or false")
+				return fmt.Errorf("private must be true or false%s", nodeLocation(v))
 			}
 		}
 	}

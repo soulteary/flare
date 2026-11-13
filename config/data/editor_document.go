@@ -92,6 +92,13 @@ func editorSnapshotLocked() (EditorDocument, [2][]byte, error) {
 	if err := yamlutil.DecodeBookmarks(raw[1], &bookmarks, false); err != nil {
 		return doc, raw, err
 	}
+	// The editor reads disk bytes, not the display snapshots, so it applies the
+	// same policy itself before any entry leaves this function.
+	for _, collection := range []model.Bookmarks{apps, bookmarks} {
+		if err := privateContentError(collection); err != nil {
+			return doc, raw, err
+		}
+	}
 	doc = EditorDocument{Version: editorVersion(raw[0], raw[1]), Categories: bookmarks.Categories, Apps: apps.Items, Bookmarks: bookmarks.Items}
 	return doc, raw, nil
 }
@@ -171,6 +178,9 @@ func commitEditorDocumentChecked(next EditorDocument, rename func(string, string
 		var target model.Bookmarks
 		if decodeErr := yamlutil.DecodeBookmarks(output[i], &target, name == "apps"); decodeErr != nil {
 			return EditorDocument{}, decodeErr
+		}
+		if policyErr := privateContentError(target); policyErr != nil {
+			return EditorDocument{}, policyErr
 		}
 	}
 	files := []*stagedFile{

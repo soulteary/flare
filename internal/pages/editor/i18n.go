@@ -149,6 +149,12 @@ func editorLocale() string {
 	}
 	return "zh"
 }
+
+// privateContentText explains why no document, import or export is available
+// while login is disabled and private entries exist. It names no entry.
+func privateContentText() string {
+	return i18n.T(editorLocale(), "navigation.private_requires_login")
+}
 func editorText(locale, source string) string {
 	if key, ok := editorMessages[source]; ok {
 		return i18n.T(locale, key)

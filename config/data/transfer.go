@@ -60,6 +60,9 @@ func BookmarkSnapshot(name string) (model.Bookmarks, string, error) {
 	if err = yamlutil.DecodeBookmarks(raw, &src, name == "apps"); err != nil {
 		return src, "", err
 	}
+	if err = privateContentError(src); err != nil {
+		return model.Bookmarks{}, "", err
+	}
 	return src, bookmarkVersion(raw), nil
 }
 
@@ -112,6 +115,9 @@ func CommitBookmarkImportChecked(name, version string, next model.Bookmarks, che
 	}
 	var target model.Bookmarks
 	if err = yamlutil.DecodeBookmarks(out, &target, name == "apps"); err != nil {
+		return err
+	}
+	if err = privateContentError(target); err != nil {
 		return err
 	}
 	if err = os.MkdirAll(bookmarkBackupDir, 0700); err != nil {
@@ -176,6 +182,18 @@ func LatestBookmarkBackup(name string) ([]byte, time.Time, error) {
 		return nil, time.Time{}, err
 	}
 	raw, err := os.ReadFile(filepath.Clean(path))
+	// A backup predates the import that created it and may hold entries that
+	// were private then. Without login it is released only when it can be
+	// decoded and contains none.
+	if err == nil && privateContentRequiresLogin.Load() {
+		var value model.Bookmarks
+		if err = yamlutil.DecodeBookmarks(raw, &value, name == "apps"); err != nil {
+			return nil, time.Time{}, fmt.Errorf("backup cannot be inspected while login is disabled: %w", err)
+		}
+		if err = privateContentError(value); err != nil {
+			return nil, time.Time{}, err
+		}
+	}
 	return raw, info.ModTime(), err
 }
 
@@ -194,6 +212,9 @@ func RawBookmarkSnapshot(name string) ([]byte, error) {
 	}
 	var value model.Bookmarks
 	if err = yamlutil.DecodeBookmarks(raw, &value, name == "apps"); err != nil {
+		return nil, err
+	}
+	if err = privateContentError(value); err != nil {
 		return nil, err
 	}
 	return raw, nil

@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/logger"
 	"github.com/soulteary/flare/internal/security"
 	"github.com/soulteary/flare/internal/yamlutil"
 	"golang.org/x/sys/unix"
@@ -51,6 +52,14 @@ func sum(raw []byte) string { h := sha256.Sum256(raw); return hex.EncodeToString
 
 // Read actual content bytes without initializing missing YAML or warming navigation caches.
 func inspectContent() (map[string][]byte, int, bool, error) {
+	return inspectContentWith(nil)
+}
+
+// inspectContentWith reports an undecodable navigation file to tolerate, when
+// given, and continues without that file's private count. Its bytes still
+// enter the legacy check and the migration snapshot. Maintenance commands pass
+// nil and keep refusing such files.
+func inspectContentWith(tolerate func(name string, err error)) (map[string][]byte, int, bool, error) {
 	files := map[string][]byte{}
 	privateCount := 0
 	legacy := false
@@ -87,6 +96,10 @@ func inspectContent() (map[string][]byte, int, bool, error) {
 		}
 		var doc model.Bookmarks
 		if err := yamlutil.DecodeBookmarks(raw, &doc, name == "apps.yml"); err != nil {
+			if tolerate != nil {
+				tolerate(name, err)
+				continue
+			}
 			return nil, 0, false, fmt.Errorf("invalid %s: %w", name, err)
 		}
 		for _, c := range doc.Categories {
@@ -395,7 +408,12 @@ func PrepareSecurity(f *model.Flags) SecurityPreparation {
 	if err := applyExplicit(f); err != nil {
 		return fail("attention_required", err.Error(), nil)
 	}
-	files, count, legacy, err := inspectContent()
+	// A navigation file that cannot be decoded renders none of its entries: the
+	// module backed by it reports the error on each request, and the rest of the
+	// instance stays available.
+	files, count, legacy, err := inspectContentWith(func(name string, decodeErr error) {
+		logger.GetLogger().Warn("navigation file cannot be decoded; its module shows an error until the file is corrected", "file", name, "error", decodeErr.Error())
+	})
 	if err != nil {
 		return fail("attention_required", err.Error(), nil)
 	}
@@ -434,7 +452,9 @@ func PrepareSecurity(f *model.Flags) SecurityPreparation {
 		return fail("attention_required", "PRIVATE visibility requires login; correct the explicit access configuration", store)
 	}
 	if f.DisableLoginMode && count > 0 {
-		return fail("attention_required", "private content conflicts with disabled login; enable login or review private flags offline", store)
+		// Startup continues. The server enables data.RequireLoginForPrivateContent
+		// when login is disabled, so no reader returns these collections.
+		logger.GetLogger().Warn("private navigation entries exist while login is disabled; the affected collections are withheld until login is enabled or the private flags are removed", "private_entries", count)
 	}
 	if !info.Initialized {
 		if !f.DisableLoginMode {

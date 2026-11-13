@@ -81,8 +81,10 @@ environment:
 ```
 
 Use both privacy settings together. Current main rejects `PRIVATE` with disabled
-login, and rejects private entries/categories in trusted anonymous mode. It does
-not clear private flags or fall back to public access. Stable 0.6.7 does not enforce
+login at startup. Private entries/categories in trusted anonymous mode do not stop
+the instance: the collection that contains them is withheld as a whole until login
+is enabled or the flags are removed; see [access models](accounts.md#access-models-and-private-inheritance).
+It does not clear private flags or fall back to public access. Stable 0.6.7 does not enforce
 per-resource flags: use whole-site PRIVATE to protect all resources. Hiding the
 settings button only changes presentation. Encoded redirects are not encryption
 or authorization; current main uses opaque handles and rechecks resource access

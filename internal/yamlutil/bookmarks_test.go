@@ -26,6 +26,42 @@ func TestNavigationPermissionValidation(t *testing.T) {
 		t.Fatal("apps accepted category")
 	}
 }
+
+// Decode errors point at the offending entry by position and source line; they
+// never quote entry names, which may be private.
+func TestNavigationDecodeErrorsLocateTheEntry(t *testing.T) {
+	for _, tc := range []struct {
+		name, raw, want string
+		apps            bool
+	}{
+		{"duplicate key", "links:\n- name: secret-name\n  name: other\n  link: https://example.com\n", `duplicate YAML key "name" (line 3)`, false},
+		{"private spelling", "links:\n- name: secret-name\n  link: https://example.com\n  private: yes\n", "private must be true or false (line 4)", false},
+		{"category without id", "categories:\n- id: first\n- title: secret-name\nlinks: []\n", "missing or duplicate category ID: category 2 (line 3) has no id", false},
+		{"duplicate category", "categories:\n- id: same\n- id: same\nlinks: []\n", `missing or duplicate category ID: "same" is defined more than once (line 3)`, false},
+		{"undefined category", "categories:\n- id: known\nlinks:\n- name: fine\n  link: https://example.com\n- name: secret-name\n  link: https://example.com\n  category: absent\n", `invalid category reference: link 2 (line 6) uses undefined category "absent"`, false},
+		{"application category", "links:\n- name: secret-name\n  link: https://example.com\n  category: any\n", "invalid category reference: application 1 (line 2) must not set a category", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var v model.Bookmarks
+			err := DecodeBookmarks([]byte(tc.raw), &v, tc.apps)
+			if err == nil || err.Error() != tc.want {
+				t.Fatalf("want %q, got %v", tc.want, err)
+			}
+			if strings.Contains(err.Error(), "secret-name") {
+				t.Fatalf("entry name leaked into %q", err)
+			}
+		})
+	}
+	// Collections supplied through a merge key have no inline position.
+	var v model.Bookmarks
+	err := DecodeBookmarks([]byte("base: &base\n  links:\n  - name: secret-name\n    link: https://example.com\n    category: absent\n<<: *base\n"), &v, false)
+	if err == nil || err.Error() != `invalid category reference: link 1 uses undefined category "absent"` {
+		t.Fatalf("unexpected merged-collection error: %v", err)
+	}
+	if sequenceLocation(nil, 0) != "" || nodeLocation(nil) != "" {
+		t.Fatal("missing nodes must not produce a location")
+	}
+}
 func TestNavigationNodeExtensionsSurviveEditAndNativeImport(t *testing.T) {
 	raw := []byte("custom_root: {enabled: true}\ncategories:\n- id: c\n  title: Category\n  private: true\n  extension: [one, two]\nlinks:\n- name: Original\n  link: https://example.com\n  category: c\n  private: false\n  custom: {nested: value}\n")
 	var v model.Bookmarks

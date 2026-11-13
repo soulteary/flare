@@ -137,9 +137,12 @@ state. Only after success, recreate the service with login enabled, preserving i
 original data. `docker start` alone cannot change an existing container's environment.
 Do not run maintenance with `docker exec` while the service holds the state lock.
 
-Contradictory access settings, private content in trusted mode, and damaged or
-unwritable security state still block startup with HTTP 503. Check terminal or
-container logs; do not delete security state to bypass the error.
+Contradictory access settings and damaged or unwritable security state still
+block startup with HTTP 503. Check terminal or container logs; do not delete
+security state to bypass the error. Private content in trusted mode and a
+navigation file that cannot be decoded do not block startup; see
+[access models](#access-models-and-private-inheritance) and
+[troubleshooting](troubleshooting.md).
 
 Persist `.flare-security/` (or `FLARE_STATE_DIR`) on writable local storage. The
 process holds an exclusive lock; stop it before maintenance commands. Only a
@@ -153,9 +156,15 @@ are outside this implementation's support boundary.
   the single administrator can view all resources and use administration.
 - Login enabled + `PRIVATE`: all navigation requires the administrator session.
 - Login disabled + `DEFAULT`: trusted-network mode allows anonymous management.
-  It must not contain private categories or entries.
-- Login disabled + `PRIVATE`, invalid security input, or private resources in
-  trusted mode: startup is blocked until the operator corrects the source.
+  It must not contain private categories or entries. If `apps.yml` or
+  `bookmarks.yml` does, the instance still starts, but that collection is
+  withheld as a whole, public entries included: its section shows a notice,
+  search suggestions fail, redirects to its entries return 404, and the editor,
+  import, export and backup download refuse it. Enable login or remove the
+  private flags from the file. Flare does not clear the flags or show the
+  entries.
+- Login disabled + `PRIVATE` or invalid security input: startup is blocked until
+  the operator corrects the source.
 
 `private: true` on a bookmark category restricts all its children. An entry's
 `private: false` cannot override its category. Missing/false values retain public

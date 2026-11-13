@@ -174,16 +174,17 @@ try:
         docker('stop', secret_reader)
         conflict = container('conflict', [volume('conflict-data')+':/app'], ['FLARE_DISABLE_LOGIN=true','FLARE_OFFLINE=true'])
         seed(conflict, fixture)
-        start(conflict, False)
-        # A paused instance may expose health but never content.
-        state = json.loads(docker('inspect', conflict))[0]['State']
-        if state['Running']:
-            port = int(json.loads(docker('inspect', conflict))[0]['NetworkSettings']['Ports']['5005/tcp'][0]['HostPort'])
-            status,_,body = request(port, '/')
-            assert status >= 400 and 'PRIVATE-ACCEPTANCE' not in body and 'PUBLIC-ACCEPTANCE' not in body
-        else:
-            assert state['ExitCode'] != 0
-        record('trusted-mode/private conflict fails closed')
+        # The instance stays available. With login disabled the collection that
+        # holds a private entry is withheld as a whole, public entries included.
+        port = start(conflict)
+        status,_,body = request(port, '/')
+        assert status == 200 and 'PRIVATE-ACCEPTANCE' not in body and 'PUBLIC-ACCEPTANCE' not in body
+        for path in ('/applications', '/editor/document', '/editor/transfer/export?collection=apps&format=yaml'):
+            status,_,body = request(port, path)
+            assert 'PRIVATE-ACCEPTANCE' not in body and 'PUBLIC-ACCEPTANCE' not in body, path
+        assert request(port, '/editor/document')[0] == 409
+        assert request(port, '/ping')[0] == 200
+        record('trusted-mode/private content is withheld while the instance stays up')
         # Real filesystem faults in the Linux kernel, not injected Go errors.
         readonly = container('readonly-state',[data+':/app',security+':/app/.flare-security:ro'],env)
         start(readonly,False)
