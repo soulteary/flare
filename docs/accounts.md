@@ -199,17 +199,21 @@ overrides the application's password. Change back only with the stopped-service
 `security set-credentials --mode deployment` command and the intended deployment
 source. Do not merely change `FLARE_CREDENTIAL_MODE` on an initialized instance.
 
-Sessions are stored by token digest, with a 30-minute idle limit and a 12-hour
-absolute limit. Eligible foreground activity renews idle time; background
-weather/clock work does not. Reauthentication rotates the token without extending
-the original absolute limit. Recent password verification lasts 10 minutes for
-sensitive operations. Ordinary restarts preserve unexpired sessions. Sign out
-revokes the current session; Sign out all, password changes and password-source
-switches revoke the relevant old sessions.
+Sessions are stored by token digest. Current source ends a session 30 days after
+sign-in. The idle limit equals that limit, so activity does not extend a session.
+Stable 0.6.8 to 0.6.14 use a 30-minute idle limit and a 12-hour absolute limit
+instead. Reauthentication rotates the token without extending the original
+limit. Recent password verification lasts 10 minutes for sensitive operations.
+Ordinary restarts preserve unexpired sessions. Sign out revokes the current
+session; Sign out all, password changes and password-source switches revoke the
+relevant old sessions.
 
-Cookies are host-only, HttpOnly, SameSite=Lax and Path=/; current session cookies
-are browser-session cookies, distinct from server-side expiry. Direct TLS uses
-Secure. For HTTPS termination, configure the [proxy policy](reverse-proxy.md).
+Cookies are host-only, HttpOnly, SameSite=Lax and Path=/. In current source the
+session cookie is persistent, with a 30-day `Max-Age`, and survives a browser
+restart; stable 0.6.8 to 0.6.14 issue browser-session cookies. Server-side expiry
+and revocation remain authoritative. Sign out explicitly on a shared device.
+Direct TLS uses Secure. For HTTPS termination, configure the
+[proxy policy](reverse-proxy.md).
 
 ## Recovery and maintenance
 

@@ -36,9 +36,14 @@ var (
 
 const ModeTrusted = "trusted"
 
+// A session ends 30 days after it is created. The idle limit equals the
+// absolute limit: LastActive is never earlier than CreatedAt, so the absolute
+// deadline is reached no later than the idle deadline and activity cannot
+// extend a session. Sensitive operations still require a password verification
+// within ReauthTimeout.
 const (
-	IdleTimeout     = 30 * time.Minute
-	AbsoluteTimeout = 12 * time.Hour
+	IdleTimeout     = 30 * 24 * time.Hour
+	AbsoluteTimeout = 30 * 24 * time.Hour
 	ReauthTimeout   = 10 * time.Minute
 )
 

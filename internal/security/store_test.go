@@ -254,8 +254,9 @@ func TestAbsoluteExpiryDespiteActivity(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
+	// Regular activity up to the absolute limit: only the final step expires.
 	for i := 0; i < 36; i++ {
-		now = now.Add(20 * time.Minute)
+		now = now.Add(AbsoluteTimeout / 36)
 		_, e = s.Session(token, true)
 		if i < 35 && e != nil {
 			t.Fatal(e)
