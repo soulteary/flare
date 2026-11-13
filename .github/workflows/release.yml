@@ -23,11 +23,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify stable release tag
+      # Stable versions are 0.x.y. A release candidate is 0.x.y-rc.N; it is
+      # published as a prerelease and never moves latest (.goreleaser.yaml).
+      - name: Verify release tag
         shell: bash
         run: |
           set -euo pipefail
-          [[ "$GITHUB_REF_NAME" =~ ^0\.[0-9]+\.[0-9]+$ ]]
+          [[ "$GITHUB_REF_NAME" =~ ^0\.[0-9]+\.[0-9]+(-rc\.[1-9][0-9]*)?$ ]]
           test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")"
 
       - name: Set up Go
@@ -50,6 +52,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # The changelog is compared with the previous stable version, so a stable
+      # release also lists the changes made between its release candidates.
+      # For a tag with no candidates in its history this is the same tag that
+      # GoReleaser selects by default.
+      - name: Select the previous stable tag
+        id: tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          previous="$(git describe --tags --abbrev=0 --exclude='*-rc.*' "refs/tags/$GITHUB_REF_NAME^" 2>/dev/null || true)"
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         if: success() && startsWith(github.ref, 'refs/tags/')
@@ -58,6 +72,11 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # A stable tag usually shares its commit with the candidate it was
+          # promoted from. Release the pushed tag rather than letting
+          # GoReleaser choose among the tags on that commit.
+          GORELEASER_CURRENT_TAG: ${{ github.ref_name }}
+          GORELEASER_PREVIOUS_TAG: ${{ steps.tags.outputs.previous }}
 
   publish_ghcr:
     name: Publish the released images to GHCR
@@ -70,7 +89,8 @@ jobs:
     with:
       version: ${{ github.ref_name }}
       expected_commit: ${{ github.sha }}
-      update_latest: true
+      # Only stable tags request latest; the script also refuses candidates.
+      update_latest: ${{ !contains(github.ref_name, '-') }}
 
   report_release:
     name: Dispatch verified release reports

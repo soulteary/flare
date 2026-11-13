@@ -78,10 +78,11 @@ scripts were removed, and public/private search modes remain separate.
 
 ## Trigger and publication safeguards
 
-Main pushes use CI; Release runs only for stable `0.x.y` tags. The release job
-validates the tag and peeled commit before using registry credentials. Tests,
-GoReleaser checks/publication, GHCR digest/provenance/platform verification and
-report dispatch/reuse stay in place. Manual Release must select a matching tag.
+Main pushes use CI; Release runs only for stable `0.x.y` tags and `0.x.y-rc.N`
+release candidates. The release job validates the tag and peeled commit before
+using registry credentials. Tests, GoReleaser checks/publication, GHCR
+digest/provenance/platform verification and report dispatch/reuse stay in
+place. Manual Release must select a matching tag.
 
 Only superseded PR runs are actively cancelled. Release, GHCR serialization and
 report writeback retain their existing coordination. gosec retains its Docker
