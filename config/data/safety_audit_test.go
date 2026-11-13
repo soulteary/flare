@@ -155,22 +155,48 @@ func TestConcurrentDiskEditStopsCommit(t *testing.T) {
 }
 
 func TestBackupCollisionAndUnknownManifestAreNotOverwritten(t *testing.T) {
+	captureBackupWarnings(t)
 	t.Chdir(t.TempDir())
 	require.NoError(t, retainSearchBackup([]byte("initial"), false))
-	first := filepath.Join(searchBackupDir, "first-upgrade-to-"+applicationVersion()+".bak")
-	require.NoError(t, os.WriteFile(first, []byte("user-backup"), 0600))
-	require.Error(t, retainSearchBackup([]byte("upgrade"), true))
-	mine, err := os.ReadFile(first)
+	upgradeName := "first-upgrade-to-" + applicationVersion() + ".bak"
+	require.NoError(t, os.WriteFile(filepath.Join(searchBackupDir, upgradeName), []byte("user-backup"), 0600))
+	// A user file under the managed name is never overwritten: its directory is
+	// set aside and the upgrade backup goes into a new one.
+	require.NoError(t, retainSearchBackup([]byte("upgrade"), true))
+	moved := setAsideBackups(t)
+	require.Len(t, moved, 1)
+	mine, err := os.ReadFile(filepath.Join(moved[0], upgradeName))
 	require.NoError(t, err)
 	require.Equal(t, "user-backup", string(mine))
+	latest, err := os.ReadFile(filepath.Join(moved[0], "latest.bak"))
+	require.NoError(t, err)
+	require.Equal(t, "initial", string(latest))
+	managed, err := os.ReadFile(filepath.Join(searchBackupDir, upgradeName))
+	require.NoError(t, err)
+	require.Equal(t, "upgrade", string(managed))
+
 	manifest := filepath.Join(searchBackupDir, "manifest.json")
 	raw, err := os.ReadFile(manifest)
 	require.NoError(t, err)
-	require.NoError(t, os.WriteFile(manifest, append(raw, []byte(" {}")...), 0600))
-	require.Error(t, retainSearchBackup([]byte("next"), false))
-	latest, err := os.ReadFile(filepath.Join(searchBackupDir, "latest.bak"))
+	tampered := append(raw, []byte(" {}")...)
+	require.NoError(t, os.WriteFile(manifest, tampered, 0600))
+	require.NoError(t, retainSearchBackup([]byte("next"), false))
+	all := setAsideBackups(t)
+	require.Len(t, all, 2)
+	for _, dir := range all {
+		if dir == moved[0] {
+			continue
+		}
+		kept, readErr := os.ReadFile(filepath.Join(dir, "manifest.json"))
+		require.NoError(t, readErr)
+		require.Equal(t, tampered, kept)
+		kept, readErr = os.ReadFile(filepath.Join(dir, upgradeName))
+		require.NoError(t, readErr)
+		require.Equal(t, "upgrade", string(kept))
+	}
+	latest, err = os.ReadFile(filepath.Join(searchBackupDir, "latest.bak"))
 	require.NoError(t, err)
-	require.Equal(t, "initial", string(latest))
+	require.Equal(t, "next", string(latest))
 }
 
 func TestEngineReorderRetainsExtensionsAndAmbiguousRenameAborts(t *testing.T) {
@@ -195,15 +221,25 @@ func TestEngineReorderRetainsExtensionsAndAmbiguousRenameAborts(t *testing.T) {
 	require.Equal(t, saved, after)
 }
 
-func TestBackupRefusesPublicPermissions(t *testing.T) {
+func TestBackupRepairsPublicPermissions(t *testing.T) {
+	warnings := captureBackupWarnings(t)
 	t.Chdir(t.TempDir())
 	require.NoError(t, retainSearchBackup([]byte("initial"), false))
 	p := filepath.Join(searchBackupDir, "latest.bak")
 	require.NoError(t, os.Chmod(p, 0644))
-	require.Error(t, retainSearchBackup([]byte("next"), false))
+	require.NoError(t, os.Chmod(searchBackupDir, 0755))
+	require.NoError(t, retainSearchBackup([]byte("next"), false))
 	got, err := os.ReadFile(p)
 	require.NoError(t, err)
-	require.Equal(t, "initial", string(got))
+	require.Equal(t, "next", string(got))
+	info, err := os.Stat(p)
+	require.NoError(t, err)
+	require.Equal(t, os.FileMode(0600), info.Mode().Perm())
+	info, err = os.Stat(searchBackupDir)
+	require.NoError(t, err)
+	require.Equal(t, os.FileMode(0700), info.Mode().Perm())
+	require.Empty(t, *warnings)
+	require.Empty(t, setAsideBackups(t))
 }
 
 func TestStaleSettingsCannotReplaceExternalEdits(t *testing.T) {

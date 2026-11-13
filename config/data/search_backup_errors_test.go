@@ -59,7 +59,12 @@ func TestManagedBackupValidationRejectsMissingOrUnsafeFiles(t *testing.T) {
 	require.Error(t, validateSearchBackups(dir, searchBackupManifest{UpgradeFile: "../outside"}))
 	require.Error(t, validateSearchBackups(dir, searchBackupManifest{Latest: "missing"}))
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "latest.bak"), []byte("private"), 0644))
-	require.Error(t, regularBackupFile(filepath.Join(dir, "latest.bak")))
-	require.NoError(t, os.Chmod(filepath.Join(dir, "latest.bak"), 0600))
+	// Open permissions are repaired, not rejected.
+	require.NoError(t, regularBackupFile(filepath.Join(dir, "latest.bak")))
+	info, err := os.Stat(filepath.Join(dir, "latest.bak"))
+	require.NoError(t, err)
+	require.Equal(t, os.FileMode(0600), info.Mode().Perm())
 	require.Error(t, validateSearchBackups(dir, searchBackupManifest{Latest: "incorrect hash"}))
+	require.NoError(t, os.Symlink("latest.bak", filepath.Join(dir, "linked.bak")))
+	require.Error(t, regularBackupFile(filepath.Join(dir, "linked.bak")))
 }

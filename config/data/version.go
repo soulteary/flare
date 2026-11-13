@@ -122,7 +122,7 @@ func comparePrerelease(a, b string) int {
 func versionForSave(original model.Application) (string, error) {
 	state := ConfigurationVersionState(original.AppVersion)
 	if state == "downgrade" {
-		return "", fmt.Errorf("configuration was saved by newer Flare %s; current version %s cannot overwrite it", original.AppVersion, applicationVersion())
+		return "", saveError(SaveFailureNewerVersion, fmt.Errorf("configuration was saved by newer Flare %s; current version %s cannot overwrite it", original.AppVersion, applicationVersion()))
 	}
 	if state == "unknown" {
 		return original.AppVersion, nil

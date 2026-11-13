@@ -15,14 +15,14 @@ func saveSearchConfigPreservingData(options model.Application) error {
 	path := getConfigPath("config")
 	raw, err := readFile(path)
 	if err != nil {
-		return err
+		return saveError(SaveFailureConfigUnreadable, err)
 	}
 	doc, original, err := readConfigDocument(raw)
 	if err != nil {
-		return err
+		return saveError(SaveFailureConfigUnreadable, err)
 	}
 	if options.ConfigRevision != "" && options.ConfigRevision != backupDigest(raw) {
-		return fmt.Errorf("configuration changed since this form was loaded; reload before saving")
+		return saveError(SaveFailureConfigChanged, fmt.Errorf("configuration changed since this form was loaded; reload before saving"))
 	}
 	if sameSearchSettings(original, options) {
 		return nil

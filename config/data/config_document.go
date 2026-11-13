@@ -36,7 +36,7 @@ func requireRegularConfig(path string) error {
 		return err
 	}
 	if !info.Mode().IsRegular() {
-		return fmt.Errorf("configuration must be a regular file; symbolic links are read-only")
+		return saveError(SaveFailureNotRegularFile, fmt.Errorf("configuration must be a regular file; symbolic links are read-only"))
 	}
 	return nil
 }
@@ -45,7 +45,7 @@ func requireRegularConfig(path string) error {
 // a shared anchor. Refuse a changed save rather than guessing at that intent.
 func rejectSharedConfigNodes(node *yaml.Node) error {
 	if node.Kind == yaml.AliasNode || node.Tag == "!!merge" {
-		return fmt.Errorf("configuration aliases/merge keys cannot be safely edited; original file retained")
+		return saveError(SaveFailureSharedNodes, fmt.Errorf("configuration aliases/merge keys cannot be safely edited; original file retained"))
 	}
 	for _, child := range node.Content {
 		if err := rejectSharedConfigNodes(child); err != nil {
@@ -65,20 +65,23 @@ func commitConfigDocumentWithBackup(path string, raw, out []byte, upgrading bool
 	}
 	current, err := readFile(path)
 	if err != nil || !bytes.Equal(raw, current) {
-		return fmt.Errorf("configuration changed during save; reload and retry")
+		return saveError(SaveFailureConfigChanged, fmt.Errorf("configuration changed during save; reload and retry"))
 	}
+	// The backup is a safety net, not a precondition. The replacement below is
+	// atomic and rechecks the original first, so a backup that cannot be taken
+	// is reported and the save continues.
 	if err = backup(raw, upgrading); err != nil {
-		return fmt.Errorf("backup: %w", err)
+		warnBackupOnce(searchBackupPath(path), err.Error(), "continuing the save without a backup")
 	}
 	if err = requireRegularConfig(path); err != nil {
 		return err
 	}
 	current, err = readFile(path)
 	if err != nil || !bytes.Equal(raw, current) {
-		return fmt.Errorf("configuration changed during save; reload and retry")
+		return saveError(SaveFailureConfigChanged, fmt.Errorf("configuration changed during save; reload and retry"))
 	}
 	if !saveConfigAtomically(path, out) {
-		return fmt.Errorf("atomic replacement failed; original backup retained")
+		return saveError(SaveFailureWrite, fmt.Errorf("atomic replacement failed; original configuration retained"))
 	}
 	invalidateFileCache("config")
 	return nil
@@ -114,7 +117,7 @@ func rejectAmbiguousEngineReplacement(root, patch *yaml.Node) error {
 		}
 		for i := 0; i < len(row.Content); i += 2 {
 			if !known[row.Content[i].Value] {
-				return fmt.Errorf("engine ID change could discard extension fields; retain the original ID or edit this engine in YAML")
+				return saveError(SaveFailureEngineExtension, fmt.Errorf("engine ID change could discard extension fields; retain the original ID or edit this engine in YAML"))
 			}
 		}
 	}

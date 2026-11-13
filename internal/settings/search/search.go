@@ -14,6 +14,7 @@ import (
 	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/pool"
 	searchcore "github.com/soulteary/flare/internal/search"
+	"github.com/soulteary/flare/internal/settings"
 )
 
 func RegisterRouting(e *fiber.App) {
@@ -36,15 +37,15 @@ func updateSearchOptions(c fiber.Ctx) error {
 		if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
 			return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
 		}
-		saved := false
+		var saveErr error
 		if writeErr := auth.AuthorizedWrite(c, func() error {
-			saved = data.UpdateSearch(options.ShowSearchComponent, options.DisabledSearchAutoFocus)
+			saveErr = data.SaveSearch(options.ShowSearchComponent, options.DisabledSearchAutoFocus)
 			return nil
 		}); writeErr != nil {
 			return writeErr
 		}
-		if !saved {
-			return renderSettings(c, options, "Unable to save search settings", false)
+		if saveErr != nil {
+			return renderSettings(c, options, settings.ExplainSaveFailure(saveErr).Text(), false)
 		}
 		return renderSettings(c, options, "", true)
 	}
@@ -142,14 +143,15 @@ func recoverSearchForm(c fiber.Ctx, err error) error {
 	if c.FormValue("auto-focus-setting") == "1" {
 		options.DisabledSearchAutoFocus = c.FormValue("search-auto-focus") != "1"
 	}
+	message := settings.ExplainSaveFailure(settings.ConfigUnreadable(err)).Text()
 	if c.FormValue("engine-count") != "" {
 		pending, parseErr := parseSearchForm(c)
 		options.Search = &pending
 		if parseErr != nil {
-			err = fmt.Errorf("%w; invalid submitted form: %v", err, parseErr)
+			message += " (invalid submitted form: " + parseErr.Error() + ")"
 		}
 	}
-	return renderSettings(c, options, "Unable to save search settings: "+err.Error(), false)
+	return renderSettings(c, options, message, false)
 }
 
 func applySearchAction(c fiber.Ctx, options model.Application, opts model.SearchOptions) error {
@@ -261,7 +263,7 @@ func saveSearchForm(c fiber.Ctx, options model.Application, opts model.SearchOpt
 		return err
 	}
 	if saveErr != nil {
-		return renderSettings(c, options, "Unable to save search settings: "+saveErr.Error(), false)
+		return renderSettings(c, options, settings.ExplainSaveFailure(saveErr).Text(), false)
 	}
 	options.Search = &opts
 	return renderSettings(c, options, "", true)

@@ -66,12 +66,15 @@ retains the original pre-upgrade document permanently; `latest.bak` retains only
 the immediately preceding document for subsequent changes. `manifest.json`
 records ownership and SHA-256 hashes. Rotation only replaces a regular file whose
 recorded hash still matches. A missing, unrecognized, externally modified or
-symlinked managed backup stops the save. Old `config.yml.pre-search-*.bak` files
+symlinked managed backup is never overwritten: releases 0.6.6 to 0.6.14 stop the
+save, current main sets the directory aside unchanged and starts a new one (see
+[configuration backups](backup-restore.md#configuration-backups-in-066)). Old `config.yml.pre-search-*.bak` files
 and other user backups are never scanned or deleted, since ownership cannot be
 reliably established. Search fields are updated through a YAML tree. Unknown configuration/search fields and engine
 extensions with unchanged IDs are retained. Bookmarks and apps are never written
-by this path. Backup failure, invalid/ambiguous YAML, or a detected concurrent
-change aborts the save. Keep the backups private: they contain the original full
+by this path. Invalid/ambiguous YAML or a detected concurrent change aborts the
+save. A backup that cannot be taken aborts it in 0.6.6 to 0.6.14; current main
+logs the failure and continues. Keep the backups private: they contain the original full
 configuration. This is a single-process update guard; administrators should avoid
 editing config.yml concurrently from another process.
 
