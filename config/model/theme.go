@@ -66,11 +66,16 @@ type Theme struct {
 	// read from the theme.yml in it, instead of a single file.
 	Directory bool `json:"-"`
 	// Stylesheet is the stylesheet a theme that is a directory brings, as it
-	// is served, and StylesheetHash names that content in the address it is
-	// served at. Both are empty for a theme without a stylesheet. The
-	// stylesheet has passed CheckThemeStylesheet.
-	Stylesheet     string `json:"-"`
-	StylesheetHash string `json:"-"`
+	// is served. It is empty for a theme without a stylesheet, and it has
+	// passed CheckThemeStylesheetFor with the assets of the theme.
+	Stylesheet string `json:"-"`
+	// Assets are the images and fonts such a theme brings, in the order of
+	// their names.
+	Assets []ThemeAsset `json:"-"`
+	// Hash names the stylesheet and the assets, in the state they were read
+	// in, in the addresses they are served at. It is empty for a theme that
+	// has neither.
+	Hash string `json:"-"`
 }
 
 // DisplayName returns the name to show for the theme in an interface

@@ -5,6 +5,8 @@ package define
 import (
 	"html/template"
 	"maps"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -65,11 +67,14 @@ var _CACHE_PAGE_THEME_RULES template.CSS
 var _CACHE_PAGE_THEME_STYLESHEET string
 
 // The stylesheet of a theme is served under an address that holds the name of
-// the theme and a hash of the content. A page links the address of the
-// content it was rendered for, so a stored copy never stands for another
-// version, and a later step can serve other files of the theme beside it.
+// the theme and a hash of what the theme brings. A page links the address of
+// the state it was rendered for, so a stored copy never stands for another
+// version. The files of the assets are served beside the stylesheet, which
+// refers to them as assets/<file>: a browser resolves that against the
+// address of the stylesheet.
 const (
 	ThemeStylesheetRoute = "/theme/:name/:hash/" + userThemeStylesheet
+	ThemeAssetRoute      = "/theme/:name/:hash/" + model.ThemeAssetDirectory + "/:file"
 	themeStylesheetBase  = "/theme/"
 )
 
@@ -121,15 +126,65 @@ func IsThemeOfDirectory(name string) bool {
 // ThemeStylesheet returns the stylesheet of a theme by the name and the hash
 // of the address it is linked under. It reports false for anything else: a
 // name that is not a theme in use, a theme without a stylesheet, and a hash
-// of content the theme no longer has.
+// of a state the theme no longer has.
 func ThemeStylesheet(name, hash string) (string, bool) {
 	themeMu.RLock()
 	defer themeMu.RUnlock()
 	theme, known := userThemeState.themes[name]
-	if !known || theme.Stylesheet == "" || theme.StylesheetHash != hash {
+	if !known || theme.Stylesheet == "" || theme.Hash != hash {
 		return "", false
 	}
 	return theme.Stylesheet, true
+}
+
+// themeAsset returns what was noted of a file in the assets of a theme, by
+// the name, the hash and the file name of the address it is served at.
+func themeAsset(name, hash, file string) (model.ThemeAsset, bool) {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	theme, known := userThemeState.themes[name]
+	if !known || theme.Hash == "" || theme.Hash != hash {
+		return model.ThemeAsset{}, false
+	}
+	for _, asset := range theme.Assets {
+		if asset.Name == file {
+			return asset, true
+		}
+	}
+	return model.ThemeAsset{}, false
+}
+
+// OpenThemeAsset opens a file in the assets of a theme by the name, the hash
+// and the file name of the address it is served at, and returns it with what
+// was noted of it when the themes directory was read. It reports false for
+// anything else: a name that is not a theme in use, a hash of a state the
+// theme no longer has, a name that is not among the assets, and a file that
+// is no longer the one that was looked at. The file is opened by the name
+// that was read from the directory, never by one that was asked for. The
+// caller closes the file.
+func OpenThemeAsset(name, hash, file string) (*os.File, model.ThemeAsset, bool) {
+	asset, known := themeAsset(name, hash, file)
+	if !known {
+		return nil, model.ThemeAsset{}, false
+	}
+	root, err := os.OpenRoot(UserThemeDirectory)
+	if err != nil {
+		return nil, model.ThemeAsset{}, false
+	}
+	defer root.Close()
+	path := filepath.Join(name, model.ThemeAssetDirectory, asset.Name)
+	handle, opened, reason := openThemeDirectoryFile(root, path, model.MaximumThemeAssetBytes)
+	if reason != "" {
+		return nil, model.ThemeAsset{}, false
+	}
+	// The address stands for the file in the state that was looked at: its
+	// size and its modification time are part of the hash. A file that has
+	// changed since has another address once the directory is read again.
+	if opened.Size() != asset.Size || !opened.ModTime().Equal(asset.ModTime) {
+		_ = handle.Close()
+		return nil, model.ThemeAsset{}, false
+	}
+	return handle, asset, true
 }
 
 // themeStylesheetAddress returns the address a theme's stylesheet is served
@@ -139,7 +194,7 @@ func themeStylesheetAddress(theme model.Theme) string {
 	if theme.Stylesheet == "" {
 		return ""
 	}
-	return themeStylesheetBase + theme.Name + "/" + theme.StylesheetHash + "/" + userThemeStylesheet
+	return themeStylesheetBase + theme.Name + "/" + theme.Hash + "/" + userThemeStylesheet
 }
 
 // ThemeTitle returns the name a theme file gives itself in an interface
@@ -434,6 +489,7 @@ func UpdatePagePalettes() {
 	theme, custom, mode := options.Theme, options.ThemeCustom, options.ThemeMode
 	stamp := statTheme(theme)
 	scan := scanUserThemes()
+	stamp.files = scan.watched[theme]
 	themeMu.Lock()
 	defer themeMu.Unlock()
 	userThemeState = scan

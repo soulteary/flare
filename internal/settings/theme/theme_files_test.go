@@ -108,7 +108,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 		{Name: "signed", Colors: colors, Author: "Example Author"},
 		{Name: "licensed", Colors: colors, Version: "2", License: "CC0-1.0", Title: model.ThemeText{Plain: "Licensed"}},
 		{Name: "zelda", Colors: colors, Directory: true},
-		{Name: "styled", Colors: colors, Directory: true, Stylesheet: "a { color: red }", StylesheetHash: "0123456789abcdef"},
+		{Name: "styled", Colors: colors, Directory: true, Stylesheet: "a { color: red }", Hash: "0123456789abcdef"},
 	}
 	for locale, want := range map[string][]themeFileCard{
 		"en": {
@@ -147,8 +147,9 @@ func TestThemeFileLinesExplainEveryReason(t *testing.T) {
 	reasons := []string{
 		define.ThemeProblemExtension, define.ThemeProblemName, define.ThemeProblemReserved, define.ThemeProblemType,
 		define.ThemeProblemLink, define.ThemeProblemDuplicate,
-		define.ThemeProblemStyleSize, define.ThemeProblemStyleEncoding, define.ThemeProblemStyleURL,
+		define.ThemeProblemStyleSize, define.ThemeProblemStyleEncoding, define.ThemeProblemStyleURL, define.ThemeProblemStyleAsset,
 		define.ThemeProblemStyleRule, define.ThemeProblemStyleFunction, define.ThemeProblemStyleCharacter,
+		define.ThemeProblemAssetName, define.ThemeProblemAssetSize, define.ThemeProblemAssetContent, define.ThemeProblemAssetLimit,
 		define.ThemeProblemRequires, define.ThemeProblemRequiresValue,
 		define.ThemeProblemSize, define.ThemeProblemLimit, define.ThemeProblemRead, define.ThemeProblemSyntax,
 		define.ThemeProblemContract, define.ThemeProblemValue, define.ThemeProblemColor, define.ThemeProblemContrast,

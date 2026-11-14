@@ -15,8 +15,12 @@ const MaximumThemeStylesheetBytes = 128 << 10
 var (
 	// ErrThemeStyleEncoding reports a stylesheet that is not UTF-8 text.
 	ErrThemeStyleEncoding = errors.New("the stylesheet is not UTF-8 text")
-	// ErrThemeStyleURL reports url(): a stylesheet loads nothing by an address.
+	// ErrThemeStyleURL reports a url() that does not name a file in the
+	// assets of the theme: a stylesheet loads nothing from anywhere else.
 	ErrThemeStyleURL = errors.New("the stylesheet refers to a resource by an address")
+	// ErrThemeStyleAsset reports a url() that names a file the assets of the
+	// theme do not hold.
+	ErrThemeStyleAsset = errors.New("the stylesheet refers to a file that is not among the assets of the theme")
 	// ErrThemeStyleRule reports an at-rule a stylesheet cannot have.
 	ErrThemeStyleRule = errors.New("the stylesheet has an at-rule that is not accepted")
 	// ErrThemeStyleFunction reports a function a stylesheet cannot use.
@@ -54,20 +58,23 @@ func (e *ThemeStyleError) Subject() string {
 }
 
 // The at-rules a stylesheet can have. @import and @namespace name another
-// resource, @font-face loads one, and @charset could have the bytes read in
-// another encoding than the one they were checked in. A rule that is not
-// listed is not accepted, so a rule a later browser gives a meaning has none
-// here.
+// resource, and @charset could have the bytes read in another encoding than
+// the one they were checked in. @font-face loads a font, and is accepted
+// because the only way to name one is url(), which is held to the assets of
+// the theme. A rule that is not listed is not accepted, so a rule a later
+// browser gives a meaning has none here.
 var themeStyleRules = map[string]bool{
 	"media": true, "supports": true, "container": true, "layer": true, "scope": true,
 	"starting-style": true, "keyframes": true, "-webkit-keyframes": true, "property": true,
-	"counter-style": true, "page": true,
+	"counter-style": true, "page": true, "font-face": true,
 }
 
 // The functions a stylesheet can use, in values and in selectors. None of them
-// loads anything. url(), src(), image(), image-set(), cross-fade(), element()
-// and paint() are not among them, and neither is any function that is not
-// listed, for the reason given for the at-rules.
+// loads anything. url() is not among them: it is read apart from the
+// functions, and held to the assets of the theme. src(), image(),
+// image-set(), cross-fade(), element() and paint(), which take an address in
+// other ways, are not listed, and neither is any function that is not listed,
+// for the reason given for the at-rules.
 var themeStyleFunctions = map[string]bool{
 	// Variables and arithmetic.
 	"var": true, "env": true, "attr": true, "calc": true, "min": true, "max": true, "clamp": true,
@@ -97,6 +104,9 @@ var themeStyleFunctions = map[string]bool{
 	"minmax": true, "repeat": true, "fit-content": true,
 	// Counters.
 	"counter": true, "counters": true,
+	// Fonts: one that is installed, and the format and the technology of
+	// one that is loaded.
+	"local": true, "format": true, "tech": true,
 	// Selectors and conditions.
 	"not": true, "is": true, "where": true, "has": true, "lang": true, "dir": true,
 	"nth-child": true, "nth-last-child": true, "nth-of-type": true, "nth-last-of-type": true,
@@ -104,17 +114,25 @@ var themeStyleFunctions = map[string]bool{
 }
 
 // CheckThemeStylesheet reports the first part of a stylesheet that a theme
-// cannot have, as a *ThemeStyleError, and nil for a stylesheet that is
-// accepted.
-//
-// A stylesheet of a theme loads nothing: with a selector on the address of a
-// link and the address of an image, a stylesheet tells whoever serves the
-// image which links a page has. The check therefore works on the tokens of
-// the stylesheet, read the way a browser reads them, and accepts no url(), no
-// at-rule and no function but the listed ones. What a comment or a string
-// holds is text and is not looked at. Whether the rest is well-formed is left
-// to the browser, which drops what it cannot use.
+// without assets cannot have, as a *ThemeStyleError, and nil for a stylesheet
+// that is accepted. It is CheckThemeStylesheetFor with no file to refer to.
 func CheckThemeStylesheet(raw []byte) error {
+	return CheckThemeStylesheetFor(raw, nil)
+}
+
+// CheckThemeStylesheetFor reports the first part of a stylesheet that a theme
+// cannot have, as a *ThemeStyleError, and nil for a stylesheet that is
+// accepted. assets holds the names of the files in the assets of the theme.
+//
+// A stylesheet of a theme loads nothing from elsewhere: with a selector on
+// the address of a link and the address of an image, a stylesheet tells
+// whoever serves the image which links a page has. The check therefore works
+// on the tokens of the stylesheet, read the way a browser reads them. It
+// accepts a url() that names a file of the assets, written as assets/<name>,
+// and no other; no at-rule and no function but the listed ones. What a
+// comment or a string holds is text and is not looked at. Whether the rest is
+// well-formed is left to the browser, which drops what it cannot use.
+func CheckThemeStylesheetFor(raw []byte, assets map[string]bool) error {
 	input, ok := cssCodePoints(raw)
 	if !ok {
 		return &ThemeStyleError{Reason: ErrThemeStyleEncoding}
@@ -128,7 +146,15 @@ func CheckThemeStylesheet(raw []byte) error {
 		case cssEnd:
 			return nil
 		case cssURL:
-			reason, found = ErrThemeStyleURL, "url()"
+			// The address is given back only where it has the form of a
+			// file of the assets; anything else could be any text.
+			file, named := ThemeAssetReference(token.address)
+			switch {
+			case !token.closed || !named:
+				reason, found = ErrThemeStyleURL, "url()"
+			case !assets[file]:
+				reason, found = ErrThemeStyleAsset, "url("+token.address+")"
+			}
 		case cssFunction:
 			if !themeStyleFunctions[asciiLower(token.name)] {
 				reason, found = ErrThemeStyleFunction, shortThemeValue(token.name)+"()"
@@ -194,18 +220,23 @@ const (
 )
 
 // cssToken is one token of a stylesheet: its kind, where it starts, and for a
-// function or an at-keyword the name with its escapes resolved.
+// function or an at-keyword the name with its escapes resolved. For url() it
+// holds the address with its escapes resolved, and whether the address was
+// written in a form a browser reads as one and closed by its parenthesis.
 type cssToken struct {
-	kind  int
-	start int
-	name  string
+	kind    int
+	start   int
+	name    string
+	address string
+	closed  bool
 }
 
 // cssScanner reads the tokens of a stylesheet as CSS Syntax Module Level 3
 // defines them. It follows the tokenizer of that specification step by step,
 // so that it finds the names a browser finds, also where they are written
-// with escapes, in another case or behind comments. It does not read on past
-// the start of an address: the check ends there.
+// with escapes, in another case or behind comments. An address is read to its
+// end; one that is not closed leaves the scanner where the reading stopped,
+// and the check ends there.
 type cssScanner struct {
 	input []rune
 	pos   int
@@ -313,17 +344,26 @@ func (s *cssScanner) skipComments() {
 	}
 }
 
-// consumeString consumes a string after its opening quote. A string ends at
-// its closing quote, at the end of the stylesheet, and at a line break that
-// is not escaped: what follows such a line break is read as tokens again.
+// consumeString consumes a string after its opening quote.
 func (s *cssScanner) consumeString(quote rune) {
+	s.consumeStringValue(quote)
+}
+
+// consumeStringValue consumes a string after its opening quote and returns
+// what it holds, with its escapes resolved. A string ends at its closing
+// quote, at the end of the stylesheet, and at a line break that is not
+// escaped: what follows such a line break is read as tokens again. The second
+// result reports the closing quote.
+func (s *cssScanner) consumeStringValue(quote rune) (string, bool) {
+	var value []rune
 	for {
-		switch s.at(0) {
+		c := s.at(0)
+		switch c {
 		case cssEndOfInput, '\n':
-			return
+			return string(value), false
 		case quote:
 			s.pos++
-			return
+			return string(value), true
 		case '\\':
 			s.pos++
 			switch s.at(0) {
@@ -332,16 +372,17 @@ func (s *cssScanner) consumeString(quote rune) {
 				// An escaped line break continues the string on the next line.
 				s.pos++
 			default:
-				s.consumeEscape()
+				value = append(value, s.consumeEscape())
 			}
 		default:
 			s.pos++
+			value = append(value, c)
 		}
 	}
 }
 
 // consumeNameLike consumes a name and tells what it is: the start of a
-// function if a parenthesis follows it, and of an address if the function is
+// function if a parenthesis follows it, and an address if the function is
 // url, in any case and however it is escaped.
 func (s *cssScanner) consumeNameLike(token cssToken) cssToken {
 	token.name = s.consumeName()
@@ -351,11 +392,67 @@ func (s *cssScanner) consumeNameLike(token cssToken) cssToken {
 	s.pos++
 	token.kind = cssFunction
 	if asciiLower(token.name) == "url" {
-		// With a quoted address this is a function and without quotes a
-		// token of its own; the check accepts neither.
 		token.kind = cssURL
+		token.address, token.closed = s.consumeAddress()
 	}
 	return token
+}
+
+// consumeAddress consumes what follows "url(" and returns the address with
+// its escapes resolved. An address is written without quotes, which makes it
+// one token up to the parenthesis, or as one string in quotes. The second
+// result is false for everything else: an address that is not closed, text a
+// browser does not read as an address, and a string that is followed by more
+// than the parenthesis.
+func (s *cssScanner) consumeAddress() (string, bool) {
+	s.skipWhitespace()
+	if quote := s.at(0); quote == '"' || quote == '\'' {
+		s.pos++
+		address, closed := s.consumeStringValue(quote)
+		s.skipWhitespace()
+		if !closed || s.at(0) != ')' {
+			return address, false
+		}
+		s.pos++
+		return address, true
+	}
+	var address []rune
+	for {
+		c := s.at(0)
+		switch {
+		case c == ')':
+			s.pos++
+			return string(address), true
+		case c == cssEndOfInput:
+			return string(address), false
+		case isCSSWhitespace(c):
+			// Whitespace ends an address: only the parenthesis can follow.
+			s.skipWhitespace()
+			if s.at(0) != ')' {
+				return string(address), false
+			}
+			s.pos++
+			return string(address), true
+		case c == '"' || c == '\'' || c == '(' || isCSSNonPrintable(c):
+			return string(address), false
+		case c == '\\':
+			if !isCSSEscape(c, s.at(1)) {
+				return string(address), false
+			}
+			s.pos++
+			address = append(address, s.consumeEscape())
+		default:
+			s.pos++
+			address = append(address, c)
+		}
+	}
+}
+
+// skipWhitespace consumes whitespace.
+func (s *cssScanner) skipWhitespace() {
+	for isCSSWhitespace(s.at(0)) {
+		s.pos++
+	}
 }
 
 // consumeName consumes a name: name code points and escapes.
@@ -445,6 +542,12 @@ func isCSSWhitespace(c rune) bool {
 
 func isCSSDigit(c rune) bool {
 	return c >= '0' && c <= '9'
+}
+
+// isCSSNonPrintable reports a control character that cannot be written in an
+// address without quotes.
+func isCSSNonPrintable(c rune) bool {
+	return (c >= 0 && c <= 8) || c == 0x0B || (c >= 0x0E && c <= 0x1F) || c == 0x7F
 }
 
 func isCSSHexDigit(c rune) bool {

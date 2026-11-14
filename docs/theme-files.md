@@ -31,8 +31,8 @@ of the selected theme leaves the selection without a theme.
 - The names of the bundled themes and `custom` cannot be used.
 - A theme file is a regular file in the directory itself, or the `theme.yml`
   of [a theme that is a directory](#a-theme-as-a-directory). Links are not
-  followed, and of a subdirectory nothing else is read but the stylesheet of
-  such a theme.
+  followed, and of a subdirectory nothing else is read but the stylesheet and
+  the assets of such a theme.
 - A `.yaml` file is not read. It is reported on the theme page, because the
   extension of a theme file is `.yml`. Files with any other extension and
   hidden files are left alone.
@@ -55,13 +55,16 @@ themes/
     zelda/
         theme.yml
         theme.css
+        assets/
+            paper.png
 ```
 
 The directory is the form for a theme of more than one file. Of a directory,
-`theme.yml` and a [stylesheet](theme-stylesheets.md) named `theme.css` are
-read, and nothing else. Without a stylesheet, a theme in a directory is the
-same theme as its `theme.yml` would be as a file. It is listed, previewed and
-selected by the name of the directory: `Theme: zelda`.
+`theme.yml`, a [stylesheet](theme-stylesheets.md) named `theme.css` and the
+[images and fonts](theme-stylesheets.md#images-and-fonts) in a directory
+named `assets` are read, and nothing else. Without a stylesheet, a theme in a
+directory is the same theme as its `theme.yml` would be as a file. It is
+listed, previewed and selected by the name of the directory: `Theme: zelda`.
 
 - The name of the directory has the rules of the name of a file without
   `.yml`, and cannot be the name of a bundled theme or `custom`.
@@ -412,9 +415,9 @@ at, and reads the directory again when they differ. An edit therefore shows on
 the next page load, without a restart. Both places a theme of the selected
 name can be read from are compared, `<name>.yml` and `<name>/theme.yml`, so a
 theme that is turned from a file into a directory, or back, is followed as
-well. For a theme that is a directory its `theme.css` is compared too. While a
-bundled theme or the custom colors are selected, no theme file is looked at
-for a page.
+well. For a theme that is a directory its `theme.css`, its `assets` directory
+and each image and font in it are compared too. While a bundled theme or the
+custom colors are selected, no theme file is looked at for a page.
 
 The theme page reads the directory every time it is shown, so files that were
 added, corrected or removed are listed as they are.
@@ -437,6 +440,9 @@ where there is one. The theme file of a directory is listed with the
 directory, as `zelda/theme.yml`. A theme whose stylesheet is not accepted is
 listed with the stylesheet, as `zelda/theme.css`; those reasons are described
 with [theme stylesheets](theme-stylesheets.md#what-a-stylesheet-can-contain).
+A theme with an image or a font that is not accepted is listed with that
+file, as `zelda/assets/paper.png`; those reasons are described with
+[images and fonts](theme-stylesheets.md#images-and-fonts).
 
 | Reason | Cause |
 | --- | --- |
@@ -492,6 +498,9 @@ checks that nothing is selected by it, and selects a theme from the notice.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/import-export.browser.cjs`
 downloads a bundled theme, imports the file, has unusable files and an
 existing name refused, replaces the file and downloads it again.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/assets.browser.cjs`
+selects a theme that brings an image and a font, edits and breaks one of them,
+and checks the pages after each step.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/safe-mode.browser.cjs`
 selects a theme whose stylesheet hides parts of the home page, opens the page
 in safe mode and goes back to the settings from its notice, and starts an

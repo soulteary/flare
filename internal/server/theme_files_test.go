@@ -349,7 +349,7 @@ func TestThemeFileContentIsShownAsText(t *testing.T) {
 		{"a b.yml"},
 		{"closing.yml", "tokens.radius"},
 		{"declared.yml", "tokens.font-family"},
-		{strings.Repeat("n", 80) + "…"},
+		{strings.Repeat("n", 104) + "…"},
 		{"unused.yml", "<u>key</u>, tokens.<i>token</i>"},
 	}, page.lines)
 
