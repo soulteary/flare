@@ -42,8 +42,9 @@ async function start() {
     await fs.mkdir(path.join(themes, directory), {recursive: true});
   }
   await fs.writeFile(path.join(themes, 'zelda', 'theme.yml'), ZELDA);
-  // Of the directory of a theme, theme.yml is read and nothing else.
-  await fs.writeFile(path.join(themes, 'zelda', 'theme.css'), 'body { background: red !important; }\n');
+  // Of the directory of a theme, theme.yml and theme.css are read and
+  // nothing else.
+  await fs.writeFile(path.join(themes, 'zelda', 'other.css'), 'body { background: red !important; }\n');
   await fs.writeFile(path.join(themes, 'plain.yml'), theme('#101010', '4px'));
   await fs.writeFile(path.join(themes, 'broken', 'theme.yml'), BROKEN);
   await fs.writeFile(path.join(themes, 'notes', 'readme.txt'), 'A directory without a theme.yml is left alone.\n');

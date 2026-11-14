@@ -31,7 +31,8 @@ of the selected theme leaves the selection without a theme.
 - The names of the bundled themes and `custom` cannot be used.
 - A theme file is a regular file in the directory itself, or the `theme.yml`
   of [a theme that is a directory](#a-theme-as-a-directory). Links are not
-  followed, and no other file of a subdirectory is read.
+  followed, and of a subdirectory nothing else is read but the stylesheet of
+  such a theme.
 - A `.yaml` file is not read. It is reported on the theme page, because the
   extension of a theme file is `.yml`. Files with any other extension and
   hidden files are left alone.
@@ -53,11 +54,13 @@ themes/
     forest.yml
     zelda/
         theme.yml
+        theme.css
 ```
 
 The directory is the form for a theme of more than one file. Of a directory,
-`theme.yml` is read and nothing else, so a theme in a directory is the same
-theme as its `theme.yml` would be as a file. It is listed, previewed and
+`theme.yml` and a [stylesheet](theme-stylesheets.md) named `theme.css` are
+read, and nothing else. Without a stylesheet, a theme in a directory is the
+same theme as its `theme.yml` would be as a file. It is listed, previewed and
 selected by the name of the directory: `Theme: zelda`.
 
 - The name of the directory has the rules of the name of a file without
@@ -294,8 +297,8 @@ theme that follows the device, the form starts from its light colors.
 
 Every theme on the theme page has a **Preview** link: the bundled themes, the
 custom colors and the theme files. It opens the home page shown with that
-theme, with its tokens, its values for light and dark and its layout, without
-selecting it.
+theme, with its tokens, its values for light and dark, its layout and its
+stylesheet, without selecting it.
 
 - Only that response is shown with the theme. Other visitors, and the same
   page opened without the link, get the selected theme, and nothing is
@@ -360,8 +363,9 @@ at, and reads the directory again when they differ. An edit therefore shows on
 the next page load, without a restart. Both places a theme of the selected
 name can be read from are compared, `<name>.yml` and `<name>/theme.yml`, so a
 theme that is turned from a file into a directory, or back, is followed as
-well. While a bundled theme or the custom colors are selected, no theme file
-is looked at for a page.
+well. For a theme that is a directory its `theme.css` is compared too. While a
+bundled theme or the custom colors are selected, no theme file is looked at
+for a page.
 
 The theme page reads the directory every time it is shown, so files that were
 added, corrected or removed are listed as they are.
@@ -381,7 +385,9 @@ is read again on every page load.
 The theme page lists each theme file that is not in use with the reason, in
 the interface language, and with the part of the file the reason is about
 where there is one. The theme file of a directory is listed with the
-directory, as `zelda/theme.yml`.
+directory, as `zelda/theme.yml`. A theme whose stylesheet is not accepted is
+listed with the stylesheet, as `zelda/theme.css`; those reasons are described
+with [theme stylesheets](theme-stylesheets.md#what-a-stylesheet-can-contain).
 
 | Reason | Cause |
 | --- | --- |

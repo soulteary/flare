@@ -65,6 +65,12 @@ type Theme struct {
 	// Directory reports a theme that is a directory of the themes directory,
 	// read from the theme.yml in it, instead of a single file.
 	Directory bool `json:"-"`
+	// Stylesheet is the stylesheet a theme that is a directory brings, as it
+	// is served, and StylesheetHash names that content in the address it is
+	// served at. Both are empty for a theme without a stylesheet. The
+	// stylesheet has passed CheckThemeStylesheet.
+	Stylesheet     string `json:"-"`
+	StylesheetHash string `json:"-"`
 }
 
 // DisplayName returns the name to show for the theme in an interface

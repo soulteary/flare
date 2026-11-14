@@ -108,6 +108,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 		{Name: "signed", Colors: colors, Author: "Example Author"},
 		{Name: "licensed", Colors: colors, Version: "2", License: "CC0-1.0", Title: model.ThemeText{Plain: "Licensed"}},
 		{Name: "zelda", Colors: colors, Directory: true},
+		{Name: "styled", Colors: colors, Directory: true, Stylesheet: "a { color: red }", StylesheetHash: "0123456789abcdef"},
 	}
 	for locale, want := range map[string][]themeFileCard{
 		"en": {
@@ -116,6 +117,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 			{Name: "signed", Title: "signed", About: "Example Author", Colors: colors},
 			{Name: "licensed", Title: "Licensed", About: "2 · CC0-1.0", Colors: colors},
 			{Name: "zelda", Title: "zelda", Colors: colors, Directory: true},
+			{Name: "styled", Title: "styled", Colors: colors, Directory: true, Stylesheet: true},
 		},
 		"zh": {
 			{Name: "forest", Title: "暮色森林", About: "1.2 · Example Author · MIT", Colors: colors},
@@ -123,6 +125,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 			{Name: "signed", Title: "signed", About: "Example Author", Colors: colors},
 			{Name: "licensed", Title: "Licensed", About: "2 · CC0-1.0", Colors: colors},
 			{Name: "zelda", Title: "zelda", Colors: colors, Directory: true},
+			{Name: "styled", Title: "styled", Colors: colors, Directory: true, Stylesheet: true},
 		},
 	} {
 		got := themeFileCards(locale, themes)
@@ -144,6 +147,8 @@ func TestThemeFileLinesExplainEveryReason(t *testing.T) {
 	reasons := []string{
 		define.ThemeProblemExtension, define.ThemeProblemName, define.ThemeProblemReserved, define.ThemeProblemType,
 		define.ThemeProblemLink, define.ThemeProblemDuplicate,
+		define.ThemeProblemStyleSize, define.ThemeProblemStyleEncoding, define.ThemeProblemStyleURL,
+		define.ThemeProblemStyleRule, define.ThemeProblemStyleFunction, define.ThemeProblemStyleCharacter,
 		define.ThemeProblemSize, define.ThemeProblemLimit, define.ThemeProblemRead, define.ThemeProblemSyntax,
 		define.ThemeProblemContract, define.ThemeProblemValue, define.ThemeProblemColor, define.ThemeProblemContrast,
 		define.ThemeProblemText,

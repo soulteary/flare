@@ -48,8 +48,9 @@ func TestThemeDirectoriesHTTP(t *testing.T) {
 	zeldaStyle := themeFileStyle + "--flare-radius:10px;"
 	handler := themeFilesRouter(t, "Locale: en\nTheme: blackboard\nShowApps: true\n", map[string]string{
 		"zelda/theme.yml": zelda,
-		// Of the directory of a theme, theme.yml is read and nothing else.
-		"zelda/theme.css":  "body { color: red }",
+		// Of the directory of a theme, theme.yml and theme.css are read and
+		// nothing else.
+		"zelda/other.css":  "body { background: url(a.png) }",
 		"zelda/other.yml":  themeFileColors + "  radius: 4em\n",
 		"plain.yml":        themeFileColors,
 		"broken/theme.yml": themeFileColors + "  radius: 4em\n",
