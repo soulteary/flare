@@ -105,6 +105,11 @@ func TestThemeTokenValues(t *testing.T) {
 			rejected: []string{"", "px", "4", "04px", "33px", "100px", "-4px", "4.5px", "4 px", "4PX", "4em", "50%", "4px;", "4px 8px", "calc(4px)", "4px}body{"},
 		},
 		{
+			token:    TokenFontScale,
+			accepted: []string{"1", "1.0", "1.00", "0.8", "0.80", "0.9", "0.95", "1.1", "1.25", "1.5", "1.50"},
+			rejected: []string{"", "0", "0.7", "0.79", "1.51", "1.6", "2", "10", "1.", ".9", "1.250", "01", "1,2", "1.2em", "120%", "-1", "+1", "1e0", " 1", "1 ", "１", "calc(1)", "1;", "1.1;zoom:2", "var(--x)", "1.a", "1.1a", "0.x", "1.-1"},
+		},
+		{
 			token:    TokenFontFamily,
 			accepted: []string{"Roboto", "Roboto, sans-serif", "Helvetica Neue,Arial", "-apple-system, BlinkMacSystemFont, Segoe UI", "思源黑体, PingFang SC, system-ui", "Font_Name-2"},
 			rejected: []string{"", ",", "Roboto,", ", Roboto", "Roboto,,Arial", "Helvetica  Neue", "2Fast", "--x", "-", "\"Roboto\"", "'Roboto'", "Roboto;color:red", "Roboto)", "url(x)", "a/b", "a\\b", "Roboto\nArial", "Roboto\tArial", "<b>", "a:b", "a{b}", strings.Repeat("a", 161)},
@@ -142,7 +147,7 @@ func TestEveryThemeTokenHasACheck(t *testing.T) {
 // A file written for a later release stays usable: what this release does not
 // know is left out and reported, and the rest is used.
 func TestReadThemeFileReportsWhatItDoesNotUse(t *testing.T) {
-	raw := validThemeFile + "  shadow: \"#000000\"\n  font-scale: \"1.1\"\n  radius: 8px\noptions:\n  - id: density\nbackground:\n  image: wallpaper.jpg\n" +
+	raw := validThemeFile + "  shadow: \"#000000\"\n  space: 4px\n  radius: 8px\noptions:\n  - id: density\nbackground:\n  image: wallpaper.jpg\n" +
 		"modes:\n  dark:\n    background: \"#000000\"\n    glow: \"#ffffff\"\n  sepia:\n    background: \"#f4ecd8\"\n"
 	file, unused, err := ReadThemeFile([]byte(raw))
 	if err != nil {
@@ -151,7 +156,7 @@ func TestReadThemeFileReportsWhatItDoesNotUse(t *testing.T) {
 	if got := unused.Keys; len(got) != 3 || got[0] != "background" || got[1] != "modes.sepia" || got[2] != "options" {
 		t.Fatalf("unused keys: %v", got)
 	}
-	if got := unused.Tokens; len(got) != 3 || got[0] != "modes.dark.glow" || got[1] != "tokens.font-scale" || got[2] != "tokens.shadow" {
+	if got := unused.Tokens; len(got) != 3 || got[0] != "modes.dark.glow" || got[1] != "tokens.shadow" || got[2] != "tokens.space" {
 		t.Fatalf("unused tokens: %v", got)
 	}
 	if len(file.Modes) != 1 || len(file.Modes[ThemeModeDark]) != 1 || file.Modes[ThemeModeDark][TokenBackground] != "#000000" {
@@ -548,5 +553,37 @@ func TestThemeFileModesAreChecked(t *testing.T) {
 		if IsThemeMode(mode) {
 			t.Errorf("%q is not a mode setting", mode)
 		}
+	}
+}
+
+// The font scale is written as a number, with or without quotes.
+func TestThemeFileFontScale(t *testing.T) {
+	for written, want := range map[string]string{"1.1": "1.1", "\"1.25\"": "1.25", "1": "1", "0.9": "0.9", "1.10": "1.10", "1.5": "1.5"} {
+		file, err := ParseThemeFile([]byte(validThemeFile + "  font-scale: " + written + "\n"))
+		if err != nil {
+			t.Fatalf("%s: %v", written, err)
+		}
+		if got := file.Theme("scaled").Tokens[TokenFontScale]; got != want {
+			t.Errorf("%s: token is %q, want %q", written, got, want)
+		}
+	}
+	for _, written := range []string{"2", "0.5", "1.75", "big", "120%", "1.1em", "[1.1]", "true"} {
+		_, err := ParseThemeFile([]byte(validThemeFile + "  font-scale: " + written + "\n"))
+		if !errors.Is(err, ErrThemeTokenValue) && !errors.Is(err, ErrThemeSyntax) {
+			t.Errorf("%s: got %v", written, err)
+		}
+	}
+	// A mode can have a scale of its own, like any other token.
+	file, err := ParseThemeFile([]byte(validThemeFile + "  font-scale: 1.1\nmodes:\n  dark:\n    font-scale: 1.2\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	theme := file.Theme("scaled")
+	if theme.In(ThemeModeLight).Tokens[TokenFontScale] != "1.1" || theme.In(ThemeModeDark).Tokens[TokenFontScale] != "1.2" {
+		t.Fatalf("scale per mode: %+v %+v", theme.Tokens, theme.Modes)
+	}
+	// It is the last token in the order of the documentation.
+	if ThemeTokenNames[len(ThemeTokenNames)-1] != TokenFontScale {
+		t.Fatalf("order of the tokens: %v", ThemeTokenNames)
 	}
 }

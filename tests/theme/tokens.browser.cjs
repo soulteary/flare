@@ -35,6 +35,12 @@ const DEFAULTS = {
   hoverRadius: '4px',
   tabRadius: '6px',
   font: 'Roboto, sans-serif',
+  titleSize: '14px',
+  descriptionSize: '11.2px',
+  bookmarkSize: '14px',
+  groupTitleSize: '16px',
+  searchSize: '20px',
+  applicationHeight: '40px',
 };
 
 // Token, value to set, and the parts that must take it. A part that follows a
@@ -52,6 +58,10 @@ const TOKENS = [
   ['--flare-hover', TEST, {hoverBackground: TEST}],
   ['--flare-radius', '10px', {hoverRadius: '10px', tabRadius: '15px'}],
   ['--flare-font-family', 'monospace', {font: 'monospace'}],
+  // Text sizes, and the height that would otherwise cut the text of an
+  // application off, are multiplied by the scale.
+  ['--flare-font-scale', '1.5', {titleSize: '21px', descriptionSize: '16.8px', bookmarkSize: '21px',
+    groupTitleSize: '24px', searchSize: '30px', applicationHeight: '60px'}],
   // The names used before the tokens keep working, for footers that set them.
   ['--color-background', TEST, {pageBackground: TEST, currentTabText: TEST, toolbarIcon: TEST}],
   ['--color-primary', TEST, {text: TEST, bookmarkText: TEST, searchText: TEST, icon: TEST}],
@@ -116,6 +126,12 @@ const measure = page => page.evaluate(() => {
     hoverRadius: style('.app-item', 'borderTopLeftRadius'),
     tabRadius: style('.bookmark-category-nav a', 'borderTopLeftRadius'),
     font: style('body', 'fontFamily'),
+    titleSize: style('.app-title', 'fontSize'),
+    descriptionSize: style('.app-desc', 'fontSize'),
+    bookmarkSize: style('a.bookmark', 'fontSize'),
+    groupTitleSize: style('.bookmark-group-title', 'fontSize'),
+    searchSize: style('#search', 'fontSize'),
+    applicationHeight: style('.app-item', 'height'),
   };
 });
 

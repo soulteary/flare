@@ -55,6 +55,7 @@ FLARE_BINARY=/tmp/flare FLARE_SEARCH_PRIVATE_TEST=1 NODE_PATH="$PWD/tests/clock/
 node tests/mdi/cheat-sheet.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/mdi/icons.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/theme/tokens.browser.cjs
+FLARE_BINARY=/tmp/flare node tests/theme/font-scale.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/theme/files.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/theme/modes.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/theme/layout.browser.cjs

@@ -23,7 +23,7 @@
 
 #hero-container .weather-value-container {
   justify-content: center;
-  font-size: 16px;
+  font-size: calc(16px * var(--flare-font-scale));
   margin-left: 10px;
   font-weight: 500;
 }
@@ -41,5 +41,5 @@
 }
 
 
-.homepage-title-compact #plugin-greetings { font-size: clamp(1.5rem, 5vw, 2.5rem); }
-.homepage-title-prominent #plugin-greetings { font-size: clamp(2rem, 9vw, 4.5rem); }
+.homepage-title-compact #plugin-greetings { font-size: calc(clamp(1.5rem, 5vw, 2.5rem) * var(--flare-font-scale)); }
+.homepage-title-prominent #plugin-greetings { font-size: calc(clamp(2rem, 9vw, 4.5rem) * var(--flare-font-scale)); }

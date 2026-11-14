@@ -161,7 +161,7 @@ func TestThemeFileLinesExplainEveryReason(t *testing.T) {
 			{File: "c.yaml", Reason: define.ThemeProblemExtension},
 		},
 		[]define.ThemeNotice{
-			{File: "a.yml", Unused: model.ThemeFileUnused{Keys: []string{"modes.sepia", "options"}, Tokens: []string{"modes.dark.glow", "tokens.font-scale"}}},
+			{File: "a.yml", Unused: model.ThemeFileUnused{Keys: []string{"modes.sepia", "options"}, Tokens: []string{"modes.dark.glow", "tokens.space"}}},
 			{File: "b.yml", Unused: model.ThemeFileUnused{Tokens: []string{"tokens.shadow"}}},
 		})
 	type line struct{ file, detail string }
@@ -169,7 +169,7 @@ func TestThemeFileLinesExplainEveryReason(t *testing.T) {
 	for _, entry := range lines {
 		got = append(got, line{entry.File, entry.Detail})
 	}
-	want := []line{{"a.yml", "modes.sepia, options, modes.dark.glow, tokens.font-scale"}, {"b.yml", "tokens.radius"}, {"b.yml", "tokens.shadow"}, {"c.yaml", ""}}
+	want := []line{{"a.yml", "modes.sepia, options, modes.dark.glow, tokens.space"}, {"b.yml", "tokens.radius"}, {"b.yml", "tokens.shadow"}, {"c.yaml", ""}}
 	if len(got) != len(want) {
 		t.Fatalf("lines: %+v", got)
 	}

@@ -11,7 +11,10 @@
   display: block;
   padding: 2px 4px;
   margin: 12px 0;
-  height: 40px;
+  /* Two lines of text at the default size. The height grows with the font
+     scale, or a larger text would be cut off. It does not shrink with it:
+     the icon keeps its size and needs the room. */
+  height: calc(40px * max(1, var(--flare-font-scale)));
   overflow: hidden;
   position: relative;
 }
@@ -94,7 +97,7 @@
 @media (max-width: 767px) {
   #container-apps .apps-container { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #container-apps .apps-container .app-container { float: none; width: auto; min-width: 0; }
-  #container-apps .apps-container .app-item { height: auto; min-height: 40px; }
+  #container-apps .apps-container .app-item { height: auto; min-height: calc(40px * max(1, var(--flare-font-scale))); }
 }
 /* Opt-in single-column and compact layouts use taller cards and wrap long text. */
 @media (max-width: 768px) {
@@ -114,15 +117,17 @@
   .mobile-bookmarks-compact #container-apps .apps-container { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* Rem-based sizes respect device font preferences without scaling settings/editor UI. */
+/* Rem-based sizes respect device font preferences without scaling settings/editor UI.
+   These sizes are the choice of the administrator for readability. A theme
+   can enlarge them with its font scale, and cannot make them smaller. */
 .navigation-text-larger #container-apps .app-title,
-.navigation-text-larger #container-bookmarks .bookmark { font-size: 1.125rem; }
+.navigation-text-larger #container-bookmarks .bookmark { font-size: calc(1.125rem * max(1, var(--flare-font-scale))); }
 .navigation-text-large #container-apps .app-title,
-.navigation-text-large #container-bookmarks .bookmark { font-size: 1.25rem; }
-.navigation-text-larger #container-apps .app-desc { font-size: .95rem; }
-.navigation-text-large #container-apps .app-desc { font-size: 1rem; }
+.navigation-text-large #container-bookmarks .bookmark { font-size: calc(1.25rem * max(1, var(--flare-font-scale))); }
+.navigation-text-larger #container-apps .app-desc { font-size: calc(.95rem * max(1, var(--flare-font-scale))); }
+.navigation-text-large #container-apps .app-desc { font-size: calc(1rem * max(1, var(--flare-font-scale))); }
 .navigation-text-larger #container-apps .app-item,
-.navigation-text-large #container-apps .app-item { height: auto; min-height: 52px; }
+.navigation-text-large #container-apps .app-item { height: auto; min-height: calc(52px * max(1, var(--flare-font-scale))); }
 .navigation-text-larger #container-apps .app-title,
 .navigation-text-large #container-apps .app-title,
 .navigation-text-larger #container-apps .app-desc,
