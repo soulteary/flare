@@ -237,7 +237,9 @@ func TestThemeModeIsSavedAndApplied(t *testing.T) {
 		t.Fatalf("the device chooses by default: %+v", page)
 	}
 
-	for mode, style := range map[string]string{model.ThemeModeDark: dark, model.ThemeModeLight: light} {
+	// In this order: the checks that follow rely on light being in use.
+	for _, set := range []struct{ mode, style string }{{model.ThemeModeDark, dark}, {model.ThemeModeLight, light}} {
+		mode, style := set.mode, set.style
 		if status, body := postTheme(t, app, modeForm(mode)); status != http.StatusOK {
 			t.Fatalf("%s: %d %s", mode, status, body)
 		}

@@ -122,7 +122,9 @@ func TestThemeModesHTTP(t *testing.T) {
 
 	// Set to dark or to light, the values are in the style of the body, as
 	// for every other theme, and the rules are gone.
-	for mode, style := range map[string]string{"dark": pairedDark, "light": pairedLight} {
+	// In this order: the checks that follow rely on light being in use.
+	for _, set := range []struct{ mode, style string }{{"dark", pairedDark}, {"light", pairedLight}} {
+		mode, style := set.mode, set.style
 		status, saved := modeRequest(handler, mode)
 		require.Equal(t, http.StatusOK, status, mode)
 		page = readThemedPage(t, saved)
