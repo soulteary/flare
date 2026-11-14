@@ -25,6 +25,7 @@ func TestThemeSafeModeLeavesTheThemesDirectoryAlone(t *testing.T) {
 	userThemeDirectory(t, "styled")
 	writeThemeDirectory(t, "styled", userThemeColors+"layout:\n  DesktopColumns: 6\n")
 	writeThemeStylesheet(t, "styled", userThemeStylesheetText)
+	writeThemeAsset(t, "styled", "a.png", assetPNG)
 	writeUserTheme(t, "plain.yml", userThemeColors)
 	writeUserTheme(t, "rejected.yml", userThemeColors+"  radius: 4em\n")
 	writeUserTheme(t, "notes.yaml", userThemeColors)
@@ -33,6 +34,8 @@ func TestThemeSafeModeLeavesTheThemesDirectoryAlone(t *testing.T) {
 	styled := GetPageTheme()
 	require.NotEmpty(t, styled.Stylesheet)
 	hash := filepath.Base(filepath.Dir(styled.Stylesheet))
+	_, _, handedOut := readThemeAsset(t, "styled", hash, "a.png")
+	require.True(t, handedOut)
 
 	setThemeSafeMode(t, true)
 	UpdatePagePalettes()
@@ -50,6 +53,8 @@ func TestThemeSafeModeLeavesTheThemesDirectoryAlone(t *testing.T) {
 	}
 	_, served := ThemeStylesheet("styled", hash)
 	require.False(t, served)
+	_, _, handedOut = readThemeAsset(t, "styled", hash, "a.png")
+	require.False(t, handedOut)
 
 	// The selection stays what it is, and the pages have no theme.
 	name, _ := ThemeSnapshot()

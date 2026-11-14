@@ -53,6 +53,7 @@ func TestThemeStylesheetIsAccepted(t *testing.T) {
 		"an escape at the end":          "a { color: red } \\",
 		"an at-rule with a parenthesis": "@media(min-width:1px){a{color:red}}",
 		"upper case":                    "@MEDIA (MIN-WIDTH: 1PX) { A { COLOR: RGB(0 0 0); TRANSFORM: TRANSLATEX(1PX) } }",
+		"a font that is installed":      "@font-face { font-family: a; src: local(Arial), local(\"Helvetica Neue\") format(\"truetype\") } a { font-family: a }",
 		"escaped names":                 `@\6d edia screen { a { color: r\67 b(0 0 0); width: \63 alc(1px + 1px) } }`,
 		"numbers":                       "a { margin: 1 +1 -1 1. .1 1.5 1e2 1E-2 1e+2 1e 1em -.5e-3% 0x10 1-- }",
 		"arrows":                        "a { } --> <!-- <! - -> -- >",
@@ -120,7 +121,6 @@ func TestThemeStylesheetLoadsNothing(t *testing.T) {
 		"element":              {"a { background: element(#a) }", ErrThemeStyleFunction, 1, "element()"},
 		"paint":                {"a { background: paint(a) }", ErrThemeStyleFunction, 1, "paint()"},
 		"expression":           {"a { width: expression(alert(1)) }", ErrThemeStyleFunction, 1, "expression()"},
-		"local":                {"a { src: local(Arial) }", ErrThemeStyleFunction, 1, "local()"},
 		"type":                 {"a { width: attr(data-a type(<url>)) }", ErrThemeStyleFunction, 1, "type()"},
 		"prefixed gradient":    {"a { background: -webkit-linear-gradient(red, blue) }", ErrThemeStyleFunction, 1, "-webkit-linear-gradient()"},
 		"longer than url":      {"a { background: urlx(a.png) }", ErrThemeStyleFunction, 1, "urlx()"},
@@ -140,7 +140,6 @@ func TestThemeStylesheetLoadsNothing(t *testing.T) {
 		"escaped import":       {`@\69mport "a.css";`, ErrThemeStyleRule, 1, "@import"},
 		"import in a block":    {"a { color: red }\n@media screen {\n  @import 'a.css';\n}", ErrThemeStyleRule, 3, "@import"},
 		"namespace":            {`@namespace svg "http://www.w3.org/2000/svg";`, ErrThemeStyleRule, 1, "@namespace"},
-		"font-face":            {"@font-face { font-family: a; src: local(a) }", ErrThemeStyleRule, 1, "@font-face"},
 		"charset":              {`@charset "utf-8";`, ErrThemeStyleRule, 1, "@charset"},
 		"document":             {"@-moz-document url-prefix() { }", ErrThemeStyleRule, 1, "@-moz-document"},
 		"a rule of the future": {"@when media(print) { }", ErrThemeStyleRule, 1, "@when"},
@@ -189,14 +188,16 @@ func TestThemeStylesheetHasToBeText(t *testing.T) {
 }
 
 // Every at-rule and function the check accepts is one of those that load
-// nothing; a name that takes an address must never be added to the lists.
+// nothing by themselves; a name that takes an address must never be added to
+// the lists. url() is not in them: the check reads it apart and holds it to
+// the assets of the theme, and @font-face has no other way to name a font.
 func TestThemeStylesheetListsHoldNothingThatLoads(t *testing.T) {
-	for _, name := range []string{"import", "namespace", "font-face", "charset", "font-feature-values", "color-profile", "document", "-moz-document"} {
+	for _, name := range []string{"import", "namespace", "charset", "font-feature-values", "color-profile", "document", "-moz-document"} {
 		if themeStyleRules[name] {
 			t.Errorf("@%s is accepted", name)
 		}
 	}
-	for _, name := range []string{"url", "src", "image", "image-set", "-webkit-image-set", "cross-fade", "-webkit-cross-fade", "element", "-moz-element", "paint", "local", "format", "tech", "url-prefix", "domain", "regexp", "expression", "symbols", "type"} {
+	for _, name := range []string{"url", "src", "image", "image-set", "-webkit-image-set", "cross-fade", "-webkit-cross-fade", "element", "-moz-element", "paint", "url-prefix", "domain", "regexp", "expression", "symbols", "type"} {
 		if themeStyleFunctions[name] {
 			t.Errorf("%s() is accepted", name)
 		}

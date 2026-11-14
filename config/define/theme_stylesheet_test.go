@@ -47,7 +47,7 @@ func TestThemeStylesheetIsRead(t *testing.T) {
 	require.Empty(t, notices)
 	for _, theme := range themes[:3] {
 		require.Empty(t, theme.Stylesheet, theme.Name)
-		require.Empty(t, theme.StylesheetHash, theme.Name)
+		require.Empty(t, theme.Hash, theme.Name)
 		page, known := GetPageThemeFor(theme.Name)
 		require.True(t, known, theme.Name)
 		require.Empty(t, page.Stylesheet, theme.Name)
@@ -56,22 +56,22 @@ func TestThemeStylesheetIsRead(t *testing.T) {
 	// The stylesheet is kept as it is in the file, under a hash of it.
 	styled := themes[3]
 	require.Equal(t, userThemeStylesheetText, styled.Stylesheet)
-	require.Regexp(t, regexp.MustCompile(`^[0-9a-f]{16}$`), styled.StylesheetHash)
-	address := "/theme/styled/" + styled.StylesheetHash + "/theme.css"
+	require.Regexp(t, regexp.MustCompile(`^[0-9a-f]{16}$`), styled.Hash)
+	address := "/theme/styled/" + styled.Hash + "/theme.css"
 	page, known := GetPageThemeFor("styled")
 	require.True(t, known)
 	require.Equal(t, address, page.Stylesheet)
 	require.Equal(t, userThemeStyle, page.BodyStyle)
 
 	// It is handed out by the name and the hash of that address only.
-	content, known := ThemeStylesheet("styled", styled.StylesheetHash)
+	content, known := ThemeStylesheet("styled", styled.Hash)
 	require.True(t, known)
 	require.Equal(t, userThemeStylesheetText, content)
 	for _, wrong := range [][2]string{
-		{"styled", ""}, {"styled", strings.Repeat("0", 16)}, {"styled", strings.ToUpper(styled.StylesheetHash)},
-		{"styled", styled.StylesheetHash + "0"}, {"bare", ""}, {"bare", styled.StylesheetHash}, {"blank", ""},
-		{"plain", styled.StylesheetHash}, {"blackboard", ""}, {model.ThemeCustomName, ""}, {"", ""},
-		{"missing", styled.StylesheetHash}, {"../styled", styled.StylesheetHash}, {"styled/other", styled.StylesheetHash},
+		{"styled", ""}, {"styled", strings.Repeat("0", 16)}, {"styled", strings.ToUpper(styled.Hash)},
+		{"styled", styled.Hash + "0"}, {"bare", ""}, {"bare", styled.Hash}, {"blank", ""},
+		{"plain", styled.Hash}, {"blackboard", ""}, {model.ThemeCustomName, ""}, {"", ""},
+		{"missing", styled.Hash}, {"../styled", styled.Hash}, {"styled/other", styled.Hash},
 	} {
 		_, known = ThemeStylesheet(wrong[0], wrong[1])
 		require.False(t, known, "%q %q", wrong[0], wrong[1])
@@ -105,7 +105,8 @@ func TestThemeStylesheetNotAccepted(t *testing.T) {
 	stylesheets := map[string]string{
 		"address":   "a { color: red }\n.app-item { background: url(https://example.test/a.png) }\n",
 		"import":    "@import \"https://example.test/a.css\";\n",
-		"font":      "a { color: red }\n\n@font-face { font-family: a; src: local(a) }\n",
+		"font":      "a { color: red }\n\n@font-face { font-family: a; src: url(//example.test/a.woff2) }\n",
+		"missing":   "a { color: red }\n.app-item { background: url(assets/a.png) }\n",
 		"function":  ".app-item { background: image-set(\"a.png\" 1x) }\n",
 		"character": ".app-item { background: #×url(a.png) }\n",
 		"encoding":  "a { color: red } \xff",
@@ -138,7 +139,8 @@ func TestThemeStylesheetNotAccepted(t *testing.T) {
 	require.ElementsMatch(t, []ThemeProblem{
 		{File: "address/theme.css", Reason: ThemeProblemStyleURL, Subject: "line 2: url()"},
 		{File: "import/theme.css", Reason: ThemeProblemStyleRule, Subject: "line 1: @import"},
-		{File: "font/theme.css", Reason: ThemeProblemStyleRule, Subject: "line 3: @font-face"},
+		{File: "font/theme.css", Reason: ThemeProblemStyleURL, Subject: "line 3: url()"},
+		{File: "missing/theme.css", Reason: ThemeProblemStyleAsset, Subject: "line 2: url(assets/a.png)"},
 		{File: "function/theme.css", Reason: ThemeProblemStyleFunction, Subject: "line 1: image-set()"},
 		{File: "character/theme.css", Reason: ThemeProblemStyleCharacter, Subject: "line 1: U+00D7"},
 		{File: "encoding/theme.css", Reason: ThemeProblemStyleEncoding},
@@ -191,7 +193,7 @@ func TestSelectedThemeFollowsItsStylesheet(t *testing.T) {
 		themes, _, _ := UserThemes()
 		for _, theme := range themes {
 			if theme.Name == "styled" && theme.Stylesheet != "" {
-				return "/theme/styled/" + theme.StylesheetHash + "/theme.css"
+				return "/theme/styled/" + theme.Hash + "/theme.css"
 			}
 		}
 		return ""

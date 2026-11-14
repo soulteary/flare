@@ -120,7 +120,7 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 | `config.yml` `ThemeSettings` | Per theme: the layout options of the theme that are turned off (current source) | [Layout of a theme](theme-files.md#layout) |
 | `config.yml` `Theme`, `ThemeCustom` | A bundled theme name, the name of a theme file (current source), or `custom` with three `#RRGGBB` colors in `ThemeCustom` (current source); read at startup | [Themes and custom colors](theme-colors.md), [theme files](theme-files.md) |
 | `config.yml` `ThemeMode` | `auto`, `light` or `dark` for a theme with light and dark values (current source); read at startup | [Light and dark](theme-files.md#light-and-dark) |
-| `themes/*.yml`, `themes/*/theme.yml`, `themes/*/theme.css` | Themes of the instance, one per file or per directory, and the stylesheet of a theme that is a directory (current source); optional | [Theme files](theme-files.md), [theme stylesheets](theme-stylesheets.md) |
+| `themes/*.yml`, `themes/*/theme.yml`, `themes/*/theme.css`, `themes/*/assets/*` | Themes of the instance, one per file or per directory, and the stylesheet, images and fonts of a theme that is a directory (current source); optional | [Theme files](theme-files.md), [theme stylesheets](theme-stylesheets.md) |
 | `config.yml` `Footer` | Administrator-controlled internal HTML | Treat it as trusted site content, unlike ordinary bookmark text |
 | `config.yml` `LoginFooter` | Current main: public login-page text/filtered HTTP(S) links | [Accounts](accounts.md); separate from internal Footer |
 

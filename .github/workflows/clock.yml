@@ -160,6 +160,10 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/theme/stylesheet.browser.cjs
+      - name: Theme assets browser acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/theme/assets.browser.cjs
       - name: Theme safe mode browser acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock

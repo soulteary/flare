@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -63,14 +64,21 @@ const (
 	ThemeProblemStyleSize      = "style_size"
 	ThemeProblemStyleEncoding  = "style_encoding"
 	ThemeProblemStyleURL       = "style_url"
+	ThemeProblemStyleAsset     = "style_asset"
 	ThemeProblemStyleRule      = "style_rule"
 	ThemeProblemStyleFunction  = "style_function"
 	ThemeProblemStyleCharacter = "style_character"
+	// Reasons a file in the assets of a theme is not accepted. The theme is
+	// then not in use either: it is not applied without a file it brings.
+	ThemeProblemAssetName    = "asset_name"
+	ThemeProblemAssetSize    = "asset_size"
+	ThemeProblemAssetContent = "asset_content"
+	ThemeProblemAssetLimit   = "asset_limit"
 )
 
 // ThemeProblem is a file in the themes directory that is not in use. File is
-// its name in that directory, and for the theme file of a directory the path
-// with a slash, such as forest/theme.yml. Subject is the part of the file the
+// its name in that directory, and for a file of a directory the path with
+// slashes, such as forest/theme.yml. Subject is the part of the file the
 // reason is about, such as tokens.radius or modes.light, or the message of the
 // YAML parser; it can be empty.
 type ThemeProblem struct {
@@ -109,10 +117,21 @@ func statThemeFile(path string) themeFileStamp {
 
 // themeStamp is the state of the files a theme of one name can be read from:
 // the file of that name, and theme.yml in the directory of that name with the
-// stylesheet beside it. Both forms are watched, because each can take the
-// place of the other.
+// stylesheet and the directory of the assets beside it. Both forms are
+// watched, because each can take the place of the other. files holds the
+// files of the assets a reading of the themes directory looked at, in the
+// state they had then; the state of their directory tells when a file is
+// added, removed or renamed.
 type themeStamp struct {
-	file, manifest, stylesheet themeFileStamp
+	file, manifest, stylesheet, assets themeFileStamp
+	files                              []themeAssetStamp
+}
+
+// themeAssetStamp is the state of a file in the assets of a theme when a
+// reading of the themes directory looked at it.
+type themeAssetStamp struct {
+	name  string
+	stamp themeFileStamp
 }
 
 // statTheme returns the state of the files a theme name is read from. A name
@@ -125,18 +144,33 @@ func statTheme(name string) themeStamp {
 		file:     statThemeFile(filepath.Join(UserThemeDirectory, name+userThemeExtension)),
 		manifest: statThemeFile(filepath.Join(UserThemeDirectory, name, userThemeManifest)),
 	}
-	// A stylesheet belongs to a theme that is a directory; beside no
-	// theme.yml it is not read.
+	// A stylesheet and assets belong to a theme that is a directory; beside
+	// no theme.yml they are not read.
 	if stamp.manifest.exists {
 		stamp.stylesheet = statThemeFile(filepath.Join(UserThemeDirectory, name, userThemeStylesheet))
+		stamp.assets = statThemeFile(filepath.Join(UserThemeDirectory, name, model.ThemeAssetDirectory))
 	}
 	return stamp
 }
 
 // current reports whether the files are still in the state they were read at.
+// The files of the assets are compared by assetsCurrent.
 func (stamp themeStamp) current(now themeStamp, clock time.Time) bool {
 	return stamp.file.current(now.file, clock) && stamp.manifest.current(now.manifest, clock) &&
-		stamp.stylesheet.current(now.stylesheet, clock)
+		stamp.stylesheet.current(now.stylesheet, clock) && stamp.assets.current(now.assets, clock)
+}
+
+// assetsCurrent reports whether the files in the assets of a theme that a
+// reading looked at are still in the state they had then. A file that is
+// edited in place leaves the state of its directory as it was.
+func (stamp themeStamp) assetsCurrent(name string, clock time.Time) bool {
+	for _, asset := range stamp.files {
+		now := statThemeFile(filepath.Join(UserThemeDirectory, name, model.ThemeAssetDirectory, asset.name))
+		if !asset.stamp.current(now, clock) {
+			return false
+		}
+	}
+	return true
 }
 
 // current reports whether a file is still in the state it was read at.
@@ -151,12 +185,15 @@ func (stamp themeFileStamp) current(now themeFileStamp, clock time.Time) bool {
 	return age >= themeStampSettle || age <= -themeStampSettle
 }
 
-// userThemeScan is one reading of the themes directory.
+// userThemeScan is one reading of the themes directory. watched holds, by the
+// name of a theme, the files of its assets the reading looked at, whether or
+// not the theme is in use.
 type userThemeScan struct {
 	themes   map[string]model.Theme
 	order    []string
 	problems []ThemeProblem
 	notices  []ThemeNotice
+	watched  map[string][]themeAssetStamp
 }
 
 var (
@@ -234,7 +271,7 @@ func isThemeDirectory(root *os.Root, directory string) bool {
 // directory is not opened, so nothing in it can keep the instance from being
 // used: there are no themes of the directory and no remarks about it.
 func scanUserThemes() userThemeScan {
-	scan := userThemeScan{themes: map[string]model.Theme{}}
+	scan := userThemeScan{themes: map[string]model.Theme{}, watched: map[string][]themeAssetStamp{}}
 	if AppFlags.ThemeSafeMode {
 		return scan
 	}
@@ -351,28 +388,139 @@ func (scan *userThemeScan) readTheme(root *os.Root, name, file, shown string, di
 	definition := theme.Theme(name)
 	definition.Directory = directory
 	if directory {
-		// A theme is used as a whole: with a stylesheet that is not
-		// accepted it is not applied without it.
-		stylesheet, rejected := readThemeStylesheet(root, name)
+		// A theme is used as a whole: with a file of its assets or a
+		// stylesheet that is not accepted it is not applied without them.
+		// The assets are read first, because the stylesheet is held to them.
+		assets, rejected := scan.readThemeAssets(root, name)
+		if rejected != nil {
+			scan.problems = append(scan.problems, *rejected)
+			return
+		}
+		stylesheet, rejected := readThemeStylesheet(root, name, assets)
 		if rejected != nil {
 			rejected.File = name + "/" + userThemeStylesheet
 			scan.problems = append(scan.problems, *rejected)
 			return
 		}
-		if stylesheet != "" {
-			sum := sha256.Sum256([]byte(stylesheet))
-			definition.Stylesheet, definition.StylesheetHash = stylesheet, hex.EncodeToString(sum[:8])
+		definition.Stylesheet, definition.Assets = stylesheet, assets
+		if stylesheet != "" || len(assets) > 0 {
+			definition.Hash = themeFilesHash(stylesheet, assets)
 		}
 	}
 	scan.themes[name] = definition
 	scan.order = append(scan.order, name)
 }
 
+// themeFilesHash names the stylesheet and the assets of a theme, in the state
+// they were read in, for the addresses they are served at. The stylesheet
+// goes in by its content, which is kept. A file of the assets is served from
+// the directory and goes in by its name, its size and its modification time:
+// it is served for as long as it has that state. A stylesheet holds no NUL
+// and a name of the assets neither, so the parts cannot be taken for one
+// another. A theme without assets has the hash of its stylesheet.
+func themeFilesHash(stylesheet string, assets []model.ThemeAsset) string {
+	digest := sha256.New()
+	digest.Write([]byte(stylesheet))
+	for _, asset := range assets {
+		fmt.Fprintf(digest, "\x00%s\x00%d\x00%d", asset.Name, asset.Size, asset.ModTime.UnixNano())
+	}
+	return hex.EncodeToString(digest.Sum(nil)[:8])
+}
+
+// readThemeAssets reads the assets of a theme that is a directory: the images
+// and fonts in the directory named assets beside its theme.yml. A theme
+// without that directory has none. An entry is meant as an asset if its name
+// ends in the extension of an image or a font a theme can bring. Every other
+// entry is left alone and never served, and so is a hidden one: editors, file
+// managers and storage devices put files of their own into a directory. An
+// entry that is meant as an asset and not accepted is the reason the theme is
+// not in use.
+func (scan *userThemeScan) readThemeAssets(root *os.Root, theme string) ([]model.ThemeAsset, *ThemeProblem) {
+	shown := theme + "/" + model.ThemeAssetDirectory
+	info, err := root.Lstat(filepath.Join(theme, model.ThemeAssetDirectory))
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return nil, nil
+	case err != nil:
+		return nil, &ThemeProblem{File: shown, Reason: ThemeProblemRead}
+	case info.Mode()&fs.ModeSymlink != 0:
+		return nil, &ThemeProblem{File: shown, Reason: ThemeProblemLink}
+	case !info.IsDir():
+		// A file of that name is not a directory of assets.
+		return nil, nil
+	}
+	entries, err := fs.ReadDir(root.FS(), shown)
+	if err != nil {
+		return nil, &ThemeProblem{File: shown, Reason: ThemeProblemRead}
+	}
+	var assets []model.ThemeAsset
+	for _, entry := range entries {
+		name := entry.Name()
+		if strings.HasPrefix(name, ".") || !model.HasThemeAssetExtension(name) {
+			continue
+		}
+		if len(assets) == model.MaximumThemeAssets {
+			return nil, &ThemeProblem{File: shown, Reason: ThemeProblemAssetLimit}
+		}
+		asset, reason := scan.readThemeAsset(root, theme, name)
+		if reason != "" {
+			return nil, &ThemeProblem{File: shown + "/" + name, Reason: reason}
+		}
+		assets = append(assets, asset)
+	}
+	return assets, nil
+}
+
+// readThemeAsset looks at one file in the assets of a theme: its name, that
+// it is a regular file of a bounded size, and that its content starts as the
+// kind of file its name says. The content is not kept; the file is served
+// from the directory for as long as it has the size and the modification
+// time noted here. The second result is the reason a file is not accepted.
+// The state of the file is noted before it is opened, so that a change made
+// from then on is seen by the next page.
+func (scan *userThemeScan) readThemeAsset(root *os.Root, theme, name string) (model.ThemeAsset, string) {
+	file := filepath.Join(theme, model.ThemeAssetDirectory, name)
+	entry, err := root.Lstat(file)
+	if err != nil {
+		return model.ThemeAsset{}, ThemeProblemRead
+	}
+	scan.watched[theme] = append(scan.watched[theme], themeAssetStamp{
+		name: name, stamp: themeFileStamp{modTime: entry.ModTime(), size: entry.Size(), exists: true},
+	})
+	switch {
+	case entry.Mode()&fs.ModeSymlink != 0:
+		return model.ThemeAsset{}, ThemeProblemLink
+	case !entry.Mode().IsRegular():
+		return model.ThemeAsset{}, ThemeProblemType
+	case !model.IsThemeAssetName(name):
+		return model.ThemeAsset{}, ThemeProblemAssetName
+	}
+	handle, opened, reason := openThemeDirectoryFile(root, file, model.MaximumThemeAssetBytes)
+	switch reason {
+	case "":
+	case ThemeProblemSize:
+		return model.ThemeAsset{}, ThemeProblemAssetSize
+	default:
+		return model.ThemeAsset{}, reason
+	}
+	defer handle.Close()
+	head := make([]byte, model.ThemeAssetHeadBytes)
+	read, err := io.ReadFull(handle, head)
+	if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return model.ThemeAsset{}, ThemeProblemRead
+	}
+	if !model.IsThemeAssetContent(name, head[:read]) {
+		return model.ThemeAsset{}, ThemeProblemAssetContent
+	}
+	kind, _ := model.ThemeAssetType(name)
+	return model.ThemeAsset{Name: name, Type: kind, Size: opened.Size(), ModTime: opened.ModTime()}, ""
+}
+
 // readThemeStylesheet reads the stylesheet of a theme that is a directory. A
 // theme without a theme.css, or with an empty one, has no stylesheet. The
 // file is read with the care of a theme file, and checked: a stylesheet of a
-// theme loads nothing.
-func readThemeStylesheet(root *os.Root, directory string) (string, *ThemeProblem) {
+// theme loads nothing but the assets of the theme, which are given here.
+func readThemeStylesheet(root *os.Root, directory string, assets []model.ThemeAsset) (string, *ThemeProblem) {
 	file := filepath.Join(directory, userThemeStylesheet)
 	if _, err := root.Lstat(file); errors.Is(err, fs.ErrNotExist) {
 		return "", nil
@@ -385,7 +533,11 @@ func readThemeStylesheet(root *os.Root, directory string) (string, *ThemeProblem
 	default:
 		return "", &ThemeProblem{Reason: reason}
 	}
-	if err := model.CheckThemeStylesheet(raw); err != nil {
+	names := make(map[string]bool, len(assets))
+	for _, asset := range assets {
+		names[asset.Name] = true
+	}
+	if err := model.CheckThemeStylesheetFor(raw, names); err != nil {
 		rejected := ThemeProblem{Reason: ThemeProblemStyleEncoding}
 		var rejection *model.ThemeStyleError
 		if errors.As(err, &rejection) {
@@ -394,6 +546,8 @@ func readThemeStylesheet(root *os.Root, directory string) (string, *ThemeProblem
 		switch {
 		case errors.Is(err, model.ErrThemeStyleURL):
 			rejected.Reason = ThemeProblemStyleURL
+		case errors.Is(err, model.ErrThemeStyleAsset):
+			rejected.Reason = ThemeProblemStyleAsset
 		case errors.Is(err, model.ErrThemeStyleRule):
 			rejected.Reason = ThemeProblemStyleRule
 		case errors.Is(err, model.ErrThemeStyleFunction):
@@ -406,35 +560,52 @@ func readThemeStylesheet(root *os.Root, directory string) (string, *ThemeProblem
 	return string(raw), nil
 }
 
-// readThemeDirectoryFile reads a file of the themes directory up to a size.
-// Such a file is a regular file: a link is reported instead of followed. The
-// file is examined again once it is open, and no more than the limit is read
-// from it, because the entry can be replaced between the two steps. Where the
-// file is not read, the second result is the reason: that it cannot be read,
-// that it is not a regular file, or that it is too large.
-func readThemeDirectoryFile(root *os.Root, file string, limit int) ([]byte, string) {
+// openThemeDirectoryFile opens a file of the themes directory of up to a
+// size. Such a file is a regular file: a link is reported instead of
+// followed. The file is examined again once it is open, because the entry can
+// be replaced between the two steps, and the state returned is that of the
+// open file. Where the file is not opened, the last result is the reason:
+// that it cannot be read, that it is not a regular file, or that it is too
+// large. The caller closes the file.
+func openThemeDirectoryFile(root *os.Root, file string, limit int64) (*os.File, fs.FileInfo, string) {
 	entry, err := root.Lstat(file)
 	if err != nil {
-		return nil, ThemeProblemRead
+		return nil, nil, ThemeProblemRead
 	}
 	if !entry.Mode().IsRegular() {
-		return nil, ThemeProblemType
+		return nil, nil, ThemeProblemType
 	}
 	handle, err := root.Open(file)
 	if err != nil {
-		return nil, ThemeProblemRead
+		return nil, nil, ThemeProblemRead
+	}
+	opened, err := handle.Stat()
+	reason := ""
+	switch {
+	case err != nil:
+		reason = ThemeProblemRead
+	case !opened.Mode().IsRegular():
+		reason = ThemeProblemType
+	case opened.Size() > limit:
+		reason = ThemeProblemSize
+	}
+	if reason != "" {
+		_ = handle.Close()
+		return nil, nil, reason
+	}
+	return handle, opened, ""
+}
+
+// readThemeDirectoryFile reads a file of the themes directory up to a size,
+// with the care of openThemeDirectoryFile. No more than the limit is read
+// from the file, whatever size it had when it was opened. Where the file is
+// not read, the second result is the reason.
+func readThemeDirectoryFile(root *os.Root, file string, limit int) ([]byte, string) {
+	handle, _, reason := openThemeDirectoryFile(root, file, int64(limit))
+	if reason != "" {
+		return nil, reason
 	}
 	defer handle.Close()
-	opened, err := handle.Stat()
-	if err != nil {
-		return nil, ThemeProblemRead
-	}
-	if !opened.Mode().IsRegular() {
-		return nil, ThemeProblemType
-	}
-	if opened.Size() > int64(limit) {
-		return nil, ThemeProblemSize
-	}
 	raw, err := io.ReadAll(io.LimitReader(handle, int64(limit)+1))
 	if err != nil {
 		return nil, ThemeProblemRead
@@ -544,15 +715,18 @@ func reloadUserThemes() {
 		applyTheme(ThemeCurrent)
 	}
 	if ThemeCurrent == selected {
+		stamp.files = scan.watched[selected]
 		selectedThemeStamp = stamp
 	}
 }
 
-// refreshSelectedTheme notices a change of the selected theme's file without
+// refreshSelectedTheme notices a change of the selected theme's files without
 // a restart. While the selection can belong to a theme of the directory it
 // costs two stats per call, one for each form the theme can have, as reading
-// apps.yml and bookmarks.yml costs one each; a bundled theme and the custom
-// colors cost nothing.
+// apps.yml and bookmarks.yml costs one each. A theme that is a directory
+// costs one more for its stylesheet, one for the directory of its assets and
+// one for each file of them, of which there are at most as many as a theme
+// can bring. A bundled theme and the custom colors cost nothing.
 func refreshSelectedTheme() {
 	if selectedThemeFileCurrent() {
 		return
@@ -573,5 +747,9 @@ func selectedThemeFileCurrent() bool {
 	themeMu.RLock()
 	selected, stamp := ThemeCurrent, selectedThemeStamp
 	themeMu.RUnlock()
-	return !isUserThemeName(selected) || stamp.current(statTheme(selected), time.Now())
+	if !isUserThemeName(selected) {
+		return true
+	}
+	clock := time.Now()
+	return stamp.current(statTheme(selected), clock) && stamp.assetsCurrent(selected, clock)
 }

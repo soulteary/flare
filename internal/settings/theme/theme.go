@@ -464,8 +464,10 @@ type themeFileLine struct {
 
 // Longest file name and longest detail shown for a file. Both come from the
 // themes directory; the page shows them as plain text of a bounded length.
+// The longest path of a file that can be in use fits: an image or a font in
+// the assets of a theme.
 const (
-	maximumShownName   = 80
+	maximumShownName   = 104
 	maximumShownDetail = 240
 )
 
