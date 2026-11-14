@@ -33,6 +33,9 @@ type Palette struct {
 type Theme struct {
 	Name   string  `json:"name"`
 	Colors Palette `json:"colors"`
+	// Tokens holds the style tokens a theme sets besides its three colors,
+	// keyed by token name. The values have passed ThemeFile.Validate.
+	Tokens map[string]string `json:"tokens,omitempty"`
 }
 
 // UnmarshalYAML decodes the palette without ever failing. config.yml is edited

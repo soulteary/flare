@@ -97,17 +97,23 @@ func CurrentThemePalette() model.Palette {
 	return ThemePalettes[0].Colors
 }
 
-// themePalette resolves a theme name. Callers hold themeMu.
-func themePalette(theme string) (model.Palette, bool) {
+// themeDefinition resolves a theme name. Callers hold themeMu.
+func themeDefinition(theme string) (model.Theme, bool) {
 	if theme == model.ThemeCustomName {
-		return themeCustom, themeCustomSet
+		return model.Theme{Name: theme, Colors: themeCustom}, themeCustomSet
 	}
 	for _, item := range ThemePalettes {
 		if item.Name == theme {
-			return item.Colors, true
+			return item, true
 		}
 	}
-	return model.Palette{}, false
+	return model.Theme{}, false
+}
+
+// themePalette returns the three colors of a theme. Callers hold themeMu.
+func themePalette(theme string) (model.Palette, bool) {
+	definition, known := themeDefinition(theme)
+	return definition.Colors, known
 }
 
 // themePrimaryColor is GetThemePrimaryColor for callers that hold themeMu.
@@ -149,10 +155,24 @@ func applyTheme(theme string) {
 	ThemePrimaryColor = themePrimaryColor(theme)
 	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor
 	_CACHE_PAGE_BODY_THEME_NAME = emptyPageBodyStyle
-	if palette, known := themePalette(theme); known {
-		// #nosec G203 -- CSS values come from the bundled palettes or from the custom palette, which is stored only after Palette.Validate accepted it (#RRGGBB only).
-		_CACHE_PAGE_BODY_THEME_NAME = template.CSS(`--color-background:` + palette.Background + `;--color-primary:` + palette.Primary + `;--color-accent:` + palette.Accent + `;`)
+	if definition, known := themeDefinition(theme); known {
+		// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate or from the custom palette, which is stored only after Palette.Validate accepted it.
+		_CACHE_PAGE_BODY_THEME_NAME = template.CSS(themeStyle(definition))
 	}
+}
+
+// themeStyle writes a theme as custom properties for the style attribute of
+// the page body. The three colors keep the names the page has always set;
+// stylesheets read them through the style tokens. Any other token the theme
+// sets replaces the default the stylesheet derives.
+func themeStyle(theme model.Theme) string {
+	style := `--color-background:` + theme.Colors.Background + `;--color-primary:` + theme.Colors.Primary + `;--color-accent:` + theme.Colors.Accent + `;`
+	for _, token := range model.ThemeTokenNames[3:] {
+		if value, set := theme.Tokens[token]; set {
+			style += `--flare-` + token + `:` + value + `;`
+		}
+	}
+	return style
 }
 
 // UpdatePagePalettes applies the theme stored in config.yml. The file can be
@@ -177,69 +197,4 @@ func UpdatePagePalettes() {
 		theme = ThemePalettes[0].Name
 	}
 	applyTheme(theme)
-}
-
-func getDefaultThemePalettes() []model.Theme {
-	return []model.Theme{
-		{
-			Name:   "blackboard",
-			Colors: model.Palette{Background: "#1a1a1a", Primary: "#FFFDEA", Accent: "#5c5c5c"},
-		},
-		{
-			Name:   "gazette",
-			Colors: model.Palette{Background: "#F2F7FF", Primary: "#000000", Accent: "#5c5c5c"},
-		},
-		{
-			Name:   "espresso",
-			Colors: model.Palette{Background: "#21211F", Primary: "#D1B59A", Accent: "#4E4E4E"},
-		},
-		{
-			Name:   "cab",
-			Colors: model.Palette{Background: "#F6D305", Primary: "#1F1F1F", Accent: "#424242"},
-		},
-		{
-			Name:   "cloud",
-			Colors: model.Palette{Background: "#f1f2f0", Primary: "#35342f", Accent: "#37bbe4"},
-		},
-		{
-			Name:   "lime",
-			Colors: model.Palette{Background: "#263238", Primary: "#AABBC3", Accent: "#aeea00"},
-		},
-		{
-			Name:   "white",
-			Colors: model.Palette{Background: "#ffffff", Primary: "#222222", Accent: "#dddddd"},
-		},
-		{
-			Name:   "tron",
-			Colors: model.Palette{Background: "#242B33", Primary: "#EFFBFF", Accent: "#6EE2FF"},
-		},
-		{
-			Name:   "blues",
-			Colors: model.Palette{Background: "#2B2C56", Primary: "#EFF1FC", Accent: "#6677EB"},
-		},
-		{
-			Name:   "passion",
-			Colors: model.Palette{Background: "#f5f5f5", Primary: "#12005e", Accent: "#8e24aa"},
-		},
-		{
-			Name:   "chalk",
-			Colors: model.Palette{Background: "#263238", Primary: "#AABBC3", Accent: "#FF869A"},
-		},
-		{
-			Name:   "paper",
-			Colors: model.Palette{Background: "#F8F6F1", Primary: "#4C432E", Accent: "#AA9A73"},
-		},
-		{
-			Name:   "neon",
-			Colors: model.Palette{Background: "#091833", Primary: "#EFFBFF", Accent: "#ea00d9"},
-		},
-		{
-			Name:   "pumpkin",
-			Colors: model.Palette{Background: "#2d3436", Primary: "#EFFBFF", Accent: "#ffa500"},
-		},
-		{
-			Name:   "onedark",
-			Colors: model.Palette{Background: "#282c34", Primary: "#dfd9d6", Accent: "#98c379"},
-		},
-	}
 }
