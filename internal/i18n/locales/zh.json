@@ -94,6 +94,8 @@
   "theme_file_problem_text": "文字过长，或含有不允许的字符：",
   "theme_file_problem_requires": "未采用：主题需要这个版本或更新的 Flare：",
   "theme_file_problem_requires_value": "requires 下的版本要写成三个数字，例如 0.7.0：",
+  "theme_file_problem_background": "主题的背景设置不符合要求：",
+  "theme_file_problem_background_asset": "背景图不在主题 assets 目录的图片之中：",
   "theme_file_problem_style_size": "未读取：样式表超过 128 KiB。",
   "theme_file_problem_style_encoding": "样式表不是 UTF-8 文本。",
   "theme_file_problem_style_url": "主题样式表里的 url() 只能指向主题自己 assets 目录中的文件，写作 url(assets/<文件名>)：",

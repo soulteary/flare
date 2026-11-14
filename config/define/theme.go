@@ -7,6 +7,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -66,6 +67,9 @@ var _CACHE_PAGE_THEME_RULES template.CSS
 // The address of the stylesheet the selected theme brings, or nothing.
 var _CACHE_PAGE_THEME_STYLESHEET string
 
+// The rule for the background image of the selected theme, or nothing.
+var _CACHE_PAGE_THEME_BACKGROUND template.CSS
+
 // The stylesheet of a theme is served under an address that holds the name of
 // the theme and a hash of what the theme brings. A page links the address of
 // the state it was rendered for, so a stored copy never stands for another
@@ -86,10 +90,13 @@ const (
 // the two and the site leaves the choice to the device. The one that is not
 // used is empty. Stylesheet is the address of the stylesheet the theme
 // brings, for the pages that take one, and empty for a theme without one.
+// Background is a rule for a style element that lays the background image of
+// the theme behind those same pages, and empty for a theme without one.
 type PageTheme struct {
 	BodyStyle  template.CSS
 	Rules      template.CSS
 	Stylesheet string
+	Background template.CSS
 }
 
 // GetPageTheme returns the selected theme for one page. Every themed page
@@ -99,7 +106,16 @@ func GetPageTheme() PageTheme {
 	refreshSelectedTheme()
 	themeMu.RLock()
 	defer themeMu.RUnlock()
-	return PageTheme{BodyStyle: _CACHE_PAGE_BODY_THEME_NAME, Rules: _CACHE_PAGE_THEME_RULES, Stylesheet: _CACHE_PAGE_THEME_STYLESHEET}
+	return selectedPageTheme()
+}
+
+// selectedPageTheme returns what a page takes from the selected theme, as it
+// was written when the theme was applied. Callers hold themeMu.
+func selectedPageTheme() PageTheme {
+	return PageTheme{
+		BodyStyle: _CACHE_PAGE_BODY_THEME_NAME, Rules: _CACHE_PAGE_THEME_RULES,
+		Stylesheet: _CACHE_PAGE_THEME_STYLESHEET, Background: _CACHE_PAGE_THEME_BACKGROUND,
+	}
 }
 
 // GetPageThemeWithoutDirectory returns what a page takes from the selected
@@ -113,7 +129,7 @@ func GetPageThemeWithoutDirectory() PageTheme {
 	if isUserThemeName(ThemeCurrent) {
 		return PageTheme{}
 	}
-	return PageTheme{BodyStyle: _CACHE_PAGE_BODY_THEME_NAME, Rules: _CACHE_PAGE_THEME_RULES, Stylesheet: _CACHE_PAGE_THEME_STYLESHEET}
+	return selectedPageTheme()
 }
 
 // IsThemeOfDirectory reports whether a name can only be that of a theme of
@@ -227,7 +243,8 @@ func GetPageThemeFor(name string) (PageTheme, bool) {
 // dark: into the style attribute, or as rules when the device chooses.
 func pageThemeOf(theme model.Theme, mode string) PageTheme {
 	shown, dark, deviceChooses := themeInMode(theme, mode)
-	page := PageTheme{Stylesheet: themeStylesheetAddress(theme)}
+	// #nosec G203 -- the rule holds the name of a theme of the directory, a hash, the name of an asset and a number, each of a form that is safe to write into a stylesheet.
+	page := PageTheme{Stylesheet: themeStylesheetAddress(theme), Background: template.CSS(themeBackgroundRule(theme))}
 	if deviceChooses {
 		// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate.
 		page.Rules = template.CSS(themeRules(shown, dark))
@@ -439,12 +456,31 @@ func applyTheme(theme string) {
 	ThemePrimaryColor = themePrimaryColor(theme)
 	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor
 	_CACHE_PAGE_BODY_THEME_NAME, _CACHE_PAGE_THEME_RULES = emptyPageBodyStyle, emptyPageBodyStyle
-	_CACHE_PAGE_THEME_STYLESHEET = ""
+	_CACHE_PAGE_THEME_STYLESHEET, _CACHE_PAGE_THEME_BACKGROUND = "", emptyPageBodyStyle
 	if definition, known := themeDefinition(theme); known {
 		page := pageThemeOf(definition, themeMode)
 		_CACHE_PAGE_BODY_THEME_NAME, _CACHE_PAGE_THEME_RULES = page.BodyStyle, page.Rules
-		_CACHE_PAGE_THEME_STYLESHEET = page.Stylesheet
+		_CACHE_PAGE_THEME_STYLESHEET, _CACHE_PAGE_THEME_BACKGROUND = page.Stylesheet, page.Background
 	}
+}
+
+// themeBackgroundRule writes the background image of a theme as a rule for a
+// style element. The image is an asset of the theme, under the address the
+// assets are served at, and it fills the window behind the page. Where the
+// theme dims it, the background color of the theme lies over it as a layer
+// of that strength; the color is taken from the token, so it is the one of
+// the mode the page is shown in. The rule follows the stylesheet of the
+// theme, as the tokens of the theme file do: what the theme file says holds.
+func themeBackgroundRule(theme model.Theme) string {
+	if theme.BackgroundImage == "" {
+		return ""
+	}
+	layers := `url(` + themeStylesheetBase + theme.Name + "/" + theme.Hash + "/" + model.ThemeAssetDirectory + "/" + theme.BackgroundImage + `)`
+	if theme.BackgroundDim > 0 {
+		veil := `color-mix(in srgb,var(--flare-background) ` + strconv.Itoa(theme.BackgroundDim) + `%,transparent)`
+		layers = `linear-gradient(` + veil + `,` + veil + `),` + layers
+	}
+	return `body{background-image:` + layers + `;background-size:cover;background-position:center;background-repeat:no-repeat;background-attachment:fixed}`
 }
 
 // themeRules writes a theme with different values for light and for dark as

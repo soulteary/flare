@@ -48,7 +48,10 @@ body {
 ```
 
 A font that is declared this way can be named by the `font-family` token of
-the theme file: `font-family: Brand, sans-serif`.
+the theme file: `font-family: Brand, sans-serif`. The theme file can also name
+one of the images as the
+[background of the pages](theme-files.md#background-image), without a
+stylesheet.
 
 | Kind | Extension | Served as |
 | --- | --- | --- |
@@ -114,6 +117,9 @@ of the theme file follow the stylesheet:
 - A token the theme file sets has the value of the theme file, also where the
   stylesheet sets it on `body`.
 - A token the theme file leaves alone can be set by the stylesheet, on `body`.
+- A [background image](theme-files.md#background-image) the theme file names
+  is the background of the pages, also where the stylesheet sets one on
+  `body`.
 
 A [preview](theme-files.md#preview) loads the stylesheet of the previewed
 theme.

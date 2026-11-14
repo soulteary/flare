@@ -64,8 +64,14 @@ func StoreUserTheme(name string, raw []byte, replace bool) error {
 	if len(raw) > MaximumThemeFileBytes {
 		return ErrThemeStoreSize
 	}
-	if _, _, err := model.ReadThemeFileFor(raw, version.Version); err != nil {
-		return err
+	theme, _, rejected := model.ReadThemeFileFor(raw, version.Version)
+	if rejected != nil {
+		return rejected
+	}
+	// What is stored here is a theme of one file, which has no assets: a
+	// background image it names would never be there.
+	if theme.Background != nil {
+		return &model.ThemeFileError{Reason: model.ErrThemeBackgroundAsset, Subject: theme.Background.Image}
 	}
 	userThemeScanMu.Lock()
 	defer userThemeScanMu.Unlock()

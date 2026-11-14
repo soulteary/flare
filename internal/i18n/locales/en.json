@@ -94,6 +94,8 @@
   "theme_file_problem_text": "A text is too long or contains characters that are not accepted:",
   "theme_file_problem_requires": "Not used: the theme needs this release of Flare or a later one:",
   "theme_file_problem_requires_value": "The release under requires has to be three numbers, such as 0.7.0:",
+  "theme_file_problem_background": "The background of the theme is not accepted:",
+  "theme_file_problem_background_asset": "The background image is not among the images in the assets of the theme:",
   "theme_file_problem_style_size": "Not read: the stylesheet is larger than 128 KiB.",
   "theme_file_problem_style_encoding": "The stylesheet is not UTF-8 text.",
   "theme_file_problem_style_url": "A url() in the stylesheet of a theme can only name a file of its assets, written as url(assets/<name>):",

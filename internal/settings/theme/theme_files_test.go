@@ -151,6 +151,7 @@ func TestThemeFileLinesExplainEveryReason(t *testing.T) {
 		define.ThemeProblemStyleRule, define.ThemeProblemStyleFunction, define.ThemeProblemStyleCharacter,
 		define.ThemeProblemAssetName, define.ThemeProblemAssetSize, define.ThemeProblemAssetContent, define.ThemeProblemAssetLimit,
 		define.ThemeProblemRequires, define.ThemeProblemRequiresValue,
+		define.ThemeProblemBackground, define.ThemeProblemBackgroundAsset,
 		define.ThemeProblemSize, define.ThemeProblemLimit, define.ThemeProblemRead, define.ThemeProblemSyntax,
 		define.ThemeProblemContract, define.ThemeProblemValue, define.ThemeProblemColor, define.ThemeProblemContrast,
 		define.ThemeProblemText,
