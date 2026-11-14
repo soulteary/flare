@@ -24,6 +24,10 @@ type Flags struct {
 	EnableMinimumRequest   bool
 	EnableDeprecatedNotice bool
 	DisableCSP             bool
+	// ThemeSafeMode leaves the themes of the themes directory out: the
+	// directory is not read, so a theme in it cannot be what keeps the
+	// instance from being used.
+	ThemeSafeMode bool
 
 	Visibility       string
 	DisableLoginMode bool
@@ -53,6 +57,7 @@ type Envs struct {
 	EnableMinimumRequest   bool `env:"FLARE_MINI_REQUEST"`
 	EnableDeprecatedNotice bool `env:"FLARE_DEPRECATED_NOTICE"`
 	DisableCSP             bool `env:"FLARE_DISABLE_CSP,unset"`
+	ThemeSafeMode          bool `env:"FLARE_THEME_SAFE_MODE"`
 
 	Visibility       string `env:"FLARE_VISIBILITY"`
 	DisableLoginMode bool   `env:"FLARE_DISABLE_LOGIN"`
@@ -76,6 +81,7 @@ type EnvFile struct {
 	EnableMinimumRequest   bool `ini:"FLARE_MINI_REQUEST,omitempty"`
 	EnableDeprecatedNotice bool `ini:"FLARE_DEPRECATED_NOTICE,omitempty"`
 	DisableCSP             bool `env:"FLARE_DISABLE_CSP,unset"`
+	ThemeSafeMode          bool `ini:"FLARE_THEME_SAFE_MODE,omitempty"`
 
 	Visibility       string `ini:"FLARE_VISIBILITY,omitempty"`
 	DisableLoginMode bool   `ini:"FLARE_DISABLE_LOGIN,omitempty"`

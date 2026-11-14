@@ -45,6 +45,7 @@ credentials or initialization, and invalid security inputs still block startup.
 | `FLARE_MINI_REQUEST` | `--mini_request`, `-m` | `false` | Boolean; inline icon SVGs, trade fewer HTTP requests for larger HTML |
 | `FLARE_DEPRECATED_NOTICE` | `--enable_notice`, `-n` | `true` | Boolean; deprecated-feature notices |
 | `FLARE_DISABLE_CSP` | `--disable_csp`, `-c` | `false` | Boolean; disabling the page script policy reduces browser protection |
+| `FLARE_THEME_SAFE_MODE` | `--theme_safe_mode` | `false` | Current source: Boolean; do not read the themes directory, see [safe mode](theme-files.md#safe-mode) |
 | `FLARE_COOKIE_NAME` | `--cookie_name`, `-k` | `flare` | Session cookie prefix; current main also includes the instance identity |
 | `FLARE_COOKIE_SECRET` | `--cookie_secret`, `-r` | Legacy: secure initialized key | Stable/legacy signed-cookie setting (at least 32 bytes); does not replace current-main security state |
 | `FLARE_COOKIE_SECURE` | `--cookie_secure` | `false` | Boolean; force HTTPS-only cookies behind TLS termination, after which pages opened over HTTP cannot sign in or save; direct TLS is secure automatically. Current source no longer needs it for writes behind TLS termination; 0.6.8–0.6.14 do |

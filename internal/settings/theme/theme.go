@@ -200,6 +200,8 @@ func importTheme(c fiber.Ctx, replace bool) error {
 		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_exists"))
 	case errors.Is(stored, define.ErrThemeStoreDirectory):
 		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_directory"))
+	case errors.Is(stored, define.ErrThemeStoreSafeMode):
+		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_safe_mode"))
 	case errors.Is(stored, define.ErrThemeStoreFull):
 		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_full"))
 	case errors.As(stored, &rejection):
@@ -344,7 +346,15 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 		m["ThemeImported"] = i18n.Format(locale, "theme_import_done", map[string]any{"name": define.ThemeTitle(notice.imported, locale)})
 	}
 	if selected, _ := define.ThemeSnapshot(); selected != "" && !define.IsKnownTheme(selected) {
-		m["ThemeUnavailable"] = i18n.Format(locale, "theme_unavailable", map[string]any{"name": plainText(selected, maximumShownName)})
+		reason := "theme_unavailable"
+		// In safe mode the file of the theme is not what is wrong.
+		if define.AppFlags.ThemeSafeMode && define.IsThemeOfDirectory(selected) {
+			reason = "theme_safe_mode_selected"
+		}
+		m["ThemeUnavailable"] = i18n.Format(locale, reason, map[string]any{"name": plainText(selected, maximumShownName)})
+	}
+	if define.AppFlags.ThemeSafeMode {
+		m["ThemeSafeMode"] = i18n.T(locale, "theme_safe_mode_notice")
 	}
 
 	if custom, stored := storedCustomPalette(options); stored {

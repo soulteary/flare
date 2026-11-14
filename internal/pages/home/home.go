@@ -388,12 +388,30 @@ type themePreview struct {
 	Action string
 }
 
+// themeSafeMode is the notice of a page that is shown in safe mode, with the
+// way back to the theme settings.
+type themeSafeMode struct {
+	Text   string
+	Back   string
+	Action string
+}
+
 // setPageTheme hands the page what it takes from the theme: the selected
 // theme, or the one this response previews. A preview changes nothing but
 // this response.
 func setPageTheme(c fiber.Ctx, m map[string]any, locale string) {
 	theme := define.GetPageTheme()
-	if name := requestPreview(c); name != "" {
+	if requestSafeMode(c) {
+		theme = define.GetPageThemeWithoutDirectory()
+		// Like a preview, the response differs from what the address
+		// shows to anyone else.
+		c.Set("Cache-Control", "private, no-store")
+		m["ThemeSafeMode"] = themeSafeMode{
+			Text:   i18n.T(locale, "theme_safe_mode_page"),
+			Back:   i18n.T(locale, "theme_preview_back"),
+			Action: define.SettingPages.Theme.Path,
+		}
+	} else if name := requestPreview(c); name != "" {
 		if previewed, known := define.GetPageThemeFor(name); known {
 			theme = previewed
 			title := define.ThemeTitle(name, locale)

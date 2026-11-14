@@ -334,6 +334,34 @@ stylesheet, without selecting it.
   visitor. With login disabled there is no such difference.
 - The browser-tab icon stays that of the selected theme.
 
+## Safe mode
+
+A theme of the themes directory can change a great deal of the navigation
+pages, with its [layout](#layout) and above all with its
+[stylesheet](theme-stylesheets.md). Safe mode leaves the themes of the
+directory out, for one page or for the whole instance. It changes neither
+`config.yml` nor the directory.
+
+| | For one page | For the instance |
+| --- | --- | --- |
+| Turned on by | `?theme-safe-mode` in the address of the home page, the application page, the bookmark page or the help page | Starting the instance with `FLARE_THEME_SAFE_MODE=true` or `--theme_safe_mode` |
+| For | The administrator; a visitor gets the page as the site shows it. With login disabled there is no such difference | Everyone |
+| Themes of the directory | In use as before, and left out of that one response | Not read: not listed, not selected, not previewed, and no file is imported |
+| The pages | That response has the selected theme if it is a bundled theme or the custom colors, and the colors of the stylesheet of the application if it is a theme of the directory. The layout is that of the site | The same, for every page, until the instance is started without safe mode or another theme is selected |
+| Said on | The page itself, in a notice with a way back to the settings | The theme page |
+
+- For one page it shows what a page looks like without the theme, for
+  example to tell whether the theme is the reason something is hard to read
+  or to find. The response is not stored by browsers or proxies.
+- For the instance it is the way to start when something in the themes
+  directory keeps the instance from working. The directory is not opened at
+  all, so what it holds is neither used nor reported.
+- A selection that names a theme of the directory stays in `config.yml`. The
+  theme is back when safe mode is off.
+- Selecting another theme does not need safe mode: the settings never load
+  the stylesheet of a theme, so Settings → Theme works whatever a theme does
+  to the other pages.
+
 ## Import and export
 
 The theme page hands a theme out as a theme file and takes a theme file in.
@@ -464,6 +492,10 @@ checks that nothing is selected by it, and selects a theme from the notice.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/import-export.browser.cjs`
 downloads a bundled theme, imports the file, has unusable files and an
 existing name refused, replaces the file and downloads it again.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/safe-mode.browser.cjs`
+selects a theme whose stylesheet hides parts of the home page, opens the page
+in safe mode and goes back to the settings from its notice, and starts an
+instance in safe mode.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/layout.browser.cjs`
 selects a theme that specifies layout, turns single options and the whole
 layout off and on again on the appearance page, and checks the home page
