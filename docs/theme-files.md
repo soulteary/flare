@@ -77,6 +77,7 @@ described there, so three colors make a complete theme.
 | `hover` | A `#RRGGBB` color, or `#RRGGBBAA` with transparency |
 | `radius` | `0`, or a whole number of pixels from `0px` to `32px` |
 | `font-family` | Font family names separated by commas, without quotes, up to 160 bytes |
+| `font-scale` | A number from `0.8` to `1.5` with at most two decimals |
 
 - Colors have to be quoted: an unquoted `#` starts a YAML comment and leaves
   the color empty.
@@ -86,6 +87,10 @@ described there, so three colors make a complete theme.
   underscores, such as `Helvetica Neue`, `-apple-system` or `思源黑体`. The
   names refer to fonts on the device of the visitor; a theme file does not
   load fonts.
+- `font-scale` multiplies the text sizes of the navigation pages; `1.25`
+  makes the text a quarter larger. What it applies to, and how it combines
+  with the text size of the appearance page, is described with the
+  [style tokens](theme-tokens.md#details).
 - No other form of value is accepted: no color names or functions, no other
   units, no `var()` and no `url()`. The values are written into the style
   attribute of the page, and a value outside the forms above rejects the file.

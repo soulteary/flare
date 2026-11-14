@@ -30,6 +30,7 @@ const (
 	TokenHover      = "hover"
 	TokenRadius     = "radius"
 	TokenFontFamily = "font-family"
+	TokenFontScale  = "font-scale"
 )
 
 // ThemeTokenNames lists the tokens in the order of their documentation. The
@@ -37,7 +38,7 @@ const (
 var ThemeTokenNames = []string{
 	TokenBackground, TokenPrimary, TokenAccent,
 	TokenIcon, TokenMuted, TokenBorder, TokenFocus, TokenInverse,
-	TokenHover, TokenRadius, TokenFontFamily,
+	TokenHover, TokenRadius, TokenFontFamily, TokenFontScale,
 }
 
 // MaximumThemeRadius is the largest value of the radius token, in pixels.
@@ -46,6 +47,14 @@ const MaximumThemeRadius = 32
 
 // maximumFontFamilyLength bounds the font-family token.
 const maximumFontFamilyLength = 160
+
+// The font-scale token is a number between these two, in hundredths. Below
+// the first, text at the default size falls under 11 pixels; above the
+// second, the columns of the page no longer hold their text.
+const (
+	minimumThemeFontScale = 80
+	maximumThemeFontScale = 150
+)
 
 var (
 	// ErrThemeSyntax reports a theme file that is not the expected YAML document.
@@ -486,6 +495,7 @@ var themeTokenChecks = map[string]func(string) bool{
 	TokenHover:      isOverlayColor,
 	TokenRadius:     isThemeRadius,
 	TokenFontFamily: isFontFamilyList,
+	TokenFontScale:  isThemeFontScale,
 }
 
 // isOverlayColor accepts #RRGGBB and #RRGGBBAA. The hover token is drawn over
@@ -521,6 +531,27 @@ func isThemeRadius(value string) bool {
 	}
 	pixels, err := strconv.Atoi(digits)
 	return err == nil && pixels >= 0 && pixels <= MaximumThemeRadius
+}
+
+// isThemeFontScale accepts a number from 0.8 to 1.5 with at most two
+// decimals, such as 1, 0.9 or 1.25. Stylesheets multiply lengths by it.
+func isThemeFontScale(value string) bool {
+	whole, fraction, decimal := strings.Cut(value, ".")
+	if (whole != "0" && whole != "1") || (decimal && (fraction == "" || len(fraction) > 2)) {
+		return false
+	}
+	hundredths := int(whole[0]-'0') * 100
+	for i := 0; i < len(fraction); i++ {
+		if fraction[i] < '0' || fraction[i] > '9' {
+			return false
+		}
+		digit := int(fraction[i] - '0')
+		if i == 0 {
+			digit *= 10
+		}
+		hundredths += digit
+	}
+	return hundredths >= minimumThemeFontScale && hundredths <= maximumThemeFontScale
 }
 
 // isFontFamilyList accepts family names separated by commas, such as

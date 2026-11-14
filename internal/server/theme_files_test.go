@@ -168,7 +168,7 @@ func readThemeFilePage(t *testing.T, page string) themeFilePage {
 func TestThemeFilesHTTP(t *testing.T) {
 	handler := themeFilesRouter(t, "Locale: en\nTheme: blackboard\nShowApps: true\n", map[string]string{
 		"forest.yml":   forestThemeFile,
-		"later.yml":    themeFileColors + "  font-scale: \"1.1\"\noptions:\n  - id: density\n",
+		"later.yml":    themeFileColors + "  space: 4px\noptions:\n  - id: density\n",
 		"rejected.yml": themeFileColors + "  radius: 4em\n",
 		"Mixed.yml":    themeFileColors,
 		"notes.yaml":   themeFileColors,
@@ -187,13 +187,13 @@ func TestThemeFilesHTTP(t *testing.T) {
 	}, page.cards)
 	require.Equal(t, [][]string{
 		{"Mixed.yml"},
-		{"later.yml", "options, tokens.font-scale"},
+		{"later.yml", "options, tokens.space"},
 		{"notes.yaml"},
 		{"rejected.yml", "tokens.radius"},
 	}, page.lines)
 	require.Equal(t, []string{
 		"Mixed.yml " + i18n.T("en", "theme_file_problem_name"),
-		"later.yml " + i18n.T("en", "theme_file_unused") + " options, tokens.font-scale",
+		"later.yml " + i18n.T("en", "theme_file_unused") + " options, tokens.space",
 		"notes.yaml " + i18n.T("en", "theme_file_problem_extension"),
 		"rejected.yml " + i18n.T("en", "theme_file_problem_value") + " tokens.radius",
 	}, page.lineTexts)
@@ -366,5 +366,29 @@ func TestThemeFileContentIsShownAsText(t *testing.T) {
 		body := getPage(t, handler, path)
 		require.Equal(t, themeFileStyle, bodyStyle(t, body), path)
 		require.NotContains(t, body, "<script>alert(1)", path)
+	}
+}
+
+// The font scale of a theme reaches the themed pages with its other tokens,
+// and the stylesheet has the default it replaces.
+func TestThemeFontScaleReachesThePages(t *testing.T) {
+	handler := themeFilesRouter(t, "Locale: en\nTheme: scaled\nShowApps: true\n", map[string]string{
+		"scaled.yml":   themeFileColors + "  radius: 8px\n  font-scale: 1.25\n",
+		"too-big.yml":  themeFileColors + "  font-scale: 3\n",
+		"declared.yml": themeFileColors + "  font-scale: \"1;zoom:2\"\n",
+	})
+	want := themeFileStyle + "--flare-radius:8px;--flare-font-scale:1.25;"
+	for _, path := range []string{"/", "/bookmarks", "/applications", "/help", "/settings/theme"} {
+		page := getPage(t, handler, path)
+		require.Equal(t, want, bodyStyle(t, page), path)
+		require.True(t, strings.Contains(page, "--flare-font-scale: 1;"), "%s: the stylesheet has no default for the scale", path)
+	}
+	// A scale outside the accepted range, or one that is not a number,
+	// rejects the file.
+	lines := readThemeFilePage(t, getPage(t, handler, "/settings/theme")).lines
+	require.Contains(t, lines, []string{"too-big.yml", "tokens.font-scale"})
+	require.Contains(t, lines, []string{"declared.yml", "tokens.font-scale"})
+	for _, name := range []string{"too-big", "declared"} {
+		require.Equal(t, http.StatusBadRequest, themeRequest(handler, url.Values{"theme": {name}}).Code, name)
 	}
 }

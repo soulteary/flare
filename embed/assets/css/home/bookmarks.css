@@ -5,7 +5,7 @@
 #container-bookmarks .bookmark-group-container h3.bookmark-group-title {
   color: var(--flare-muted);
   margin-bottom: 10px;
-  font-size: 16px;
+  font-size: calc(16px * var(--flare-font-scale));
   font-weight: 400;
 }
 

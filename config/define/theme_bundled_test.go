@@ -74,6 +74,13 @@ func TestThemeStyleWritesTokensAfterTheColors(t *testing.T) {
 			"--flare-icon:#ffcc66;--flare-hover:#00000033;--flare-radius:8px;--flare-font-family:Helvetica Neue, sans-serif;",
 		themeStyle(theme))
 
+	// The font scale follows the font family, as in the documentation.
+	theme.Tokens = map[string]string{model.TokenFontScale: "1.25", model.TokenFontFamily: "Georgia, serif", model.TokenRadius: "0"}
+	require.Equal(t,
+		"--color-background:#101010;--color-primary:#f0f0f0;--color-accent:#808080;"+
+			"--flare-radius:0;--flare-font-family:Georgia, serif;--flare-font-scale:1.25;",
+		themeStyle(theme))
+
 	// A token outside the documented list is never written.
 	theme.Tokens = map[string]string{"shadow": "0 0 4px red"}
 	require.Equal(t, "--color-background:#101010;--color-primary:#f0f0f0;--color-accent:#808080;", themeStyle(theme))

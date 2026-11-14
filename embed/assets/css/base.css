@@ -25,6 +25,9 @@ body {
   --flare-hover: rgba(0, 0, 0, 0.2);
   --flare-radius: 4px;
   --flare-font-family: Roboto, sans-serif;
+  /* A number that every text size of the navigation pages is multiplied by,
+     together with the heights that would otherwise clip the text. */
+  --flare-font-scale: 1;
 
   --spacing-ui: 10px;
   background-color: var(--flare-background);
@@ -68,7 +71,7 @@ h1 {
 
 h2 a {
   font-weight: 900;
-  font-size: 20px;
+  font-size: calc(20px * var(--flare-font-scale));
   margin-bottom: 16px;
 }
 
@@ -85,6 +88,10 @@ h2 a {
   display: block;
 
   overflow: auto;
+  /* The text size of the body, scaled. Sizes in em inside the navigation
+     pages follow it; sizes in px and rem are multiplied where they are set.
+     The settings pages are outside this element and keep their sizes. */
+  font-size: calc(14px * var(--flare-font-scale));
 }
 
 .container {
@@ -112,7 +119,7 @@ h2 a {
 
 .plugin-container h2 {
   font-weight: 900;
-  font-size: 20px;
+  font-size: calc(20px * var(--flare-font-scale));
   margin-bottom: 16px;
 }
 
@@ -168,5 +175,5 @@ h2 a {
     padding: 20px 16px calc(120px + env(safe-area-inset-bottom));
   }
   #page-home .footer-container { overflow-wrap: anywhere; }
-  #page-home h1 { font-size: clamp(1.75rem, 8vw, 3rem); overflow-wrap: anywhere; }
+  #page-home h1 { font-size: calc(clamp(1.75rem, 8vw, 3rem) * var(--flare-font-scale)); overflow-wrap: anywhere; }
 }

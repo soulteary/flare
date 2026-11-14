@@ -31,13 +31,14 @@ theme. The bundled themes and custom colors set these three; a
 | `--flare-hover` | `rgba(0, 0, 0, 0.2)` | Background of an application under the pointer |
 | `--flare-radius` | `4px` | Corners of small controls; larger corners are multiples of it |
 | `--flare-font-family` | `Roboto, sans-serif` | Text |
+| `--flare-font-scale` | `1` | A number that the text sizes of the navigation pages are multiplied by |
 
 ## Scope
 
 - The home page, the application and bookmark pages and the help page use all
   tokens.
 - The settings pages use the three theme colors, the radius and the font. The
-  other color tokens do not apply to them.
+  other color tokens and the font scale do not apply to them.
 - The editor, the import/export page and the sign-in page keep their own
   colors and use no token.
 
@@ -57,6 +58,13 @@ theme. The bundled themes and custom colors set these three; a
   [bundled icons](theme-colors.md#bundled-icons).
 - **Round shapes.** The toolbar buttons and switches keep their round shape and
   do not follow `--flare-radius`.
+- **Font scale.** `--flare-font-scale` multiplies every text size of the home
+  page, the application and bookmark pages and the help page. The height of
+  an application grows with it, so that its two lines are not cut off, and
+  does not shrink with it; icons keep their size. The larger sizes of
+  **Navigation text size** on the appearance page are the choice of the
+  administrator for readability: a scale above 1 enlarges them further, and a
+  scale below 1 does not make them smaller.
 
 ## Verification
 
@@ -64,3 +72,7 @@ theme. The bundled themes and custom colors set these three; a
 each token in Chromium and checks that the parts of the home page listed above
 take the value and that no other measured part changes. It does the same for
 the three earlier names.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/font-scale.browser.cjs`
+selects themes with a font scale and checks the text sizes of the navigation
+pages, that an application is not cut off, that the settings pages keep their
+sizes, and that a scale below 1 leaves a larger navigation text size alone.
