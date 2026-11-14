@@ -21,6 +21,16 @@
   cursor: default;
 }
 
+.theme-groups .theme .theme-preview-link {
+  display: inline-block;
+  margin: -4px 0 10px;
+  font-size: 12px;
+  color: var(--flare-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.8;
+}
+
 .theme-groups .theme .theme-choose {
   position: absolute;
   z-index: 1;

@@ -88,9 +88,7 @@ func renderHelp(c fiber.Ctx) error {
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
 	m["PageName"] = "Home"
-	pageTheme := define.GetPageTheme()
-	m["PageAppearance"] = pageTheme.BodyStyle
-	m["PageThemeRules"] = pageTheme.Rules
+	setPageTheme(c, m, locale)
 	m["SettingPages"] = define.SettingPages
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
@@ -176,9 +174,7 @@ func pageBookmark(c fiber.Ctx) error {
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
 	m["PageName"] = i18n.T(locale, "page_bookmarks")
 	m["SubPage"] = true
-	pageTheme := define.GetPageTheme()
-	m["PageAppearance"] = pageTheme.BodyStyle
-	m["PageThemeRules"] = pageTheme.Rules
+	setPageTheme(c, m, locale)
 	m["BodyClassName"] = homepageBodyClasses(options)
 	m["SettingPages"] = define.SettingPages
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
@@ -224,9 +220,7 @@ func pageApplication(c fiber.Ctx) error {
 	}
 	m["PageName"] = i18n.T(locale, "page_apps")
 	m["SubPage"] = true
-	pageTheme := define.GetPageTheme()
-	m["PageAppearance"] = pageTheme.BodyStyle
-	m["PageThemeRules"] = pageTheme.Rules
+	setPageTheme(c, m, locale)
 	m["BodyClassName"] = homepageBodyClasses(options)
 	m["OptionTitle"] = options.Title
 	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
@@ -291,9 +285,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
 	m["PageName"] = "Home"
-	pageTheme := define.GetPageTheme()
-	m["PageAppearance"] = pageTheme.BodyStyle
-	m["PageThemeRules"] = pageTheme.Rules
+	setPageTheme(c, m, locale)
 	m["SettingPages"] = define.SettingPages
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
@@ -381,6 +373,52 @@ func parseRequestURL(c fiber.Ctx) fn.DynamicURL {
 		r.TLS = &tls.ConnectionState{}
 	}
 	return fn.ParseRequestURLTo(&r)
+}
+
+// themePreview is what the page says while it previews a theme.
+type themePreview struct {
+	// Name is the theme, as the theme settings take it to select it.
+	Name string
+	Text string
+	Use  string
+	Back string
+	// Action is where selecting the theme is submitted, and where the way
+	// back leads.
+	Action string
+}
+
+// setPageTheme hands the page what it takes from the theme: the selected
+// theme, or the one this response previews. A preview changes nothing but
+// this response.
+func setPageTheme(c fiber.Ctx, m map[string]any, locale string) {
+	theme := define.GetPageTheme()
+	if name := requestPreview(c); name != "" {
+		if previewed, known := define.GetPageThemeFor(name); known {
+			theme = previewed
+			title := define.ThemeTitle(name, locale)
+			if name == model.ThemeCustomName {
+				title = i18n.T(locale, "theme_custom")
+			}
+			// Selecting the previewed theme is a write to the settings and
+			// needs the token of the session, on every page a preview can
+			// be opened on.
+			if _, set := m["SecurityCSRFToken"]; !set && auth.PersistentSecurity(c) {
+				m["SecurityCSRFToken"] = auth.CSRFToken(c)
+			}
+			// The response differs from what the address shows to anyone
+			// else, so nothing may keep a copy of it.
+			c.Set("Cache-Control", "private, no-store")
+			m["ThemePreview"] = themePreview{
+				Name:   name,
+				Text:   i18n.Format(locale, "theme_preview_notice", map[string]any{"name": title}),
+				Use:    i18n.T(locale, "theme_preview_use"),
+				Back:   i18n.T(locale, "theme_preview_back"),
+				Action: define.SettingPages.Theme.Path,
+			}
+		}
+	}
+	m["PageAppearance"] = theme.BodyStyle
+	m["PageThemeRules"] = theme.Rules
 }
 
 // homepageBodyClasses keeps appearance and letter-case preferences consistent on navigation pages.

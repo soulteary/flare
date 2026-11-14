@@ -83,6 +83,44 @@ func GetPageTheme() PageTheme {
 	return PageTheme{BodyStyle: _CACHE_PAGE_BODY_THEME_NAME, Rules: _CACHE_PAGE_THEME_RULES}
 }
 
+// ThemeTitle returns the name a theme file gives itself in an interface
+// language, and the name of the theme where the file gives none or the theme
+// is not a file.
+func ThemeTitle(name, locale string) string {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	if definition, known := themeDefinition(name); known {
+		return definition.DisplayName(locale)
+	}
+	return name
+}
+
+// GetPageThemeFor returns a theme for one page as GetPageTheme returns the
+// selected one, without selecting it: a preview shows a single response with
+// it, and every other response keeps the selected theme. It reports false
+// for a name that is not a theme in use.
+func GetPageThemeFor(name string) (PageTheme, bool) {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	definition, known := themeDefinition(name)
+	if !known {
+		return PageTheme{}, false
+	}
+	return pageThemeOf(definition, themeMode), true
+}
+
+// pageThemeOf writes a theme for a page under a site setting for light and
+// dark: into the style attribute, or as rules when the device chooses.
+func pageThemeOf(theme model.Theme, mode string) PageTheme {
+	shown, dark, deviceChooses := themeInMode(theme, mode)
+	if deviceChooses {
+		// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate.
+		return PageTheme{Rules: template.CSS(themeRules(shown, dark))}
+	}
+	// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate or from the custom palette, which is stored only after Palette.Validate accepted it.
+	return PageTheme{BodyStyle: template.CSS(themeStyle(shown))}
+}
+
 // GetAppBodyStyle returns the style attribute of the page body for the
 // selected theme. It is empty when the theme is written as rules instead.
 func GetAppBodyStyle() template.CSS {
@@ -182,6 +220,16 @@ func HomepageInEffect(options model.Application) *model.HomepageOptions {
 	refreshSelectedTheme()
 	themeMu.RLock()
 	name := ThemeCurrent
+	themeMu.RUnlock()
+	return HomepageInEffectFor(options, name)
+}
+
+// HomepageInEffectFor returns the layout options a page is rendered with
+// under a given theme, selected or not: those of the site with the layout of
+// that theme in place, as far as the administrator has not turned it off for
+// that theme.
+func HomepageInEffectFor(options model.Application, name string) *model.HomepageOptions {
+	themeMu.RLock()
 	definition, _ := themeDefinition(name)
 	themeMu.RUnlock()
 	return options.Homepage.WithThemeLayout(definition.Layout, options.ThemeSettings[name].IgnoreLayout)
@@ -274,18 +322,10 @@ func applyTheme(theme string) {
 	ThemePrimaryColor = themePrimaryColor(theme)
 	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor
 	_CACHE_PAGE_BODY_THEME_NAME, _CACHE_PAGE_THEME_RULES = emptyPageBodyStyle, emptyPageBodyStyle
-	definition, known := themeDefinition(theme)
-	if !known {
-		return
+	if definition, known := themeDefinition(theme); known {
+		page := pageThemeOf(definition, themeMode)
+		_CACHE_PAGE_BODY_THEME_NAME, _CACHE_PAGE_THEME_RULES = page.BodyStyle, page.Rules
 	}
-	shown, dark, deviceChooses := themeInMode(definition, themeMode)
-	if deviceChooses {
-		// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate.
-		_CACHE_PAGE_THEME_RULES = template.CSS(themeRules(shown, dark))
-		return
-	}
-	// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate or from the custom palette, which is stored only after Palette.Validate accepted it.
-	_CACHE_PAGE_BODY_THEME_NAME = template.CSS(themeStyle(shown))
 }
 
 // themeRules writes a theme with different values for light and for dark as

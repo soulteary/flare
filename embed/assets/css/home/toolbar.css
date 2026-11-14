@@ -85,3 +85,46 @@
   .toolbar-container { width: 44px; bottom: calc(10px + env(safe-area-inset-bottom)); left: calc(10px + env(safe-area-inset-left)); }
   .toolbar-btn-bg { width: 44px; height: 44px; opacity: 1; }
 }
+
+/* Shown at the top of a page while the administrator previews a theme: what
+   is previewed, and the two ways on. It takes its colors from the previewed
+   theme, like the rest of the page. */
+#page-home .theme-preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  border: 1px solid var(--flare-border);
+  border-radius: calc(var(--flare-radius) * 2);
+}
+
+#page-home .theme-preview-bar span {
+  flex: 1 1 240px;
+  overflow-wrap: anywhere;
+}
+
+#page-home .theme-preview-bar form {
+  margin: 0;
+}
+
+#page-home .theme-preview-bar a,
+#page-home .theme-preview-bar button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--flare-border);
+  border-radius: calc(var(--flare-radius) * 2);
+  background: transparent;
+  color: var(--flare-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+#page-home .theme-preview-bar button {
+  border-color: var(--flare-accent);
+  background: var(--flare-accent);
+  color: var(--flare-inverse);
+}
