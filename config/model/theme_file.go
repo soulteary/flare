@@ -71,6 +71,13 @@ var (
 	ErrThemeRequires = errors.New("theme file needs a later release")
 	// ErrThemeRequiresValue reports a requires that does not name a release.
 	ErrThemeRequiresValue = errors.New("theme file names the release it needs in a form that is not accepted")
+	// ErrThemeBackground reports a background that is not written in the
+	// accepted form.
+	ErrThemeBackground = errors.New("theme file has a background that is not accepted")
+	// ErrThemeBackgroundAsset reports a background image that is not among
+	// the images in the assets of the theme. A theme that is a single file
+	// has no assets.
+	ErrThemeBackgroundAsset = errors.New("theme file names a background image that is not among the assets of the theme")
 )
 
 // ThemeFileError is the reason a theme file is rejected. Reason is one of the
@@ -122,6 +129,31 @@ type ThemeFile struct {
 	// Requires names the first release the theme works with, as three
 	// numbers such as 0.7.0. It is empty for a theme that names none.
 	Requires string
+	// Background is the image the theme lays behind the navigation pages.
+	// It is nil for a theme without one.
+	Background *ThemeBackground
+}
+
+// ThemeBackground is the background image of a theme. Image names an image
+// among the assets of the theme the way its stylesheet does, as
+// assets/<name>. Dim is how much of the background color of the theme lies
+// over the image, in percent: 0 shows the image as it is, and with 100
+// nothing of it is seen. Text is drawn on the image, so Dim is what keeps it
+// readable on an image that was not made for text.
+type ThemeBackground struct {
+	Image string
+	Dim   int
+}
+
+// Asset returns the name of the image among the assets of the theme. It
+// reports false for an image that is not written as assets/<name> with the
+// name of an image a theme can bring.
+func (b ThemeBackground) Asset() (string, bool) {
+	name, named := ThemeAssetReference(b.Image)
+	if kind, _ := ThemeAssetType(name); !named || !strings.HasPrefix(kind, "image/") {
+		return "", false
+	}
+	return name, true
 }
 
 // ThemeText is a text of a theme file: one string, or one string per
@@ -293,6 +325,14 @@ func ReadThemeFileFor(raw []byte, version string) (ThemeFile, ThemeFileUnused, e
 			target = &file.Modes
 		case "layout":
 			target = &file.Layout
+		case "background":
+			background, parts, err := readThemeBackground(document[key])
+			if err != nil {
+				return ThemeFile{}, ThemeFileUnused{}, err
+			}
+			file.Background = background
+			unused.Keys = append(unused.Keys, parts...)
+			continue
 		default:
 			unused.Keys = append(unused.Keys, key)
 			continue
@@ -330,6 +370,63 @@ func ReadThemeFileFor(raw []byte, version string) (ThemeFile, ThemeFileUnused, e
 		return ThemeFile{}, unused, err
 	}
 	return file, unused, nil
+}
+
+// readThemeBackground reads the background of a theme file: a mapping with
+// an image and, optionally, how much the image is dimmed. A part this release
+// does not know is left out and returned as a path in the file, like any
+// other. A background without a value is no background.
+//
+// The two values are read as what they are written as. A decoder would turn
+// a number with a fraction into a whole one, and dim: 0.6 into no dimming at
+// all, so anything but a whole number is refused instead.
+func readThemeBackground(node yaml.Node) (*ThemeBackground, []string, error) {
+	var written map[string]yaml.Node
+	if err := node.Decode(&written); err != nil {
+		return nil, nil, themeFileError(ErrThemeSyntax, "background: "+err.Error())
+	}
+	if written == nil {
+		return nil, nil, nil
+	}
+	parts := make([]string, 0, len(written))
+	for part := range written {
+		parts = append(parts, part)
+	}
+	slices.Sort(parts)
+	background := &ThemeBackground{}
+	var unused []string
+	for _, part := range parts {
+		switch part {
+		case "image":
+			image, text := themeScalar(written[part], "!!str")
+			if !text {
+				return nil, nil, themeFileError(ErrThemeBackground, "background.image")
+			}
+			background.Image = image
+		case "dim":
+			number, whole := themeScalar(written[part], "!!int")
+			dim, err := strconv.Atoi(number)
+			if !whole || err != nil {
+				return nil, nil, themeFileError(ErrThemeBackground, "background.dim")
+			}
+			background.Dim = dim
+		default:
+			unused = append(unused, "background."+part)
+		}
+	}
+	return background, unused, nil
+}
+
+// themeScalar returns a value of a theme file as it is written, if it is a
+// single value of the given kind: !!str for a text, !!int for a whole number.
+func themeScalar(node yaml.Node, kind string) (string, bool) {
+	if node.Kind == yaml.AliasNode && node.Alias != nil {
+		node = *node.Alias
+	}
+	if node.Kind != yaml.ScalarNode || node.ShortTag() != kind {
+		return "", false
+	}
+	return node.Value, true
 }
 
 // themeRelease reads a release as three numbers: 0.7.0. A theme file names a
@@ -452,6 +549,14 @@ func (f ThemeFile) Validate() error {
 			return themeFileError(ErrThemeSyntax, "layout."+option)
 		}
 	}
+	if f.Background != nil {
+		if _, named := f.Background.Asset(); !named {
+			return themeFileError(ErrThemeBackground, "background.image")
+		}
+		if f.Background.Dim < 0 || f.Background.Dim > 100 {
+			return themeFileError(ErrThemeBackground, "background.dim")
+		}
+	}
 	if !isThemeText(f.Name.Plain, maximumThemeNameLength) {
 		return themeFileError(ErrThemeText, "name")
 	}
@@ -559,6 +664,11 @@ func (f ThemeFile) Theme(name string) Theme {
 	}
 	if len(f.Layout) > 0 {
 		theme.Layout = maps.Clone(f.Layout)
+	}
+	if f.Background != nil {
+		// Validate has accepted the image, so it names an asset.
+		theme.BackgroundImage, _ = f.Background.Asset()
+		theme.BackgroundDim = f.Background.Dim
 	}
 	return theme
 }

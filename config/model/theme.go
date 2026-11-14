@@ -62,6 +62,12 @@ type Theme struct {
 	Version string    `json:"-"`
 	Author  string    `json:"-"`
 	License string    `json:"-"`
+	// BackgroundImage is the name of the image among the assets that the
+	// theme lays behind the navigation pages, and BackgroundDim is how much
+	// of the background color lies over it, in percent. The name is empty
+	// for a theme without a background image.
+	BackgroundImage string `json:"-"`
+	BackgroundDim   int    `json:"-"`
 	// Directory reports a theme that is a directory of the themes directory,
 	// read from the theme.yml in it, instead of a single file.
 	Directory bool `json:"-"`

@@ -68,6 +68,11 @@ const (
 	ThemeProblemStyleRule      = "style_rule"
 	ThemeProblemStyleFunction  = "style_function"
 	ThemeProblemStyleCharacter = "style_character"
+	// Reasons the background of a theme is not accepted: one that is not
+	// written in the accepted form, and an image that is not among the
+	// images in the assets of the theme.
+	ThemeProblemBackground      = "background"
+	ThemeProblemBackgroundAsset = "background_asset"
 	// Reasons a file in the assets of a theme is not accepted. The theme is
 	// then not in use either: it is not applied without a file it brings.
 	ThemeProblemAssetName    = "asset_name"
@@ -390,10 +395,15 @@ func (scan *userThemeScan) readTheme(root *os.Root, name, file, shown string, di
 	if directory {
 		// A theme is used as a whole: with a file of its assets or a
 		// stylesheet that is not accepted it is not applied without them.
-		// The assets are read first, because the stylesheet is held to them.
+		// The assets are read first, because the background image and the
+		// stylesheet are held to them.
 		assets, rejected := scan.readThemeAssets(root, name)
 		if rejected != nil {
 			scan.problems = append(scan.problems, *rejected)
+			return
+		}
+		if !hasThemeBackground(definition, assets) {
+			scan.problems = append(scan.problems, themeBackgroundProblem(definition, shown))
 			return
 		}
 		stylesheet, rejected := readThemeStylesheet(root, name, assets)
@@ -406,9 +416,34 @@ func (scan *userThemeScan) readTheme(root *os.Root, name, file, shown string, di
 		if stylesheet != "" || len(assets) > 0 {
 			definition.Hash = themeFilesHash(stylesheet, assets)
 		}
+	} else if !hasThemeBackground(definition, nil) {
+		// A theme that is a single file has no assets to take an image from.
+		scan.problems = append(scan.problems, themeBackgroundProblem(definition, shown))
+		return
 	}
 	scan.themes[name] = definition
 	scan.order = append(scan.order, name)
+}
+
+// hasThemeBackground reports whether the background image a theme names is
+// among its assets. A theme that names none has what it needs. That the name
+// is that of an image was settled when the theme file was read.
+func hasThemeBackground(theme model.Theme, assets []model.ThemeAsset) bool {
+	if theme.BackgroundImage == "" {
+		return true
+	}
+	for _, asset := range assets {
+		if asset.Name == theme.BackgroundImage {
+			return true
+		}
+	}
+	return false
+}
+
+// themeBackgroundProblem describes a theme whose background image is not
+// among its assets, for the theme file that names the image.
+func themeBackgroundProblem(theme model.Theme, file string) ThemeProblem {
+	return ThemeProblem{File: file, Reason: ThemeProblemBackgroundAsset, Subject: model.ThemeAssetDirectory + "/" + theme.BackgroundImage}
 }
 
 // themeFilesHash names the stylesheet and the assets of a theme, in the state
@@ -664,6 +699,10 @@ func themeProblemReason(err error) string {
 		return ThemeProblemRequires
 	case errors.Is(err, model.ErrThemeRequiresValue):
 		return ThemeProblemRequiresValue
+	case errors.Is(err, model.ErrThemeBackground):
+		return ThemeProblemBackground
+	case errors.Is(err, model.ErrThemeBackgroundAsset):
+		return ThemeProblemBackgroundAsset
 	default:
 		return ThemeProblemSyntax
 	}

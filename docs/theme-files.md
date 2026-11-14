@@ -101,6 +101,7 @@ tokens:
 | `tokens` | Yes | The style tokens the theme sets; `background`, `primary` and `accent` are required |
 | `modes` | No | Other token values for light and for dark; see [light and dark](#light-and-dark) |
 | `layout` | No | Layout options the theme specifies; see [layout](#layout) |
+| `background` | No | An image behind the navigation pages, for a theme that is a directory; see [background image](#background-image) |
 | `name` | No | The name to show, up to 48 characters; without it the name of the file is shown |
 | `version`, `author`, `license` | No | Up to 64 characters each; shown with the theme on the settings page, without any other effect |
 | `requires` | No | The first release of Flare the theme works with, as three numbers such as `0.7.0`; see [files written for another release](#files-written-for-another-release) |
@@ -249,6 +250,43 @@ An option or a value that this release does not have is left out and listed
 on the theme page, and the setting of the site applies to that option. The
 rest of the layout, and the theme, stay in use.
 
+### Background image
+
+A [theme that is a directory](#a-theme-as-a-directory) can lay one of the
+[images in its assets](theme-stylesheets.md#images-and-fonts) behind the
+navigation pages:
+
+```yaml
+background:
+  image: assets/wallpaper.jpg
+  dim: 60
+```
+
+| Key | Required | Value |
+| --- | --- | --- |
+| `image` | Yes | `assets/` and the name of an image among the assets of the theme, as the stylesheet of a theme refers to one |
+| `dim` | No | A whole number from 0 to 100: how much of the background color of the theme lies over the image, in percent. Without it the image is shown as it is |
+
+- The image fills the window behind the page and stays in place while the
+  page is scrolled. It is on the home page, the application page, the bookmark
+  page and the help page. The settings take the colors of the theme and no
+  image.
+- Text is drawn on the image. The check of the contrast between `primary` and
+  `background` knows nothing of the image, so `dim` is what keeps the text
+  readable on an image that was not made for it: with 60, six tenths of what
+  shows is the background color. The color is that of the mode the page is
+  shown in, so a theme with [light and dark](#light-and-dark) values dims the
+  same image towards each.
+- A theme is used as a whole. One whose image is not among the images in its
+  assets is not in use, and the theme page says so. A theme that is a single
+  file has no assets, so a file with a `background` is not in use as a single
+  file, and is not [imported](#import-and-export).
+- The background of the theme file holds where the
+  [stylesheet](theme-stylesheets.md) of the theme sets a background image on
+  `body` as well, as a token of the theme file holds over the stylesheet.
+- `dim` is written as a whole number. A fraction such as `0.6` is not read as
+  six tenths; it is refused.
+
 ### Names in several languages
 
 `name` can give one text for each interface language instead of a single text:
@@ -266,11 +304,11 @@ the order of the codes.
 
 ### Files written for another release
 
-Keys, tokens, modes and layout options that this release does not know are
-not used, and neither is a layout value it does not have. The theme remains
-usable, and the settings page lists the parts that were left out. A theme
-file written for a later release therefore works with what this release
-knows.
+Keys, tokens, modes, layout options and parts of `background` that this
+release does not know are not used, and neither is a layout value it does not
+have. The theme remains usable, and the settings page lists the parts that
+were left out. A theme file written for a later release therefore works with
+what this release knows.
 
 Everything this release does use has to be valid. A file with one value that
 is not accepted is not used at all; the theme is not applied in part.
@@ -392,6 +430,8 @@ copied as a directory.
 - The file gets the checks of every theme file. One that is not usable is
   refused with the reason, and nothing is written. An accepted file is stored
   as it was uploaded, with its comments and with parts for later releases.
+- A file with a [background image](#background-image) is refused: what is
+  imported is a theme of one file, and the image would not be there.
 - A theme file of the same name is replaced only with **Replace a theme file
   of the same name** ticked. Something else of that name in the directory, a
   folder or a link, is never replaced.
@@ -463,6 +503,8 @@ file, as `zelda/assets/paper.png`; those reasons are described with
 | Text not accepted | `name`, `version`, `author` or `license` is too long, has leading or trailing spaces, or contains control characters |
 | The theme needs a later release | `requires` names a release after this one; shown with that release |
 | Release under `requires` not accepted | `requires` is not three numbers; shown with what is written |
+| Background not accepted | `background.image` is not `assets/` and the name of an image, or `background.dim` is not a whole number from 0 to 100; shown with the key |
+| Background image not among the images in the assets | The file is not there, or the theme is a single file; shown with the image, for example `assets/wallpaper.jpg` |
 
 At startup, a selected theme that cannot be used is also written to the log as
 a warning.
@@ -501,6 +543,10 @@ existing name refused, replaces the file and downloads it again.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/assets.browser.cjs`
 selects a theme that brings an image and a font, edits and breaks one of them,
 and checks the pages after each step.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/background.browser.cjs`
+opens the pages of a theme with a background image, checks the color the
+image and its dim give the page for light and for dark, edits the theme file
+and the image, and checks the pages after each step.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/safe-mode.browser.cjs`
 selects a theme whose stylesheet hides parts of the home page, opens the page
 in safe mode and goes back to the settings from its notice, and starts an
