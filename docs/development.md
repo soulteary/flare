@@ -53,6 +53,7 @@ FLARE_BINARY=/tmp/flare node tests/mobile/readability.browser.cjs
 FLARE_BINARY=/tmp/flare NODE_PATH="$PWD/tests/clock/node_modules" node tests/search/hybrid.cjs
 FLARE_BINARY=/tmp/flare FLARE_SEARCH_PRIVATE_TEST=1 NODE_PATH="$PWD/tests/clock/node_modules" node tests/search/hybrid.cjs
 node tests/mdi/cheat-sheet.browser.cjs
+FLARE_BINARY=/tmp/flare node tests/mdi/icons.browser.cjs
 FLARE_WEATHER_BROWSER=1 go test ./internal/settings/weather -run '^TestWeatherBrowser$' -count=1 -v
 ```
 

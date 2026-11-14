@@ -42,12 +42,20 @@
   }
 
 
-#container-bookmarks .bookmark-group-container .bookmark-list a.bookmark img {
+#container-bookmarks .bookmark-group-container .bookmark-list a.bookmark img,
+#container-bookmarks .bookmark-group-container .bookmark-list a.bookmark svg:where(.icon-ref) {
   display: inline-block;
   width: 20px;
   height: 20px;
   color: var(--color-primary);
   vertical-align: middle;
+}
+
+@media (forced-colors: active) {
+  #container-bookmarks .bookmark-group-container .bookmark svg,
+  #container-bookmarks .bookmark-group-container .bookmark svg path {
+    fill: CanvasText !important;
+  }
 }
 #container-bookmarks .bookmark-group-container .bookmark svg,
 #container-bookmarks .bookmark-group-container .bookmark span {

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -107,15 +108,22 @@ func newIconTestRouter(t *testing.T, minimumRequest bool) *fiber.App {
 	return e
 }
 
-// iconURL extracts the URL a browser would request from the rendered icon markup.
+// iconURL extracts the URL a browser would request from the rendered icon
+// markup: the file referenced by <use>, without the fragment that selects the
+// path inside it.
 func iconURL(markup string) (string, error) {
-	const prefix = `<img src="`
-	if !strings.HasPrefix(markup, prefix) {
-		return "", fmt.Errorf("expected an image URL, got %q", markup)
+	const prefix = `<use href="`
+	_, reference, found := strings.Cut(markup, prefix)
+	if !found || !strings.HasPrefix(markup, "<svg ") {
+		return "", fmt.Errorf("expected an SVG that references an icon file, got %q", markup)
 	}
-	url, _, found := strings.Cut(strings.TrimPrefix(markup, prefix), `"`)
+	reference, _, found = strings.Cut(reference, `"`)
 	if !found {
-		return "", fmt.Errorf("image URL has no closing quote: %q", markup)
+		return "", fmt.Errorf("icon reference has no closing quote: %q", markup)
+	}
+	url, fragment, found := strings.Cut(reference, "#")
+	if !found || fragment != iconFragment {
+		return "", fmt.Errorf("icon reference does not select the path: %q", reference)
 	}
 	return url, nil
 }
@@ -188,7 +196,11 @@ func TestIconRoute_MissingAndInvalidPaths(t *testing.T) {
 		t.Fatalf("prepare outside-subtree file: %v", err)
 	}
 	paths := []string{
-		"/assets/mdi/pumpkin-missing.svg",
+		"/assets/mdi/missing.svg",
+		// Releases up to 0.6.15 wrote one file per theme. Those names are gone.
+		"/assets/mdi/pumpkin-servernetwork.svg",
+		"/assets/mdi/servernetwork",
+		"/assets/mdi/servernetwork.SVG",
 		"/assets/mdi/",
 		"/assets/mdi/.",
 		"/assets/mdi/../private.svg",
@@ -196,9 +208,9 @@ func TestIconRoute_MissingAndInvalidPaths(t *testing.T) {
 		"/assets/mdi/%2e%2e%2fprivate.svg",
 		"/assets/mdi/..%5cprivate.svg",
 		"/assets/mdi/%2Fprivate.svg",
-		"/assets/mdi//pumpkin-serverNetwork.svg",
-		"/assets/mdi/pumpkin-serverNetwork.svg/extra",
-		"/assets/mdipumpkin-serverNetwork.svg",
+		"/assets/mdi//servernetwork.svg",
+		"/assets/mdi/servernetwork.svg/extra",
+		"/assets/mdiservernetwork.svg",
 	}
 	for _, path := range paths {
 		t.Run(path, func(t *testing.T) {
@@ -234,7 +246,7 @@ func TestIconFileHandler_PreservesUnexpectedReadErrors(t *testing.T) {
 		return fiber.DefaultErrorHandler(c, err)
 	}})
 	e.Get(_ASSETS_WEB_URI+"/:name", iconFileHandler(failingIconFS{err: cause}))
-	rec := requestIcon(e, http.MethodGet, "/assets/mdi/pumpkin-serverNetwork.svg", "", "")
+	rec := requestIcon(e, http.MethodGet, "/assets/mdi/servernetwork.svg", "", "")
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("unexpected read failure must remain a 500, got %d: %q", rec.Code, rec.Body.String())
 	}
@@ -246,26 +258,62 @@ func TestIconFileHandler_PreservesUnexpectedReadErrors(t *testing.T) {
 	}
 }
 
-func TestIconRoute_ThemeChangeKeepsIndependentContents(t *testing.T) {
+// The page fills the referenced path with the theme color, so the file and
+// its URL must not depend on the theme or on its colors.
+func TestIconFileIsIndependentOfTheme(t *testing.T) {
 	e := newIconTestRouter(t, false)
-	firstURL := generatedIconURL(t)
-	first := requestIcon(e, http.MethodGet, firstURL, "", "")
+	markup := GetIconByName("serverNetwork")
+	url := generatedIconURL(t)
+	if !strings.HasPrefix(url, "/assets/mdi/servernetwork.svg?v=") {
+		t.Fatalf("unexpected icon URL: %q", url)
+	}
+	first := requestIcon(e, http.MethodGet, url, "", "")
+	if first.Code != http.StatusOK {
+		t.Fatalf("GET generated icon: status %d", first.Code)
+	}
+	body := first.Body.String()
+	if !strings.Contains(body, `<path id="`+iconFragment+`" d="`) {
+		t.Fatalf("the path cannot be referenced: %q", body)
+	}
+	for _, color := range []string{"fill", "style", "#123456", "pumpkin"} {
+		if strings.Contains(body, color) {
+			t.Fatalf("icon file carries theme data (%q): %q", color, body)
+		}
+	}
+
+	// Another theme, then another color under the same theme name.
 	define.ThemeCurrent = "night"
 	define.ThemePrimaryColor = "#abcdef"
-	secondURL := generatedIconURL(t)
-	second := requestIcon(e, http.MethodGet, secondURL, "If-None-Match", first.Header().Get("ETag"))
-	if firstURL == secondURL || second.Code != http.StatusOK {
-		t.Fatalf("theme change did not create a separate icon: %q -> %q, status %d", firstURL, secondURL, second.Code)
+	if again := GetIconByName("serverNetwork"); again != markup {
+		t.Fatalf("theme change altered the icon markup: %q", again)
 	}
-	if !strings.Contains(first.Body.String(), "fill:#123456;") || !strings.Contains(second.Body.String(), "fill:#abcdef;") {
-		t.Fatalf("icons have incorrect theme colors: first %q, second %q", first.Body.String(), second.Body.String())
+	define.ThemePrimaryColor = "#fedcba"
+	if again := GetIconByName("serverNetwork"); again != markup {
+		t.Fatalf("color change altered the icon markup: %q", again)
 	}
-	if first.Header().Get("ETag") == second.Header().Get("ETag") {
-		t.Fatal("different SVG contents must have different ETags")
+	cached := requestIcon(e, http.MethodGet, url, "If-None-Match", first.Header().Get("ETag"))
+	if cached.Code != http.StatusNotModified {
+		t.Fatalf("theme change replaced the icon file: status %d", cached.Code)
 	}
-	again := requestIcon(e, http.MethodGet, firstURL, "", "")
-	if again.Code != http.StatusOK || again.Body.String() != first.Body.String() {
-		t.Fatalf("theme switch corrupted the original cached icon: status %d, body %q", again.Code, again.Body.String())
+	iconCacheMu.RLock()
+	entries := len(iconMarkupCache)
+	iconCacheMu.RUnlock()
+	if entries != 1 {
+		t.Fatalf("theme changes created %d cache entries", entries)
+	}
+}
+
+func TestGetIconByName_ReferencesIconFile(t *testing.T) {
+	_ = newIconTestRouter(t, false)
+	markup := GetIconByName("serverNetwork")
+	pattern := regexp.MustCompile(`^<svg class="icon-ref" viewBox="0 0 24 24" width="68" height="68" style="fill: var\(--color-primary\);" aria-hidden="true"><use href="/assets/mdi/servernetwork\.svg\?v=[0-9a-f]{64}#i"></use></svg>$`)
+	if !pattern.MatchString(markup) {
+		t.Fatalf("unexpected reference markup: %q", markup)
+	}
+	for _, name := range []string{"", "not-a-bundled-icon"} {
+		if got := GetIconByName(name); got != "" {
+			t.Errorf("invalid icon %q produced markup: %q", name, got)
+		}
 	}
 }
 
@@ -283,7 +331,7 @@ func TestGetIconByName_MinimumRequest(t *testing.T) {
 			t.Errorf("invalid icon %q produced markup: %q", name, got)
 		}
 	}
-	missing := requestIcon(e, http.MethodGet, "/assets/mdi/pumpkin-serverNetwork.svg", "", "")
+	missing := requestIcon(e, http.MethodGet, "/assets/mdi/servernetwork.svg", "", "")
 	if missing.Code != http.StatusNotFound {
 		t.Fatalf("inline rendering unexpectedly created an external SVG: status %d", missing.Code)
 	}
@@ -356,35 +404,14 @@ func TestIconNamesShareOneCanonicalCacheEntry(t *testing.T) {
 	}
 }
 
-func TestSameThemeColorChangeReplacesSVGValidator(t *testing.T) {
-	app := newIconTestRouter(t, false)
-	url := generatedIconURL(t)
-	before := requestIcon(app, http.MethodGet, url, "", "")
-	define.ThemePrimaryColor = "#abcdef" // same length and same theme name
-	next := generatedIconURL(t)
-	if next == url {
-		t.Fatal("same-size content change did not update its URL version")
-	}
-	after := requestIcon(app, http.MethodGet, next, "If-None-Match", before.Header().Get("ETag"))
-	if after.Code != http.StatusOK || !strings.Contains(after.Body.String(), "fill:#abcdef;") || before.Header().Get("ETag") == after.Header().Get("ETag") {
-		t.Fatalf("same-size changed SVG reused old content: status=%d", after.Code)
-	}
-	define.ThemePrimaryColor = "#123456"
-	_ = generatedIconURL(t)
-	restored := requestIcon(app, http.MethodGet, url, "", "")
-	if restored.Body.String() != before.Body.String() {
-		t.Fatal("returning to the original color did not regenerate the SVG")
-	}
-}
-
-func TestMixedCaseLegacyResourceURLUsesCanonicalIcon(t *testing.T) {
+func TestMixedCaseResourceURLUsesCanonicalIcon(t *testing.T) {
 	app := newIconTestRouter(t, false)
 	canonical := generatedIconURL(t)
 	current := requestIcon(app, http.MethodGet, canonical, "", "")
-	legacy := strings.Replace(canonical, "servernetwork.svg", "serverNetwork.svg", 1)
-	cached := requestIcon(app, http.MethodGet, legacy, "If-None-Match", current.Header().Get("ETag"))
+	mixed := strings.Replace(canonical, "servernetwork.svg", "serverNetwork.svg", 1)
+	cached := requestIcon(app, http.MethodGet, mixed, "If-None-Match", current.Header().Get("ETag"))
 	if cached.Code != http.StatusNotModified {
-		t.Fatalf("legacy mixed-case asset failed: status=%d", cached.Code)
+		t.Fatalf("mixed-case asset failed: status=%d", cached.Code)
 	}
 }
 

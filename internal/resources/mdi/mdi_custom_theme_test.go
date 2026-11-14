@@ -12,7 +12,9 @@ import (
 	"github.com/soulteary/flare/config/model"
 )
 
-func TestCustomThemeIconsUseItsPrimaryColor(t *testing.T) {
+// The custom theme changes its colors without changing its name. Icon files
+// carry no color, so saving other colors needs neither a new file nor a new URL.
+func TestCustomThemeKeepsIconFiles(t *testing.T) {
 	app := newIconTestRouter(t, false)
 	// Leave no stored palette behind for the other tests of this package. The
 	// cleanup is registered after t.Chdir, so it runs in the test directory.
@@ -23,14 +25,12 @@ func TestCustomThemeIconsUseItsPrimaryColor(t *testing.T) {
 	})
 	require.NoError(t, define.SetCustomTheme(model.Palette{Background: "#10241b", Primary: "#e8f1e4", Accent: "#f2b84b"}))
 	first := generatedIconURL(t)
-	require.True(t, strings.HasPrefix(first, "/assets/mdi/custom-servernetwork.svg?v="), first)
-	require.Contains(t, requestIcon(app, http.MethodGet, first, "", "").Body.String(), "fill:#e8f1e4;")
+	require.True(t, strings.HasPrefix(first, "/assets/mdi/servernetwork.svg?v="), first)
+	body := requestIcon(app, http.MethodGet, first, "", "").Body.String()
+	require.NotContains(t, body, "fill")
+	require.NotContains(t, body, "#e8f1e4")
 
-	// Saving other colors keeps the theme name, so the icon is told apart by
-	// its content version.
 	require.NoError(t, define.SetCustomTheme(model.Palette{Background: "#10241b", Primary: "#ffd166", Accent: "#f2b84b"}))
-	second := generatedIconURL(t)
-	require.NotEqual(t, first, second)
-	require.True(t, strings.HasPrefix(second, "/assets/mdi/custom-servernetwork.svg?v="), second)
-	require.Contains(t, requestIcon(app, http.MethodGet, second, "", "").Body.String(), "fill:#ffd166;")
+	require.Equal(t, first, generatedIconURL(t))
+	require.Equal(t, body, requestIcon(app, http.MethodGet, first, "", "").Body.String())
 }

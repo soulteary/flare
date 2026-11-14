@@ -78,7 +78,7 @@ func TestPersistentStorePublicAssetCacheAndPrivateResponses(t *testing.T) {
 				return rec
 			}
 			require.NotEmpty(t, mdi.GetIconByName("server"))
-			paths := []string{"/favicon.ico", "/assets/editor-ui/editor.css", "/assets/editor-ui/app.js", "/assets/mdi/" + define.ThemeCurrent + "-server.svg", assets.ThemeFaviconURL()}
+			paths := []string{"/favicon.ico", "/assets/editor-ui/editor.css", "/assets/editor-ui/app.js", "/assets/mdi/server.svg", assets.ThemeFaviconURL()}
 			for _, path := range paths {
 				policy := "public, max-age=0, must-revalidate"
 				if path == assets.ThemeFaviconURL() {
@@ -210,7 +210,7 @@ func TestEditorAssetsUseVersionedURLsAndRevalidate(t *testing.T) {
 		require.NotEmpty(t, get.Header().Get("ETag"), path)
 		require.Equal(t, http.StatusNotModified, request(http.MethodGet, path, get.Header().Get("ETag")).Code, path)
 	}
-	for _, path := range []string{"/favicon.ico", "/assets/mdi/" + define.ThemeCurrent + "-server.svg"} {
+	for _, path := range []string{"/favicon.ico", "/assets/mdi/server.svg"} {
 		if path != "/favicon.ico" {
 			require.NotEmpty(t, mdi.GetIconByName("server"))
 		}

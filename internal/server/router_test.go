@@ -181,7 +181,7 @@ func TestNewRouter_MDIIcons(t *testing.T) {
 	iconURL := mdiURLFromHomepage(t, handler)
 	icon := httptest.NewRecorder()
 	handler.ServeHTTP(icon, httptest.NewRequest(http.MethodGet, iconURL, nil))
-	pathData, originalStyle := decodeMDISVG(t, icon)
+	pathData := decodeMDISVG(t, icon)
 	originalBody := icon.Body.String()
 	etag := icon.Header().Get("ETag")
 	require.NotEmpty(t, etag, "successful SVG responses must support cache validation")
@@ -214,20 +214,17 @@ func TestNewRouter_MDIIcons(t *testing.T) {
 	themeResponse := httptest.NewRecorder()
 	handler.ServeHTTP(themeResponse, themeRequest)
 	require.Equal(t, http.StatusOK, themeResponse.Code)
-	themedURL := mdiURLFromHomepage(t, handler)
-	require.NotEqual(t, iconURL, themedURL, "theme changes must produce a distinct icon URL")
+	// The icon file carries no color. The page fills it with the theme color,
+	// so the new theme reaches the icon through the page and the file stays valid.
+	themedPage := httptest.NewRecorder()
+	handler.ServeHTTP(themedPage, httptest.NewRequest(http.MethodGet, "/", nil))
+	assert.Contains(t, themedPage.Body.String(), "--color-primary:#EFFBFF;", "pumpkin's primary color must reach the page")
+	assert.Equal(t, iconURL, mdiURLFromHomepage(t, handler), "theme changes must not move the icon file")
+	themedRequest := httptest.NewRequest(http.MethodGet, iconURL, nil)
+	themedRequest.Header.Set("If-None-Match", etag)
 	themedIcon := httptest.NewRecorder()
-	handler.ServeHTTP(themedIcon, httptest.NewRequest(http.MethodGet, themedURL, nil))
-	themedPath, themedStyle := decodeMDISVG(t, themedIcon)
-	assert.Equal(t, pathData, themedPath, "changing themes must preserve the icon geometry")
-	assert.NotEqual(t, originalStyle, themedStyle, "the new SVG must use the selected theme color")
-	assert.Contains(t, themedStyle, "#EFFBFF", "pumpkin's primary color must reach the SVG")
-	assert.NotEqual(t, etag, themedIcon.Header().Get("ETag"), "different SVG bytes need distinct validators")
-
-	previousIcon := httptest.NewRecorder()
-	handler.ServeHTTP(previousIcon, httptest.NewRequest(http.MethodGet, iconURL, nil))
-	require.Equal(t, http.StatusOK, previousIcon.Code)
-	assert.Equal(t, originalBody, previousIcon.Body.String(), "a cached URL must keep its original theme")
+	handler.ServeHTTP(themedIcon, themedRequest)
+	assert.Equal(t, http.StatusNotModified, themedIcon.Code, "a browser keeps its copy of the icon across themes")
 
 	// The existing minimum-request mode must still render the same icon inline.
 	flags := define.AppFlags
@@ -303,14 +300,15 @@ func mdiURLFromHomepage(t *testing.T, handler http.Handler) string {
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/", nil))
 	require.Equal(t, http.StatusOK, response.Code)
-	imageSource := regexp.MustCompile(`<img\b[^>]*\bsrc=["']?(/assets/mdi/[^"'\s>]+)`)
-	matches := imageSource.FindAllStringSubmatch(response.Body.String(), -1)
+	reference := regexp.MustCompile(`<use\b[^>]*\bhref="(/assets/mdi/[^"#]+)#i"`)
+	matches := reference.FindAllStringSubmatch(response.Body.String(), -1)
 	require.Len(t, matches, 1, "the fixture's icon must be emitted by the homepage")
 	return matches[0][1]
 }
 
-// decodeMDISVG verifies the HTTP response and parses the SVG as a browser resource.
-func decodeMDISVG(t *testing.T, response *httptest.ResponseRecorder) (pathData, style string) {
+// decodeMDISVG verifies the HTTP response and parses the SVG as a browser
+// resource: one path that the page can reference, without a color of its own.
+func decodeMDISVG(t *testing.T, response *httptest.ResponseRecorder) (pathData string) {
 	t.Helper()
 	require.Equal(t, http.StatusOK, response.Code, response.Body.String())
 	mediaType, _, err := mime.ParseMediaType(response.Header().Get("Content-Type"))
@@ -319,13 +317,18 @@ func decodeMDISVG(t *testing.T, response *httptest.ResponseRecorder) (pathData, 
 	var document struct {
 		XMLName xml.Name `xml:"svg"`
 		Paths   []struct {
+			ID    string `xml:"id,attr"`
 			Data  string `xml:"d,attr"`
 			Style string `xml:"style,attr"`
+			Fill  string `xml:"fill,attr"`
 		} `xml:"path"`
 	}
 	require.NoError(t, xml.Unmarshal(response.Body.Bytes(), &document))
 	require.Equal(t, "http://www.w3.org/2000/svg", document.XMLName.Space)
 	require.Len(t, document.Paths, 1)
 	require.NotEmpty(t, document.Paths[0].Data)
-	return document.Paths[0].Data, document.Paths[0].Style
+	require.Equal(t, "i", document.Paths[0].ID)
+	require.Empty(t, document.Paths[0].Style)
+	require.Empty(t, document.Paths[0].Fill)
+	return document.Paths[0].Data
 }
