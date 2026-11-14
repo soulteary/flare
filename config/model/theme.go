@@ -36,6 +36,20 @@ type Theme struct {
 	// Tokens holds the style tokens a theme sets besides its three colors,
 	// keyed by token name. The values have passed ThemeFile.Validate.
 	Tokens map[string]string `json:"tokens,omitempty"`
+	// Title, Version, Author and License describe a theme read from a file.
+	Title   ThemeText `json:"-"`
+	Version string    `json:"-"`
+	Author  string    `json:"-"`
+	License string    `json:"-"`
+}
+
+// DisplayName returns the name to show for the theme in an interface
+// language: the name its file gives, or the name of the file.
+func (t Theme) DisplayName(locale string) string {
+	if title := t.Title.For(locale); title != "" {
+		return title
+	}
+	return t.Name
 }
 
 // UnmarshalYAML decodes the palette without ever failing. config.yml is edited

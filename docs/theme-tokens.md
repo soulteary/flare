@@ -15,7 +15,8 @@ nesting of the pages are not part of this promise and can change.
 
 The first three tokens are the colors of the [theme](theme-colors.md). The
 others have a default that derives from them, so three colors make a complete
-theme. No setting changes a derived token yet; they hold their defaults.
+theme. The bundled themes and custom colors set these three; a
+[theme file](theme-files.md) can set any token.
 
 | Token | Default | Used for |
 | --- | --- | --- |

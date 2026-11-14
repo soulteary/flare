@@ -22,8 +22,9 @@ func ThemeFaviconURL() string {
 		return icon.url
 	}
 	// Themed favicons exist only for the bundled palettes. A custom palette
-	// uses the default icon instead of borrowing another theme's colors.
-	if theme == model.ThemeCustomName {
+	// and a theme file use the default icon instead of borrowing another
+	// theme's colors.
+	if theme == model.ThemeCustomName || define.IsUserTheme(theme) {
 		return FaviconURL()
 	}
 	return themeFavicons[define.ThemePalettes[0].Name].url

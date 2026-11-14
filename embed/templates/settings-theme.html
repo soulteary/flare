@@ -2,6 +2,7 @@
 <div class="setting-group-container">
     <form method="POST" action="{{ .SettingPages.Theme.Path }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <h2>{{ T .Locale "settings_theme" }}</h2>
+        {{ if .ThemeUnavailable }}<p class="theme-notice" role="alert">{{ .ThemeUnavailable }}</p>{{ end }}
         <div class="theme-groups clearfix">
             {{range .Themes}}
             <div class="pull-left theme theme-{{.Name}}">
@@ -32,6 +33,31 @@
             </div>
             {{ end }}
         </div>
+        <h2 class="theme-files-title">{{ T .Locale "theme_files" }}</h2>
+        <p class="theme-help">{{ T .Locale "theme_files_help" }}</p>
+        {{ if .ThemeFiles }}
+        <div class="theme-groups theme-groups-files">
+            {{ range .ThemeFiles }}
+            <div class="theme theme-file">
+                <div class="theme-container clearfix">
+                    <input class="theme-choose" name="theme" type="submit" value="{{ .Name }}" aria-label="{{ .Title }}">
+                    <div class="pull-left theme-color color-background" style="background-color: {{ .Colors.Background }};"></div>
+                    <div class="pull-left theme-color color-primary" style="background-color: {{ .Colors.Primary }};"></div>
+                    <div class="pull-left theme-color color-accent" style="background-color: {{ .Colors.Accent }};"></div>
+                </div>
+                <p class="theme-title">{{ .Title }}</p>
+                {{ if .About }}<p class="theme-about">{{ .About }}</p>{{ end }}
+            </div>
+            {{ end }}
+        </div>
+        {{ end }}
+        {{ if .ThemeFileLines }}
+        <ul class="theme-file-lines">
+            {{ range .ThemeFileLines }}
+            <li><code>{{ .File }}</code> {{ .Text }}{{ if .Detail }} <code>{{ .Detail }}</code>{{ end }}</li>
+            {{ end }}
+        </ul>
+        {{ end }}
     </form>
     <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-custom-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <input type="hidden" name="action" value="{{ .ThemeCustomAction }}">

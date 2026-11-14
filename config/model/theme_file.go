@@ -1,12 +1,13 @@
 package model
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -54,52 +55,303 @@ var (
 	ErrThemeToken = errors.New("theme file sets an unknown token")
 	// ErrThemeTokenValue reports a token value outside the accepted form.
 	ErrThemeTokenValue = errors.New("theme token has a value that is not accepted")
+	// ErrThemeText reports a name, version, author or license that is not plain text of the accepted length.
+	ErrThemeText = errors.New("theme file has a text that is not accepted")
 )
 
-// ThemeFile is a theme as written in a file. Its values end up in a style
-// attribute without further escaping, so nothing is used before Validate has
-// accepted it.
-type ThemeFile struct {
-	Contract int               `yaml:"contract"`
-	Tokens   map[string]string `yaml:"tokens"`
+// ThemeFileError is the reason a theme file is rejected. Reason is one of the
+// errors above or one of the palette errors. Subject names the part of the
+// file the reason is about, a token or a key, or holds the message of the
+// YAML parser; it can be empty.
+type ThemeFileError struct {
+	Reason  error
+	Subject string
 }
 
-// ParseThemeFile reads and validates one theme file. Unknown keys are errors:
-// a key this release does not read would otherwise be ignored silently.
-func ParseThemeFile(raw []byte) (ThemeFile, error) {
-	var file ThemeFile
-	decoder := yaml.NewDecoder(bytes.NewReader(raw))
-	decoder.KnownFields(true)
-	if err := decoder.Decode(&file); err != nil {
-		return ThemeFile{}, fmt.Errorf("%w: %v", ErrThemeSyntax, err)
+func (e *ThemeFileError) Error() string {
+	if e.Subject == "" {
+		return e.Reason.Error()
 	}
+	return e.Reason.Error() + ": " + e.Subject
+}
+
+func (e *ThemeFileError) Unwrap() error { return e.Reason }
+
+func themeFileError(reason error, subject string) error {
+	return &ThemeFileError{Reason: reason, Subject: subject}
+}
+
+// Longest accepted texts of a theme file, in characters.
+const (
+	maximumThemeNameLength = 48
+	maximumThemeTextLength = 64
+)
+
+// ThemeFile is a theme as written in a file. Its token values end up in a
+// style attribute without further escaping, so nothing is used before
+// Validate has accepted it.
+type ThemeFile struct {
+	Contract int
+	// Name is shown instead of the file name. The remaining texts describe
+	// the theme and have no effect.
+	Name    ThemeText
+	Version string
+	Author  string
+	License string
+	Tokens  map[string]string
+}
+
+// ThemeText is a text of a theme file: one string, or one string per
+// interface language. Language codes are kept in lower case with hyphens, so
+// zh-CN, zh_CN and zh-cn name the same language.
+type ThemeText struct {
+	Plain     string
+	Localized map[string]string
+}
+
+// UnmarshalYAML accepts a string or a mapping of language to string.
+func (t *ThemeText) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind == yaml.AliasNode && node.Alias != nil {
+		node = node.Alias
+	}
+	if node.Kind != yaml.MappingNode {
+		return node.Decode(&t.Plain)
+	}
+	var written map[string]string
+	if err := node.Decode(&written); err != nil {
+		return err
+	}
+	t.Localized = make(map[string]string, len(written))
+	for language, text := range written {
+		code := strings.ReplaceAll(strings.ToLower(language), "_", "-")
+		if _, repeated := t.Localized[code]; repeated {
+			return fmt.Errorf("language %q is given more than once", code)
+		}
+		t.Localized[code] = text
+	}
+	return nil
+}
+
+// For returns the text for an interface language: the text in that language,
+// the plain text, English, and then any other language.
+func (t ThemeText) For(locale string) string {
+	if text := t.inLanguage(locale); text != "" {
+		return text
+	}
+	if t.Plain != "" {
+		return t.Plain
+	}
+	if text := t.inLanguage("en"); text != "" {
+		return text
+	}
+	for _, language := range t.languages() {
+		if text := t.Localized[language]; text != "" {
+			return text
+		}
+	}
+	return ""
+}
+
+// inLanguage returns the text written for a language, or else for the first
+// regional form of it: zh-cn answers for zh.
+func (t ThemeText) inLanguage(language string) string {
+	if language == "" {
+		return ""
+	}
+	if text := t.Localized[language]; text != "" {
+		return text
+	}
+	for _, code := range t.languages() {
+		if text := t.Localized[code]; text != "" && strings.HasPrefix(code, language+"-") {
+			return text
+		}
+	}
+	return ""
+}
+
+// languages returns the language codes in a fixed order.
+func (t ThemeText) languages() []string {
+	languages := make([]string, 0, len(t.Localized))
+	for language := range t.Localized {
+		languages = append(languages, language)
+	}
+	slices.Sort(languages)
+	return languages
+}
+
+// ThemeFileUnused lists the parts of a theme file that were read but not
+// used: keys and tokens this release does not know. A file written for a later
+// release remains usable without them.
+type ThemeFileUnused struct {
+	Keys   []string
+	Tokens []string
+}
+
+// Empty reports whether every part of the file was used.
+func (u ThemeFileUnused) Empty() bool { return len(u.Keys) == 0 && len(u.Tokens) == 0 }
+
+// ReadThemeFile reads and validates a theme file. Keys and tokens this
+// release does not know are left out and reported; everything that is used
+// has to be valid, or the file is rejected as a whole. A rejection is a
+// *ThemeFileError.
+func ReadThemeFile(raw []byte) (ThemeFile, ThemeFileUnused, error) {
+	// A mapping of nodes rejects a document that is not a mapping and one
+	// that repeats a key.
+	var document map[string]yaml.Node
+	if err := yaml.Unmarshal(raw, &document); err != nil {
+		return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeSyntax, err.Error())
+	}
+	if document == nil {
+		return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeSyntax, "the file is empty")
+	}
+	keys := make([]string, 0, len(document))
+	for key := range document {
+		keys = append(keys, key)
+	}
+	slices.Sort(keys)
+	var file ThemeFile
+	var unused ThemeFileUnused
+	for _, key := range keys {
+		var target any
+		switch key {
+		case "contract":
+			target = &file.Contract
+		case "name":
+			target = &file.Name
+		case "version":
+			target = &file.Version
+		case "author":
+			target = &file.Author
+		case "license":
+			target = &file.License
+		case "tokens":
+			target = &file.Tokens
+		default:
+			unused.Keys = append(unused.Keys, key)
+			continue
+		}
+		node := document[key]
+		if err := node.Decode(target); err != nil {
+			return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeSyntax, key+": "+err.Error())
+		}
+	}
+	for token := range file.Tokens {
+		if _, known := themeTokenChecks[token]; !known {
+			unused.Tokens = append(unused.Tokens, token)
+			delete(file.Tokens, token)
+		}
+	}
+	slices.Sort(unused.Tokens)
 	if err := file.Validate(); err != nil {
+		return ThemeFile{}, unused, err
+	}
+	return file, unused, nil
+}
+
+// ParseThemeFile reads a theme file that has to be used in full, as the
+// bundled themes are. An unknown key or token is an error.
+func ParseThemeFile(raw []byte) (ThemeFile, error) {
+	file, unused, err := ReadThemeFile(raw)
+	if err != nil {
 		return ThemeFile{}, err
+	}
+	if len(unused.Keys) > 0 {
+		return ThemeFile{}, themeFileError(ErrThemeSyntax, "unknown key "+strconv.Quote(unused.Keys[0]))
+	}
+	if len(unused.Tokens) > 0 {
+		return ThemeFile{}, themeFileError(ErrThemeToken, unused.Tokens[0])
 	}
 	return file, nil
 }
 
 // Validate accepts a theme whose tokens can be written into a page. The three
 // colors are required and have to pass the checks of a custom palette; the
-// other tokens are optional.
+// other tokens are optional. The first reason found is returned as a
+// *ThemeFileError, and the order of the checks does not vary.
 func (f ThemeFile) Validate() error {
 	if f.Contract != ThemeContract {
-		return fmt.Errorf("%w: contract %d, this release reads %d", ErrThemeContract, f.Contract, ThemeContract)
+		return themeFileError(ErrThemeContract, strconv.Itoa(f.Contract))
 	}
-	for name, value := range f.Tokens {
-		check, known := themeTokenChecks[name]
-		if !known {
-			return fmt.Errorf("%w: %q", ErrThemeToken, name)
+	unknown := make([]string, 0)
+	for name := range f.Tokens {
+		if _, known := themeTokenChecks[name]; !known {
+			unknown = append(unknown, name)
 		}
-		if !check(value) {
-			return fmt.Errorf("%w: %q", ErrThemeTokenValue, name)
+	}
+	if len(unknown) > 0 {
+		return themeFileError(ErrThemeToken, slices.Min(unknown))
+	}
+	for _, name := range ThemeTokenNames {
+		if value, set := f.Tokens[name]; set && !themeTokenChecks[name](value) {
+			return themeFileError(ErrThemeTokenValue, name)
+		}
+	}
+	for _, name := range ThemeTokenNames[:3] {
+		if _, set := f.Tokens[name]; !set {
+			return themeFileError(ErrPaletteColor, name)
 		}
 	}
 	if err := f.Palette().Validate(); err != nil {
-		return err
+		return themeFileError(err, "")
+	}
+	if !isThemeText(f.Name.Plain, maximumThemeNameLength) {
+		return themeFileError(ErrThemeText, "name")
+	}
+	for _, language := range f.Name.languages() {
+		if !isThemeWord(language) || !isThemeText(f.Name.Localized[language], maximumThemeNameLength) {
+			return themeFileError(ErrThemeText, "name: "+strconv.Quote(language))
+		}
+	}
+	for _, text := range []struct{ key, value string }{{"version", f.Version}, {"author", f.Author}, {"license", f.License}} {
+		if !isThemeText(text.value, maximumThemeTextLength) {
+			return themeFileError(ErrThemeText, text.key)
+		}
 	}
 	return nil
 }
+
+// isThemeText accepts an empty text or plain text of a limited length. Texts
+// are shown on the settings page, where they are escaped; control characters
+// and surrounding spaces are rejected because they have no place in a label.
+func isThemeText(text string, limit int) bool {
+	if text == "" {
+		return true
+	}
+	if !utf8.ValidString(text) || utf8.RuneCountInString(text) > limit || strings.TrimSpace(text) != text {
+		return false
+	}
+	for _, r := range text {
+		if unicode.IsControl(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// isThemeWord accepts a short lower-case identifier such as a language code
+// or a theme name: letters and digits, with single hyphens between them.
+func isThemeWord(word string) bool {
+	if word == "" || len(word) > maximumThemeWordLength {
+		return false
+	}
+	for i := 0; i < len(word); i++ {
+		c := word[i]
+		switch {
+		case c >= 'a' && c <= 'z', c >= '0' && c <= '9':
+		case c == '-' && i > 0 && i < len(word)-1 && word[i-1] != '-':
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+// maximumThemeWordLength bounds theme names and language codes.
+const maximumThemeWordLength = 32
+
+// IsThemeName reports whether a name can identify a theme file: lower-case
+// letters and digits with single hyphens between them, at most 32 bytes.
+func IsThemeName(name string) bool { return isThemeWord(name) }
 
 // Palette returns the three colors of the theme as written.
 func (f ThemeFile) Palette() Palette {
@@ -108,7 +360,7 @@ func (f ThemeFile) Palette() Palette {
 
 // Theme converts a validated file into the theme the application uses.
 func (f ThemeFile) Theme(name string) Theme {
-	theme := Theme{Name: name, Colors: f.Palette()}
+	theme := Theme{Name: name, Colors: f.Palette(), Title: f.Name, Version: f.Version, Author: f.Author, License: f.License}
 	for _, token := range ThemeTokenNames[3:] {
 		if value, set := f.Tokens[token]; set {
 			if theme.Tokens == nil {

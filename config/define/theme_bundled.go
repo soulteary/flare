@@ -8,9 +8,11 @@ import (
 )
 
 // Bundled themes are theme files. They are read with the parser and the
-// checks that apply to every theme file.
+// checks that apply to every theme file. Their directory is not named themes:
+// that is the name of the directory an instance reads its own theme files
+// from, relative to its working directory.
 //
-//go:embed themes/*.yml
+//go:embed bundled/*.yml
 var bundledThemeFiles embed.FS
 
 // bundledThemeOrder is the order of the theme page. The first theme is the
@@ -24,7 +26,7 @@ var bundledThemeOrder = []string{
 func loadBundledThemes() ([]model.Theme, error) {
 	themes := make([]model.Theme, 0, len(bundledThemeOrder))
 	for _, name := range bundledThemeOrder {
-		raw, err := bundledThemeFiles.ReadFile("themes/" + name + ".yml")
+		raw, err := bundledThemeFiles.ReadFile("bundled/" + name + ".yml")
 		if err != nil {
 			return nil, fmt.Errorf("bundled theme %s: %w", name, err)
 		}

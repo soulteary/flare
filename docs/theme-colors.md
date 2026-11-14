@@ -11,6 +11,8 @@ settings pages. The editor, the import/export page and the sign-in page keep
 their own colors.
 
 Stylesheets read the three colors through [style tokens](theme-tokens.md).
+A theme can also be added to an instance as a [theme file](theme-files.md),
+which can set the other tokens as well.
 
 ## Custom colors
 

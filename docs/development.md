@@ -55,6 +55,7 @@ FLARE_BINARY=/tmp/flare FLARE_SEARCH_PRIVATE_TEST=1 NODE_PATH="$PWD/tests/clock/
 node tests/mdi/cheat-sheet.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/mdi/icons.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/theme/tokens.browser.cjs
+FLARE_BINARY=/tmp/flare node tests/theme/files.browser.cjs
 FLARE_WEATHER_BROWSER=1 go test ./internal/settings/weather -run '^TestWeatherBrowser$' -count=1 -v
 ```
 

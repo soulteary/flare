@@ -78,18 +78,67 @@
   }
 }
 
-.theme-custom-form {
+.theme-custom-form,
+.theme-files-title {
   margin-top: 28px;
 }
 
-.theme-custom-form .theme-help {
+.setting-group-container .theme-help {
   font-size: 13px;
   line-height: 1.8;
   margin: 0 0 16px;
   opacity: 0.8;
 }
 
-.theme-custom-form .theme-notice {
+/* Theme files: cards for the files in use, and one line for each file that
+   needs attention. Titles and the lines hold text from the files, so they
+   wrap anywhere instead of widening the page. */
+.theme-groups-files {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.theme-groups-files .theme .theme-title {
+  text-transform: none;
+  padding-right: 12px;
+  overflow-wrap: anywhere;
+}
+
+.theme-groups-files .theme .theme-about {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: -4px 0 8px;
+  padding-right: 12px;
+  opacity: 0.8;
+  overflow-wrap: anywhere;
+}
+
+.theme-file-lines {
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 0 0 16px;
+}
+
+.theme-file-lines li {
+  color: var(--flare-primary);
+  padding: 6px 0;
+  border-top: 1px solid color-mix(in srgb, var(--flare-primary) 12%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.theme-file-lines code {
+  font-size: 12px;
+  padding: 1px 5px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  border-radius: var(--flare-radius);
+  background: color-mix(in srgb, var(--flare-primary) 10%, var(--flare-background));
+  color: var(--flare-primary);
+}
+
+.setting-group-container .theme-notice {
   font-size: 13px;
   line-height: 1.8;
   margin: 0 0 16px;

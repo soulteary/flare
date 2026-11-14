@@ -51,7 +51,11 @@ func initPageInlineStyle() {
 // 页面 body cssvar 样式
 var _CACHE_PAGE_BODY_THEME_NAME template.CSS
 
+// GetAppBodyStyle returns the style attribute of the page body for the
+// selected theme. Every themed page calls it once per response, which makes it
+// the place where a change of the selected theme's file is noticed.
 func GetAppBodyStyle() template.CSS {
+	refreshSelectedTheme()
 	themeMu.RLock()
 	defer themeMu.RUnlock()
 	return _CACHE_PAGE_BODY_THEME_NAME
@@ -71,8 +75,8 @@ func ThemeRenderSnapshot() (string, string, uint64) {
 	return ThemeCurrent, ThemePrimaryColor, themeGeneration
 }
 
-// IsKnownTheme reports whether a theme can be selected: a built-in theme, or
-// the custom theme once a palette has been stored for it.
+// IsKnownTheme reports whether a theme can be selected: a built-in theme, a
+// theme file in use, or the custom theme once a palette has been stored for it.
 func IsKnownTheme(theme string) bool {
 	themeMu.RLock()
 	defer themeMu.RUnlock()
@@ -107,7 +111,8 @@ func themeDefinition(theme string) (model.Theme, bool) {
 			return item, true
 		}
 	}
-	return model.Theme{}, false
+	item, known := userThemeState.themes[theme]
+	return item, known
 }
 
 // themePalette returns the three colors of a theme. Callers hold themeMu.
@@ -148,10 +153,13 @@ func SetCustomTheme(palette model.Palette) error {
 	return nil
 }
 
-// applyTheme publishes one theme. Callers hold themeMu for writing.
+// applyTheme publishes one theme. Callers hold themeMu for writing. The state
+// of the theme's file is not known here; a caller that has read the themes
+// directory records it afterwards, and otherwise the next page reads it.
 func applyTheme(theme string) {
 	themeGeneration++
 	ThemeCurrent = theme
+	selectedThemeStamp = themeFileStamp{}
 	ThemePrimaryColor = themePrimaryColor(theme)
 	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor
 	_CACHE_PAGE_BODY_THEME_NAME = emptyPageBodyStyle
@@ -175,14 +183,19 @@ func themeStyle(theme model.Theme) string {
 	return style
 }
 
-// UpdatePagePalettes applies the theme stored in config.yml. The file can be
-// edited by hand, so the custom palette is validated again here; a custom
-// theme without a usable palette falls back to the first built-in theme
-// instead of rendering unstyled pages.
+// UpdatePagePalettes applies the theme stored in config.yml and reads the
+// theme files of the instance. config.yml can be edited by hand, so the custom
+// palette is validated again here; a custom theme without a usable palette
+// falls back to the first built-in theme instead of rendering unstyled pages.
 func UpdatePagePalettes() {
+	userThemeScanMu.Lock()
+	defer userThemeScanMu.Unlock()
 	theme, custom := data.GetThemeSelection()
+	stamp := statThemeFile(theme)
+	scan := scanUserThemes()
 	themeMu.Lock()
 	defer themeMu.Unlock()
+	userThemeState = scan
 	themeCustom, themeCustomSet = model.Palette{}, false
 	if custom != nil {
 		palette := custom.Normalized()
@@ -197,4 +210,8 @@ func UpdatePagePalettes() {
 		theme = ThemePalettes[0].Name
 	}
 	applyTheme(theme)
+	selectedThemeStamp = stamp
+	if _, known := themeDefinition(theme); !known && theme != "" {
+		logger.GetLogger().Warn("Theme is not a bundled theme and has no usable theme file; pages use the colors of the stylesheet", "theme", theme)
+	}
 }
