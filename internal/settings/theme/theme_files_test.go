@@ -161,15 +161,15 @@ func TestThemeFileLinesExplainEveryReason(t *testing.T) {
 			{File: "c.yaml", Reason: define.ThemeProblemExtension},
 		},
 		[]define.ThemeNotice{
-			{File: "a.yml", Unused: model.ThemeFileUnused{Keys: []string{"layout", "modes"}, Tokens: []string{"font-scale"}}},
-			{File: "b.yml", Unused: model.ThemeFileUnused{Tokens: []string{"shadow"}}},
+			{File: "a.yml", Unused: model.ThemeFileUnused{Keys: []string{"layout", "modes.sepia"}, Tokens: []string{"modes.dark.glow", "tokens.font-scale"}}},
+			{File: "b.yml", Unused: model.ThemeFileUnused{Tokens: []string{"tokens.shadow"}}},
 		})
 	type line struct{ file, detail string }
 	got := make([]line, 0, len(lines))
 	for _, entry := range lines {
 		got = append(got, line{entry.File, entry.Detail})
 	}
-	want := []line{{"a.yml", "layout, modes, tokens.font-scale"}, {"b.yml", "tokens.radius"}, {"b.yml", "tokens.shadow"}, {"c.yaml", ""}}
+	want := []line{{"a.yml", "layout, modes.sepia, modes.dark.glow, tokens.font-scale"}, {"b.yml", "tokens.radius"}, {"b.yml", "tokens.shadow"}, {"c.yaml", ""}}
 	if len(got) != len(want) {
 		t.Fatalf("lines: %+v", got)
 	}
@@ -207,5 +207,115 @@ func TestThemeFileTextIsPlain(t *testing.T) {
 		if got := plainText(tc.text, tc.limit); got != tc.want {
 			t.Errorf("%s: got %q, want %q", name, got, tc.want)
 		}
+	}
+}
+
+const pairedThemeFile = themeFileColors + "modes:\n  light:\n    background: \"#f6f3ea\"\n    primary: \"#2b2a27\"\n"
+
+func modeForm(mode string) url.Values {
+	return url.Values{"action": {actionSaveMode}, "theme-mode": {mode}}
+}
+
+func TestThemeModeIsSavedAndApplied(t *testing.T) {
+	app := isolateTheme(t)
+	// Runs before the cleanup of isolateTheme reads the configuration again.
+	t.Cleanup(func() {
+		_ = os.RemoveAll(define.UserThemeDirectory)
+		define.SetThemeMode(model.ThemeModeAuto)
+	})
+	if err := os.Mkdir(define.UserThemeDirectory, 0700); err != nil {
+		t.Fatal(err)
+	}
+	writeThemeFile(t, "paired.yml", pairedThemeFile)
+	if status, body := postTheme(t, app, url.Values{"theme": {"paired"}}); status != http.StatusOK {
+		t.Fatalf("select: %d %s", status, body)
+	}
+	light := "--color-background:#f6f3ea;--color-primary:#2b2a27;--color-accent:#f2b84b;"
+	dark := "--color-background:#10241b;--color-primary:#e8f1e4;--color-accent:#f2b84b;"
+	rules := "@media not all and (prefers-color-scheme:dark){body{" + light + "}}@media (prefers-color-scheme:dark){body{" + dark + "}}"
+	if page := define.GetPageTheme(); page.BodyStyle != "" || string(page.Rules) != rules {
+		t.Fatalf("the device chooses by default: %+v", page)
+	}
+
+	for mode, style := range map[string]string{model.ThemeModeDark: dark, model.ThemeModeLight: light} {
+		if status, body := postTheme(t, app, modeForm(mode)); status != http.StatusOK {
+			t.Fatalf("%s: %d %s", mode, status, body)
+		}
+		if page := define.GetPageTheme(); string(page.BodyStyle) != style || page.Rules != "" {
+			t.Fatalf("%s: %+v", mode, page)
+		}
+		if stored := data.GetThemeMode(); stored != mode {
+			t.Fatalf("stored %q, want %q", stored, mode)
+		}
+		if theme, _ := data.GetThemeSelection(); theme != "paired" {
+			t.Fatalf("%s: the selection changed to %q", mode, theme)
+		}
+	}
+
+	// Anything else is rejected and changes neither the pages nor config.yml.
+	stored, err := os.ReadFile("config.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, mode := range []string{"", "Dark", "night", "auto;", "light dark", strings.Repeat("a", 4096)} {
+		if status, body := postTheme(t, app, modeForm(mode)); status != http.StatusBadRequest {
+			t.Errorf("%q: %d %s", mode, status, body)
+		}
+		if page := define.GetPageTheme(); string(page.BodyStyle) != light {
+			t.Errorf("%q: the pages changed: %+v", mode, page)
+		}
+		if raw, readErr := os.ReadFile("config.yml"); readErr != nil || string(raw) != string(stored) {
+			t.Errorf("%q: config.yml changed: %q %v", mode, raw, readErr)
+		}
+	}
+
+	if status, body := postTheme(t, app, modeForm(model.ThemeModeAuto)); status != http.StatusOK {
+		t.Fatalf("auto: %d %s", status, body)
+	}
+	if page := define.GetPageTheme(); page.BodyStyle != "" || string(page.Rules) != rules {
+		t.Fatalf("back to the device: %+v", page)
+	}
+}
+
+// A failed save leaves the mode the pages are shown in.
+func TestFailedThemeModeSavePreservesRuntimeState(t *testing.T) {
+	app := isolateTheme(t)
+	t.Cleanup(func() { define.SetThemeMode(model.ThemeModeAuto) })
+	if err := os.Remove("config.yml"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir("config.yml", 0700); err != nil {
+		t.Fatal(err)
+	}
+	status, _ := postTheme(t, app, modeForm(model.ThemeModeDark))
+	if mode, _ := define.ThemeModeState(); status != http.StatusInternalServerError || mode != model.ThemeModeAuto {
+		t.Fatalf("failed save status=%d mode=%q", status, mode)
+	}
+}
+
+func TestThemeFileCardsShowBothSetsOfColors(t *testing.T) {
+	base := model.Palette{Background: "#10241b", Primary: "#e8f1e4", Accent: "#f2b84b"}
+	light := model.Palette{Background: "#f6f3ea", Primary: "#2b2a27", Accent: "#f2b84b"}
+	themes := []model.Theme{
+		{Name: "single", Colors: base},
+		{Name: "light-given", Colors: base, Modes: map[string]map[string]string{model.ThemeModeLight: {"background": "#f6f3ea", "primary": "#2b2a27"}}},
+		{Name: "dark-given", Colors: light, Modes: map[string]map[string]string{model.ThemeModeDark: {"background": "#10241b", "primary": "#e8f1e4"}}},
+		// The colors are the same in both modes; only another token differs.
+		{Name: "same-colors", Colors: base, Modes: map[string]map[string]string{model.ThemeModeDark: {"radius": "0"}}},
+	}
+	cards := themeFileCards("en", themes)
+	if len(cards) != len(themes) {
+		t.Fatalf("%d cards", len(cards))
+	}
+	if cards[0].Colors != base || cards[0].Dark != nil {
+		t.Errorf("single: %+v", cards[0])
+	}
+	for _, card := range cards[1:3] {
+		if card.Colors != light || card.Dark == nil || *card.Dark != base {
+			t.Errorf("%s: %+v %+v", card.Name, card.Colors, card.Dark)
+		}
+	}
+	if cards[3].Colors != base || cards[3].Dark != nil {
+		t.Errorf("same-colors: %+v", cards[3])
 	}
 }

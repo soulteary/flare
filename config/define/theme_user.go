@@ -46,8 +46,8 @@ const (
 )
 
 // ThemeProblem is a file in the themes directory that is not in use. Subject
-// is the part of the file the reason is about, such as tokens.radius, or the
-// message of the YAML parser; it can be empty.
+// is the part of the file the reason is about, such as tokens.radius or
+// modes.light, or the message of the YAML parser; it can be empty.
 type ThemeProblem struct {
 	File    string
 	Reason  string
@@ -237,11 +237,8 @@ func readUserTheme(root *os.Root, file string) (model.ThemeFile, model.ThemeFile
 		if errors.As(err, &rejection) {
 			rejected.Subject = rejection.Subject
 		}
-		switch rejected.Reason {
-		case ThemeProblemValue, ThemeProblemColor:
-			// The model names the token; the file has it under tokens.
-			rejected.Subject = "tokens." + rejected.Subject
-		case ThemeProblemContract:
+		// The text of the reason says which contract is read.
+		if rejected.Reason == ThemeProblemContract {
 			rejected.Subject = ""
 		}
 		return model.ThemeFile{}, unused, &rejected

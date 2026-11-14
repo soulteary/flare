@@ -50,6 +50,32 @@ func GetThemeSelection() (string, *model.Palette) {
 	return opts.Theme, opts.ThemeCustom
 }
 
+// GetThemeMode returns the stored setting for light and dark as written. It
+// is empty when the configuration has none, and it is not validated here:
+// config.yml can be edited by hand.
+func GetThemeMode() string {
+	opts, err := GetAllSettingsOptions()
+	if err != nil {
+		return ""
+	}
+	return opts.ThemeMode
+}
+
+// SaveThemeMode stores the setting for light and dark: auto, light or dark.
+func SaveThemeMode(mode string) error {
+	if !model.IsThemeMode(mode) {
+		return saveError(SaveFailureInvalidInput, fmt.Errorf("unsupported theme mode %q", mode))
+	}
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		return saveError(SaveFailureConfigUnreadable, err)
+	}
+	options.ThemeMode = mode
+	return saveAppConfig("config", options)
+}
+
 // SaveThemeCustom stores a custom palette and selects it in a single write.
 // Choosing a built-in theme afterwards keeps the stored palette.
 func SaveThemeCustom(palette model.Palette) error {

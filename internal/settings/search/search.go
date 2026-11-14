@@ -103,7 +103,9 @@ func renderSettings(c fiber.Ctx, options model.Application, message string, save
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
 	m["PageName"] = "Search"
-	m["PageAppearance"] = define.GetAppBodyStyle()
+	pageTheme := define.GetPageTheme()
+	m["PageAppearance"] = pageTheme.BodyStyle
+	m["PageThemeRules"] = pageTheme.Rules
 	m["SettingPages"] = define.SettingPages
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["ShowSearchComponent"] = options.ShowSearchComponent

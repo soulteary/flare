@@ -60,6 +60,7 @@ tokens:
 | --- | --- | --- |
 | `contract` | Yes | `1`, the version of this format |
 | `tokens` | Yes | The style tokens the theme sets; `background`, `primary` and `accent` are required |
+| `modes` | No | Other token values for light and for dark; see [light and dark](#light-and-dark) |
 | `name` | No | The name to show, up to 48 characters; without it the name of the file is shown |
 | `version`, `author`, `license` | No | Up to 64 characters each; shown with the theme on the settings page, without any other effect |
 
@@ -87,6 +88,58 @@ described there, so three colors make a complete theme.
 - No other form of value is accepted: no color names or functions, no other
   units, no `var()` and no `url()`. The values are written into the style
   attribute of the page, and a value outside the forms above rejects the file.
+
+### Light and dark
+
+A theme can have different values for light and for dark. `modes` gives the
+values that differ:
+
+```yaml
+contract: 1
+tokens:
+  background: "#16181d"
+  primary: "#e6e1cf"
+  accent: "#ffcc66"
+  radius: 8px
+modes:
+  light:
+    background: "#f6f3ea"
+    primary: "#2b2a27"
+    accent: "#b5651d"
+```
+
+- `modes.light` and `modes.dark` take the same tokens and values as `tokens`.
+  A value given for a mode replaces the value of `tokens` in that mode;
+  everything else stays as `tokens` has it. A theme that is dark as written
+  needs only `modes.light`, and a light one only `modes.dark`.
+- `tokens` stays a complete theme with its three colors. It is what a mode
+  without values of its own uses, and what a release that does not know
+  `modes` uses.
+- In each mode the primary color needs the contrast of at least 3:1 against
+  the background once the values of the mode are in place.
+- Other names under `modes` are not used and are listed on the theme page.
+
+Which of the two the pages show is a setting of the site. Settings → Theme
+offers it under **Light and dark** while the selected theme has different
+values for the two.
+
+| Setting | `ThemeMode` in `config.yml` | The pages show |
+| --- | --- | --- |
+| Follow the device | `auto`, also without the key | The light values, and the dark ones on a device that asks for dark |
+| Light | `light` | The light values |
+| Dark | `dark` | The dark values |
+
+- Following the device uses the `prefers-color-scheme` media feature of the
+  browser. The page changes with the device without being loaded again.
+- The setting belongs to the site, not to a theme. It is kept while another
+  theme is selected, and it has no effect on a theme that is the same in both
+  modes, such as the bundled themes and custom colors.
+- A theme with one set of values in use writes it into the `style` attribute
+  of `body`, as the bundled themes do. While the device chooses, the two sets
+  are rules in a `style` element of the page head instead, each in a media
+  query, and the attribute is empty.
+- The card of such a theme on the theme page shows the light colors above the
+  dark ones.
 
 ### Names in several languages
 
@@ -132,7 +185,8 @@ theme names.
 A theme file has no browser-tab icon of its own and uses the default icon, as
 custom colors do. The **Custom colors** form starts from the three colors of
 the theme in use, so the colors of a theme file can be adjusted there; the
-result is a set of custom colors, without the other tokens of the file.
+result is a set of custom colors, without the other tokens of the file. For a
+theme that follows the device, the form starts from its light colors.
 
 ## Changes while the instance runs
 
@@ -172,9 +226,9 @@ where there is one.
 | Cannot be read | For example missing read permission |
 | Not a usable theme file | Not YAML, not a mapping, a key given twice, or a value of the wrong shape; the message of the parser is shown |
 | `contract: 1` is required | `contract` is missing or has another value |
-| Token value not accepted | Shown with the token, for example `tokens.radius` |
+| Token value not accepted | Shown with the token, for example `tokens.radius` or `modes.light.radius` |
 | Required color missing | Shown with the token, for example `tokens.accent` |
-| Contrast below 3:1 | Between `primary` and `background` |
+| Contrast below 3:1 | Between `primary` and `background`; shown with the mode, for example `modes.light`, when it is the values of a mode that lower it |
 | Text not accepted | `name`, `version`, `author` or `license` is too long, has leading or trailing spaces, or contains control characters |
 
 At startup, a selected theme that cannot be used is also written to the log as
@@ -192,8 +246,11 @@ applies in the same way.
 
 `go test ./config/model ./config/define ./internal/settings/theme ./internal/resources/assets ./internal/server -run 'Theme' -count=1`
 covers the format, the files that are not used, selection, following the file
-of the selected theme, the favicon and the rendered pages, including that
-texts and names from the directory are shown as text.
+of the selected theme, light and dark, the favicon and the rendered pages,
+including that texts and names from the directory are shown as text.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/files.browser.cjs`
 selects a theme file in Chromium, edits it, breaks it, removes it and puts it
 back, and checks the pages after each step.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/modes.browser.cjs`
+loads the pages of a theme with light and dark values for a device that asks
+for light and for one that asks for dark, under each of the three settings.

@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/assets/css/home/toolbar.css">
   {{ else }}
   <style type="text/css">{{.PageInlineStyle}}</style>
-  {{ end }}
+  {{ end }}{{ if .PageThemeRules }}<style type="text/css">{{.PageThemeRules}}</style>{{ end }}
   <meta name="description" content="Flare - self-hosted startpage for your server"/>
   {{ if .GuideAssetsURI }}<link rel="stylesheet" href="{{.GuideAssetsURI}}/introjs.min.css"><link rel="stylesheet" href="{{.GuideAssetsURI}}/app.css"><script src="{{.GuideAssetsURI}}/intro.min.js"></script>{{ end }}
 </head>

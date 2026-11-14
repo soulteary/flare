@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/assets/css/settings/theme.css">
   {{ else }}
   <style type="text/css">{{.PageInlineStyle}}</style>
-  {{ end }}
+  {{ end }}{{ if .PageThemeRules }}<style type="text/css">{{.PageThemeRules}}</style>{{ end }}
 </head>
 <body style="{{.PageAppearance}}" >
   <div class="pageview" id="page-settings">

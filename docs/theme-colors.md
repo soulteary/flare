@@ -68,6 +68,11 @@ ThemeCustom:
 Colors are `#RRGGBB` values and have to be quoted: an unquoted `#` starts a
 YAML comment and leaves the color empty.
 
+`ThemeMode` can stand next to them. It chooses between the light and the dark
+values of a theme that has both, which only a
+[theme file](theme-files.md#light-and-dark) can have, and has no effect on the
+bundled themes and custom colors.
+
 `Theme` is read at startup. After changing it by hand, restart the instance, as
 for the bundled theme names. The card on the settings page shows the
 `ThemeCustom` block as it is in the file, and selecting the card applies that

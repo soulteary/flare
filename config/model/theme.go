@@ -29,6 +29,20 @@ type Palette struct {
 	Accent     string `json:"accent" yaml:"Accent"`
 }
 
+// Color modes. A theme can give other token values for light and for dark,
+// and the site setting chooses one of the two or leaves the choice to the
+// device of the visitor.
+const (
+	ThemeModeAuto  = "auto"
+	ThemeModeLight = "light"
+	ThemeModeDark  = "dark"
+)
+
+// IsThemeMode reports whether a value is one of the three site settings.
+func IsThemeMode(value string) bool {
+	return value == ThemeModeAuto || value == ThemeModeLight || value == ThemeModeDark
+}
+
 // Theme Data Model
 type Theme struct {
 	Name   string  `json:"name"`
@@ -36,6 +50,10 @@ type Theme struct {
 	// Tokens holds the style tokens a theme sets besides its three colors,
 	// keyed by token name. The values have passed ThemeFile.Validate.
 	Tokens map[string]string `json:"tokens,omitempty"`
+	// Modes holds the token values a theme replaces in light and in dark
+	// mode, keyed by mode and by token name. The three colors can be among
+	// them. The values have passed ThemeFile.Validate.
+	Modes map[string]map[string]string `json:"-"`
 	// Title, Version, Author and License describe a theme read from a file.
 	Title   ThemeText `json:"-"`
 	Version string    `json:"-"`
@@ -50,6 +68,38 @@ func (t Theme) DisplayName(locale string) string {
 		return title
 	}
 	return t.Name
+}
+
+// In returns the theme as it is in one mode: its colors and tokens with the
+// values of that mode in place, and no modes of its own. A theme without
+// values for the mode is returned with its colors and tokens as they are.
+func (t Theme) In(mode string) Theme {
+	resolved := t
+	resolved.Modes = nil
+	replaced := t.Modes[mode]
+	if len(replaced) == 0 {
+		return resolved
+	}
+	resolved.Tokens = make(map[string]string, len(t.Tokens)+len(replaced))
+	for name, value := range t.Tokens {
+		resolved.Tokens[name] = value
+	}
+	for name, value := range replaced {
+		switch name {
+		case TokenBackground:
+			resolved.Colors.Background = value
+		case TokenPrimary:
+			resolved.Colors.Primary = value
+		case TokenAccent:
+			resolved.Colors.Accent = value
+		default:
+			resolved.Tokens[name] = value
+		}
+	}
+	if len(resolved.Tokens) == 0 {
+		resolved.Tokens = nil
+	}
+	return resolved
 }
 
 // UnmarshalYAML decodes the palette without ever failing. config.yml is edited

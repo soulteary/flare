@@ -204,7 +204,9 @@ func renderForm(c fiber.Ctx, testResult string, status int, submitted *weatherFo
 	m["ShowWeatherModule"] = !define.AppFlags.EnableOfflineMode && showWeather
 	m["ShowWeather"] = showWeather
 	m["PageName"] = "Weather"
-	m["PageAppearance"] = define.GetAppBodyStyle()
+	pageTheme := define.GetPageTheme()
+	m["PageAppearance"] = pageTheme.BodyStyle
+	m["PageThemeRules"] = pageTheme.Rules
 	m["SettingPages"] = define.SettingPages
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["OptionTitle"] = options.Title

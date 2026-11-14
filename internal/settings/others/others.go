@@ -41,7 +41,9 @@ func pageOthers(c fiber.Ctx) error {
 	m["UserName"] = auth.GetUserName(c)
 	m["LoginDate"] = auth.GetUserLoginDate(c)
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
-	m["PageAppearance"] = define.GetAppBodyStyle()
+	pageTheme := define.GetPageTheme()
+	m["PageAppearance"] = pageTheme.BodyStyle
+	m["PageThemeRules"] = pageTheme.Rules
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["LoginURI"] = define.MiscPages.Login.Path
 	m["LogoutURI"] = define.MiscPages.Logout.Path
