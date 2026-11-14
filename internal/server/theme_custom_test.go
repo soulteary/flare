@@ -102,12 +102,13 @@ func TestCustomThemeColorsHTTP(t *testing.T) {
 	// The custom palette has no generated favicon of its own.
 	require.Contains(t, page, `href="`+assets.FaviconURL()+`"`)
 
-	// Every themed page uses the palette, and icons take its primary color.
+	// Every themed page uses the palette. Icons are filled with its primary
+	// color through the page's variable; the icon file itself carries no color.
 	home := get("/")
 	require.Contains(t, home, customThemeStyle)
-	icon := regexp.MustCompile(`src="(/assets/mdi/custom-github\.svg)\?v=[0-9a-f]{64}"`).FindStringSubmatch(home)
-	require.NotNil(t, icon, "home page has no icon for the custom theme")
-	require.Contains(t, get(icon[1]), `style="fill:#e8f1e4;"`)
+	icon := regexp.MustCompile(`style="fill: var\(--color-primary\);" aria-hidden="true"><use href="(/assets/mdi/github\.svg)\?v=[0-9a-f]{64}#i">`).FindStringSubmatch(home)
+	require.NotNil(t, icon, "home page has no icon that follows the custom theme")
+	require.NotContains(t, get(icon[1]), "fill")
 
 	// A rejected palette explains the reason and leaves the saved palette
 	// active. Colors that were submitted stay in the form for correction.

@@ -35,11 +35,24 @@
 }
 
 /* 非inline模式 */
-#container-apps .apps-container .app-icon img{
+/* Bundled icons are SVG elements that reference an icon file; remote icons are
+   images. :where keeps both at the same specificity, so layout rules that
+   resize an image resize the SVG as well. */
+#container-apps .apps-container .app-icon img,
+#container-apps .apps-container .app-icon svg:where(.icon-ref) {
   display: block;
   width: 32px;
   height: 32px;
   color: var(--color-primary);
+}
+
+/* Forced colors replace the page background, which can leave a theme color
+   without contrast. Draw bundled icons in the system text color. */
+@media (forced-colors: active) {
+  #container-apps .apps-container .app-icon svg,
+  #container-apps .apps-container .app-icon svg path {
+    fill: CanvasText !important;
+  }
 }
 
 .app-content-uppercase #container-apps .apps-container .app-text {

@@ -31,6 +31,24 @@ be hard to read. The accent color is not checked.
 Icons from the bundled icon set follow the primary color. Themed browser-tab
 icons exist only for the bundled themes, so custom colors use the default icon.
 
+## Bundled icons
+
+> Availability: the behavior in this section is in current source and is not
+> part of 0.6.15, which writes one icon file per theme with the color in it.
+
+An icon from the bundled icon set is drawn in the primary color of the theme in
+use. The page takes the color from the theme; the icon file,
+`/assets/mdi/<name>.svg`, carries none. Selecting another theme or saving other
+custom colors therefore changes the icons without requesting other files.
+`FLARE_MINI_REQUEST` writes the icons into the page instead of referencing
+files; they follow the primary color in the same way.
+
+When the browser forces colors, for example under a Windows contrast theme,
+bundled icons are drawn in the system text color. The forced page background
+could otherwise leave the theme color without contrast.
+
+Icons given as a URL are images and keep their own colors.
+
 ## Stored form
 
 The selection and the colors are stored in `config.yml`:
