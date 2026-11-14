@@ -365,3 +365,9 @@
   #page-settings .weather-observation { gap: 14px; }
   #page-settings .weather-temperature { font-size: 32px; }
 }
+
+/* The remark next to a layout option the selected theme specifies, with the
+   box that keeps the site setting for it. */
+#page-settings .form-group .theme-layout-note { margin-top: 6px; }
+#page-settings .form-group .theme-layout-choice { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 0 6px; min-height: 24px; font-size: inherit; cursor: pointer; }
+#page-settings .form-group .theme-layout-choice input { margin: 0; }

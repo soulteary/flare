@@ -278,6 +278,9 @@ type themeFileCard struct {
 	// dark mode when they are different.
 	Colors model.Palette
 	Dark   *model.Palette
+	// Layout names the layout options the theme specifies, so that it is
+	// known before the theme is selected that it changes more than colors.
+	Layout string
 }
 
 func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
@@ -297,6 +300,9 @@ func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
 		}
 		if dark := theme.In(model.ThemeModeDark).Colors; dark != card.Colors {
 			card.Dark = &dark
+		}
+		if specified := (*model.HomepageOptions)(nil).ThemeLayoutApplied(theme.Layout, nil); len(specified) > 0 {
+			card.Layout = i18n.Format(locale, "theme_layout_sets", map[string]any{"options": settings.LayoutOptionList(locale, specified)})
 		}
 		cards = append(cards, card)
 	}

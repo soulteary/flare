@@ -3,6 +3,7 @@ package appearance
 import (
 	"html/template"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -65,6 +66,10 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 	}
 
 	if err := updateClockOptions(c, &update); err != nil {
+		return c.Status(err.Code).SendString(err.Message)
+	}
+
+	if err := updateThemeLayout(c, &update); err != nil {
 		return c.Status(err.Code).SendString(err.Message)
 	}
 
@@ -188,6 +193,7 @@ func pageAppearance(c fiber.Ctx) error {
 		m["CategoryNavigation"] = options.Homepage.CategoryNavigation
 	}
 	m["Locale"] = options.Locale
+	themeLayoutNotes(m, options.Locale, options)
 	return c.Status(http.StatusOK).Render("settings.html", m)
 }
 
@@ -273,6 +279,110 @@ func updateHomepageNavigation(c fiber.Ctx, update *model.Application) *fiber.Err
 	}
 
 	return nil
+}
+
+// Form fields about the layout the selected theme specifies. The form has
+// them only while such a theme is selected.
+const (
+	// fieldThemeLayoutAll turns the layout of every theme off or on.
+	fieldThemeLayoutAll  = "theme-layout-all"
+	themeLayoutAllApply  = "apply"
+	themeLayoutAllIgnore = "ignore"
+	// fieldThemeLayoutTheme names the theme the boxes of the form are about,
+	// and fieldThemeLayoutIgnore, followed by an option, is the box that
+	// keeps the site setting for that option.
+	fieldThemeLayoutTheme  = "theme-layout-theme"
+	fieldThemeLayoutIgnore = "theme-layout-ignore-"
+)
+
+// updateThemeLayout reads which parts of the theme's layout the administrator
+// turned off. A form without these fields, such as one rendered while another
+// theme was selected, changes nothing about them.
+func updateThemeLayout(c fiber.Ctx, update *model.Application) *fiber.Error {
+	if all := formvalue.Get(c, fieldThemeLayoutAll); all != "" {
+		if all != themeLayoutAllApply && all != themeLayoutAllIgnore {
+			return fiber.NewError(http.StatusBadRequest, "invalid theme layout choice")
+		}
+		homepage := model.HomepageOptions{}
+		if update.Homepage != nil {
+			homepage = *update.Homepage
+		} else {
+			existing, err := data.GetAllSettingsOptions()
+			if err != nil {
+				return fiber.NewError(http.StatusInternalServerError, "config error")
+			}
+			if existing.Homepage != nil {
+				homepage = *existing.Homepage
+			}
+		}
+		homepage.IgnoreThemeLayout = all == themeLayoutAllIgnore
+		update.Homepage = &homepage
+	}
+	// The boxes are in the form only while the layout of the theme applies.
+	// Their absence then means that none is ticked; without the name of the
+	// theme the form had no boxes, and the stored choice stays.
+	theme := formvalue.Get(c, fieldThemeLayoutTheme)
+	if theme == "" {
+		return nil
+	}
+	if !model.IsThemeName(theme) {
+		return fiber.NewError(http.StatusBadRequest, "invalid theme name")
+	}
+	ignored := []string{}
+	for _, option := range model.ThemeLayoutOptions {
+		if formvalue.Has(c, fieldThemeLayoutIgnore+option) {
+			ignored = append(ignored, option)
+		}
+	}
+	update.ThemeSettings = map[string]model.ThemeSettings{theme: {IgnoreLayout: ignored}}
+	return nil
+}
+
+// themeLayoutNote is the remark next to a layout option the selected theme
+// specifies.
+type themeLayoutNote struct {
+	// Field is the name of the box that keeps the site setting. It is
+	// empty while the layout of themes is turned off as a whole, when the
+	// option has no box of its own.
+	Field   string
+	Text    string
+	UseMine string
+	Ignored bool
+}
+
+// themeLayoutNotes describes the layout of the selected theme for the page:
+// one remark for each option the theme specifies, by option, and a summary.
+func themeLayoutNotes(m map[string]any, locale string, options model.Application) {
+	name, layout := define.SelectedThemeLayout()
+	specified := make([]string, 0, len(layout))
+	notes := map[string]*themeLayoutNote{}
+	off := options.Homepage != nil && options.Homepage.IgnoreThemeLayout
+	for _, option := range model.ThemeLayoutOptions {
+		value, set := layout[option]
+		if !set || !model.IsThemeLayoutValue(option, value) {
+			continue
+		}
+		specified = append(specified, option)
+		params := map[string]any{"value": settings.LayoutValueLabel(locale, option, value)}
+		note := &themeLayoutNote{UseMine: i18n.T(locale, "theme_layout_use_mine")}
+		if off {
+			note.Text = i18n.Format(locale, "theme_layout_note_off", params)
+		} else {
+			note.Text = i18n.Format(locale, "theme_layout_note", params)
+			note.Field = fieldThemeLayoutIgnore + option
+			note.Ignored = slices.Contains(options.ThemeSettings[name].IgnoreLayout, option)
+		}
+		notes[option] = note
+	}
+	// The template looks every option up in the remarks, so they are there
+	// for a theme without a layout as well, and then empty.
+	m["ThemeLayout"] = notes
+	if len(specified) == 0 {
+		return
+	}
+	m["ThemeLayoutOff"] = off
+	m["ThemeLayoutTheme"] = name
+	m["ThemeLayoutSummary"] = i18n.Format(locale, "theme_layout_help", map[string]any{"options": settings.LayoutOptionList(locale, specified)})
 }
 
 func updateClockOptions(c fiber.Ctx, update *model.Application) *fiber.Error {

@@ -103,6 +103,9 @@ type ThemeFile struct {
 	// Modes holds the token values that replace those of Tokens in light
 	// and in dark mode, keyed by mode.
 	Modes map[string]map[string]string
+	// Layout holds the layout options the theme specifies, by the names the
+	// options have under Homepage in config.yml.
+	Layout map[string]string
 }
 
 // ThemeText is a text of a theme file: one string, or one string per
@@ -184,10 +187,11 @@ func (t ThemeText) languages() []string {
 }
 
 // ThemeFileUnused lists the parts of a theme file that were read but not
-// used, as paths in the file. Keys holds keys and modes this release does not
-// know, such as layout or modes.sepia; Tokens holds tokens it does not know,
-// such as tokens.shadow or modes.light.shadow. A file written for a later
-// release remains usable without them.
+// used, as paths in the file. Keys holds keys, modes, layout options and
+// layout values this release does not know, such as options, modes.sepia,
+// layout.CardStyle or "layout.DesktopColumns: 12"; Tokens holds tokens it
+// does not know, such as tokens.shadow or modes.light.shadow. A file written
+// for a later release remains usable without them.
 type ThemeFileUnused struct {
 	Keys   []string
 	Tokens []string
@@ -234,6 +238,8 @@ func ReadThemeFile(raw []byte) (ThemeFile, ThemeFileUnused, error) {
 			target = &file.Tokens
 		case "modes":
 			target = &file.Modes
+		case "layout":
+			target = &file.Layout
 		default:
 			unused.Keys = append(unused.Keys, key)
 			continue
@@ -252,12 +258,34 @@ func ReadThemeFile(raw []byte) (ThemeFile, ThemeFileUnused, error) {
 		}
 		unused.Tokens = dropUnknownTokens(replaced, "modes."+mode+".", unused.Tokens)
 	}
+	// A layout option or value this release does not have is left out like
+	// any other part it does not know: the site setting applies instead.
+	for option, value := range file.Layout {
+		switch {
+		case !IsThemeLayoutOption(option):
+			unused.Keys = append(unused.Keys, "layout."+option)
+		case !IsThemeLayoutValue(option, value):
+			unused.Keys = append(unused.Keys, "layout."+option+": "+shortThemeValue(value))
+		default:
+			continue
+		}
+		delete(file.Layout, option)
+	}
 	slices.Sort(unused.Keys)
 	slices.Sort(unused.Tokens)
 	if err := file.Validate(); err != nil {
 		return ThemeFile{}, unused, err
 	}
 	return file, unused, nil
+}
+
+// shortThemeValue bounds a value of a theme file that is reported back.
+func shortThemeValue(value string) string {
+	const limit = 32
+	if utf8.RuneCountInString(value) <= limit {
+		return value
+	}
+	return string([]rune(value)[:limit]) + "…"
 }
 
 // dropUnknownTokens removes the tokens this release does not know from one
@@ -323,6 +351,16 @@ func (f ThemeFile) Validate() error {
 		}
 		if err := f.Theme("").In(mode).Colors.Validate(); err != nil {
 			return themeFileError(err, "modes."+mode)
+		}
+	}
+	options := make([]string, 0, len(f.Layout))
+	for option := range f.Layout {
+		options = append(options, option)
+	}
+	slices.Sort(options)
+	for _, option := range options {
+		if !IsThemeLayoutValue(option, f.Layout[option]) {
+			return themeFileError(ErrThemeSyntax, "layout."+option)
 		}
 	}
 	if !isThemeText(f.Name.Plain, maximumThemeNameLength) {
@@ -429,6 +467,9 @@ func (f ThemeFile) Theme(name string) Theme {
 			}
 			theme.Modes[mode] = maps.Clone(replaced)
 		}
+	}
+	if len(f.Layout) > 0 {
+		theme.Layout = maps.Clone(f.Layout)
 	}
 	return theme
 }

@@ -48,7 +48,7 @@ async function start() {
   await fs.mkdir(themes);
   await fs.writeFile(path.join(themes, 'forest.yml'), FOREST);
   await fs.writeFile(path.join(themes, 'later.yml'),
-    COLORS + '  font-scale: "1.1"\nlayout:\n  DesktopColumns: 4\n');
+    COLORS + '  font-scale: "1.1"\noptions:\n  - id: density\n');
   await fs.writeFile(path.join(themes, 'bad-radius.yml'), COLORS + '  radius: 4em\n');
   await fs.writeFile(path.join(themes, 'Mixed.yml'), COLORS);
   await fs.writeFile(path.join(themes, 'notes.yaml'), COLORS);
@@ -131,7 +131,7 @@ const measure = page => page.evaluate(() => {
     assert.deepEqual(listed.lines, [
       ['Mixed.yml'],
       ['bad-radius.yml', 'tokens.radius'],
-      ['later.yml', 'layout, tokens.font-scale'],
+      ['later.yml', 'options, tokens.font-scale'],
       ['notes.yaml'],
     ]);
     assert.deepEqual(listed.alert, []);

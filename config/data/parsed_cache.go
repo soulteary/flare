@@ -74,6 +74,14 @@ func cloneApplication(value model.Application) model.Application {
 		copy := *value.ThemeCustom
 		value.ThemeCustom = &copy
 	}
+	if value.ThemeSettings != nil {
+		copy := make(map[string]model.ThemeSettings, len(value.ThemeSettings))
+		for name, settings := range value.ThemeSettings {
+			settings.IgnoreLayout = slices.Clone(settings.IgnoreLayout)
+			copy[name] = settings
+		}
+		value.ThemeSettings = copy
+	}
 	return value
 }
 func cloneBookmarks(value model.Bookmarks) model.Bookmarks {

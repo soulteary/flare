@@ -54,6 +54,9 @@ type Theme struct {
 	// mode, keyed by mode and by token name. The three colors can be among
 	// them. The values have passed ThemeFile.Validate.
 	Modes map[string]map[string]string `json:"-"`
+	// Layout holds the layout options a theme specifies, by the names they
+	// have under Homepage in config.yml, with values a theme can give.
+	Layout map[string]string `json:"-"`
 	// Title, Version, Author and License describe a theme read from a file.
 	Title   ThemeText `json:"-"`
 	Version string    `json:"-"`

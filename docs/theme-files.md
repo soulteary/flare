@@ -61,6 +61,7 @@ tokens:
 | `contract` | Yes | `1`, the version of this format |
 | `tokens` | Yes | The style tokens the theme sets; `background`, `primary` and `accent` are required |
 | `modes` | No | Other token values for light and for dark; see [light and dark](#light-and-dark) |
+| `layout` | No | Layout options the theme specifies; see [layout](#layout) |
 | `name` | No | The name to show, up to 48 characters; without it the name of the file is shown |
 | `version`, `author`, `license` | No | Up to 64 characters each; shown with the theme on the settings page, without any other effect |
 
@@ -141,6 +142,68 @@ values for the two.
 - The card of such a theme on the theme page shows the light colors above the
   dark ones.
 
+### Layout
+
+A theme can specify how the home page, the application page and the bookmark
+page are laid out. `layout` names options of the site and the value the theme
+wants for each:
+
+```yaml
+layout:
+  DesktopColumns: 6
+  TitleSize: compact
+  HideAppDescriptions: true
+```
+
+The options have the names they have under `Homepage` in `config.yml`.
+
+| Option | Values | Described in |
+| --- | --- | --- |
+| `MobileBookmarkLayout` | `classic`, `single-column`, `compact` | [Mobile layout](mobile-layout.md) |
+| `TitleSize` | `standard`, `compact`, `prominent` | [Mobile layout](mobile-layout.md) |
+| `HideAppDescriptions` | `true`, `false` | [Mobile layout](mobile-layout.md) |
+| `CategoryNavigation` | `all`, `tabs`, `collapse` | [Category navigation](category-navigation.md) |
+| `BookmarkLayout` | `groups`, `sections` | [Desktop columns](desktop-columns-and-scale.md) |
+| `DesktopColumns` | `legacy`, `auto`, `4`, `5`, `6`, `8` | [Desktop columns](desktop-columns-and-scale.md) |
+
+`legacy` is the layout of releases before the option, which `config.yml`
+stores as an empty value. A theme cannot specify anything else: the text size
+is for the reader, and which modules a page shows, how links open, search,
+clock and weather are for the administrator.
+
+While the theme is selected, the options it specifies replace those of the
+site, and the others stay as the site has them. The settings of the site are
+not rewritten: selecting another theme brings its layout back, and an update
+of the theme file changes the layout without anything to migrate. The card of
+a theme on the theme page names the options it sets, so this is known before
+the theme is selected. The bundled themes specify none.
+
+Settings → Appearance says next to each of these options what the selected
+theme sets, and can turn the layout of the theme off:
+
+| On the page | Stored in `config.yml` | Effect |
+| --- | --- | --- |
+| **Use my setting** next to an option | `ThemeSettings.<theme>.IgnoreLayout`, a list of options | That option uses the setting of the site while this theme is selected |
+| **Layout set by the theme** → **Use my settings for every option** | `Homepage.IgnoreThemeLayout: true` | No theme changes the layout |
+
+```yaml
+Homepage:
+    DesktopColumns: "4"
+    IgnoreThemeLayout: false
+ThemeSettings:
+    forest:
+        IgnoreLayout:
+            - DesktopColumns
+```
+
+A value under `Homepage` that is changed by hand has no effect on an option
+while the theme's value applies. A line in the log at startup names the
+options the selected theme replaces.
+
+An option or a value that this release does not have is left out and listed
+on the theme page, and the setting of the site applies to that option. The
+rest of the layout, and the theme, stay in use.
+
 ### Names in several languages
 
 `name` can give one text for each interface language instead of a single text:
@@ -158,9 +221,10 @@ the order of the codes.
 
 ### Files written for another release
 
-Keys and tokens that this release does not know are not used. The theme
-remains usable, and the settings page lists the parts that were left out. A
-theme file written for a later release therefore works with what this release
+Keys, tokens, modes and layout options that this release does not know are
+not used, and neither is a layout value it does not have. The theme remains
+usable, and the settings page lists the parts that were left out. A theme
+file written for a later release therefore works with what this release
 knows.
 
 Everything this release does use has to be valid. A file with one value that
@@ -244,13 +308,17 @@ applies in the same way.
 
 ## Verification
 
-`go test ./config/model ./config/define ./internal/settings/theme ./internal/resources/assets ./internal/server -run 'Theme' -count=1`
+`go test ./config/model ./config/define ./config/data ./internal/settings/... ./internal/resources/assets ./internal/server -run 'Theme|Homepage' -count=1`
 covers the format, the files that are not used, selection, following the file
-of the selected theme, light and dark, the favicon and the rendered pages,
-including that texts and names from the directory are shown as text.
+of the selected theme, light and dark, layout, the favicon and the rendered
+pages, including that texts and names from the directory are shown as text.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/files.browser.cjs`
 selects a theme file in Chromium, edits it, breaks it, removes it and puts it
 back, and checks the pages after each step.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/modes.browser.cjs`
 loads the pages of a theme with light and dark values for a device that asks
 for light and for one that asks for dark, under each of the three settings.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/layout.browser.cjs`
+selects a theme that specifies layout, turns single options and the whole
+layout off and on again on the appearance page, and checks the home page
+after each step.

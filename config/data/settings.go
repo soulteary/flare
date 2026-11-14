@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/soulteary/flare/config/model"
@@ -226,6 +227,23 @@ func SaveAppearance(update model.Application) error {
 	if update.Homepage != nil {
 		options.Homepage = update.Homepage
 	}
+	for name, settings := range update.ThemeSettings {
+		ignored, err := normalizeIgnoredLayout(name, settings.IgnoreLayout)
+		if err != nil {
+			return saveError(SaveFailureInvalidInput, err)
+		}
+		// An empty list is stored only to clear an earlier one: a theme
+		// nothing was ever turned off for gets no entry.
+		if _, stored := options.ThemeSettings[name]; !stored && len(ignored) == 0 {
+			continue
+		}
+		if options.ThemeSettings == nil {
+			options.ThemeSettings = make(map[string]model.ThemeSettings)
+		}
+		current := options.ThemeSettings[name]
+		current.IgnoreLayout = ignored
+		options.ThemeSettings[name] = current
+	}
 	options.Title = update.Title
 	options.Footer = update.Footer
 	options.OpenAppNewTab = update.OpenAppNewTab
@@ -250,6 +268,26 @@ func SaveAppearance(update model.Application) error {
 	}
 
 	return saveAppConfig("config", options)
+}
+
+// normalizeIgnoredLayout checks the layout options turned off for a theme and
+// returns them without repetition, in the order of the appearance page.
+func normalizeIgnoredLayout(theme string, options []string) ([]string, error) {
+	if !model.IsThemeName(theme) {
+		return nil, fmt.Errorf("invalid theme name %q", theme)
+	}
+	for _, option := range options {
+		if !model.IsThemeLayoutOption(option) {
+			return nil, fmt.Errorf("invalid layout option %q", option)
+		}
+	}
+	ignored := make([]string, 0, len(options))
+	for _, option := range model.ThemeLayoutOptions {
+		if slices.Contains(options, option) {
+			ignored = append(ignored, option)
+		}
+	}
+	return ignored, nil
 }
 
 // UpdateSelectedWeather atomically saves the display address and provider fields.

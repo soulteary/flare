@@ -3,6 +3,7 @@ package home
 import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/auth"
 )
@@ -24,6 +25,13 @@ func requestSettings(c fiber.Ctx) (model.Application, error) {
 		snapshot.value, snapshot.err = data.ReadExistingSettingsOptions()
 	} else {
 		snapshot.value, snapshot.err = data.GetAllSettingsOptions()
+	}
+	// The pages are rendered with the layout in effect: the options of the
+	// site with the layout of the selected theme in place. Every reader of
+	// Homepage below this point, the body classes, the category navigation
+	// and the fragment cache key among them, takes that one result.
+	if snapshot.err == nil {
+		snapshot.value.Homepage = define.HomepageInEffect(snapshot.value)
 	}
 	c.Locals(requestSettingsKey{}, snapshot)
 	return snapshot.value, snapshot.err
