@@ -116,7 +116,8 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 | `config.yml` `Clock` | Display time, seconds, zone; since 0.6.3 | [Clock](clock.md) |
 | `config.yml` `Search` | Engines/hybrid since 0.6.5; additional modes and save protections in 0.6.6 | [Search](search.md) |
 | `config.yml` `Homepage` | Layout controls since 0.6.5; adaptive tablet columns in 0.6.6 | [Mobile](mobile-layout.md), [desktop](desktop-columns-and-scale.md) |
-| `config.yml` `Theme`, `ThemeCustom` | A bundled theme name, or `custom` with three `#RRGGBB` colors in `ThemeCustom` (current source); read at startup | [Themes and custom colors](theme-colors.md) |
+| `config.yml` `Theme`, `ThemeCustom` | A bundled theme name, the name of a theme file (current source), or `custom` with three `#RRGGBB` colors in `ThemeCustom` (current source); read at startup | [Themes and custom colors](theme-colors.md), [theme files](theme-files.md) |
+| `themes/*.yml` | Themes of the instance, one per file (current source); optional | [Theme files](theme-files.md) |
 | `config.yml` `Footer` | Administrator-controlled internal HTML | Treat it as trusted site content, unlike ordinary bookmark text |
 | `config.yml` `LoginFooter` | Current main: public login-page text/filtered HTTP(S) links | [Accounts](accounts.md); separate from internal Footer |
 

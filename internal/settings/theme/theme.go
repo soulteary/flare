@@ -3,8 +3,11 @@ package theme
 import (
 	"errors"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -56,6 +59,9 @@ func updateThemes(c fiber.Ctx) error {
 	if theme == model.ThemeCustomName {
 		return selectCustomPalette(c)
 	}
+	// The themes directory is read first: a file added or corrected since the
+	// page was shown can be selected, and one that went away cannot.
+	define.ReloadUserThemes()
 	if !define.IsKnownTheme(theme) {
 		return c.Status(http.StatusBadRequest).SendString("Unknown theme")
 	}
@@ -148,6 +154,8 @@ func pageTheme(c fiber.Ctx) error {
 
 func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	themes := define.ThemePalettes
+	// The page lists the theme files as they are now.
+	define.ReloadUserThemes()
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
@@ -170,6 +178,12 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	m["SettingPages"] = define.SettingPages
 	m["Themes"] = themes
 	m["OptionTitle"] = options.Title
+	fileThemes, problems, notices := define.UserThemes()
+	m["ThemeFiles"] = themeFileCards(locale, fileThemes)
+	m["ThemeFileLines"] = themeFileLines(locale, problems, notices)
+	if selected, _ := define.ThemeSnapshot(); selected != "" && !define.IsKnownTheme(selected) {
+		m["ThemeUnavailable"] = i18n.Format(locale, "theme_unavailable", map[string]any{"name": plainText(selected, maximumShownName)})
+	}
 
 	if custom, stored := storedCustomPalette(options); stored {
 		m["ThemeCustom"] = custom
@@ -211,4 +225,87 @@ func paletteErrorText(locale string, err error) string {
 		return i18n.T(locale, "theme_custom_low_contrast")
 	}
 	return i18n.T(locale, "theme_custom_invalid_color")
+}
+
+// themeFileCard is a theme file in use, as the page shows it.
+type themeFileCard struct {
+	// Name is the name of the file without its extension, the value stored
+	// in config.yml when the theme is selected.
+	Name string
+	// Title is the name to show, About the version, author and license the
+	// file gives.
+	Title  string
+	About  string
+	Colors model.Palette
+}
+
+func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
+	cards := make([]themeFileCard, 0, len(themes))
+	for _, theme := range themes {
+		about := make([]string, 0, 3)
+		for _, text := range []string{theme.Version, theme.Author, theme.License} {
+			if text != "" {
+				about = append(about, text)
+			}
+		}
+		cards = append(cards, themeFileCard{
+			Name:   theme.Name,
+			Title:  theme.DisplayName(locale),
+			About:  strings.Join(about, " · "),
+			Colors: theme.Colors,
+		})
+	}
+	return cards
+}
+
+// themeFileLine is one remark about a file in the themes directory: why it
+// is not in use, or which of its parts are not used.
+type themeFileLine struct {
+	File   string
+	Text   string
+	Detail string
+}
+
+// Longest file name and longest detail shown for a file. Both come from the
+// themes directory; the page shows them as plain text of a bounded length.
+const (
+	maximumShownName   = 80
+	maximumShownDetail = 240
+)
+
+func themeFileLines(locale string, problems []define.ThemeProblem, notices []define.ThemeNotice) []themeFileLine {
+	lines := make([]themeFileLine, 0, len(problems)+len(notices))
+	for _, problem := range problems {
+		lines = append(lines, themeFileLine{
+			File:   plainText(problem.File, maximumShownName),
+			Text:   i18n.T(locale, "theme_file_problem_"+problem.Reason),
+			Detail: plainText(problem.Subject, maximumShownDetail),
+		})
+	}
+	for _, notice := range notices {
+		parts := append([]string(nil), notice.Unused.Keys...)
+		for _, token := range notice.Unused.Tokens {
+			parts = append(parts, "tokens."+token)
+		}
+		lines = append(lines, themeFileLine{
+			File:   plainText(notice.File, maximumShownName),
+			Text:   i18n.T(locale, "theme_file_unused"),
+			Detail: plainText(strings.Join(parts, ", "), maximumShownDetail),
+		})
+	}
+	// One file can have a problem and unused parts; its lines stay together.
+	sort.SliceStable(lines, func(i, j int) bool { return lines[i].File < lines[j].File })
+	return lines
+}
+
+// plainText prepares a file name or a parser message for display: one line
+// of valid text, cut to a number of characters.
+func plainText(text string, limit int) string {
+	text = strings.Join(strings.FieldsFunc(strings.ToValidUTF8(text, "?"), func(r rune) bool {
+		return unicode.IsSpace(r) || unicode.IsControl(r)
+	}), " ")
+	if utf8.RuneCountInString(text) <= limit {
+		return text
+	}
+	return string([]rune(text)[:limit]) + "…"
 }

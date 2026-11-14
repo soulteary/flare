@@ -41,7 +41,7 @@ func TestBundledThemeFilesKeepTheBundledThemes(t *testing.T) {
 }
 
 func TestEveryBundledThemeFileIsListed(t *testing.T) {
-	entries, err := fs.ReadDir(bundledThemeFiles, "themes")
+	entries, err := fs.ReadDir(bundledThemeFiles, "bundled")
 	require.NoError(t, err)
 	var files []string
 	for _, entry := range entries {

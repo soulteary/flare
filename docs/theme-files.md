@@ -1,0 +1,199 @@
+# Theme files
+
+> Availability: in current source; not part of 0.6.15.
+
+A theme can be added to an instance as a file. The file gives the three colors
+of a [theme](theme-colors.md) and, if wanted, values for the other
+[style tokens](theme-tokens.md) and a name to show. The bundled themes are
+files of the same format.
+
+## Location and name
+
+Theme files are read from the `themes` directory in the working directory of
+the instance, next to `config.yml`. In the container image that is
+`/app/themes`.
+
+```text
+config.yml
+apps.yml
+bookmarks.yml
+themes/
+    forest.yml
+```
+
+The name of the file without `.yml` is the name of the theme. It is the value
+of `Theme` in `config.yml` while the theme is selected, so renaming the file
+of the selected theme leaves the selection without a theme.
+
+- A name uses lower-case letters, digits and single hyphens between them, and
+  has at most 32 characters: `forest`, `solarized-light`.
+- The names of the bundled themes and `custom` cannot be used.
+- A theme file is a regular file in the directory itself. Links, and files in
+  subdirectories, are not read.
+- A `.yaml` file is not read. It is reported on the theme page, because the
+  extension of a theme file is `.yml`. Files with any other extension and
+  hidden files are left alone.
+- Up to 64 files are looked at, in the order of their names, counting the
+  `.yaml` files that are only reported. A theme file can have up to 64 KiB.
+
+The directory is optional. Nothing is created in it or written to it.
+
+## Format
+
+```yaml
+contract: 1
+name: Forest at dusk
+version: "1.2"
+author: Example Author
+license: MIT
+tokens:
+  background: "#10241b"
+  primary: "#e8f1e4"
+  accent: "#f2b84b"
+  muted: "#9db8a6"
+  hover: "#ffffff1a"
+  radius: 10px
+  font-family: Georgia, serif
+```
+
+| Key | Required | Value |
+| --- | --- | --- |
+| `contract` | Yes | `1`, the version of this format |
+| `tokens` | Yes | The style tokens the theme sets; `background`, `primary` and `accent` are required |
+| `name` | No | The name to show, up to 48 characters; without it the name of the file is shown |
+| `version`, `author`, `license` | No | Up to 64 characters each; shown with the theme on the settings page, without any other effect |
+
+### Tokens
+
+The keys under `tokens` are the names of the [style tokens](theme-tokens.md)
+without the `--flare-` prefix. A token that is not set keeps the default
+described there, so three colors make a complete theme.
+
+| Token | Accepted value |
+| --- | --- |
+| `background`, `primary`, `accent`, `icon`, `muted`, `border`, `focus`, `inverse` | A `#RRGGBB` color |
+| `hover` | A `#RRGGBB` color, or `#RRGGBBAA` with transparency |
+| `radius` | `0`, or a whole number of pixels from `0px` to `32px` |
+| `font-family` | Font family names separated by commas, without quotes, up to 160 bytes |
+
+- Colors have to be quoted: an unquoted `#` starts a YAML comment and leaves
+  the color empty.
+- The primary color needs a contrast ratio of at least 3:1 against the
+  background, as for [custom colors](theme-colors.md#custom-colors).
+- A font family name is one or more words of letters, digits, hyphens and
+  underscores, such as `Helvetica Neue`, `-apple-system` or `思源黑体`. The
+  names refer to fonts on the device of the visitor; a theme file does not
+  load fonts.
+- No other form of value is accepted: no color names or functions, no other
+  units, no `var()` and no `url()`. The values are written into the style
+  attribute of the page, and a value outside the forms above rejects the file.
+
+### Names in several languages
+
+`name` can give one text for each interface language instead of a single text:
+
+```yaml
+name:
+  en: Forest at dusk
+  zh: 暮色森林
+```
+
+The text for the [interface language](i18n.md) is shown. A regional code such
+as `zh-CN` answers for its language. Without a text for the interface language
+the English text is shown, and without one, the text of the first language in
+the order of the codes.
+
+### Files written for another release
+
+Keys and tokens that this release does not know are not used. The theme
+remains usable, and the settings page lists the parts that were left out. A
+theme file written for a later release therefore works with what this release
+knows.
+
+Everything this release does use has to be valid. A file with one value that
+is not accepted is not used at all; the theme is not applied in part.
+
+`contract` changes only when the format changes in a way an older release
+cannot read. A file with another `contract` is not used.
+
+## Selecting a theme file
+
+Settings → Theme lists the usable files under **Theme files**, after the
+bundled themes, with their names and colors. Selecting one stores its name in
+`config.yml` and applies it to the pages a bundled theme applies to.
+
+```yaml
+Theme: forest
+```
+
+`Theme` can also be set by hand. It is read at startup, as for the bundled
+theme names.
+
+A theme file has no browser-tab icon of its own and uses the default icon, as
+custom colors do. The **Custom colors** form starts from the three colors of
+the theme in use, so the colors of a theme file can be adjusted there; the
+result is a set of custom colors, without the other tokens of the file.
+
+## Changes while the instance runs
+
+The pages follow the file of the selected theme. Each page load compares the
+modification time and the size of that file with the values it was read at,
+and reads the directory again when they differ. An edit therefore shows on the
+next page load, without a restart. While a bundled theme or the custom colors
+are selected, no theme file is looked at for a page.
+
+The theme page reads the directory every time it is shown, so files that were
+added, corrected or removed are listed as they are.
+
+When the file of the selected theme is removed, or is edited into a file that
+is not usable, the pages are not left with the previous version of the theme.
+They use the colors of the stylesheet, and the theme page names the theme and,
+for a file that is still there, the reason. Correcting the file or putting it
+back applies the theme again on the next page load.
+
+An edit that keeps both the size and the modification time of the file is not
+noticed, except within two seconds of that time: during those, the directory
+is read again on every page load.
+
+## Files that are not used
+
+The theme page lists each theme file that is not in use with the reason, in
+the interface language, and with the part of the file the reason is about
+where there is one.
+
+| Reason | Cause |
+| --- | --- |
+| The extension has to be `.yml` | The file is named `.yaml` |
+| File name not accepted | Upper-case letters, spaces, underscores, other characters, or more than 32 characters |
+| Name belongs to a bundled theme or the custom colors | For example `blackboard.yml` or `custom.yml` |
+| Not a regular file | A directory or a link named like a theme file |
+| Larger than 64 KiB | |
+| More than 64 files | Reported for the first file that is not looked at; the files after it are not looked at either |
+| Cannot be read | For example missing read permission |
+| Not a usable theme file | Not YAML, not a mapping, a key given twice, or a value of the wrong shape; the message of the parser is shown |
+| `contract: 1` is required | `contract` is missing or has another value |
+| Token value not accepted | Shown with the token, for example `tokens.radius` |
+| Required color missing | Shown with the token, for example `tokens.accent` |
+| Contrast below 3:1 | Between `primary` and `background` |
+| Text not accepted | `name`, `version`, `author` or `license` is too long, has leading or trailing spaces, or contains control characters |
+
+At startup, a selected theme that cannot be used is also written to the log as
+a warning.
+
+## Returning to an earlier release
+
+Releases up to 0.6.15 do not read theme files. With the name of a theme file
+in `Theme` they start and render the colors of the stylesheet. The protection
+of a configuration saved by a newer release, described under
+[returning to an earlier release](theme-colors.md#returning-to-an-earlier-release),
+applies in the same way.
+
+## Verification
+
+`go test ./config/model ./config/define ./internal/settings/theme ./internal/resources/assets ./internal/server -run 'Theme' -count=1`
+covers the format, the files that are not used, selection, following the file
+of the selected theme, the favicon and the rendered pages, including that
+texts and names from the directory are shown as text.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/files.browser.cjs`
+selects a theme file in Chromium, edits it, breaks it, removes it and puts it
+back, and checks the pages after each step.
