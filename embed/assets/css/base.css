@@ -5,13 +5,31 @@
 }
 
 body {
+  /* The three colors of a theme. The page sets them in its style attribute;
+     these values apply when it does not. */
   --color-background: #2d3436;
   --color-primary: #effbff;
   --color-accent: #ffa500;
+
+  /* Style tokens, documented in docs/theme-tokens.md. Stylesheets use these
+     names. The first three are the theme colors; the others derive from them,
+     so three colors make a complete theme. */
+  --flare-background: var(--color-background);
+  --flare-primary: var(--color-primary);
+  --flare-accent: var(--color-accent);
+  --flare-icon: var(--flare-primary);
+  --flare-muted: var(--flare-accent);
+  --flare-border: var(--flare-accent);
+  --flare-focus: var(--flare-accent);
+  --flare-inverse: var(--flare-background);
+  --flare-hover: rgba(0, 0, 0, 0.2);
+  --flare-radius: 4px;
+  --flare-font-family: Roboto, sans-serif;
+
   --spacing-ui: 10px;
-  background-color: var(--color-background);
+  background-color: var(--flare-background);
   transition: background-color 0.3s;
-  font-family: Roboto, sans-serif;
+  font-family: var(--flare-font-family);
   font-size: 14px;
 }
 
@@ -24,7 +42,7 @@ div,
 p,
 a,
 span {
-  color: var(--color-primary);
+  color: var(--flare-primary);
 }
 
 a {

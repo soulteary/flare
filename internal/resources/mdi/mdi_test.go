@@ -306,7 +306,7 @@ func TestIconFileIsIndependentOfTheme(t *testing.T) {
 func TestGetIconByName_ReferencesIconFile(t *testing.T) {
 	_ = newIconTestRouter(t, false)
 	markup := GetIconByName("serverNetwork")
-	pattern := regexp.MustCompile(`^<svg class="icon-ref" viewBox="0 0 24 24" width="68" height="68" style="fill: var\(--color-primary\);" aria-hidden="true"><use href="/assets/mdi/servernetwork\.svg\?v=[0-9a-f]{64}#i"></use></svg>$`)
+	pattern := regexp.MustCompile(`^<svg class="icon-ref" viewBox="0 0 24 24" width="68" height="68" style="fill: var\(--flare-icon\);" aria-hidden="true"><use href="/assets/mdi/servernetwork\.svg\?v=[0-9a-f]{64}#i"></use></svg>$`)
 	if !pattern.MatchString(markup) {
 		t.Fatalf("unexpected reference markup: %q", markup)
 	}
@@ -320,7 +320,7 @@ func TestGetIconByName_ReferencesIconFile(t *testing.T) {
 func TestGetIconByName_MinimumRequest(t *testing.T) {
 	e := newIconTestRouter(t, true)
 	markup := GetIconByName("serverNetwork")
-	if !strings.HasPrefix(markup, "<svg ") || !strings.Contains(markup, "fill: var(--color-primary);") || strings.Contains(markup, "<img") {
+	if !strings.HasPrefix(markup, "<svg ") || !strings.Contains(markup, "fill: var(--flare-icon);") || strings.Contains(markup, "<img") {
 		t.Fatalf("minimum-request mode must inline a theme-aware SVG, got %q", markup)
 	}
 	if again := GetIconByName("serverNetwork"); again != markup {

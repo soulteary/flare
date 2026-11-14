@@ -106,7 +106,7 @@ func TestCustomThemeColorsHTTP(t *testing.T) {
 	// color through the page's variable; the icon file itself carries no color.
 	home := get("/")
 	require.Contains(t, home, customThemeStyle)
-	icon := regexp.MustCompile(`style="fill: var\(--color-primary\);" aria-hidden="true"><use href="(/assets/mdi/github\.svg)\?v=[0-9a-f]{64}#i">`).FindStringSubmatch(home)
+	icon := regexp.MustCompile(`style="fill: var\(--flare-icon\);" aria-hidden="true"><use href="(/assets/mdi/github\.svg)\?v=[0-9a-f]{64}#i">`).FindStringSubmatch(home)
 	require.NotNil(t, icon, "home page has no icon that follows the custom theme")
 	require.NotContains(t, get(icon[1]), "fill")
 

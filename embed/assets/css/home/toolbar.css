@@ -23,7 +23,7 @@
 }
 
 #btn-open-settings svg {
-  color: var(--color-primary);
+  color: var(--flare-primary);
   width: 90%;
   margin-top: 2px;
 }
@@ -45,7 +45,7 @@
 }
 
 #btn-open-help svg {
-  color: var(--color-primary);
+  color: var(--flare-primary);
   width: 90%;
   margin-top: 2px;
 }
@@ -60,7 +60,7 @@
 .toolbar-btn-bg{
   width: 35px;
   height: 35px;
-  background-color: var(--color-accent);
+  background-color: var(--flare-accent);
   border-radius: 50%;
   display: block;
   -webkit-justify-content: center;

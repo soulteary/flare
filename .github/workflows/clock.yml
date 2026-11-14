@@ -124,6 +124,10 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/mdi/icons.browser.cjs
+      - name: Style token browser acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/theme/tokens.browser.cjs
       - name: Minimal scratch-container timezone acceptance
         shell: bash
         run: |

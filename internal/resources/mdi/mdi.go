@@ -143,7 +143,7 @@ func GetIconByName(name string) string {
 		return markup
 	}
 	if key.inline {
-		markup = `<svg viewBox="0 0 24 24"><path d="` + icon + `" style="fill: var(--color-primary);"></path></svg>`
+		markup = `<svg viewBox="0 0 24 24"><path d="` + icon + `" style="fill: var(--flare-icon);"></path></svg>`
 	} else {
 		// The file carries no color and does not depend on the theme: the page
 		// references its path and fills it with the theme color, so a theme or
@@ -157,7 +157,7 @@ func GetIconByName(name string) string {
 		// The version bypasses a previously cached file after an icon-library
 		// update. The query is not an access-control or immutable guarantee.
 		version := fmt.Sprintf("%x", sha256.Sum256([]byte(content)))
-		markup = `<svg class="icon-ref" viewBox="0 0 24 24" width="68" height="68" style="fill: var(--color-primary);" aria-hidden="true"><use href="/` + svgFile + `?v=` + version + `#` + iconFragment + `"></use></svg>`
+		markup = `<svg class="icon-ref" viewBox="0 0 24 24" width="68" height="68" style="fill: var(--flare-icon);" aria-hidden="true"><use href="/` + svgFile + `?v=` + version + `#` + iconFragment + `"></use></svg>`
 	}
 	// Do not retain a borrowed request string from a caller using Fiber's
 	// mutable request mode. Canonical hot lookups need no additional copy.

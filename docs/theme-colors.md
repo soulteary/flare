@@ -10,6 +10,8 @@ the home page, the application and bookmark pages, the help page and the
 settings pages. The editor, the import/export page and the sign-in page keep
 their own colors.
 
+Stylesheets read the three colors through [style tokens](theme-tokens.md).
+
 ## Custom colors
 
 The **Custom colors** form on the same page takes one color for each of the
