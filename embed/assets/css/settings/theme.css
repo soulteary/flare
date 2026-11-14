@@ -17,7 +17,7 @@
 .theme-groups .theme .theme-title {
   text-transform: capitalize;
   margin: 8px 0;
-  color: var(--color-primary);
+  color: var(--flare-primary);
   cursor: default;
 }
 
@@ -94,8 +94,8 @@
   line-height: 1.8;
   margin: 0 0 16px;
   padding: 12px 14px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-background));
+  border-radius: calc(var(--flare-radius) * 2);
+  background: color-mix(in srgb, var(--flare-primary) 6%, var(--flare-background));
   overflow-wrap: anywhere;
 }
 
@@ -117,7 +117,7 @@
   height: 36px;
   padding: 0;
   border: 1px solid silver;
-  border-radius: 4px;
+  border-radius: var(--flare-radius);
   background: none;
   cursor: pointer;
 }

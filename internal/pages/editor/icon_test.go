@@ -57,7 +57,7 @@ func TestEditorIconHTTP(t *testing.T) {
 			require.Equal(t, "http://www.w3.org/2000/svg", svg.XMLName.Space)
 			require.NotEmpty(t, svg.Path.Data)
 			require.Contains(t, svg.Path.Style, "fill:#123456;")
-			require.NotContains(t, first.Body.String(), "var(--color-primary)")
+			require.NotContains(t, first.Body.String(), "var(--")
 			lowercase := request("servernetwork", "")
 			require.Equal(t, http.StatusOK, lowercase.Code)
 			require.Equal(t, first.Body.String(), lowercase.Body.String())

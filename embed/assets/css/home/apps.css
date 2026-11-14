@@ -17,8 +17,8 @@
 }
 
 #container-apps .apps-container .app-item:hover {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
+  background-color: var(--flare-hover);
+  border-radius: var(--flare-radius);
   transition: all .1s;
 }
 
@@ -31,7 +31,7 @@
 
 #container-apps .apps-container .app-icon * {
   width: 90%;
-  color: var(--color-primary);
+  color: var(--flare-icon);
 }
 
 /* 非inline模式 */
@@ -43,7 +43,7 @@
   display: block;
   width: 32px;
   height: 32px;
-  color: var(--color-primary);
+  color: var(--flare-icon);
 }
 
 /* Forced colors replace the page background, which can leave a theme color
@@ -74,7 +74,7 @@
 }
 
 #container-apps .apps-container .app-desc {
-  color: var(--color-accent);
+  color: var(--flare-muted);
   font-weight: 400;
   font-size: 0.8em;
   opacity: 1;
