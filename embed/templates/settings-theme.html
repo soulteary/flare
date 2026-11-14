@@ -16,7 +16,8 @@
                     <div class="pull-left theme-color color-accent" style="background-color: {{.Colors.Accent}};"></div>
                 </div>
                 <p class="theme-title">{{.Name}}</p>
-                <a class="theme-preview-link" href="/?theme-preview={{.Name}}">{{ T $.Locale "theme_preview" }}</a>
+                <a class="theme-card-link theme-preview-link" href="/?theme-preview={{.Name}}">{{ T $.Locale "theme_preview" }}</a>
+                <a class="theme-card-link theme-export-link" href="{{ $.ThemeExportPath }}?name={{.Name}}">{{ T $.Locale "theme_export" }}</a>
             </div>
             {{end}}
             {{ if .ThemeCustom }}
@@ -31,7 +32,8 @@
                     <div class="pull-left theme-color color-accent" style="background-color: {{.ThemeCustom.Accent}};"></div>
                 </div>
                 <p class="theme-title">{{ T .Locale "theme_custom" }}</p>
-                <a class="theme-preview-link" href="/?theme-preview=custom">{{ T .Locale "theme_preview" }}</a>
+                <a class="theme-card-link theme-preview-link" href="/?theme-preview=custom">{{ T .Locale "theme_preview" }}</a>
+                <a class="theme-card-link theme-export-link" href="{{ .ThemeExportPath }}?name=custom">{{ T .Locale "theme_export" }}</a>
             </div>
             {{ end }}
         </div>
@@ -55,7 +57,8 @@
                 <p class="theme-title">{{ .Title }}</p>
                 {{ if .About }}<p class="theme-about">{{ .About }}</p>{{ end }}
                 {{ if .Layout }}<p class="theme-about">{{ .Layout }}</p>{{ end }}
-                <a class="theme-preview-link" href="/?theme-preview={{ .Name }}">{{ T $.Locale "theme_preview" }}</a>
+                <a class="theme-card-link theme-preview-link" href="/?theme-preview={{ .Name }}">{{ T $.Locale "theme_preview" }}</a>
+                <a class="theme-card-link theme-export-link" href="{{ $.ThemeExportPath }}?name={{ .Name }}">{{ T $.Locale "theme_export" }}</a>
             </div>
             {{ end }}
         </div>
@@ -67,6 +70,23 @@
             {{ end }}
         </ul>
         {{ end }}
+    </form>
+    <form method="POST" action="{{ .SettingPages.Theme.Path }}" enctype="multipart/form-data" class="theme-import-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
+        <input type="hidden" name="action" value="{{ .ThemeImportAction }}">
+        <h2>{{ T .Locale "theme_import" }}</h2>
+        {{ if .ThemeImportRefused }}<p class="theme-notice" role="alert">{{ .ThemeImportRefused }}</p>{{ end }}
+        {{ if .ThemeImported }}<p class="theme-notice" role="status">{{ .ThemeImported }}</p>{{ end }}
+        <p class="theme-help">{{ T .Locale "theme_import_help" }}</p>
+        <div class="form-group">
+            <label for="theme-import-file">{{ T .Locale "theme_import_file" }}</label>
+            <input type="file" id="theme-import-file" name="theme-file" accept=".yml">
+        </div>
+        <div class="form-group">
+            <label class="theme-import-replace"><input type="checkbox" name="replace" value="1"> {{ T .Locale "theme_import_replace" }}</label>
+        </div>
+        <div class="form-group">
+            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_import_submit" }}" />
+        </div>
     </form>
     {{ if .ThemeModeChoice }}
     <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-mode-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}

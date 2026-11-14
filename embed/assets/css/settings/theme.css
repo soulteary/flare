@@ -21,7 +21,7 @@
   cursor: default;
 }
 
-.theme-groups .theme .theme-preview-link {
+.theme-groups .theme .theme-card-link {
   display: inline-block;
   margin: -4px 0 10px;
   font-size: 12px;
@@ -90,8 +90,32 @@
 
 .theme-custom-form,
 .theme-mode-form,
+.theme-import-form,
 .theme-files-title {
   margin-top: 28px;
+}
+
+/* The two links of a card stand next to each other. */
+.theme-groups .theme .theme-card-link + .theme-card-link {
+  margin-left: 10px;
+}
+
+.theme-import-form input[type="file"] {
+  max-width: 100%;
+  color: var(--flare-primary);
+  font: inherit;
+}
+
+.theme-import-form .theme-import-replace {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  cursor: pointer;
+}
+
+.theme-import-form .theme-import-replace input {
+  margin: 0;
 }
 
 .setting-group-container .theme-help {

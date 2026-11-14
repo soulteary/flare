@@ -2,6 +2,7 @@ package theme
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"sort"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/auth"
+	"github.com/soulteary/flare/internal/formvalue"
 	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/pool"
 	"github.com/soulteary/flare/internal/settings"
@@ -25,11 +27,21 @@ import (
 const (
 	actionSaveCustom = "save-custom"
 	actionSaveMode   = "save-mode"
+	// actionImport is submitted by the form that uploads a theme file, in
+	// the field importField. The box importReplace allows replacing a theme
+	// file of the same name.
+	actionImport  = "import"
+	importField   = "theme-file"
+	importReplace = "replace"
 )
+
+// exportPath is where a theme is handed out as a theme file, by its name.
+const exportPath = "/export"
 
 func RegisterRouting(e *fiber.App) {
 	e.Get(define.SettingPages.Theme.Path, auth.AuthRequired, pageTheme)
 	e.Post(define.SettingPages.Theme.Path, auth.AuthRequired, updateThemes)
+	e.Get(define.SettingPages.Theme.Path+exportPath, auth.AuthRequired, exportTheme)
 }
 
 var updateMu sync.Mutex
@@ -57,6 +69,9 @@ func updateThemes(c fiber.Ctx) error {
 			Accent:     strings.Clone(body.Accent),
 		}
 		return updateCustomPalette(c, palette.Normalized())
+	}
+	if body.Action == actionImport {
+		return importTheme(c, formvalue.Has(c, importReplace))
 	}
 	if body.Action == actionSaveMode {
 		// The mode is one of three constants once it is accepted, so nothing
@@ -132,6 +147,103 @@ func updateThemeMode(c fiber.Ctx, submitted string) error {
 	return renderTheme(c, http.StatusOK, themeNotice{modeSaved: true})
 }
 
+// importTheme stores an uploaded theme file in the themes directory. The
+// name of the theme is the name of the uploaded file. The file is checked
+// like the files of the directory, and it is not selected by being stored.
+// A refusal is shown on the page with its reason, and nothing is written.
+func importTheme(c fiber.Ctx, replace bool) error {
+	locale := settingsLocale()
+	refuse := func(status int, text string) error {
+		return renderTheme(c, status, themeNotice{importRefused: text})
+	}
+	header, err := c.FormFile(importField)
+	if err != nil || header.Filename == "" {
+		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_missing"))
+	}
+	// A browser may send the path the file has on the device it comes from.
+	// Only what follows the last separator of either kind is the name.
+	filename := header.Filename
+	if separator := strings.LastIndexAny(filename, `/\`); separator >= 0 {
+		filename = filename[separator+1:]
+	}
+	name, isThemeFile := strings.CutSuffix(filename, ".yml")
+	if !isThemeFile {
+		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_name"))
+	}
+	if header.Size > define.MaximumThemeFileBytes {
+		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_size"))
+	}
+	upload, err := header.Open()
+	if err != nil {
+		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_missing"))
+	}
+	raw, err := io.ReadAll(io.LimitReader(upload, define.MaximumThemeFileBytes+1))
+	_ = upload.Close()
+	if err != nil {
+		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_missing"))
+	}
+	// The name is kept beyond the request, in the list of themes.
+	name = strings.Clone(name)
+	var stored error
+	if done, err := commitThemeChange(c, func() error { stored = define.StoreUserTheme(name, raw, replace); return nil }); done {
+		return err
+	}
+	var rejection *model.ThemeFileError
+	switch {
+	case stored == nil:
+		return renderTheme(c, http.StatusOK, themeNotice{imported: name})
+	case errors.Is(stored, define.ErrThemeStoreName):
+		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_name"))
+	case errors.Is(stored, define.ErrThemeStoreSize):
+		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_size"))
+	case errors.Is(stored, define.ErrThemeStoreExists):
+		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_exists"))
+	case errors.Is(stored, define.ErrThemeStoreFull):
+		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_full"))
+	case errors.As(stored, &rejection):
+		// The reason is worded as in the list of files that are not used,
+		// after the statement every refusal makes.
+		problem := define.ThemeFileProblem(stored)
+		text := i18n.Format(locale, "theme_import_rejected", map[string]any{"reason": i18n.T(locale, "theme_file_problem_"+problem.Reason)})
+		if problem.Subject != "" {
+			text += " " + plainText(problem.Subject, maximumShownDetail)
+		}
+		return refuse(http.StatusBadRequest, text)
+	default:
+		return refuse(http.StatusInternalServerError, i18n.T(locale, "theme_import_write"))
+	}
+}
+
+// exportTheme hands a theme out as a theme file to download: a file of the
+// themes directory as it is, the file a bundled theme is defined by, or the
+// custom colors written as a file.
+func exportTheme(c fiber.Ctx) error {
+	if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
+		return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
+	}
+	// The directory is read first, so that the file is the one there now.
+	define.ReloadUserThemes()
+	filename, raw, known := define.ExportTheme(c.Query("name"))
+	if !known {
+		return c.Status(http.StatusNotFound).SendString("Unknown theme")
+	}
+	// The file name consists of a theme name and fixed text.
+	c.Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+	c.Set("Cache-Control", "no-store")
+	c.Set("X-Content-Type-Options", "nosniff")
+	c.Set("Content-Type", "application/yaml; charset=utf-8")
+	return c.Status(http.StatusOK).Send(raw)
+}
+
+// settingsLocale returns the interface language of the settings pages.
+func settingsLocale() string {
+	options, err := data.GetAllSettingsOptions()
+	if err != nil || options.Locale == "" {
+		return "zh"
+	}
+	return options.Locale
+}
+
 // selectCustomPalette applies the palette stored in config.yml. The file is
 // the source of truth: it may have been edited since the palette was last
 // applied, and the selection has to match what the next start will read.
@@ -175,6 +287,10 @@ type themeNotice struct {
 	saved     bool
 	// modeSaved reports a stored setting for light and dark.
 	modeSaved bool
+	// imported names a theme file that was stored, and importRefused says
+	// why one was not.
+	imported      string
+	importRefused string
 }
 
 func pageTheme(c fiber.Ctx) error {
@@ -219,6 +335,12 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	m["ThemeModeChoice"] = choice
 	m["ThemeModeAction"] = actionSaveMode
 	m["ThemeModeSaved"] = notice.modeSaved
+	m["ThemeExportPath"] = define.SettingPages.Theme.Path + exportPath
+	m["ThemeImportAction"] = actionImport
+	m["ThemeImportRefused"] = notice.importRefused
+	if notice.imported != "" {
+		m["ThemeImported"] = i18n.Format(locale, "theme_import_done", map[string]any{"name": define.ThemeTitle(notice.imported, locale)})
+	}
 	if selected, _ := define.ThemeSnapshot(); selected != "" && !define.IsKnownTheme(selected) {
 		m["ThemeUnavailable"] = i18n.Format(locale, "theme_unavailable", map[string]any{"name": plainText(selected, maximumShownName)})
 	}

@@ -1,13 +1,22 @@
 package theme
 
 import (
+	"bytes"
+	"errors"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"net/http/httptest"
+	"net/textproto"
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
@@ -319,5 +328,257 @@ func TestThemeFileCardsShowBothSetsOfColors(t *testing.T) {
 	}
 	if cards[3].Colors != base || cards[3].Dark != nil {
 		t.Errorf("same-colors: %+v", cards[3])
+	}
+}
+
+// importRequest builds the upload the import form sends: the action, the
+// file under the name a browser gives it, and the box if it is ticked.
+func importRequest(t *testing.T, filename, content string, replace bool) *http.Request {
+	t.Helper()
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	if err := writer.WriteField("action", actionImport); err != nil {
+		t.Fatal(err)
+	}
+	if replace {
+		if err := writer.WriteField(importReplace, "1"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if filename != "" {
+		// Written by hand: the helper of the standard library would clean
+		// the name, and a browser is free to send what it likes.
+		header := textproto.MIMEHeader{}
+		header.Set("Content-Disposition", `form-data; name="`+importField+`"; filename="`+strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(filename)+`"`)
+		header.Set("Content-Type", "application/octet-stream")
+		part, err := writer.CreatePart(header)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err = part.Write([]byte(content)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, define.SettingPages.Theme.Path, &body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	return req
+}
+
+func uploadTheme(t *testing.T, app *fiber.App, filename, content string, replace bool) int {
+	t.Helper()
+	res, err := app.Test(importRequest(t, filename, content, replace), fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = res.Body.Close()
+	return res.StatusCode
+}
+
+func storedThemeFiles(t *testing.T) []string {
+	t.Helper()
+	entries, err := os.ReadDir(define.UserThemeDirectory)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+	return names
+}
+
+func TestThemeFileIsImported(t *testing.T) {
+	app := isolateTheme(t)
+	t.Cleanup(func() { _ = os.RemoveAll(define.UserThemeDirectory) })
+	config, err := os.ReadFile("config.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The file is stored under its name, as it was sent, and listed. It is
+	// not selected, and config.yml is not written.
+	content := "# By hand.\n" + themeFileColors + "  radius: 10px\n"
+	if status := uploadTheme(t, app, "forest.yml", content, false); status != http.StatusOK {
+		t.Fatalf("import: %d", status)
+	}
+	stored, err := os.ReadFile(filepath.Join(define.UserThemeDirectory, "forest.yml"))
+	if err != nil || string(stored) != content {
+		t.Fatalf("stored %q %v", stored, err)
+	}
+	if !define.IsUserTheme("forest") {
+		t.Fatal("the imported theme is not in use")
+	}
+	if name, _ := define.ThemeSnapshot(); name != "blackboard" {
+		t.Fatalf("importing selected %q", name)
+	}
+	if raw, readErr := os.ReadFile("config.yml"); readErr != nil || string(raw) != string(config) {
+		t.Fatalf("config.yml changed: %q %v", raw, readErr)
+	}
+
+	// The same name again needs the box, and then replaces the file.
+	if status := uploadTheme(t, app, "forest.yml", themeFileColors, false); status != http.StatusConflict {
+		t.Fatalf("existing file: %d", status)
+	}
+	if stored, _ = os.ReadFile(filepath.Join(define.UserThemeDirectory, "forest.yml")); string(stored) != content {
+		t.Fatalf("an import without the box replaced the file: %q", stored)
+	}
+	if status := uploadTheme(t, app, "forest.yml", themeFileColors, true); status != http.StatusOK {
+		t.Fatalf("replacement: %d", status)
+	}
+	if stored, _ = os.ReadFile(filepath.Join(define.UserThemeDirectory, "forest.yml")); string(stored) != themeFileColors {
+		t.Fatalf("stored after replacing: %q", stored)
+	}
+
+	// A browser may send the path the file has on its device. Only the
+	// name counts, and the file lands in the themes directory.
+	for sent, want := range map[string]string{
+		`C:\Users\someone\Desktop\from-windows.yml`: "from-windows.yml",
+		"/home/someone/themes/from-unix.yml":        "from-unix.yml",
+		"../../escaping.yml":                        "escaping.yml",
+		`..\..\backslashes.yml`:                     "backslashes.yml",
+	} {
+		if status := uploadTheme(t, app, sent, themeFileColors, false); status != http.StatusOK {
+			t.Errorf("%q: %d", sent, status)
+		}
+		if _, statErr := os.Stat(filepath.Join(define.UserThemeDirectory, want)); statErr != nil {
+			t.Errorf("%q was not stored as %s: %v", sent, want, statErr)
+		}
+	}
+	got := storedThemeFiles(t)
+	want := []string{"backslashes.yml", "escaping.yml", "forest.yml", "from-unix.yml", "from-windows.yml"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("themes directory: %v", got)
+	}
+	// Nothing was written beside the directory.
+	entries, err := os.ReadDir(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if entry.Name() != "config.yml" && entry.Name() != define.UserThemeDirectory {
+			t.Errorf("unexpected %q in the data directory", entry.Name())
+		}
+	}
+}
+
+func TestThemeFileImportRefusals(t *testing.T) {
+	app := isolateTheme(t)
+	t.Cleanup(func() { _ = os.RemoveAll(define.UserThemeDirectory) })
+	large := themeFileColors + "#" + strings.Repeat("x", define.MaximumThemeFileBytes)
+	for name, tc := range map[string]struct {
+		filename, content string
+		status            int
+	}{
+		"no file":                 {"", "", http.StatusBadRequest},
+		"other extension":         {"forest.yaml", themeFileColors, http.StatusBadRequest},
+		"no extension":            {"forest", themeFileColors, http.StatusBadRequest},
+		"extension in capitals":   {"forest.YML", themeFileColors, http.StatusBadRequest},
+		"two extensions":          {"forest.yml.txt", themeFileColors, http.StatusBadRequest},
+		"name in capitals":        {"Forest.yml", themeFileColors, http.StatusBadRequest},
+		"name with a space":       {"my forest.yml", themeFileColors, http.StatusBadRequest},
+		"hidden file":             {".forest.yml", themeFileColors, http.StatusBadRequest},
+		"only an extension":       {".yml", themeFileColors, http.StatusBadRequest},
+		"bundled theme":           {"blackboard.yml", themeFileColors, http.StatusBadRequest},
+		"custom colors":           {"custom.yml", themeFileColors, http.StatusBadRequest},
+		"long name":               {strings.Repeat("a", 33) + ".yml", themeFileColors, http.StatusBadRequest},
+		"too large":               {"forest.yml", large, http.StatusBadRequest},
+		"not a theme":             {"forest.yml", "<!doctype html><script>alert(1)</script>", http.StatusBadRequest},
+		"value that is not valid": {"forest.yml", themeFileColors + "  radius: 4em\n", http.StatusBadRequest},
+		"declaration in a value":  {"forest.yml", themeFileColors + "  font-family: \"x;background:url(//example.test/)\"\n", http.StatusBadRequest},
+		"empty file":              {"forest.yml", "", http.StatusBadRequest},
+	} {
+		if status := uploadTheme(t, app, tc.filename, tc.content, true); status != tc.status {
+			t.Errorf("%s: %d, want %d", name, status, tc.status)
+		}
+		if files := storedThemeFiles(t); len(files) != 0 {
+			t.Fatalf("%s: something was stored: %v", name, files)
+		}
+	}
+	if define.IsUserTheme("forest") {
+		t.Fatal("a refused file is in use")
+	}
+}
+
+func TestThemeIsExported(t *testing.T) {
+	app := isolateTheme(t)
+	t.Cleanup(func() { _ = os.RemoveAll(define.UserThemeDirectory) })
+	app.Get(define.SettingPages.Theme.Path+exportPath, exportTheme)
+	if err := os.Mkdir(define.UserThemeDirectory, 0700); err != nil {
+		t.Fatal(err)
+	}
+	content := "# By hand.\n" + themeFileColors + "  radius: 10px\n"
+	writeThemeFile(t, "forest.yml", content)
+	export := func(name string) (*http.Response, string) {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodGet, define.SettingPages.Theme.Path+exportPath+"?name="+url.QueryEscape(name), nil)
+		res, err := app.Test(req, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return res, string(body)
+	}
+
+	// A theme file written since the instance started is handed out as it is.
+	res, body := export("forest")
+	if res.StatusCode != http.StatusOK || body != content {
+		t.Fatalf("theme file: %d %q", res.StatusCode, body)
+	}
+	for header, want := range map[string]string{
+		"Content-Disposition":    `attachment; filename="forest.yml"`,
+		"Content-Type":           "application/yaml; charset=utf-8",
+		"Cache-Control":          "no-store",
+		"X-Content-Type-Options": "nosniff",
+	} {
+		if got := res.Header.Get(header); got != want {
+			t.Errorf("%s: %q, want %q", header, got, want)
+		}
+	}
+
+	// A bundled theme comes under a name it can be imported under.
+	res, body = export("tron")
+	if res.StatusCode != http.StatusOK || res.Header.Get("Content-Disposition") != `attachment; filename="tron-copy.yml"` || !strings.Contains(body, `"#242B33"`) {
+		t.Fatalf("bundled theme: %d %q %q", res.StatusCode, res.Header.Get("Content-Disposition"), body)
+	}
+	if status := uploadTheme(t, app, "tron-copy.yml", body, false); status != http.StatusOK {
+		t.Fatalf("importing the copy of a bundled theme: %d", status)
+	}
+
+	// The custom colors come as a file once there are any.
+	if res, _ = export(model.ThemeCustomName); res.StatusCode != http.StatusNotFound {
+		t.Fatalf("custom colors before any are stored: %d", res.StatusCode)
+	}
+	if status, page := postTheme(t, app, customForm("#10241b", "#e8f1e4", "#f2b84b")); status != http.StatusOK {
+		t.Fatalf("save: %d %s", status, page)
+	}
+	res, body = export(model.ThemeCustomName)
+	if res.StatusCode != http.StatusOK || res.Header.Get("Content-Disposition") != `attachment; filename="custom-colors.yml"` {
+		t.Fatalf("custom colors: %d %q", res.StatusCode, res.Header.Get("Content-Disposition"))
+	}
+	if status := uploadTheme(t, app, "custom-colors.yml", body, false); status != http.StatusOK {
+		t.Fatalf("importing the custom colors as a theme file: %d", status)
+	}
+
+	// Anything else is not found, and no other file is handed out.
+	if err := os.WriteFile("secret.yml", []byte("Secret: value\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"", "missing", "forest.yml", "../secret", "../config", "config", "Forest", "themes/forest", strings.Repeat("a", 4096)} {
+		if res, body = export(name); res.StatusCode != http.StatusNotFound || strings.Contains(body, "Secret") {
+			t.Errorf("%q: %d %q", name, res.StatusCode, body)
+		}
+		if res.Header.Get("Content-Disposition") != "" {
+			t.Errorf("%q: offered as a download", name)
+		}
 	}
 }
