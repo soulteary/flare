@@ -1,0 +1,5 @@
+contract: 1
+tokens:
+  background: "#242B33"
+  primary: "#EFFBFF"
+  accent: "#6EE2FF"
