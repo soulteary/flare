@@ -58,6 +58,7 @@ func defaultFlags() model.Flags {
 		EnableMinimumRequest:   env.EnableMinimumRequest,
 		EnableDeprecatedNotice: env.EnableDeprecatedNotice,
 		DisableCSP:             env.DisableCSP,
+		ThemeSafeMode:          env.ThemeSafeMode,
 		Visibility:             "DEFAULT",
 		DisableLoginMode:       true,
 		User:                   env.User,

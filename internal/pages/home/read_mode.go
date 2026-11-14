@@ -15,6 +15,29 @@ type settingsSnapshot struct {
 	// preview is the theme this one response is shown with instead of the
 	// selected theme, or empty.
 	preview string
+	// safeMode reports a response that is shown without the themes of the
+	// themes directory.
+	safeMode bool
+}
+
+// safeModeParameter asks for one response without the themes of the themes
+// directory: the page as it is when none of them has a say. It is honored
+// for the administrator only, like a preview, and needs no value.
+const safeModeParameter = "theme-safe-mode"
+
+// safeModeRequested reports whether the request asks for safe mode and may.
+func safeModeRequested(c fiber.Ctx) bool {
+	if _, asked := c.Queries()[safeModeParameter]; !asked {
+		return false
+	}
+	return auth.CheckUserIsLogin(c)
+}
+
+// requestSafeMode reports whether this response is shown in safe mode. It is
+// known once requestSettings has run.
+func requestSafeMode(c fiber.Ctx) bool {
+	snapshot, taken := c.Locals(requestSettingsKey{}).(settingsSnapshot)
+	return taken && snapshot.safeMode
 }
 
 // previewParameter names a theme to show one response with. It is honored
@@ -64,7 +87,10 @@ func requestSettings(c fiber.Ctx) (model.Application, error) {
 	// Homepage below this point, the body classes, the category navigation
 	// and the fragment cache key among them, takes that one result.
 	if snapshot.err == nil {
-		if snapshot.preview = previewedTheme(c); snapshot.preview != "" {
+		if snapshot.safeMode = safeModeRequested(c); snapshot.safeMode {
+			// Safe mode comes before a preview, and leaves the layout as the
+			// site has it: no theme changes it.
+		} else if snapshot.preview = previewedTheme(c); snapshot.preview != "" {
 			snapshot.value.Homepage = define.HomepageInEffectFor(snapshot.value, snapshot.preview)
 		} else {
 			snapshot.value.Homepage = define.HomepageInEffect(snapshot.value)

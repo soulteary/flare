@@ -34,6 +34,9 @@ var (
 	ErrThemeStoreSize = errors.New("the file is larger than a theme file can be")
 	// ErrThemeStoreWrite reports that the file could not be written.
 	ErrThemeStoreWrite = errors.New("the theme file could not be written")
+	// ErrThemeStoreSafeMode reports that the themes directory is left alone
+	// because the instance runs in safe mode.
+	ErrThemeStoreSafeMode = errors.New("the themes directory is not used in safe mode")
 )
 
 // Suffixes of the file names offered for a download. A bundled theme and the
@@ -52,6 +55,9 @@ const (
 // file is written beside its place and moved into it, so a reader sees the
 // previous file or the new one.
 func StoreUserTheme(name string, raw []byte, replace bool) error {
+	if AppFlags.ThemeSafeMode {
+		return ErrThemeStoreSafeMode
+	}
 	if !isUserThemeName(name) {
 		return ErrThemeStoreName
 	}

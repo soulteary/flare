@@ -97,6 +97,27 @@ func GetPageTheme() PageTheme {
 	return PageTheme{BodyStyle: _CACHE_PAGE_BODY_THEME_NAME, Rules: _CACHE_PAGE_THEME_RULES, Stylesheet: _CACHE_PAGE_THEME_STYLESHEET}
 }
 
+// GetPageThemeWithoutDirectory returns what a page takes from the selected
+// theme when the themes of the themes directory are left out: the selected
+// theme if it is a bundled theme or the custom colors, and nothing if the
+// selection names a theme of the directory. Such a page has the colors of the
+// stylesheet of the application.
+func GetPageThemeWithoutDirectory() PageTheme {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	if isUserThemeName(ThemeCurrent) {
+		return PageTheme{}
+	}
+	return PageTheme{BodyStyle: _CACHE_PAGE_BODY_THEME_NAME, Rules: _CACHE_PAGE_THEME_RULES, Stylesheet: _CACHE_PAGE_THEME_STYLESHEET}
+}
+
+// IsThemeOfDirectory reports whether a name can only be that of a theme of
+// the themes directory: it is the form of a theme name and not the name of a
+// bundled theme or of the custom colors.
+func IsThemeOfDirectory(name string) bool {
+	return isUserThemeName(name)
+}
+
 // ThemeStylesheet returns the stylesheet of a theme by the name and the hash
 // of the address it is linked under. It reports false for anything else: a
 // name that is not a theme in use, a theme without a stylesheet, and a hash
@@ -438,6 +459,9 @@ func UpdatePagePalettes() {
 	applyTheme(theme)
 	selectedThemeStamp = stamp
 	definition, known := themeDefinition(theme)
+	if AppFlags.ThemeSafeMode {
+		logger.GetLogger().Warn("Theme safe mode is on: the themes directory is not read, and the bundled themes and custom colors work as always")
+	}
 	if !known && theme != "" {
 		logger.GetLogger().Warn("Theme is not a bundled theme and has no usable theme file; pages use the colors of the stylesheet", "theme", theme)
 	}

@@ -112,7 +112,8 @@ settings do not load it. It does not judge what a stylesheet does to the
 navigation pages. A stylesheet can hide, move and restyle everything on them,
 and with `content` it can show text of its own. A theme is therefore installed
 like the other content of an instance: by the administrator, from a source
-the administrator trusts.
+the administrator trusts. [Safe mode](theme-files.md#safe-mode) shows a page,
+or runs the instance, without the themes of the directory.
 
 ## What a stylesheet can rely on
 

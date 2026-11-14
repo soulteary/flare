@@ -38,8 +38,7 @@
             {{ end }}
         </div>
         <h2 class="theme-files-title">{{ T .Locale "theme_files" }}</h2>
-        <p class="theme-help">{{ T .Locale "theme_files_help" }}</p>
-        {{ if .ThemeFiles }}
+        <p class="theme-help">{{ T .Locale "theme_files_help" }}</p>{{ if .ThemeSafeMode }}<p class="theme-notice theme-safe-mode" role="status">{{ .ThemeSafeMode }}</p>{{ end }}{{ if .ThemeFiles }}
         <div class="theme-groups theme-groups-files">
             {{ range .ThemeFiles }}
             <div class="theme theme-file">

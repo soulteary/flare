@@ -32,6 +32,9 @@ const (
 	_KEY_DISABLE_CSP       = "disable_csp"
 	_KEY_DISABLE_CSP_SHORT = "c"
 
+	// _KEY_THEME_SAFE_MODE leaves the themes of the themes directory out.
+	_KEY_THEME_SAFE_MODE = "theme_safe_mode"
+
 	_KEY_COOKIE_NAME       = "cookie_name"
 	_KEY_COOKIE_NAME_SHORT = "k"
 

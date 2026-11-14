@@ -15,6 +15,7 @@ const (
 	DEFAULT_ENABLE_EDITOR            = true
 	DEFAULT_VISIBILITY               = "DEFAULT"
 	DEFAULT_DISABLE_CSP              = false
+	DEFAULT_THEME_SAFE_MODE          = false
 	// DEFAULT_ACCESS_LOG records failed requests while keeping successful access quiet.
 	DEFAULT_ACCESS_LOG = "errors"
 
@@ -37,6 +38,7 @@ func GetDefaultEnvVars() model.Envs {
 		EnableEditor:           DEFAULT_ENABLE_EDITOR,
 		Visibility:             DEFAULT_VISIBILITY,
 		DisableCSP:             DEFAULT_DISABLE_CSP,
+		ThemeSafeMode:          DEFAULT_THEME_SAFE_MODE,
 
 		User: DEFAULT_USER_NAME,
 		Pass: "",

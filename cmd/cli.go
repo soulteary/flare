@@ -44,6 +44,8 @@ func GetCliFlags() (*model.Flags, *flags.FlagSet) {
 	boolVarP(options, &cliFlags.EnableEditor, _KEY_ENABLE_EDITOR, _KEY_ENABLE_EDITOR_SHORT, define.DEFAULT_ENABLE_EDITOR, "启用编辑器")
 	// 禁用 CSP
 	boolVarP(options, &cliFlags.DisableCSP, _KEY_DISABLE_CSP, _KEY_DISABLE_CSP_SHORT, define.DEFAULT_DISABLE_CSP, "禁用CSP")
+	// 主题安全模式
+	boolVarP(options, &cliFlags.ThemeSafeMode, _KEY_THEME_SAFE_MODE, "", define.DEFAULT_THEME_SAFE_MODE, "主题安全模式：不读取 themes 目录里的主题")
 	// 其他
 	options.BoolVarP(&cliFlags.ShowVersion, "version", "v", false, "显示应用版本号")
 	options.BoolVarP(&cliFlags.ShowHelp, "help", "h", false, "显示帮助")
@@ -140,6 +142,7 @@ func parseCLI(baseFlags model.Flags) model.Flags {
 		baseFlags.DisableLoginMode = cliFlags.DisableLoginMode
 	}
 	baseFlags.DisableCSP = configutil.ResolveBoolPflag(fs, _KEY_DISABLE_CSP, "", baseFlags.DisableCSP)
+	baseFlags.ThemeSafeMode = configutil.ResolveBoolPflag(fs, _KEY_THEME_SAFE_MODE, "", baseFlags.ThemeSafeMode)
 
 	visibility := baseFlags.Visibility
 	if fs.Changed(_KEY_VISIBILITY) {

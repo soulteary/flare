@@ -230,9 +230,14 @@ func isThemeDirectory(root *os.Root, directory string) bool {
 }
 
 // scanUserThemes reads the themes directory. An instance without the
-// directory has no themes of its own; that is not an error.
+// directory has no themes of its own; that is not an error. In safe mode the
+// directory is not opened, so nothing in it can keep the instance from being
+// used: there are no themes of the directory and no remarks about it.
 func scanUserThemes() userThemeScan {
 	scan := userThemeScan{themes: map[string]model.Theme{}}
+	if AppFlags.ThemeSafeMode {
+		return scan
+	}
 	root, err := os.OpenRoot(UserThemeDirectory)
 	if err != nil {
 		return scan
