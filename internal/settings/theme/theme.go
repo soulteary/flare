@@ -410,6 +410,9 @@ type themeFileCard struct {
 	// Directory reports a theme that is a directory. Such a theme is not
 	// offered as a download of one file.
 	Directory bool
+	// Stylesheet reports a theme that brings a stylesheet, so that it is
+	// known before the theme is selected that it changes more than colors.
+	Stylesheet bool
 }
 
 func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
@@ -427,7 +430,8 @@ func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
 			About:  strings.Join(about, " · "),
 			Colors: theme.In(model.ThemeModeLight).Colors,
 			// The form of the theme decides what the card offers.
-			Directory: theme.Directory,
+			Directory:  theme.Directory,
+			Stylesheet: theme.Stylesheet != "",
 		}
 		if dark := theme.In(model.ThemeModeDark).Colors; dark != card.Colors {
 			card.Dark = &dark

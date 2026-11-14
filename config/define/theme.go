@@ -61,16 +61,30 @@ var _CACHE_PAGE_BODY_THEME_NAME template.CSS
 // style attribute when the device chooses between light and dark.
 var _CACHE_PAGE_THEME_RULES template.CSS
 
+// The address of the stylesheet the selected theme brings, or nothing.
+var _CACHE_PAGE_THEME_STYLESHEET string
+
+// The stylesheet of a theme is served under an address that holds the name of
+// the theme and a hash of the content. A page links the address of the
+// content it was rendered for, so a stored copy never stands for another
+// version, and a later step can serve other files of the theme beside it.
+const (
+	ThemeStylesheetRoute = "/theme/:name/:hash/" + userThemeStylesheet
+	themeStylesheetBase  = "/theme/"
+)
+
 // PageTheme is what a themed page takes from the selected theme, read at one
 // moment. A theme reaches the page in one of two ways. BodyStyle is the style
 // attribute of the body: the custom properties of the theme. Rules is the
 // content of a style element with the same properties for light and for dark,
 // each in a media query; it is used when the theme has different values for
 // the two and the site leaves the choice to the device. The one that is not
-// used is empty.
+// used is empty. Stylesheet is the address of the stylesheet the theme
+// brings, for the pages that take one, and empty for a theme without one.
 type PageTheme struct {
-	BodyStyle template.CSS
-	Rules     template.CSS
+	BodyStyle  template.CSS
+	Rules      template.CSS
+	Stylesheet string
 }
 
 // GetPageTheme returns the selected theme for one page. Every themed page
@@ -80,7 +94,31 @@ func GetPageTheme() PageTheme {
 	refreshSelectedTheme()
 	themeMu.RLock()
 	defer themeMu.RUnlock()
-	return PageTheme{BodyStyle: _CACHE_PAGE_BODY_THEME_NAME, Rules: _CACHE_PAGE_THEME_RULES}
+	return PageTheme{BodyStyle: _CACHE_PAGE_BODY_THEME_NAME, Rules: _CACHE_PAGE_THEME_RULES, Stylesheet: _CACHE_PAGE_THEME_STYLESHEET}
+}
+
+// ThemeStylesheet returns the stylesheet of a theme by the name and the hash
+// of the address it is linked under. It reports false for anything else: a
+// name that is not a theme in use, a theme without a stylesheet, and a hash
+// of content the theme no longer has.
+func ThemeStylesheet(name, hash string) (string, bool) {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	theme, known := userThemeState.themes[name]
+	if !known || theme.Stylesheet == "" || theme.StylesheetHash != hash {
+		return "", false
+	}
+	return theme.Stylesheet, true
+}
+
+// themeStylesheetAddress returns the address a theme's stylesheet is served
+// at. The name of a theme of the directory and the hash are safe to write
+// into an address as they are.
+func themeStylesheetAddress(theme model.Theme) string {
+	if theme.Stylesheet == "" {
+		return ""
+	}
+	return themeStylesheetBase + theme.Name + "/" + theme.StylesheetHash + "/" + userThemeStylesheet
 }
 
 // ThemeTitle returns the name a theme file gives itself in an interface
@@ -113,12 +151,15 @@ func GetPageThemeFor(name string) (PageTheme, bool) {
 // dark: into the style attribute, or as rules when the device chooses.
 func pageThemeOf(theme model.Theme, mode string) PageTheme {
 	shown, dark, deviceChooses := themeInMode(theme, mode)
+	page := PageTheme{Stylesheet: themeStylesheetAddress(theme)}
 	if deviceChooses {
 		// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate.
-		return PageTheme{Rules: template.CSS(themeRules(shown, dark))}
+		page.Rules = template.CSS(themeRules(shown, dark))
+		return page
 	}
 	// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate or from the custom palette, which is stored only after Palette.Validate accepted it.
-	return PageTheme{BodyStyle: template.CSS(themeStyle(shown))}
+	page.BodyStyle = template.CSS(themeStyle(shown))
+	return page
 }
 
 // GetAppBodyStyle returns the style attribute of the page body for the
@@ -322,9 +363,11 @@ func applyTheme(theme string) {
 	ThemePrimaryColor = themePrimaryColor(theme)
 	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor
 	_CACHE_PAGE_BODY_THEME_NAME, _CACHE_PAGE_THEME_RULES = emptyPageBodyStyle, emptyPageBodyStyle
+	_CACHE_PAGE_THEME_STYLESHEET = ""
 	if definition, known := themeDefinition(theme); known {
 		page := pageThemeOf(definition, themeMode)
 		_CACHE_PAGE_BODY_THEME_NAME, _CACHE_PAGE_THEME_RULES = page.BodyStyle, page.Rules
+		_CACHE_PAGE_THEME_STYLESHEET = page.Stylesheet
 	}
 }
 

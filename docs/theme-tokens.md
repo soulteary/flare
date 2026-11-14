@@ -9,7 +9,9 @@ value, for example the color of a border, instead of the value.
 
 The names and meanings in the table are stable: a stylesheet or a footer that
 uses them keeps working across releases. Element ids, class names and the
-nesting of the pages are not part of this promise and can change.
+nesting of the pages are not part of this promise and can change, apart from
+the few names listed for
+[theme stylesheets](theme-stylesheets.md#what-a-stylesheet-can-rely-on).
 
 ## Tokens
 

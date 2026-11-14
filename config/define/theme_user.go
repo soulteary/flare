@@ -1,6 +1,8 @@
 package define
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"io"
 	"io/fs"
@@ -24,6 +26,8 @@ const (
 	userThemeExtension = ".yml"
 	// userThemeManifest is the theme file of a theme that is a directory.
 	userThemeManifest = "theme.yml"
+	// userThemeStylesheet is the stylesheet such a theme can bring.
+	userThemeStylesheet = "theme.css"
 	// MaximumUserThemeFiles is the number of entries of the themes directory
 	// looked at, in the order of their names: theme files, directories and
 	// links. Entries after them are neither read nor reported.
@@ -49,6 +53,14 @@ const (
 	ThemeProblemColor     = "color"
 	ThemeProblemContrast  = "contrast"
 	ThemeProblemText      = "text"
+	// Reasons the stylesheet of a theme is not accepted. The theme is then
+	// not in use: it is not applied without its stylesheet.
+	ThemeProblemStyleSize      = "style_size"
+	ThemeProblemStyleEncoding  = "style_encoding"
+	ThemeProblemStyleURL       = "style_url"
+	ThemeProblemStyleRule      = "style_rule"
+	ThemeProblemStyleFunction  = "style_function"
+	ThemeProblemStyleCharacter = "style_character"
 )
 
 // ThemeProblem is a file in the themes directory that is not in use. File is
@@ -90,11 +102,12 @@ func statThemeFile(path string) themeFileStamp {
 	return themeFileStamp{modTime: info.ModTime(), size: info.Size(), exists: true}
 }
 
-// themeStamp is the state of the two files a theme of one name can be read
-// from: the file of that name, and theme.yml in the directory of that name.
-// Both are watched, because each can take the place of the other.
+// themeStamp is the state of the files a theme of one name can be read from:
+// the file of that name, and theme.yml in the directory of that name with the
+// stylesheet beside it. Both forms are watched, because each can take the
+// place of the other.
 type themeStamp struct {
-	file, manifest themeFileStamp
+	file, manifest, stylesheet themeFileStamp
 }
 
 // statTheme returns the state of the files a theme name is read from. A name
@@ -103,15 +116,22 @@ func statTheme(name string) themeStamp {
 	if !isUserThemeName(name) {
 		return themeStamp{}
 	}
-	return themeStamp{
+	stamp := themeStamp{
 		file:     statThemeFile(filepath.Join(UserThemeDirectory, name+userThemeExtension)),
 		manifest: statThemeFile(filepath.Join(UserThemeDirectory, name, userThemeManifest)),
 	}
+	// A stylesheet belongs to a theme that is a directory; beside no
+	// theme.yml it is not read.
+	if stamp.manifest.exists {
+		stamp.stylesheet = statThemeFile(filepath.Join(UserThemeDirectory, name, userThemeStylesheet))
+	}
+	return stamp
 }
 
-// current reports whether both files are still in the state they were read at.
+// current reports whether the files are still in the state they were read at.
 func (stamp themeStamp) current(now themeStamp, clock time.Time) bool {
-	return stamp.file.current(now.file, clock) && stamp.manifest.current(now.manifest, clock)
+	return stamp.file.current(now.file, clock) && stamp.manifest.current(now.manifest, clock) &&
+		stamp.stylesheet.current(now.stylesheet, clock)
 }
 
 // current reports whether a file is still in the state it was read at.
@@ -320,46 +340,106 @@ func (scan *userThemeScan) readTheme(root *os.Root, name, file, shown string, di
 	}
 	definition := theme.Theme(name)
 	definition.Directory = directory
+	if directory {
+		// A theme is used as a whole: with a stylesheet that is not
+		// accepted it is not applied without it.
+		stylesheet, rejected := readThemeStylesheet(root, name)
+		if rejected != nil {
+			rejected.File = name + "/" + userThemeStylesheet
+			scan.problems = append(scan.problems, *rejected)
+			return
+		}
+		if stylesheet != "" {
+			sum := sha256.Sum256([]byte(stylesheet))
+			definition.Stylesheet, definition.StylesheetHash = stylesheet, hex.EncodeToString(sum[:8])
+		}
+	}
 	scan.themes[name] = definition
 	scan.order = append(scan.order, name)
 }
 
-// readUserTheme reads one theme file. A theme file is a regular file of the
-// directory: a link is reported instead of followed. The file is examined
-// again once it is open, and no more than the size limit is read from it,
-// because the entry can be replaced between the two steps.
-func readUserTheme(root *os.Root, file string) (model.ThemeFile, model.ThemeFileUnused, *ThemeProblem) {
-	problem := func(reason string) (model.ThemeFile, model.ThemeFileUnused, *ThemeProblem) {
-		return model.ThemeFile{}, model.ThemeFileUnused{}, &ThemeProblem{Reason: reason}
+// readThemeStylesheet reads the stylesheet of a theme that is a directory. A
+// theme without a theme.css, or with an empty one, has no stylesheet. The
+// file is read with the care of a theme file, and checked: a stylesheet of a
+// theme loads nothing.
+func readThemeStylesheet(root *os.Root, directory string) (string, *ThemeProblem) {
+	file := filepath.Join(directory, userThemeStylesheet)
+	if _, err := root.Lstat(file); errors.Is(err, fs.ErrNotExist) {
+		return "", nil
 	}
+	raw, reason := readThemeDirectoryFile(root, file, model.MaximumThemeStylesheetBytes)
+	switch reason {
+	case "":
+	case ThemeProblemSize:
+		return "", &ThemeProblem{Reason: ThemeProblemStyleSize}
+	default:
+		return "", &ThemeProblem{Reason: reason}
+	}
+	if err := model.CheckThemeStylesheet(raw); err != nil {
+		rejected := ThemeProblem{Reason: ThemeProblemStyleEncoding}
+		var rejection *model.ThemeStyleError
+		if errors.As(err, &rejection) {
+			rejected.Subject = rejection.Subject()
+		}
+		switch {
+		case errors.Is(err, model.ErrThemeStyleURL):
+			rejected.Reason = ThemeProblemStyleURL
+		case errors.Is(err, model.ErrThemeStyleRule):
+			rejected.Reason = ThemeProblemStyleRule
+		case errors.Is(err, model.ErrThemeStyleFunction):
+			rejected.Reason = ThemeProblemStyleFunction
+		case errors.Is(err, model.ErrThemeStyleCharacter):
+			rejected.Reason = ThemeProblemStyleCharacter
+		}
+		return "", &rejected
+	}
+	return string(raw), nil
+}
+
+// readThemeDirectoryFile reads a file of the themes directory up to a size.
+// Such a file is a regular file: a link is reported instead of followed. The
+// file is examined again once it is open, and no more than the limit is read
+// from it, because the entry can be replaced between the two steps. Where the
+// file is not read, the second result is the reason: that it cannot be read,
+// that it is not a regular file, or that it is too large.
+func readThemeDirectoryFile(root *os.Root, file string, limit int) ([]byte, string) {
 	entry, err := root.Lstat(file)
 	if err != nil {
-		return problem(ThemeProblemRead)
+		return nil, ThemeProblemRead
 	}
 	if !entry.Mode().IsRegular() {
-		return problem(ThemeProblemType)
+		return nil, ThemeProblemType
 	}
 	handle, err := root.Open(file)
 	if err != nil {
-		return problem(ThemeProblemRead)
+		return nil, ThemeProblemRead
 	}
 	defer handle.Close()
 	opened, err := handle.Stat()
 	if err != nil {
-		return problem(ThemeProblemRead)
+		return nil, ThemeProblemRead
 	}
 	if !opened.Mode().IsRegular() {
-		return problem(ThemeProblemType)
+		return nil, ThemeProblemType
 	}
-	if opened.Size() > MaximumThemeFileBytes {
-		return problem(ThemeProblemSize)
+	if opened.Size() > int64(limit) {
+		return nil, ThemeProblemSize
 	}
-	raw, err := io.ReadAll(io.LimitReader(handle, MaximumThemeFileBytes+1))
+	raw, err := io.ReadAll(io.LimitReader(handle, int64(limit)+1))
 	if err != nil {
-		return problem(ThemeProblemRead)
+		return nil, ThemeProblemRead
 	}
-	if len(raw) > MaximumThemeFileBytes {
-		return problem(ThemeProblemSize)
+	if len(raw) > limit {
+		return nil, ThemeProblemSize
+	}
+	return raw, ""
+}
+
+// readUserTheme reads one theme file.
+func readUserTheme(root *os.Root, file string) (model.ThemeFile, model.ThemeFileUnused, *ThemeProblem) {
+	raw, reason := readThemeDirectoryFile(root, file, MaximumThemeFileBytes)
+	if reason != "" {
+		return model.ThemeFile{}, model.ThemeFileUnused{}, &ThemeProblem{Reason: reason}
 	}
 	theme, unused, err := model.ReadThemeFile(raw)
 	if err != nil {

@@ -31,8 +31,9 @@ func TestThemeDirectoryIsRead(t *testing.T) {
 	userThemeDirectory(t, "blackboard")
 	writeThemeDirectory(t, "zelda", userThemeColors+"  radius: 10px\nname:\n  en: Zelda\n  zh: 塞尔达\nversion: \"2.0\"\nlayout:\n  DesktopColumns: 6\n")
 	writeUserTheme(t, "plain.yml", userThemeColors)
-	// Of the directory of a theme, theme.yml is read and nothing else.
-	writeUserTheme(t, filepath.Join("zelda", "theme.css"), "body { color: red }")
+	// Of the directory of a theme, theme.yml and theme.css are read and
+	// nothing else.
+	writeUserTheme(t, filepath.Join("zelda", "other.css"), "body { background: url(a.png) }")
 	writeUserTheme(t, filepath.Join("zelda", "other.yml"), userThemeColors+"  radius: 4em\n")
 	makeThemesSubdirectory(t, filepath.Join("zelda", "assets"))
 	writeUserTheme(t, filepath.Join("zelda", "assets", "theme.yml"), userThemeColors)
@@ -224,7 +225,8 @@ func TestThemeOfOneNameAsFileAndAsDirectory(t *testing.T) {
 	fileStyle := userThemeStyle + "--flare-radius:2px;"
 	require.Equal(t, fileStyle, GetAppBodyStyle())
 
-	// A directory of the name without a theme.yml is not a theme.
+	// A directory of the name without a theme.yml is not a theme, also with
+	// a stylesheet in it.
 	makeThemesSubdirectory(t, "forest")
 	writeUserTheme(t, filepath.Join("forest", "theme.css"), "body { color: red }")
 	ReloadUserThemes()
@@ -296,9 +298,10 @@ func TestSelectedThemeFollowsItsDirectory(t *testing.T) {
 	}
 
 	// While theme.yml keeps its state the directory is not read: a theme
-	// added to it is not seen, and neither is another file of the theme.
+	// added to it is not seen, and neither is a file of the theme that is
+	// not one of those a theme is read from.
 	writeUserTheme(t, "added.yml", userThemeColors)
-	writeUserTheme(t, filepath.Join("forest", "theme.css"), "body { color: red }")
+	writeUserTheme(t, filepath.Join("forest", "other.css"), "body { color: red }")
 	for range 3 {
 		require.Equal(t, userThemeStyle, GetAppBodyStyle())
 	}

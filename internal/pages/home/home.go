@@ -44,6 +44,7 @@ func InitWeatherIfNeeded() {
 }
 
 func RegisterRouting(e *fiber.App) {
+	registerThemeStylesheet(e)
 	if define.AppFlags.Visibility != "PRIVATE" {
 		e.Get(define.RegularPages.Home.Path, pageHome)
 		e.Get(define.RegularPages.Help.Path, renderHelp)
@@ -419,6 +420,7 @@ func setPageTheme(c fiber.Ctx, m map[string]any, locale string) {
 	}
 	m["PageAppearance"] = theme.BodyStyle
 	m["PageThemeRules"] = theme.Rules
+	m["PageThemeStylesheet"] = theme.Stylesheet
 }
 
 // homepageBodyClasses keeps appearance and letter-case preferences consistent on navigation pages.
