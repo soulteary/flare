@@ -440,6 +440,7 @@ func setPageTheme(c fiber.Ctx, m map[string]any, locale string) {
 	m["PageThemeRules"] = theme.Rules
 	m["PageThemeStylesheet"] = theme.Stylesheet
 	m["PageThemeBackground"] = theme.Background
+	m["PageThemeAttributes"] = theme.Attributes
 }
 
 // homepageBodyClasses keeps appearance and letter-case preferences consistent on navigation pages.

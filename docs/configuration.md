@@ -117,7 +117,7 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 | `config.yml` `Clock` | Display time, seconds, zone; since 0.6.3 | [Clock](clock.md) |
 | `config.yml` `Search` | Engines/hybrid since 0.6.5; additional modes and save protections in 0.6.6 | [Search](search.md) |
 | `config.yml` `Homepage` | Layout controls since 0.6.5; adaptive tablet columns in 0.6.6. `IgnoreThemeLayout` (current source) turns off the layout that themes specify | [Mobile](mobile-layout.md), [desktop](desktop-columns-and-scale.md), [layout of a theme](theme-files.md#layout) |
-| `config.yml` `ThemeSettings` | Per theme: the layout options of the theme that are turned off (current source) | [Layout of a theme](theme-files.md#layout) |
+| `config.yml` `ThemeSettings` | Per theme: the layout options of the theme that are turned off, and the values chosen for the [options](theme-files.md#options) of the theme (current source) | [Layout of a theme](theme-files.md#layout) |
 | `config.yml` `Theme`, `ThemeCustom` | A bundled theme name, the name of a theme file (current source), or `custom` with three `#RRGGBB` colors in `ThemeCustom` (current source); read at startup | [Themes and custom colors](theme-colors.md), [theme files](theme-files.md) |
 | `config.yml` `ThemeMode` | `auto`, `light` or `dark` for a theme with light and dark values (current source); read at startup | [Light and dark](theme-files.md#light-and-dark) |
 | `themes/*.yml`, `themes/*/theme.yml`, `themes/*/theme.css`, `themes/*/assets/*` | Themes of the instance, one per file or per directory, and the stylesheet, images and fonts of a theme that is a directory (current source); optional | [Theme files](theme-files.md), [theme stylesheets](theme-stylesheets.md) |

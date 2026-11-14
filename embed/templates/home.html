@@ -21,7 +21,7 @@
   <meta name="description" content="Flare - self-hosted startpage for your server"/>
   {{ if .GuideAssetsURI }}<link rel="stylesheet" href="{{.GuideAssetsURI}}/introjs.min.css"><link rel="stylesheet" href="{{.GuideAssetsURI}}/app.css"><script src="{{.GuideAssetsURI}}/intro.min.js"></script>{{ end }}
 </head>
-<body style="{{.PageAppearance}}" class="{{.BodyClassName}}">
+<body style="{{.PageAppearance}}" class="{{.BodyClassName}}"{{ if .PageThemeAttributes }}{{ .PageThemeAttributes }}{{ end }}>
   <div class="pageview" id="page-home" {{ if .GuideAssetsURI }}style="position:inherit;"{{ end }}>
     <div class="container no-select">{{ if .ThemePreview }}<div class="theme-preview-bar" role="status"><span>{{ .ThemePreview.Text }}</span><form method="POST" action="{{ .ThemePreview.Action }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}<input type="hidden" name="theme" value="{{ .ThemePreview.Name }}"><button type="submit">{{ .ThemePreview.Use }}</button></form><a href="{{ .ThemePreview.Action }}">{{ .ThemePreview.Back }}</a></div>{{ end }}{{ if .ThemeSafeMode }}<div class="theme-preview-bar" role="status"><span>{{ .ThemeSafeMode.Text }}</span><a href="{{ .ThemeSafeMode.Action }}">{{ .ThemeSafeMode.Back }}</a></div>{{ end }}{{ if .ShowSearchComponent }}
       <div class="module-container" id="search-container">

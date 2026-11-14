@@ -148,13 +148,13 @@ func TestThemeFileForALaterReleaseIsReportedAsSuch(t *testing.T) {
 	}
 	// The parts a file for a later release leaves unused are not listed:
 	// the file is not used at all.
-	_, unused, err := ReadThemeFileFor([]byte(validThemeFile+"options:\n  - id: density\n"+later), "0.8.0")
+	_, unused, err := ReadThemeFileFor([]byte(validThemeFile+"sounds:\n  - id: chime\n"+later), "0.8.0")
 	if !errors.Is(err, ErrThemeRequires) || !unused.Empty() {
 		t.Fatalf("%v %+v", err, unused)
 	}
 	// On a release that meets the requirement the file is read as any other.
-	_, unused, err = ReadThemeFileFor([]byte(validThemeFile+"options:\n  - id: density\n"+later), "0.9.0")
-	if err != nil || len(unused.Keys) != 1 || unused.Keys[0] != "options" {
+	_, unused, err = ReadThemeFileFor([]byte(validThemeFile+"sounds:\n  - id: chime\n"+later), "0.9.0")
+	if err != nil || len(unused.Keys) != 1 || unused.Keys[0] != "sounds" {
 		t.Fatalf("%v %+v", err, unused)
 	}
 	if _, _, err = ReadThemeFileFor([]byte(validThemeFile+"  radius: 4em\n"+later), "0.9.0"); !errors.Is(err, ErrThemeTokenValue) {

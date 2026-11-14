@@ -55,7 +55,7 @@
                 </div>
                 <p class="theme-title">{{ .Title }}</p>
                 {{ if .About }}<p class="theme-about">{{ .About }}</p>{{ end }}
-                {{ if .Layout }}<p class="theme-about">{{ .Layout }}</p>{{ end }}{{ if .Stylesheet }}<p class="theme-about">{{ T $.Locale "theme_stylesheet_note" }}</p>{{ end }}
+                {{ if .Layout }}<p class="theme-about">{{ .Layout }}</p>{{ end }}{{ if .Stylesheet }}<p class="theme-about">{{ T $.Locale "theme_stylesheet_note" }}</p>{{ end }}{{ if .Options }}<p class="theme-about">{{ T $.Locale "theme_options_note" }}</p>{{ end }}
                 <a class="theme-card-link theme-preview-link" href="/?theme-preview={{ .Name }}">{{ T $.Locale "theme_preview" }}</a>
                 {{ if not .Directory }}<a class="theme-card-link theme-export-link" href="{{ $.ThemeExportPath }}?name={{ .Name }}">{{ T $.Locale "theme_export" }}</a>{{ end }}
             </div>
@@ -105,7 +105,43 @@
             <input class="btn-submit" type="submit" value="{{ T .Locale "theme_custom_save" }}" />
         </div>
     </form>
-    {{ end }}
+    {{ end }}{{ if .ThemeOptions }}<form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-options-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
+        <input type="hidden" name="action" value="{{ .ThemeOptionsAction }}">
+        <input type="hidden" name="theme-options-theme" value="{{ .ThemeOptionsTheme }}">
+        <h2>{{ .ThemeOptionsTitle }}</h2>
+        {{ if .ThemeOptionsSaved }}<p class="theme-notice" role="status">{{ T .Locale "theme_options_saved" }}</p>{{ end }}
+        <p class="theme-help">{{ T .Locale "theme_options_help" }}</p>
+        {{ range .ThemeOptions }}{{ if eq .Kind "boolean" }}
+        <div class="form-group theme-option">
+            <label class="theme-import-replace"><input type="checkbox" name="option-{{ .ID }}" value="true"{{ if .On }} checked{{ end }}> {{ .Label }}</label>
+        </div>
+        {{ else if eq .Kind "color" }}
+        <div class="theme-custom-fields theme-option">
+            <div class="theme-custom-field">
+                <input type="color" id="theme-option-{{ .ID }}" name="option-{{ .ID }}" value="{{ .Value }}">
+                <label for="theme-option-{{ .ID }}">{{ .Label }}</label>
+            </div>
+        </div>
+        {{ else }}
+        <div class="form-group theme-option">
+            <label for="theme-option-{{ .ID }}">{{ .Label }}</label>
+            <select name="option-{{ .ID }}" id="theme-option-{{ .ID }}">
+                {{ range .Choices }}<option value="{{ .Value }}"{{ if .Selected }} selected{{ end }}>{{ .Label }}</option>
+                {{ end }}
+            </select>
+        </div>
+        {{ end }}{{ end }}
+        <div class="form-group">
+            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_custom_save" }}" />
+        </div>
+    </form>
+    <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-options-reset-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
+        <input type="hidden" name="action" value="{{ .ThemeOptionsReset }}">
+        <input type="hidden" name="theme-options-theme" value="{{ .ThemeOptionsTheme }}">
+        <div class="form-group">
+            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_options_reset" }}" />
+        </div>
+    </form>{{ end }}
     <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-custom-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <input type="hidden" name="action" value="{{ .ThemeCustomAction }}">
         <h2>{{ T .Locale "theme_custom" }}</h2>

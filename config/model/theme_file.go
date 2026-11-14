@@ -132,6 +132,9 @@ type ThemeFile struct {
 	// Background is the image the theme lays behind the navigation pages.
 	// It is nil for a theme without one.
 	Background *ThemeBackground
+	// Options are the settings the theme offers to the administrator, in
+	// the order of the file.
+	Options []ThemeOption
 }
 
 // ThemeBackground is the background image of a theme. Image names an image
@@ -333,6 +336,15 @@ func ReadThemeFileFor(raw []byte, version string) (ThemeFile, ThemeFileUnused, e
 			file.Background = background
 			unused.Keys = append(unused.Keys, parts...)
 			continue
+		case "options":
+			options, parts, err := readThemeOptions(document[key])
+			if err != nil {
+				return ThemeFile{}, ThemeFileUnused{}, err
+			}
+			file.Options = options
+			unused.Keys = append(unused.Keys, parts.Keys...)
+			unused.Tokens = append(unused.Tokens, parts.Tokens...)
+			continue
 		default:
 			unused.Keys = append(unused.Keys, key)
 			continue
@@ -351,18 +363,13 @@ func ReadThemeFileFor(raw []byte, version string) (ThemeFile, ThemeFileUnused, e
 		}
 		unused.Tokens = dropUnknownTokens(replaced, "modes."+mode+".", unused.Tokens)
 	}
-	// A layout option or value this release does not have is left out like
-	// any other part it does not know: the site setting applies instead.
-	for option, value := range file.Layout {
-		switch {
-		case !IsThemeLayoutOption(option):
-			unused.Keys = append(unused.Keys, "layout."+option)
-		case !IsThemeLayoutValue(option, value):
-			unused.Keys = append(unused.Keys, "layout."+option+": "+shortThemeValue(value))
-		default:
-			continue
+	unused.Keys = dropUnknownLayout(file.Layout, "layout.", unused.Keys)
+	// A color option that gives no default has the color the theme gives
+	// its token, so that the color is written in one place.
+	for i, option := range file.Options {
+		if option.Kind == ThemeOptionColor && option.Default == "" {
+			file.Options[i].Default = file.Tokens[option.Token]
 		}
-		delete(file.Layout, option)
 	}
 	slices.Sort(unused.Keys)
 	slices.Sort(unused.Tokens)
@@ -471,6 +478,25 @@ func shortThemeValue(value string) string {
 	return string([]rune(value)[:limit]) + "…"
 }
 
+// dropUnknownLayout removes the layout options this release does not have
+// from one mapping of a theme file, and the options with a value it does not
+// have, and adds their paths to the list. Such an option is left out like any
+// other part a release does not know: the site setting applies instead.
+func dropUnknownLayout(layout map[string]string, path string, unused []string) []string {
+	for option, value := range layout {
+		switch {
+		case !IsThemeLayoutOption(option):
+			unused = append(unused, path+option)
+		case !IsThemeLayoutValue(option, value):
+			unused = append(unused, path+option+": "+shortThemeValue(value))
+		default:
+			continue
+		}
+		delete(layout, option)
+	}
+	return unused
+}
+
 // dropUnknownTokens removes the tokens this release does not know from one
 // mapping of a theme file and adds their paths to the list.
 func dropUnknownTokens(tokens map[string]string, path string, unused []string) []string {
@@ -548,6 +574,9 @@ func (f ThemeFile) Validate() error {
 		if !IsThemeLayoutValue(option, f.Layout[option]) {
 			return themeFileError(ErrThemeSyntax, "layout."+option)
 		}
+	}
+	if err := validateThemeOptions(f.Options); err != nil {
+		return err
 	}
 	if f.Background != nil {
 		if _, named := f.Background.Asset(); !named {
@@ -670,6 +699,7 @@ func (f ThemeFile) Theme(name string) Theme {
 		theme.BackgroundImage, _ = f.Background.Asset()
 		theme.BackgroundDim = f.Background.Dim
 	}
+	theme.Options = slices.Clone(f.Options)
 	return theme
 }
 

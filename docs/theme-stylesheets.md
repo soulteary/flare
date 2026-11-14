@@ -240,6 +240,23 @@ file, and is then not used by an earlier one. The [style tokens](theme-tokens.md
 the way to change a color, the corner radius, the font or the text size, and
 keep working when the pages change.
 
+### Options of the theme
+
+The body of the navigation pages has one attribute for each `enum` and
+`boolean` [option](theme-files.md#options) of the theme, with the value the
+option has now: `data-theme-<id>="<value>"`. A boolean option has `true` or
+`false`. A stylesheet selects by them:
+
+```css
+body[data-theme-frames="true"] .app-item {
+    outline: 1px solid var(--flare-border);
+}
+```
+
+The attributes are there whatever the administrator has chosen, with the
+default of an option nothing is chosen for. A `color` option has no
+attribute: its color is the value of a token.
+
 ## How it is served
 
 - The address of the stylesheet is `/theme/<name>/<hash>/theme.css`, and the

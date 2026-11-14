@@ -304,7 +304,7 @@ func TestUserThemeFileLimit(t *testing.T) {
 
 func TestUserThemeFileWithUnusedParts(t *testing.T) {
 	userThemeDirectory(t, "blackboard")
-	writeUserTheme(t, "later.yml", userThemeColors+"  space: 4px\n  radius: 8px\noptions:\n  - id: density\nmodes:\n  sepia:\n    background: \"#f4ecd8\"\n  dark:\n    glow: \"#ffffff\"\n")
+	writeUserTheme(t, "later.yml", userThemeColors+"  space: 4px\n  radius: 8px\nsounds:\n  - id: chime\nmodes:\n  sepia:\n    background: \"#f4ecd8\"\n  dark:\n    glow: \"#ffffff\"\n")
 	writeUserTheme(t, "rejected.yml", userThemeColors+"  radius: 4em\neffects:\n  snow: true\n")
 	ReloadUserThemes()
 	themes, problems, notices := UserThemes()
@@ -312,7 +312,7 @@ func TestUserThemeFileWithUnusedParts(t *testing.T) {
 	require.Equal(t, map[string]string{"radius": "8px"}, themes[0].Tokens)
 	require.Equal(t, []ThemeProblem{{File: "rejected.yml", Reason: ThemeProblemValue, Subject: "tokens.radius"}}, problems)
 	require.Equal(t, []ThemeNotice{
-		{File: "later.yml", Unused: model.ThemeFileUnused{Keys: []string{"modes.sepia", "options"}, Tokens: []string{"modes.dark.glow", "tokens.space"}}},
+		{File: "later.yml", Unused: model.ThemeFileUnused{Keys: []string{"modes.sepia", "sounds"}, Tokens: []string{"modes.dark.glow", "tokens.space"}}},
 		{File: "rejected.yml", Unused: model.ThemeFileUnused{Keys: []string{"effects"}}},
 	}, notices)
 

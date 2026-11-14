@@ -68,6 +68,12 @@ type Theme struct {
 	// for a theme without a background image.
 	BackgroundImage string `json:"-"`
 	BackgroundDim   int    `json:"-"`
+	// Options are the settings the theme offers to the administrator, in
+	// the order of its file. Attributes holds their values as a page writes
+	// them on its body; it is set by WithOptions, for the theme as it is
+	// with the values that are chosen.
+	Options    []ThemeOption    `json:"-"`
+	Attributes []ThemeAttribute `json:"-"`
 	// Directory reports a theme that is a directory of the themes directory,
 	// read from the theme.yml in it, instead of a single file.
 	Directory bool `json:"-"`

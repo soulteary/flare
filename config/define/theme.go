@@ -7,6 +7,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -92,11 +93,15 @@ const (
 // brings, for the pages that take one, and empty for a theme without one.
 // Background is a rule for a style element that lays the background image of
 // the theme behind those same pages, and empty for a theme without one.
+// Attributes are the values of the options of the theme as attributes of the
+// body of those pages, for the stylesheet of the theme, with a space before
+// each; they are empty for a theme without options.
 type PageTheme struct {
 	BodyStyle  template.CSS
 	Rules      template.CSS
 	Stylesheet string
 	Background template.CSS
+	Attributes template.HTMLAttr
 }
 
 // GetPageTheme returns the selected theme for one page. Every themed page
@@ -105,8 +110,57 @@ type PageTheme struct {
 func GetPageTheme() PageTheme {
 	refreshSelectedTheme()
 	themeMu.RLock()
-	defer themeMu.RUnlock()
-	return selectedPageTheme()
+	page := selectedPageTheme()
+	definition, known := themeDefinition(ThemeCurrent)
+	mode := themeMode
+	themeMu.RUnlock()
+	// A theme with options is written for the page with the values that
+	// are chosen now. A theme without options, as every bundled theme is,
+	// is taken as it was written when it was applied.
+	if known && len(definition.Options) > 0 {
+		return pageThemeOf(themeWithChoices(definition), mode)
+	}
+	return page
+}
+
+// themeWithChoices returns a theme with the values the administrator has
+// chosen for its options in place. The values are those config.yml holds at
+// this moment, read through the cache of that file, so a change of them shows
+// on the next page like any other setting, without a restart. A theme
+// without options is returned as it is and reads nothing. Callers do not hold
+// themeMu.
+func themeWithChoices(theme model.Theme) model.Theme {
+	if len(theme.Options) == 0 {
+		return theme
+	}
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return theme.WithOptions(nil)
+	}
+	return theme.WithOptions(options.ThemeSettings[theme.Name].Options)
+}
+
+// ThemeOptions returns the options a theme offers and the values they have
+// now: those chosen for them, and the default of each option nothing usable
+// is chosen for. It reports false for a name that is not a theme in use.
+func ThemeOptions(name string) ([]model.ThemeOption, map[string]string, bool) {
+	themeMu.RLock()
+	definition, known := themeDefinition(name)
+	themeMu.RUnlock()
+	if !known {
+		return nil, nil, false
+	}
+	var chosen map[string]string
+	if len(definition.Options) > 0 {
+		if options, err := data.GetAllSettingsOptions(); err == nil {
+			chosen = options.ThemeSettings[name].Options
+		}
+	}
+	values := make(map[string]string, len(definition.Options))
+	for _, option := range definition.Options {
+		values[option.ID] = option.Value(chosen[option.ID])
+	}
+	return slices.Clone(definition.Options), values, true
 }
 
 // selectedPageTheme returns what a page takes from the selected theme, as it
@@ -231,20 +285,21 @@ func ThemeTitle(name, locale string) string {
 // for a name that is not a theme in use.
 func GetPageThemeFor(name string) (PageTheme, bool) {
 	themeMu.RLock()
-	defer themeMu.RUnlock()
 	definition, known := themeDefinition(name)
+	mode := themeMode
+	themeMu.RUnlock()
 	if !known {
 		return PageTheme{}, false
 	}
-	return pageThemeOf(definition, themeMode), true
+	return pageThemeOf(themeWithChoices(definition), mode), true
 }
 
 // pageThemeOf writes a theme for a page under a site setting for light and
 // dark: into the style attribute, or as rules when the device chooses.
 func pageThemeOf(theme model.Theme, mode string) PageTheme {
 	shown, dark, deviceChooses := themeInMode(theme, mode)
-	// #nosec G203 -- the rule holds the name of a theme of the directory, a hash, the name of an asset and a number, each of a form that is safe to write into a stylesheet.
-	page := PageTheme{Stylesheet: themeStylesheetAddress(theme), Background: template.CSS(themeBackgroundRule(theme))}
+	// #nosec G203 -- the rule holds the name of a theme of the directory, a hash, the name of an asset and a number, each of a form that is safe to write into a stylesheet; the attributes hold identifiers of a theme file that ThemeFile.Validate accepted.
+	page := PageTheme{Stylesheet: themeStylesheetAddress(theme), Background: template.CSS(themeBackgroundRule(theme)), Attributes: template.HTMLAttr(themeAttributes(theme))}
 	if deviceChooses {
 		// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate.
 		page.Rules = template.CSS(themeRules(shown, dark))
@@ -253,6 +308,19 @@ func pageThemeOf(theme model.Theme, mode string) PageTheme {
 	// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate or from the custom palette, which is stored only after Palette.Validate accepted it.
 	page.BodyStyle = template.CSS(themeStyle(shown))
 	return page
+}
+
+// themeAttributes writes the values of the options of a theme as attributes
+// for the body of a page: data-theme-<option>="<value>", with a space before
+// each. The stylesheet of the theme selects by them. The name of an option
+// and a value are lower-case letters, digits and hyphens, which need no
+// escaping in the name or in the value of an attribute.
+func themeAttributes(theme model.Theme) string {
+	attributes := ""
+	for _, attribute := range theme.Attributes {
+		attributes += ` data-theme-` + attribute.Name + `="` + attribute.Value + `"`
+	}
+	return attributes
 }
 
 // GetAppBodyStyle returns the style attribute of the page body for the
@@ -295,9 +363,11 @@ func GetThemePrimaryColor(theme string) string {
 // has no palette of its own, so the first built-in palette is returned for it.
 func CurrentThemePalette() model.Palette {
 	themeMu.RLock()
-	defer themeMu.RUnlock()
-	if definition, known := themeDefinition(ThemeCurrent); known {
-		shown, _, _ := themeInMode(definition, themeMode)
+	definition, known := themeDefinition(ThemeCurrent)
+	mode := themeMode
+	themeMu.RUnlock()
+	if known {
+		shown, _, _ := themeInMode(themeWithChoices(definition), mode)
 		return shown.Colors
 	}
 	return ThemePalettes[0].Colors
@@ -308,12 +378,15 @@ func CurrentThemePalette() model.Palette {
 // only on such a theme.
 func ThemeModeState() (string, bool) {
 	themeMu.RLock()
-	defer themeMu.RUnlock()
 	definition, known := themeDefinition(ThemeCurrent)
+	mode := themeMode
+	themeMu.RUnlock()
 	if !known {
-		return themeMode, false
+		return mode, false
 	}
-	return themeMode, themeHasModes(definition)
+	// A value of an option can set a token for both modes that the theme
+	// has different values for.
+	return mode, themeHasModes(themeWithChoices(definition))
 }
 
 // SetThemeMode publishes the site setting for light and dark, after
@@ -339,9 +412,11 @@ func SetThemeMode(mode string) bool {
 // options it specifies. The bundled themes and custom colors specify none.
 func SelectedThemeLayout() (string, map[string]string) {
 	themeMu.RLock()
-	defer themeMu.RUnlock()
-	definition, _ := themeDefinition(ThemeCurrent)
-	return ThemeCurrent, maps.Clone(definition.Layout)
+	name := ThemeCurrent
+	definition, _ := themeDefinition(name)
+	themeMu.RUnlock()
+	// The layout a value of an option brings is layout of the theme.
+	return name, maps.Clone(themeWithChoices(definition).Layout)
 }
 
 // HomepageInEffect returns the layout options a page is rendered with: those
@@ -366,7 +441,10 @@ func HomepageInEffectFor(options model.Application, name string) *model.Homepage
 	themeMu.RLock()
 	definition, _ := themeDefinition(name)
 	themeMu.RUnlock()
-	return options.Homepage.WithThemeLayout(definition.Layout, options.ThemeSettings[name].IgnoreLayout)
+	// The values chosen for the options of the theme come from the same
+	// settings as the rest of the layout.
+	layout := definition.WithOptions(options.ThemeSettings[name].Options).Layout
+	return options.Homepage.WithThemeLayout(layout, options.ThemeSettings[name].IgnoreLayout)
 }
 
 // themeHasModes reports whether a theme looks different in light and in dark.
@@ -559,7 +637,8 @@ func UpdatePagePalettes() {
 	}
 	// Hand-edited values under Homepage have no effect on these options
 	// while the theme is selected, which is easy to miss in the file.
-	if applied := options.Homepage.ThemeLayoutApplied(definition.Layout, options.ThemeSettings[theme].IgnoreLayout); len(applied) > 0 {
+	layout := definition.WithOptions(options.ThemeSettings[theme].Options).Layout
+	if applied := options.Homepage.ThemeLayoutApplied(layout, options.ThemeSettings[theme].IgnoreLayout); len(applied) > 0 {
 		logger.GetLogger().Info("The selected theme specifies layout options that replace those under Homepage; the appearance settings can turn them off", "theme", theme, "options", strings.Join(applied, ","))
 	}
 }

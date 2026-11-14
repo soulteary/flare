@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"sync"
 
@@ -74,6 +75,46 @@ func SaveThemeMode(mode string) error {
 		return saveError(SaveFailureConfigUnreadable, err)
 	}
 	options.ThemeMode = mode
+	return saveAppConfig("config", options)
+}
+
+// SaveThemeOptions stores the values chosen for the options of a theme, by
+// the ID of each option, in place of those stored before. Without values the
+// stored ones are removed, and the options of the theme have their defaults
+// again. What is stored has the shape of an option and of a value: whether
+// the theme has the option and the option can have the value is for the
+// caller, and is checked again whenever the values are used.
+func SaveThemeOptions(theme string, chosen map[string]string) error {
+	if !model.IsThemeName(theme) {
+		return saveError(SaveFailureInvalidInput, fmt.Errorf("invalid theme name %q", theme))
+	}
+	if len(chosen) > model.MaximumThemeOptions {
+		return saveError(SaveFailureInvalidInput, fmt.Errorf("more than %d options", model.MaximumThemeOptions))
+	}
+	for option, value := range chosen {
+		if !model.IsThemeName(option) || (!model.IsThemeName(value) && !model.IsHexColor(value)) {
+			return saveError(SaveFailureInvalidInput, fmt.Errorf("invalid value for option %q", option))
+		}
+	}
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		return saveError(SaveFailureConfigUnreadable, err)
+	}
+	current, stored := options.ThemeSettings[theme]
+	// A theme nothing was ever stored for gets no entry for no values.
+	if !stored && len(chosen) == 0 {
+		return nil
+	}
+	if options.ThemeSettings == nil {
+		options.ThemeSettings = make(map[string]model.ThemeSettings)
+	}
+	current.Options = maps.Clone(chosen)
+	if len(chosen) == 0 {
+		current.Options = nil
+	}
+	options.ThemeSettings[theme] = current
 	return saveAppConfig("config", options)
 }
 

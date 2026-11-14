@@ -32,7 +32,7 @@ func TestThemeThatNeedsALaterRelease(t *testing.T) {
 	writeUserTheme(t, "written-wrong.yml", userThemeColors+"requires: \">=0.7.0\"\n")
 	// A file for a later release can hold what this release does not accept
 	// or does not know. It is reported for the release alone.
-	writeUserTheme(t, "later-values.yml", userThemeColors+"  radius: 4em\noptions:\n  - id: density\nrequires: 0.8.0\n")
+	writeUserTheme(t, "later-values.yml", userThemeColors+"  radius: 4em\nsounds:\n  - id: chime\nrequires: 0.8.0\n")
 	writeThemeDirectory(t, "later-styled", userThemeColors+"requires: 1.0.0\n")
 	writeThemeStylesheet(t, "later-styled", "@import 'a.css';")
 	writeThemeDirectory(t, "now-styled", userThemeColors+"requires: 0.7.0\n")
