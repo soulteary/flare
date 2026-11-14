@@ -232,18 +232,27 @@ func readUserTheme(root *os.Root, file string) (model.ThemeFile, model.ThemeFile
 	}
 	theme, unused, err := model.ReadThemeFile(raw)
 	if err != nil {
-		rejected := ThemeProblem{Reason: themeProblemReason(err)}
-		var rejection *model.ThemeFileError
-		if errors.As(err, &rejection) {
-			rejected.Subject = rejection.Subject
-		}
-		// The text of the reason says which contract is read.
-		if rejected.Reason == ThemeProblemContract {
-			rejected.Subject = ""
-		}
+		rejected := ThemeFileProblem(err)
 		return model.ThemeFile{}, unused, &rejected
 	}
 	return theme, unused, nil
+}
+
+// ThemeFileProblem describes why the content of a theme file was rejected:
+// the reason, and the part of the file it is about. It is the same
+// description for a file of the themes directory and for one that is
+// submitted to be stored there.
+func ThemeFileProblem(err error) ThemeProblem {
+	rejected := ThemeProblem{Reason: themeProblemReason(err)}
+	var rejection *model.ThemeFileError
+	if errors.As(err, &rejection) {
+		rejected.Subject = rejection.Subject
+	}
+	// The text of the reason says which contract is read.
+	if rejected.Reason == ThemeProblemContract {
+		rejected.Subject = ""
+	}
+	return rejected
 }
 
 // themeProblemReason names the reason a theme file was rejected.

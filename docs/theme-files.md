@@ -36,7 +36,8 @@ of the selected theme leaves the selection without a theme.
 - Up to 64 files are looked at, in the order of their names, counting the
   `.yaml` files that are only reported. A theme file can have up to 64 KiB.
 
-The directory is optional. Nothing is created in it or written to it.
+The directory is optional. Files in it are read, and nothing is written to it
+except by an [import](#import-and-export) on the theme page.
 
 ## Format
 
@@ -277,6 +278,42 @@ selecting it.
   visitor. With login disabled there is no such difference.
 - The browser-tab icon stays that of the selected theme.
 
+## Import and export
+
+The theme page hands a theme out as a theme file and takes a theme file in.
+Both are for the administrator, and neither selects a theme.
+
+**Download** next to a theme sends a theme file:
+
+| Theme | File |
+| --- | --- |
+| A theme file | The file of the themes directory as it is, `<name>.yml` |
+| A bundled theme | The file the theme is defined by, as `<name>-copy.yml` |
+| Custom colors | A theme file with the three colors, as `custom-colors.yml` |
+
+The name of a bundled theme and `custom` cannot be the name of a theme file,
+so those two downloads have a name under which they can be imported. The
+download of a bundled theme is a starting point for a theme of one's own.
+
+**Import a theme file** stores an uploaded file in the themes directory:
+
+- The name of the file is the name of the theme, with the rules under
+  [location and name](#location-and-name): `<name>.yml`, and not the name of a
+  bundled theme. A path the browser sends with the name is not used.
+- The file gets the checks of every theme file. One that is not usable is
+  refused with the reason, and nothing is written. An accepted file is stored
+  as it was uploaded, with its comments and with parts for later releases.
+- A theme file of the same name is replaced only with **Replace a theme file
+  of the same name** ticked. Something else of that name in the directory, a
+  folder or a link, is never replaced.
+- A file can have up to 64 KiB, and a new file is refused while the directory
+  holds 64 files, because more are not read.
+- The directory is created by the first import. A new file is readable and
+  writable for the user the instance runs as; a replaced file keeps its
+  permissions.
+
+A theme file is removed by deleting it from the directory.
+
 ## Changes while the instance runs
 
 The pages follow the file of the selected theme. Each page load compares the
@@ -335,9 +372,9 @@ applies in the same way.
 
 `go test ./config/model ./config/define ./config/data ./internal/settings/... ./internal/resources/assets ./internal/server -run 'Theme|Homepage' -count=1`
 covers the format, the files that are not used, selection, following the file
-of the selected theme, light and dark, layout, the preview, the favicon and
-the rendered pages, including that texts and names from the directory are
-shown as text.
+of the selected theme, light and dark, layout, the preview, import and export,
+the favicon and the rendered pages, including that texts and names from the
+directory are shown as text.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/files.browser.cjs`
 selects a theme file in Chromium, edits it, breaks it, removes it and puts it
 back, and checks the pages after each step.
@@ -347,6 +384,9 @@ for light and for one that asks for dark, under each of the three settings.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/preview.browser.cjs`
 opens the preview of a theme file and of a bundled theme from the theme page,
 checks that nothing is selected by it, and selects a theme from the notice.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/import-export.browser.cjs`
+downloads a bundled theme, imports the file, has unusable files and an
+existing name refused, replaces the file and downloads it again.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/layout.browser.cjs`
 selects a theme that specifies layout, turns single options and the whole
 layout off and on again on the appearance page, and checks the home page

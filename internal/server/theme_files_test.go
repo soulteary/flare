@@ -352,12 +352,13 @@ func TestThemeFileContentIsShownAsText(t *testing.T) {
 	}, page.lines)
 
 	// The cards and the lines hold only the elements of the template, and
-	// the one link of a card leads to its preview.
+	// the two links of a card lead to its preview and to its download.
 	for element := range page.elements {
 		require.Contains(t, []string{"div", "input", "p", "li", "code", "a"}, element)
 	}
-	require.Equal(t, len(page.cards), page.elements["a"])
+	require.Equal(t, 2*len(page.cards), page.elements["a"])
 	require.Contains(t, raw, `href="/?theme-preview=texts"`)
+	require.Contains(t, raw, `href="/settings/theme/export?name=texts"`)
 	require.NotContains(t, raw, "<script>alert(1)")
 	require.NotContains(t, raw, "<img src=x")
 	require.NotContains(t, raw, "example.test")

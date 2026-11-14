@@ -148,6 +148,10 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/theme/preview.browser.cjs
+      - name: Theme import and export browser acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/theme/import-export.browser.cjs
       - name: Minimal scratch-container timezone acceptance
         shell: bash
         run: |
