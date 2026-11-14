@@ -257,6 +257,26 @@ the theme in use, so the colors of a theme file can be adjusted there; the
 result is a set of custom colors, without the other tokens of the file. For a
 theme that follows the device, the form starts from its light colors.
 
+## Preview
+
+Every theme on the theme page has a **Preview** link: the bundled themes, the
+custom colors and the theme files. It opens the home page shown with that
+theme, with its tokens, its values for light and dark and its layout, without
+selecting it.
+
+- Only that response is shown with the theme. Other visitors, and the same
+  page opened without the link, get the selected theme, and nothing is
+  written to `config.yml`.
+- A notice at the top of the page names the previewed theme. **Use this
+  theme** selects it; **Back to the settings** leaves it unselected.
+- The preview shows the file as it is at that moment. A theme file can be
+  edited and its preview loaded again before the theme is selected.
+- The address of a preview is the page with `?theme-preview=<name>`, on the
+  home page, the application and bookmark pages and the help page. The
+  parameter is honored for the administrator only and has no effect for a
+  visitor. With login disabled there is no such difference.
+- The browser-tab icon stays that of the selected theme.
+
 ## Changes while the instance runs
 
 The pages follow the file of the selected theme. Each page load compares the
@@ -315,14 +335,18 @@ applies in the same way.
 
 `go test ./config/model ./config/define ./config/data ./internal/settings/... ./internal/resources/assets ./internal/server -run 'Theme|Homepage' -count=1`
 covers the format, the files that are not used, selection, following the file
-of the selected theme, light and dark, layout, the favicon and the rendered
-pages, including that texts and names from the directory are shown as text.
+of the selected theme, light and dark, layout, the preview, the favicon and
+the rendered pages, including that texts and names from the directory are
+shown as text.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/files.browser.cjs`
 selects a theme file in Chromium, edits it, breaks it, removes it and puts it
 back, and checks the pages after each step.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/modes.browser.cjs`
 loads the pages of a theme with light and dark values for a device that asks
 for light and for one that asks for dark, under each of the three settings.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/preview.browser.cjs`
+opens the preview of a theme file and of a bundled theme from the theme page,
+checks that nothing is selected by it, and selects a theme from the notice.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/layout.browser.cjs`
 selects a theme that specifies layout, turns single options and the whole
 layout off and on again on the appearance page, and checks the home page

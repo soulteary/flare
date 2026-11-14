@@ -16,6 +16,7 @@
                     <div class="pull-left theme-color color-accent" style="background-color: {{.Colors.Accent}};"></div>
                 </div>
                 <p class="theme-title">{{.Name}}</p>
+                <a class="theme-preview-link" href="/?theme-preview={{.Name}}">{{ T $.Locale "theme_preview" }}</a>
             </div>
             {{end}}
             {{ if .ThemeCustom }}
@@ -30,6 +31,7 @@
                     <div class="pull-left theme-color color-accent" style="background-color: {{.ThemeCustom.Accent}};"></div>
                 </div>
                 <p class="theme-title">{{ T .Locale "theme_custom" }}</p>
+                <a class="theme-preview-link" href="/?theme-preview=custom">{{ T .Locale "theme_preview" }}</a>
             </div>
             {{ end }}
         </div>
@@ -53,6 +55,7 @@
                 <p class="theme-title">{{ .Title }}</p>
                 {{ if .About }}<p class="theme-about">{{ .About }}</p>{{ end }}
                 {{ if .Layout }}<p class="theme-about">{{ .Layout }}</p>{{ end }}
+                <a class="theme-preview-link" href="/?theme-preview={{ .Name }}">{{ T $.Locale "theme_preview" }}</a>
             </div>
             {{ end }}
         </div>
