@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/soulteary/flare/config/model"
+	version "github.com/soulteary/version-kit/v4"
 )
 
 // An instance reads its own themes from the themes directory of its working
@@ -53,6 +54,10 @@ const (
 	ThemeProblemColor     = "color"
 	ThemeProblemContrast  = "contrast"
 	ThemeProblemText      = "text"
+	// The release a theme file needs: one that is later than this one, and
+	// one that is not written as a release.
+	ThemeProblemRequires      = "requires"
+	ThemeProblemRequiresValue = "requires_value"
 	// Reasons the stylesheet of a theme is not accepted. The theme is then
 	// not in use: it is not applied without its stylesheet.
 	ThemeProblemStyleSize      = "style_size"
@@ -441,7 +446,7 @@ func readUserTheme(root *os.Root, file string) (model.ThemeFile, model.ThemeFile
 	if reason != "" {
 		return model.ThemeFile{}, model.ThemeFileUnused{}, &ThemeProblem{Reason: reason}
 	}
-	theme, unused, err := model.ReadThemeFile(raw)
+	theme, unused, err := model.ReadThemeFileFor(raw, version.Version)
 	if err != nil {
 		rejected := ThemeFileProblem(err)
 		return model.ThemeFile{}, unused, &rejected
@@ -479,6 +484,10 @@ func themeProblemReason(err error) string {
 		return ThemeProblemContrast
 	case errors.Is(err, model.ErrThemeText):
 		return ThemeProblemText
+	case errors.Is(err, model.ErrThemeRequires):
+		return ThemeProblemRequires
+	case errors.Is(err, model.ErrThemeRequiresValue):
+		return ThemeProblemRequiresValue
 	default:
 		return ThemeProblemSyntax
 	}

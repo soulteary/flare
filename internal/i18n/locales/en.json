@@ -92,6 +92,8 @@
   "theme_file_problem_color": "A required color is missing:",
   "theme_file_problem_contrast": "The contrast between the primary color and the background is below 3:1.",
   "theme_file_problem_text": "A text is too long or contains characters that are not accepted:",
+  "theme_file_problem_requires": "Not used: the theme needs this release of Flare or a later one:",
+  "theme_file_problem_requires_value": "The release under requires has to be three numbers, such as 0.7.0:",
   "theme_file_problem_style_size": "Not read: the stylesheet is larger than 128 KiB.",
   "theme_file_problem_style_encoding": "The stylesheet is not UTF-8 text.",
   "theme_file_problem_style_url": "The stylesheet of a theme loads nothing by an address, so url() is not accepted:",

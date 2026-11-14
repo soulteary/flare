@@ -100,6 +100,7 @@ tokens:
 | `layout` | No | Layout options the theme specifies; see [layout](#layout) |
 | `name` | No | The name to show, up to 48 characters; without it the name of the file is shown |
 | `version`, `author`, `license` | No | Up to 64 characters each; shown with the theme on the settings page, without any other effect |
+| `requires` | No | The first release of Flare the theme works with, as three numbers such as `0.7.0`; see [files written for another release](#files-written-for-another-release) |
 
 ### Tokens
 
@@ -274,6 +275,26 @@ is not accepted is not used at all; the theme is not applied in part.
 `contract` changes only when the format changes in a way an older release
 cannot read. A file with another `contract` is not used.
 
+A theme can name the first release it works with:
+
+```yaml
+requires: 0.7.0
+```
+
+- A release before that one does not use the theme, and the theme page names
+  the release the theme needs. That is the reason given for such a file
+  whatever else it holds, because a file for a later release can have values
+  an earlier one does not accept.
+- The release is written as three numbers and in no other form: without a
+  `v`, without `>=` and without a suffix.
+- A release with a suffix, such as `0.7.0-rc.1`, counts as the release its
+  numbers name. A build that is not a release, as during development, meets
+  every requirement.
+- `requires` is for a theme that depends on what a release brought, for
+  example a [stylesheet](theme-stylesheets.md) that relies on the pages of
+  that release. A theme of tokens alone rarely needs it: tokens, keys and
+  layout options a release does not know are left out, as described above.
+
 ## Selecting a theme file
 
 Settings → Theme lists the usable files under **Theme files**, after the
@@ -406,6 +427,8 @@ with [theme stylesheets](theme-stylesheets.md#what-a-stylesheet-can-contain).
 | Required color missing | Shown with the token, for example `tokens.accent` |
 | Contrast below 3:1 | Between `primary` and `background`; shown with the mode, for example `modes.light`, when it is the values of a mode that lower it |
 | Text not accepted | `name`, `version`, `author` or `license` is too long, has leading or trailing spaces, or contains control characters |
+| The theme needs a later release | `requires` names a release after this one; shown with that release |
+| Release under `requires` not accepted | `requires` is not three numbers; shown with what is written |
 
 At startup, a selected theme that cannot be used is also written to the log as
 a warning.

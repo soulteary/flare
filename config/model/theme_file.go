@@ -67,6 +67,10 @@ var (
 	ErrThemeTokenValue = errors.New("theme token has a value that is not accepted")
 	// ErrThemeText reports a name, version, author or license that is not plain text of the accepted length.
 	ErrThemeText = errors.New("theme file has a text that is not accepted")
+	// ErrThemeRequires reports a theme file that needs a later release.
+	ErrThemeRequires = errors.New("theme file needs a later release")
+	// ErrThemeRequiresValue reports a requires that does not name a release.
+	ErrThemeRequiresValue = errors.New("theme file names the release it needs in a form that is not accepted")
 )
 
 // ThemeFileError is the reason a theme file is rejected. Reason is one of the
@@ -115,6 +119,9 @@ type ThemeFile struct {
 	// Layout holds the layout options the theme specifies, by the names the
 	// options have under Homepage in config.yml.
 	Layout map[string]string
+	// Requires names the first release the theme works with, as three
+	// numbers such as 0.7.0. It is empty for a theme that names none.
+	Requires string
 }
 
 // ThemeText is a text of a theme file: one string, or one string per
@@ -212,8 +219,16 @@ func (u ThemeFileUnused) Empty() bool { return len(u.Keys) == 0 && len(u.Tokens)
 // ReadThemeFile reads and validates a theme file. Keys, modes and tokens this
 // release does not know are left out and reported; everything that is used
 // has to be valid, or the file is rejected as a whole. A rejection is a
-// *ThemeFileError.
+// *ThemeFileError. The release a file needs is checked for its form only:
+// ReadThemeFileFor compares it with a release.
 func ReadThemeFile(raw []byte) (ThemeFile, ThemeFileUnused, error) {
+	return ReadThemeFileFor(raw, "")
+}
+
+// ReadThemeFileFor is ReadThemeFile for an application of a given version. A
+// file that needs a later release is rejected. A version that is not that of
+// a release, as a development build has, meets every requirement.
+func ReadThemeFileFor(raw []byte, version string) (ThemeFile, ThemeFileUnused, error) {
 	// A mapping of nodes rejects a document that is not a mapping and one
 	// that repeats a key.
 	var document map[string]yaml.Node
@@ -223,18 +238,47 @@ func ReadThemeFile(raw []byte) (ThemeFile, ThemeFileUnused, error) {
 	if document == nil {
 		return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeSyntax, "the file is empty")
 	}
+	var file ThemeFile
+	// What a file says about itself is read before the rest. A file for
+	// another contract or for a later release can hold parts this release
+	// cannot read or does not accept, and the reason to give for such a file
+	// is the one it states.
+	for _, key := range []string{"contract", "requires"} {
+		node, written := document[key]
+		if !written {
+			continue
+		}
+		var target any = &file.Contract
+		if key == "requires" {
+			target = &file.Requires
+		}
+		if err := node.Decode(target); err != nil {
+			return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeSyntax, key+": "+err.Error())
+		}
+	}
+	if file.Contract != ThemeContract {
+		return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeContract, strconv.Itoa(file.Contract))
+	}
+	if _, written := document["requires"]; written {
+		needed, accepted := themeRelease(file.Requires, false)
+		if !accepted {
+			return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeRequiresValue, shortThemeValue(file.Requires))
+		}
+		if running, known := themeRelease(version, true); known && slices.Compare(needed[:], running[:]) > 0 {
+			return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeRequires, file.Requires)
+		}
+	}
 	keys := make([]string, 0, len(document))
 	for key := range document {
 		keys = append(keys, key)
 	}
 	slices.Sort(keys)
-	var file ThemeFile
 	var unused ThemeFileUnused
 	for _, key := range keys {
 		var target any
 		switch key {
-		case "contract":
-			target = &file.Contract
+		case "contract", "requires":
+			continue
 		case "name":
 			target = &file.Name
 		case "version":
@@ -288,6 +332,39 @@ func ReadThemeFile(raw []byte) (ThemeFile, ThemeFileUnused, error) {
 	return file, unused, nil
 }
 
+// themeRelease reads a release as three numbers: 0.7.0. A theme file names a
+// release in exactly that form. The version of an application can also start
+// with a v and end with a suffix, as v0.7.0, 0.7.0-rc.1 and 0.7.0+build do;
+// such a version counts as the release its numbers name. Anything else is no
+// release: the second result is false.
+func themeRelease(text string, version bool) ([3]int, bool) {
+	var release [3]int
+	if version {
+		text = strings.TrimPrefix(text, "v")
+		if suffix := strings.IndexAny(text, "-+"); suffix >= 0 {
+			text = text[:suffix]
+		}
+	}
+	parts := strings.Split(text, ".")
+	if len(parts) != len(release) {
+		return release, false
+	}
+	for i, part := range parts {
+		// A number is written with digits alone and without leading zeros,
+		// and is short enough to hold.
+		if part == "" || len(part) > 6 || (len(part) > 1 && part[0] == '0') {
+			return release, false
+		}
+		for _, digit := range []byte(part) {
+			if digit < '0' || digit > '9' {
+				return release, false
+			}
+			release[i] = release[i]*10 + int(digit-'0')
+		}
+	}
+	return release, true
+}
+
 // shortThemeValue bounds a value of a theme file that is reported back.
 func shortThemeValue(value string) string {
 	const limit = 32
@@ -334,6 +411,9 @@ func ParseThemeFile(raw []byte) (ThemeFile, error) {
 func (f ThemeFile) Validate() error {
 	if f.Contract != ThemeContract {
 		return themeFileError(ErrThemeContract, strconv.Itoa(f.Contract))
+	}
+	if _, accepted := themeRelease(f.Requires, false); f.Requires != "" && !accepted {
+		return themeFileError(ErrThemeRequiresValue, shortThemeValue(f.Requires))
 	}
 	if err := validateThemeTokens(f.Tokens, "tokens."); err != nil {
 		return err
