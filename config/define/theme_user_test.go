@@ -305,7 +305,7 @@ func TestUserThemeFileLimit(t *testing.T) {
 func TestUserThemeFileWithUnusedParts(t *testing.T) {
 	userThemeDirectory(t, "blackboard")
 	writeUserTheme(t, "later.yml", userThemeColors+"  font-scale: \"1.1\"\n  radius: 8px\noptions:\n  - id: density\nmodes:\n  sepia:\n    background: \"#f4ecd8\"\n  dark:\n    glow: \"#ffffff\"\n")
-	writeUserTheme(t, "rejected.yml", userThemeColors+"  radius: 4em\nlayout:\n  DesktopColumns: 4\n")
+	writeUserTheme(t, "rejected.yml", userThemeColors+"  radius: 4em\nbackground:\n  image: wallpaper.jpg\n")
 	ReloadUserThemes()
 	themes, problems, notices := UserThemes()
 	require.Equal(t, []string{"later"}, userThemeNames(themes))
@@ -313,7 +313,7 @@ func TestUserThemeFileWithUnusedParts(t *testing.T) {
 	require.Equal(t, []ThemeProblem{{File: "rejected.yml", Reason: ThemeProblemValue, Subject: "tokens.radius"}}, problems)
 	require.Equal(t, []ThemeNotice{
 		{File: "later.yml", Unused: model.ThemeFileUnused{Keys: []string{"modes.sepia", "options"}, Tokens: []string{"modes.dark.glow", "tokens.font-scale"}}},
-		{File: "rejected.yml", Unused: model.ThemeFileUnused{Keys: []string{"layout"}}},
+		{File: "rejected.yml", Unused: model.ThemeFileUnused{Keys: []string{"background"}}},
 	}, notices)
 
 	// What UserThemes returns is the caller's to change.

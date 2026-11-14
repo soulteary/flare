@@ -26,11 +26,14 @@ type Application struct {
 	Theme                   string           `yaml:"Theme"`
 	ThemeCustom             *Palette         `yaml:"ThemeCustom,omitempty"`
 	ThemeMode               string           `yaml:"ThemeMode,omitempty"`
-	ShowWeather             bool             `yaml:"ShowWeather"`
-	WeatherLocation         *WeatherLocation `yaml:"WeatherLocation,omitempty"`
-	Location                string           `yaml:"Location"`
-	EnableEncryptedLink     bool             `yaml:"EnableEncryptedLink"`
-	IconMode                string           `yaml:"IconMode"`
-	KeepLetterCase          bool             `yaml:"KeepLetterCase"`
-	Locale                  string           `yaml:"Locale"`
+	// ThemeSettings holds what the administrator has set for single themes,
+	// by the name of the theme.
+	ThemeSettings       map[string]ThemeSettings `yaml:"ThemeSettings,omitempty"`
+	ShowWeather         bool                     `yaml:"ShowWeather"`
+	WeatherLocation     *WeatherLocation         `yaml:"WeatherLocation,omitempty"`
+	Location            string                   `yaml:"Location"`
+	EnableEncryptedLink bool                     `yaml:"EnableEncryptedLink"`
+	IconMode            string                   `yaml:"IconMode"`
+	KeepLetterCase      bool                     `yaml:"KeepLetterCase"`
+	Locale              string                   `yaml:"Locale"`
 }

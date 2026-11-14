@@ -12,6 +12,9 @@ type HomepageOptions struct {
 	NavigationTextSize   string `yaml:"NavigationTextSize"`
 	TitleSize            string `yaml:"TitleSize"`
 	HideAppDescriptions  bool   `yaml:"HideAppDescriptions"`
+	// IgnoreThemeLayout turns off the layout every theme specifies, so that
+	// the options above apply whatever theme is selected.
+	IgnoreThemeLayout bool `yaml:"IgnoreThemeLayout"`
 }
 
 // Phone and tablet bookmark layouts. Classic is the default and needs no class.

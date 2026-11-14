@@ -142,13 +142,13 @@ func TestEveryThemeTokenHasACheck(t *testing.T) {
 // A file written for a later release stays usable: what this release does not
 // know is left out and reported, and the rest is used.
 func TestReadThemeFileReportsWhatItDoesNotUse(t *testing.T) {
-	raw := validThemeFile + "  shadow: \"#000000\"\n  font-scale: \"1.1\"\n  radius: 8px\noptions:\n  - id: density\nlayout:\n  DesktopColumns: 4\n" +
+	raw := validThemeFile + "  shadow: \"#000000\"\n  font-scale: \"1.1\"\n  radius: 8px\noptions:\n  - id: density\nbackground:\n  image: wallpaper.jpg\n" +
 		"modes:\n  dark:\n    background: \"#000000\"\n    glow: \"#ffffff\"\n  sepia:\n    background: \"#f4ecd8\"\n"
 	file, unused, err := ReadThemeFile([]byte(raw))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := unused.Keys; len(got) != 3 || got[0] != "layout" || got[1] != "modes.sepia" || got[2] != "options" {
+	if got := unused.Keys; len(got) != 3 || got[0] != "background" || got[1] != "modes.sepia" || got[2] != "options" {
 		t.Fatalf("unused keys: %v", got)
 	}
 	if got := unused.Tokens; len(got) != 3 || got[0] != "modes.dark.glow" || got[1] != "tokens.font-scale" || got[2] != "tokens.shadow" {
@@ -183,11 +183,11 @@ func TestReadThemeFileReportsWhatItDoesNotUse(t *testing.T) {
 
 	// What is used still has to be valid, and the unused parts of a rejected
 	// file are reported with the rejection.
-	file, unused, err = ReadThemeFile([]byte(validThemeFile + "  radius: 4em\nlayout: {}\n"))
+	file, unused, err = ReadThemeFile([]byte(validThemeFile + "  radius: 4em\noptions: {}\n"))
 	if !errors.Is(err, ErrThemeTokenValue) || file.Tokens != nil {
 		t.Fatalf("got %v %+v", err, file)
 	}
-	if len(unused.Keys) != 1 || unused.Keys[0] != "layout" {
+	if len(unused.Keys) != 1 || unused.Keys[0] != "options" {
 		t.Fatalf("unused keys of a rejected file: %v", unused.Keys)
 	}
 }

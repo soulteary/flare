@@ -52,6 +52,7 @@
                 </div>
                 <p class="theme-title">{{ .Title }}</p>
                 {{ if .About }}<p class="theme-about">{{ .About }}</p>{{ end }}
+                {{ if .Layout }}<p class="theme-about">{{ .Layout }}</p>{{ end }}
             </div>
             {{ end }}
         </div>

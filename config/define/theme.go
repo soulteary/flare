@@ -4,6 +4,8 @@ package define
 
 import (
 	"html/template"
+	"maps"
+	"strings"
 	"sync"
 
 	"github.com/soulteary/flare/config/data"
@@ -161,6 +163,30 @@ func SetThemeMode(mode string) bool {
 	return true
 }
 
+// SelectedThemeLayout returns the name of the selected theme and the layout
+// options it specifies. The bundled themes and custom colors specify none.
+func SelectedThemeLayout() (string, map[string]string) {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	definition, _ := themeDefinition(ThemeCurrent)
+	return ThemeCurrent, maps.Clone(definition.Layout)
+}
+
+// HomepageInEffect returns the layout options a page is rendered with: those
+// of the site with the layout of the selected theme in place, as far as the
+// administrator has not turned it off. It is the Homepage block of the given
+// settings when the theme changes nothing. Like GetPageTheme it notices a
+// change of the selected theme's file first, so that one page takes its
+// layout and its tokens from the same reading of the file.
+func HomepageInEffect(options model.Application) *model.HomepageOptions {
+	refreshSelectedTheme()
+	themeMu.RLock()
+	name := ThemeCurrent
+	definition, _ := themeDefinition(name)
+	themeMu.RUnlock()
+	return options.Homepage.WithThemeLayout(definition.Layout, options.ThemeSettings[name].IgnoreLayout)
+}
+
 // themeHasModes reports whether a theme looks different in light and in dark.
 func themeHasModes(theme model.Theme) bool {
 	return themeStyle(theme.In(model.ThemeModeLight)) != themeStyle(theme.In(model.ThemeModeDark))
@@ -295,8 +321,13 @@ func themeStyle(theme model.Theme) string {
 func UpdatePagePalettes() {
 	userThemeScanMu.Lock()
 	defer userThemeScanMu.Unlock()
-	theme, custom := data.GetThemeSelection()
-	mode := data.GetThemeMode()
+	// One reading of config.yml gives the selection, the mode and the
+	// settings the layout of the theme is weighed against.
+	options, readErr := data.GetAllSettingsOptions()
+	if readErr != nil {
+		options = model.Application{}
+	}
+	theme, custom, mode := options.Theme, options.ThemeCustom, options.ThemeMode
 	stamp := statThemeFile(theme)
 	scan := scanUserThemes()
 	themeMu.Lock()
@@ -323,7 +354,13 @@ func UpdatePagePalettes() {
 	}
 	applyTheme(theme)
 	selectedThemeStamp = stamp
-	if _, known := themeDefinition(theme); !known && theme != "" {
+	definition, known := themeDefinition(theme)
+	if !known && theme != "" {
 		logger.GetLogger().Warn("Theme is not a bundled theme and has no usable theme file; pages use the colors of the stylesheet", "theme", theme)
+	}
+	// Hand-edited values under Homepage have no effect on these options
+	// while the theme is selected, which is easy to miss in the file.
+	if applied := options.Homepage.ThemeLayoutApplied(definition.Layout, options.ThemeSettings[theme].IgnoreLayout); len(applied) > 0 {
+		logger.GetLogger().Info("The selected theme specifies layout options that replace those under Homepage; the appearance settings can turn them off", "theme", theme, "options", strings.Join(applied, ","))
 	}
 }

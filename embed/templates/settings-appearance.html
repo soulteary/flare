@@ -1,3 +1,4 @@
+{{ define "theme-layout-note" }}{{ if . }}<p class="help-text theme-layout-note">{{ .Text }}{{ if .Field }} <label class="theme-layout-choice"><input type="checkbox" name="{{ .Field }}" value="1" {{ if .Ignored }}checked{{ end }}> {{ .UseMine }}</label>{{ end }}</p>{{ end }}{{ end }}
 {{ define "settings-appearance.html" }}
 <div class="setting-group-container">
 
@@ -97,13 +98,24 @@
             {{ end }}
         </div>
 
+        {{ if .ThemeLayout }}
+        <div class="form-group">
+            <label for="theme-layout-all">{{ T .Locale "theme_layout" }}</label>
+            <select name="theme-layout-all" id="theme-layout-all">
+                <option value="apply" {{ if not .ThemeLayoutOff }}selected{{ end }}>{{ T .Locale "theme_layout_apply" }}</option>
+                <option value="ignore" {{ if .ThemeLayoutOff }}selected{{ end }}>{{ T .Locale "theme_layout_ignore" }}</option>
+            </select>
+            <p class="help-text">{{ .ThemeLayoutSummary }}</p>
+            {{ if not .ThemeLayoutOff }}<input type="hidden" name="theme-layout-theme" value="{{ .ThemeLayoutTheme }}">{{ end }}
+        </div>
+        {{ end }}
         <div class="form-group">
             <label for="mobile-bookmark-layout">{{ T .Locale "mobile_bookmark_layout" }}</label>
             <select name="mobile-bookmark-layout" id="mobile-bookmark-layout">
                 <option value="classic" {{ if eq .OptionMobileBookmarkLayout "classic" }}selected{{ end }}>{{ T .Locale "mobile_bookmark_classic" }}</option>
                 <option value="single-column" {{ if eq .OptionMobileBookmarkLayout "single-column" }}selected{{ end }}>{{ T .Locale "mobile_bookmark_single" }}</option>
                 <option value="compact" {{ if eq .OptionMobileBookmarkLayout "compact" }}selected{{ end }}>{{ T .Locale "mobile_bookmark_compact" }}</option>
-            </select>
+            </select>{{ template "theme-layout-note" (index .ThemeLayout "MobileBookmarkLayout") }}
             <p class="help-text">{{ T .Locale "mobile_bookmark_help" }}</p>
         </div>
         <div class="form-group"><label for="navigation-text-size">{{ T .Locale "navigation_text_size" }}</label><select name="navigation-text-size" id="navigation-text-size">
@@ -115,11 +127,11 @@
             <option value="compact" {{ if eq .OptionTitleSize "compact" }}selected{{ end }}>{{ T .Locale "size_compact" }}</option>
             <option value="standard" {{ if eq .OptionTitleSize "standard" }}selected{{ end }}>{{ T .Locale "size_standard" }}</option>
             <option value="prominent" {{ if eq .OptionTitleSize "prominent" }}selected{{ end }}>{{ T .Locale "size_prominent" }}</option>
-        </select></div>
+        </select>{{ template "theme-layout-note" (index .ThemeLayout "TitleSize") }}</div>
         <div class="form-group"><label for="hide-app-descriptions">{{ T .Locale "app_descriptions" }}</label><select name="hide-app-descriptions" id="hide-app-descriptions">
             <option value="0" {{ if not .OptionHideAppDescriptions }}selected{{ end }}>{{ T .Locale "show" }}</option>
             <option value="1" {{ if .OptionHideAppDescriptions }}selected{{ end }}>{{ T .Locale "hide" }}</option>
-        </select><p class="help-text">{{ T .Locale "readability_help" }}</p></div>
+        </select>{{ template "theme-layout-note" (index .ThemeLayout "HideAppDescriptions") }}<p class="help-text">{{ T .Locale "readability_help" }}</p></div>
         <h2>{{ T .Locale "module_settings" }}</h2>
 
         <div class="form-group">
@@ -278,7 +290,7 @@
  <option value="all" {{if eq .CategoryNavigation "all"}}selected{{end}}>{{ T .Locale "category_navigation_all" }}</option>
  <option value="tabs" {{if eq .CategoryNavigation "tabs"}}selected{{end}}>{{ T .Locale "category_navigation_tabs" }}</option>
  <option value="collapse" {{if eq .CategoryNavigation "collapse"}}selected{{end}}>{{ T .Locale "category_navigation_collapse" }}</option>
- </select>
+ </select>{{ template "theme-layout-note" (index .ThemeLayout "CategoryNavigation") }}
  <p class="help-text">{{ T .Locale "category_navigation_help" }}</p>
  </div>
  <div class="form-group">
@@ -286,15 +298,14 @@
  <select id="bookmark-layout" name="bookmark-layout">
  <option value="groups" {{if eq .BookmarkLayout "groups"}}selected{{end}}>{{ T .Locale "bookmark_layout_groups" }}</option>
  <option value="sections" {{if eq .BookmarkLayout "sections"}}selected{{end}}>{{ T .Locale "bookmark_layout_sections" }}</option>
- </select><p class="help-text">{{ T .Locale "bookmark_layout_help" }}</p>
+ </select>{{ template "theme-layout-note" (index .ThemeLayout "BookmarkLayout") }}<p class="help-text">{{ T .Locale "bookmark_layout_help" }}</p>
  </div>
  <div class="form-group">
  <label for="desktop-columns">{{ T .Locale "desktop_columns" }}</label>
  <select id="desktop-columns" name="desktop-columns">
  <option value="legacy" {{if eq .DesktopColumns ""}}selected{{end}}>{{ T .Locale "desktop_columns_default" }}</option>
  <option value="auto" {{if eq .DesktopColumns "auto"}}selected{{end}}>{{ T .Locale "desktop_columns_auto" }}</option>
- {{range $count := .DesktopColumnChoices}}<option value="{{$count}}" {{if eq $.DesktopColumns $count}}selected{{end}}>{{$count}}</option>{{end}}
- </select><p class="help-text">{{ T .Locale "desktop_columns_help" }}</p>
+ {{range $count := .DesktopColumnChoices}}<option value="{{$count}}" {{if eq $.DesktopColumns $count}}selected{{end}}>{{$count}}</option>{{end}}</select>{{ template "theme-layout-note" (index .ThemeLayout "DesktopColumns") }}<p class="help-text">{{ T .Locale "desktop_columns_help" }}</p>
  </div>
  <div class="form-group">
             <input class="btn-submit" type="submit" value="{{ T .Locale "save_changes" }}" />
