@@ -44,6 +44,11 @@
                     <div class="pull-left theme-color color-background" style="background-color: {{ .Colors.Background }};"></div>
                     <div class="pull-left theme-color color-primary" style="background-color: {{ .Colors.Primary }};"></div>
                     <div class="pull-left theme-color color-accent" style="background-color: {{ .Colors.Accent }};"></div>
+                    {{ if .Dark }}
+                    <div class="pull-left theme-color color-background" style="background-color: {{ .Dark.Background }};"></div>
+                    <div class="pull-left theme-color color-primary" style="background-color: {{ .Dark.Primary }};"></div>
+                    <div class="pull-left theme-color color-accent" style="background-color: {{ .Dark.Accent }};"></div>
+                    {{ end }}
                 </div>
                 <p class="theme-title">{{ .Title }}</p>
                 {{ if .About }}<p class="theme-about">{{ .About }}</p>{{ end }}
@@ -59,6 +64,25 @@
         </ul>
         {{ end }}
     </form>
+    {{ if .ThemeModeChoice }}
+    <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-mode-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
+        <input type="hidden" name="action" value="{{ .ThemeModeAction }}">
+        <h2>{{ T .Locale "theme_mode" }}</h2>
+        {{ if .ThemeModeSaved }}<p class="theme-notice" role="status">{{ T .Locale "theme_mode_saved" }}</p>{{ end }}
+        <p class="theme-help">{{ T .Locale "theme_mode_help" }}</p>
+        <div class="form-group">
+            <label for="theme-mode">{{ T .Locale "theme_mode_label" }}</label>
+            <select name="theme-mode" id="theme-mode">
+                <option value="auto" {{ if eq .ThemeMode "auto" }}selected{{ end }}>{{ T .Locale "theme_mode_auto" }}</option>
+                <option value="light" {{ if eq .ThemeMode "light" }}selected{{ end }}>{{ T .Locale "theme_mode_light" }}</option>
+                <option value="dark" {{ if eq .ThemeMode "dark" }}selected{{ end }}>{{ T .Locale "theme_mode_dark" }}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_custom_save" }}" />
+        </div>
+    </form>
+    {{ end }}
     <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-custom-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <input type="hidden" name="action" value="{{ .ThemeCustomAction }}">
         <h2>{{ T .Locale "theme_custom" }}</h2>

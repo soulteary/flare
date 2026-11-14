@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -99,6 +100,9 @@ type ThemeFile struct {
 	Author  string
 	License string
 	Tokens  map[string]string
+	// Modes holds the token values that replace those of Tokens in light
+	// and in dark mode, keyed by mode.
+	Modes map[string]map[string]string
 }
 
 // ThemeText is a text of a theme file: one string, or one string per
@@ -180,7 +184,9 @@ func (t ThemeText) languages() []string {
 }
 
 // ThemeFileUnused lists the parts of a theme file that were read but not
-// used: keys and tokens this release does not know. A file written for a later
+// used, as paths in the file. Keys holds keys and modes this release does not
+// know, such as layout or modes.sepia; Tokens holds tokens it does not know,
+// such as tokens.shadow or modes.light.shadow. A file written for a later
 // release remains usable without them.
 type ThemeFileUnused struct {
 	Keys   []string
@@ -190,7 +196,7 @@ type ThemeFileUnused struct {
 // Empty reports whether every part of the file was used.
 func (u ThemeFileUnused) Empty() bool { return len(u.Keys) == 0 && len(u.Tokens) == 0 }
 
-// ReadThemeFile reads and validates a theme file. Keys and tokens this
+// ReadThemeFile reads and validates a theme file. Keys, modes and tokens this
 // release does not know are left out and reported; everything that is used
 // has to be valid, or the file is rejected as a whole. A rejection is a
 // *ThemeFileError.
@@ -226,6 +232,8 @@ func ReadThemeFile(raw []byte) (ThemeFile, ThemeFileUnused, error) {
 			target = &file.License
 		case "tokens":
 			target = &file.Tokens
+		case "modes":
+			target = &file.Modes
 		default:
 			unused.Keys = append(unused.Keys, key)
 			continue
@@ -235,17 +243,33 @@ func ReadThemeFile(raw []byte) (ThemeFile, ThemeFileUnused, error) {
 			return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeSyntax, key+": "+err.Error())
 		}
 	}
-	for token := range file.Tokens {
-		if _, known := themeTokenChecks[token]; !known {
-			unused.Tokens = append(unused.Tokens, token)
-			delete(file.Tokens, token)
+	unused.Tokens = dropUnknownTokens(file.Tokens, "tokens.", unused.Tokens)
+	for mode, replaced := range file.Modes {
+		if mode != ThemeModeLight && mode != ThemeModeDark {
+			unused.Keys = append(unused.Keys, "modes."+mode)
+			delete(file.Modes, mode)
+			continue
 		}
+		unused.Tokens = dropUnknownTokens(replaced, "modes."+mode+".", unused.Tokens)
 	}
+	slices.Sort(unused.Keys)
 	slices.Sort(unused.Tokens)
 	if err := file.Validate(); err != nil {
 		return ThemeFile{}, unused, err
 	}
 	return file, unused, nil
+}
+
+// dropUnknownTokens removes the tokens this release does not know from one
+// mapping of a theme file and adds their paths to the list.
+func dropUnknownTokens(tokens map[string]string, path string, unused []string) []string {
+	for token := range tokens {
+		if _, known := themeTokenChecks[token]; !known {
+			unused = append(unused, path+token)
+			delete(tokens, token)
+		}
+	}
+	return unused
 }
 
 // ParseThemeFile reads a theme file that has to be used in full, as the
@@ -266,33 +290,40 @@ func ParseThemeFile(raw []byte) (ThemeFile, error) {
 
 // Validate accepts a theme whose tokens can be written into a page. The three
 // colors are required and have to pass the checks of a custom palette; the
-// other tokens are optional. The first reason found is returned as a
-// *ThemeFileError, and the order of the checks does not vary.
+// other tokens are optional. The values of a mode replace those of the theme,
+// and the result has to pass the same checks. The first reason found is
+// returned as a *ThemeFileError that names the part of the file, and the
+// order of the checks does not vary.
 func (f ThemeFile) Validate() error {
 	if f.Contract != ThemeContract {
 		return themeFileError(ErrThemeContract, strconv.Itoa(f.Contract))
 	}
-	unknown := make([]string, 0)
-	for name := range f.Tokens {
-		if _, known := themeTokenChecks[name]; !known {
-			unknown = append(unknown, name)
-		}
-	}
-	if len(unknown) > 0 {
-		return themeFileError(ErrThemeToken, slices.Min(unknown))
-	}
-	for _, name := range ThemeTokenNames {
-		if value, set := f.Tokens[name]; set && !themeTokenChecks[name](value) {
-			return themeFileError(ErrThemeTokenValue, name)
-		}
+	if err := validateThemeTokens(f.Tokens, "tokens."); err != nil {
+		return err
 	}
 	for _, name := range ThemeTokenNames[:3] {
 		if _, set := f.Tokens[name]; !set {
-			return themeFileError(ErrPaletteColor, name)
+			return themeFileError(ErrPaletteColor, "tokens."+name)
 		}
 	}
 	if err := f.Palette().Validate(); err != nil {
 		return themeFileError(err, "")
+	}
+	modes := make([]string, 0, len(f.Modes))
+	for mode := range f.Modes {
+		modes = append(modes, mode)
+	}
+	slices.Sort(modes)
+	for _, mode := range modes {
+		if mode != ThemeModeLight && mode != ThemeModeDark {
+			return themeFileError(ErrThemeSyntax, "unknown mode "+strconv.Quote(mode))
+		}
+		if err := validateThemeTokens(f.Modes[mode], "modes."+mode+"."); err != nil {
+			return err
+		}
+		if err := f.Theme("").In(mode).Colors.Validate(); err != nil {
+			return themeFileError(err, "modes."+mode)
+		}
 	}
 	if !isThemeText(f.Name.Plain, maximumThemeNameLength) {
 		return themeFileError(ErrThemeText, "name")
@@ -305,6 +336,28 @@ func (f ThemeFile) Validate() error {
 	for _, text := range []struct{ key, value string }{{"version", f.Version}, {"author", f.Author}, {"license", f.License}} {
 		if !isThemeText(text.value, maximumThemeTextLength) {
 			return themeFileError(ErrThemeText, text.key)
+		}
+	}
+	return nil
+}
+
+// validateThemeTokens checks one mapping of tokens: the tokens of the theme
+// or the tokens of a mode. An unknown token is reported before a value, the
+// first in the order of the names; values are checked in the order of the
+// documentation.
+func validateThemeTokens(tokens map[string]string, path string) error {
+	unknown := make([]string, 0)
+	for name := range tokens {
+		if _, known := themeTokenChecks[name]; !known {
+			unknown = append(unknown, name)
+		}
+	}
+	if len(unknown) > 0 {
+		return themeFileError(ErrThemeToken, path+slices.Min(unknown))
+	}
+	for _, name := range ThemeTokenNames {
+		if value, set := tokens[name]; set && !themeTokenChecks[name](value) {
+			return themeFileError(ErrThemeTokenValue, path+name)
 		}
 	}
 	return nil
@@ -367,6 +420,14 @@ func (f ThemeFile) Theme(name string) Theme {
 				theme.Tokens = make(map[string]string)
 			}
 			theme.Tokens[token] = value
+		}
+	}
+	for _, mode := range []string{ThemeModeLight, ThemeModeDark} {
+		if replaced := f.Modes[mode]; len(replaced) > 0 {
+			if theme.Modes == nil {
+				theme.Modes = make(map[string]map[string]string)
+			}
+			theme.Modes[mode] = maps.Clone(replaced)
 		}
 	}
 	return theme

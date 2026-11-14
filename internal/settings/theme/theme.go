@@ -20,9 +20,12 @@ import (
 	"github.com/soulteary/flare/internal/settings"
 )
 
-// actionSaveCustom is submitted by the custom color form. Theme cards submit
-// only a theme name.
-const actionSaveCustom = "save-custom"
+// actionSaveCustom is submitted by the custom color form and actionSaveMode
+// by the form for light and dark. Theme cards submit only a theme name.
+const (
+	actionSaveCustom = "save-custom"
+	actionSaveMode   = "save-mode"
+)
 
 func RegisterRouting(e *fiber.App) {
 	e.Get(define.SettingPages.Theme.Path, auth.AuthRequired, pageTheme)
@@ -40,6 +43,7 @@ func updateThemes(c fiber.Ctx) error {
 		Background string `form:"custom-background"`
 		Primary    string `form:"custom-primary"`
 		Accent     string `form:"custom-accent"`
+		Mode       string `form:"theme-mode"`
 	}
 	if err := c.Bind().Body(&body); err != nil {
 		return c.Status(http.StatusForbidden).JSON("提交数据缺失")
@@ -53,6 +57,11 @@ func updateThemes(c fiber.Ctx) error {
 			Accent:     strings.Clone(body.Accent),
 		}
 		return updateCustomPalette(c, palette.Normalized())
+	}
+	if body.Action == actionSaveMode {
+		// The mode is one of three constants once it is accepted, so nothing
+		// of the request is retained.
+		return updateThemeMode(c, body.Mode)
 	}
 	// ThemeCurrent survives the request, so retain an owned copy.
 	theme := strings.Clone(body.Theme)
@@ -105,6 +114,24 @@ func updateCustomPalette(c fiber.Ctx, palette model.Palette) error {
 	return renderTheme(c, http.StatusOK, themeNotice{saved: true})
 }
 
+// updateThemeMode stores and applies the setting for light and dark.
+func updateThemeMode(c fiber.Ctx, submitted string) error {
+	mode := ""
+	for _, known := range []string{model.ThemeModeAuto, model.ThemeModeLight, model.ThemeModeDark} {
+		if submitted == known {
+			mode = known
+		}
+	}
+	if mode == "" {
+		return c.Status(http.StatusBadRequest).SendString("Unknown theme mode")
+	}
+	if done, err := commitThemeChange(c, func() error { return data.SaveThemeMode(mode) }); done {
+		return err
+	}
+	define.SetThemeMode(mode)
+	return renderTheme(c, http.StatusOK, themeNotice{modeSaved: true})
+}
+
 // selectCustomPalette applies the palette stored in config.yml. The file is
 // the source of truth: it may have been edited since the palette was last
 // applied, and the selection has to match what the next start will read.
@@ -146,6 +173,8 @@ type themeNotice struct {
 	submitted *model.Palette
 	rejected  error
 	saved     bool
+	// modeSaved reports a stored setting for light and dark.
+	modeSaved bool
 }
 
 func pageTheme(c fiber.Ctx) error {
@@ -172,7 +201,9 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	m["Locale"] = locale
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
-	m["PageAppearance"] = define.GetAppBodyStyle()
+	pageTheme := define.GetPageTheme()
+	m["PageAppearance"] = pageTheme.BodyStyle
+	m["PageThemeRules"] = pageTheme.Rules
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["PageName"] = "Theme"
 	m["SettingPages"] = define.SettingPages
@@ -181,6 +212,13 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	fileThemes, problems, notices := define.UserThemes()
 	m["ThemeFiles"] = themeFileCards(locale, fileThemes)
 	m["ThemeFileLines"] = themeFileLines(locale, problems, notices)
+	// The setting for light and dark is offered while it has an effect: on a
+	// theme with different values for the two.
+	mode, choice := define.ThemeModeState()
+	m["ThemeMode"] = mode
+	m["ThemeModeChoice"] = choice
+	m["ThemeModeAction"] = actionSaveMode
+	m["ThemeModeSaved"] = notice.modeSaved
 	if selected, _ := define.ThemeSnapshot(); selected != "" && !define.IsKnownTheme(selected) {
 		m["ThemeUnavailable"] = i18n.Format(locale, "theme_unavailable", map[string]any{"name": plainText(selected, maximumShownName)})
 	}
@@ -234,9 +272,12 @@ type themeFileCard struct {
 	Name string
 	// Title is the name to show, About the version, author and license the
 	// file gives.
-	Title  string
-	About  string
+	Title string
+	About string
+	// Colors are the colors of the theme in light mode. Dark holds those of
+	// dark mode when they are different.
 	Colors model.Palette
+	Dark   *model.Palette
 }
 
 func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
@@ -248,12 +289,16 @@ func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
 				about = append(about, text)
 			}
 		}
-		cards = append(cards, themeFileCard{
+		card := themeFileCard{
 			Name:   theme.Name,
 			Title:  theme.DisplayName(locale),
 			About:  strings.Join(about, " · "),
-			Colors: theme.Colors,
-		})
+			Colors: theme.In(model.ThemeModeLight).Colors,
+		}
+		if dark := theme.In(model.ThemeModeDark).Colors; dark != card.Colors {
+			card.Dark = &dark
+		}
+		cards = append(cards, card)
 	}
 	return cards
 }
@@ -283,10 +328,7 @@ func themeFileLines(locale string, problems []define.ThemeProblem, notices []def
 		})
 	}
 	for _, notice := range notices {
-		parts := append([]string(nil), notice.Unused.Keys...)
-		for _, token := range notice.Unused.Tokens {
-			parts = append(parts, "tokens."+token)
-		}
+		parts := append(append([]string(nil), notice.Unused.Keys...), notice.Unused.Tokens...)
 		lines = append(lines, themeFileLine{
 			File:   plainText(notice.File, maximumShownName),
 			Text:   i18n.T(locale, "theme_file_unused"),

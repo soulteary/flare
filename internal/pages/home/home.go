@@ -88,7 +88,9 @@ func renderHelp(c fiber.Ctx) error {
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
 	m["PageName"] = "Home"
-	m["PageAppearance"] = define.GetAppBodyStyle()
+	pageTheme := define.GetPageTheme()
+	m["PageAppearance"] = pageTheme.BodyStyle
+	m["PageThemeRules"] = pageTheme.Rules
 	m["SettingPages"] = define.SettingPages
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
@@ -174,7 +176,9 @@ func pageBookmark(c fiber.Ctx) error {
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
 	m["PageName"] = i18n.T(locale, "page_bookmarks")
 	m["SubPage"] = true
-	m["PageAppearance"] = define.GetAppBodyStyle()
+	pageTheme := define.GetPageTheme()
+	m["PageAppearance"] = pageTheme.BodyStyle
+	m["PageThemeRules"] = pageTheme.Rules
 	m["BodyClassName"] = homepageBodyClasses(options)
 	m["SettingPages"] = define.SettingPages
 	m["BookmarksURI"] = define.RegularPages.Bookmarks.Path
@@ -220,7 +224,9 @@ func pageApplication(c fiber.Ctx) error {
 	}
 	m["PageName"] = i18n.T(locale, "page_apps")
 	m["SubPage"] = true
-	m["PageAppearance"] = define.GetAppBodyStyle()
+	pageTheme := define.GetPageTheme()
+	m["PageAppearance"] = pageTheme.BodyStyle
+	m["PageThemeRules"] = pageTheme.Rules
 	m["BodyClassName"] = homepageBodyClasses(options)
 	m["OptionTitle"] = options.Title
 	m["OptionOpenAppNewTab"] = options.OpenAppNewTab
@@ -285,7 +291,9 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	defer pool.PutTemplateMap(m)
 	m["Locale"] = locale
 	m["PageName"] = "Home"
-	m["PageAppearance"] = define.GetAppBodyStyle()
+	pageTheme := define.GetPageTheme()
+	m["PageAppearance"] = pageTheme.BodyStyle
+	m["PageThemeRules"] = pageTheme.Rules
 	m["SettingPages"] = define.SettingPages
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()

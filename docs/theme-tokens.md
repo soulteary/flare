@@ -45,7 +45,10 @@ theme. The bundled themes and custom colors set these three; a
 
 - **Where tokens are defined.** On `body`. A derived token is computed there:
   setting `--flare-primary` on an element inside the page does not change
-  `--flare-icon` below that element. Set tokens on `body`.
+  `--flare-icon` below that element. Set tokens on `body`. A theme sets them
+  in the `style` attribute of `body`, or, while it
+  [follows the device](theme-files.md#light-and-dark) between light and dark,
+  in rules of a `style` element in the page head.
 - **Earlier names.** `--color-background`, `--color-primary` and
   `--color-accent` remain available and hold the theme colors. Existing footer
   markup that uses them is unaffected.

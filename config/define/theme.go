@@ -25,6 +25,10 @@ var themeCustomSet bool
 var ThemeCurrent = ""
 var ThemePrimaryColor = ""
 
+// themeMode is the site setting that chooses between the light and the dark
+// values of a theme, or leaves the choice to the device. Guarded by themeMu.
+var themeMode = model.ThemeModeAuto
+
 func Init() {
 	initPageInlineStyle()
 	UpdatePagePalettes()
@@ -51,14 +55,36 @@ func initPageInlineStyle() {
 // 页面 body cssvar 样式
 var _CACHE_PAGE_BODY_THEME_NAME template.CSS
 
-// GetAppBodyStyle returns the style attribute of the page body for the
-// selected theme. Every themed page calls it once per response, which makes it
-// the place where a change of the selected theme's file is noticed.
-func GetAppBodyStyle() template.CSS {
+// The rules of the selected theme for a style element, used instead of the
+// style attribute when the device chooses between light and dark.
+var _CACHE_PAGE_THEME_RULES template.CSS
+
+// PageTheme is what a themed page takes from the selected theme, read at one
+// moment. A theme reaches the page in one of two ways. BodyStyle is the style
+// attribute of the body: the custom properties of the theme. Rules is the
+// content of a style element with the same properties for light and for dark,
+// each in a media query; it is used when the theme has different values for
+// the two and the site leaves the choice to the device. The one that is not
+// used is empty.
+type PageTheme struct {
+	BodyStyle template.CSS
+	Rules     template.CSS
+}
+
+// GetPageTheme returns the selected theme for one page. Every themed page
+// calls it once per response, which makes it the place where a change of the
+// selected theme's file is noticed.
+func GetPageTheme() PageTheme {
 	refreshSelectedTheme()
 	themeMu.RLock()
 	defer themeMu.RUnlock()
-	return _CACHE_PAGE_BODY_THEME_NAME
+	return PageTheme{BodyStyle: _CACHE_PAGE_BODY_THEME_NAME, Rules: _CACHE_PAGE_THEME_RULES}
+}
+
+// GetAppBodyStyle returns the style attribute of the page body for the
+// selected theme. It is empty when the theme is written as rules instead.
+func GetAppBodyStyle() template.CSS {
+	return GetPageTheme().BodyStyle
 }
 
 // ThemeSnapshot returns a consistent theme name/color pair for one resource.
@@ -90,15 +116,73 @@ func GetThemePrimaryColor(theme string) string {
 	return themePrimaryColor(theme)
 }
 
-// CurrentThemePalette returns the colors in use. An unknown theme name has no
-// palette of its own, so the first built-in palette is returned for it.
+// CurrentThemePalette returns the colors in use: those of the mode the site
+// is set to, and the light ones when the device chooses. An unknown theme name
+// has no palette of its own, so the first built-in palette is returned for it.
 func CurrentThemePalette() model.Palette {
 	themeMu.RLock()
 	defer themeMu.RUnlock()
-	if palette, known := themePalette(ThemeCurrent); known {
-		return palette
+	if definition, known := themeDefinition(ThemeCurrent); known {
+		shown, _, _ := themeInMode(definition, themeMode)
+		return shown.Colors
 	}
 	return ThemePalettes[0].Colors
+}
+
+// ThemeModeState returns the site setting for light and dark, and whether the
+// selected theme has different values for the two. The setting has an effect
+// only on such a theme.
+func ThemeModeState() (string, bool) {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	definition, known := themeDefinition(ThemeCurrent)
+	if !known {
+		return themeMode, false
+	}
+	return themeMode, themeHasModes(definition)
+}
+
+// SetThemeMode publishes the site setting for light and dark, after
+// persistence. A value that is not a mode changes nothing.
+func SetThemeMode(mode string) bool {
+	if !model.IsThemeMode(mode) {
+		return false
+	}
+	themeMu.Lock()
+	defer themeMu.Unlock()
+	if mode == themeMode {
+		return true
+	}
+	themeMode = mode
+	// The theme and its file are the same as before.
+	stamp := selectedThemeStamp
+	applyTheme(ThemeCurrent)
+	selectedThemeStamp = stamp
+	return true
+}
+
+// themeHasModes reports whether a theme looks different in light and in dark.
+func themeHasModes(theme model.Theme) bool {
+	return themeStyle(theme.In(model.ThemeModeLight)) != themeStyle(theme.In(model.ThemeModeDark))
+}
+
+// themeInMode resolves a theme for a site setting. It returns the theme as
+// pages show it, the theme as they show it on a device that asks for dark,
+// and whether the device chooses between the two. When the site is set to
+// light or to dark, or the theme is the same in both, there is no choice and
+// the two results are equal.
+func themeInMode(theme model.Theme, mode string) (model.Theme, model.Theme, bool) {
+	light, dark := theme.In(model.ThemeModeLight), theme.In(model.ThemeModeDark)
+	switch mode {
+	case model.ThemeModeLight:
+		return light, light, false
+	case model.ThemeModeDark:
+		return dark, dark, false
+	}
+	if themeStyle(light) == themeStyle(dark) {
+		return light, light, false
+	}
+	return light, dark, true
 }
 
 // themeDefinition resolves a theme name. Callers hold themeMu.
@@ -123,8 +207,9 @@ func themePalette(theme string) (model.Palette, bool) {
 
 // themePrimaryColor is GetThemePrimaryColor for callers that hold themeMu.
 func themePrimaryColor(theme string) string {
-	if palette, known := themePalette(theme); known {
-		return palette.Primary
+	if definition, known := themeDefinition(theme); known {
+		shown, _, _ := themeInMode(definition, themeMode)
+		return shown.Colors.Primary
 	}
 	return ThemePalettes[0].Colors.Primary
 }
@@ -162,11 +247,31 @@ func applyTheme(theme string) {
 	selectedThemeStamp = themeFileStamp{}
 	ThemePrimaryColor = themePrimaryColor(theme)
 	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor
-	_CACHE_PAGE_BODY_THEME_NAME = emptyPageBodyStyle
-	if definition, known := themeDefinition(theme); known {
-		// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate or from the custom palette, which is stored only after Palette.Validate accepted it.
-		_CACHE_PAGE_BODY_THEME_NAME = template.CSS(themeStyle(definition))
+	_CACHE_PAGE_BODY_THEME_NAME, _CACHE_PAGE_THEME_RULES = emptyPageBodyStyle, emptyPageBodyStyle
+	definition, known := themeDefinition(theme)
+	if !known {
+		return
 	}
+	shown, dark, deviceChooses := themeInMode(definition, themeMode)
+	if deviceChooses {
+		// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate.
+		_CACHE_PAGE_THEME_RULES = template.CSS(themeRules(shown, dark))
+		return
+	}
+	// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate or from the custom palette, which is stored only after Palette.Validate accepted it.
+	_CACHE_PAGE_BODY_THEME_NAME = template.CSS(themeStyle(shown))
+}
+
+// themeRules writes a theme with different values for light and for dark as
+// rules for a style element. Each set of values is complete and stands in a
+// media query of its own, and the two queries exclude each other: with one
+// rule that always applied, a token set only for light would remain in
+// effect for dark. The rules set the same custom properties on the body as
+// the style attribute does for other themes, so they have to follow the
+// stylesheet that holds the defaults.
+func themeRules(light, dark model.Theme) string {
+	return `@media not all and (prefers-color-scheme:dark){body{` + themeStyle(light) +
+		`}}@media (prefers-color-scheme:dark){body{` + themeStyle(dark) + `}}`
 }
 
 // themeStyle writes a theme as custom properties for the style attribute of
@@ -191,11 +296,18 @@ func UpdatePagePalettes() {
 	userThemeScanMu.Lock()
 	defer userThemeScanMu.Unlock()
 	theme, custom := data.GetThemeSelection()
+	mode := data.GetThemeMode()
 	stamp := statThemeFile(theme)
 	scan := scanUserThemes()
 	themeMu.Lock()
 	defer themeMu.Unlock()
 	userThemeState = scan
+	themeMode = model.ThemeModeAuto
+	if model.IsThemeMode(mode) {
+		themeMode = mode
+	} else if mode != "" {
+		logger.GetLogger().Warn("ThemeMode in config.yml is not auto, light or dark; using auto", "value", mode)
+	}
 	themeCustom, themeCustomSet = model.Palette{}, false
 	if custom != nil {
 		palette := custom.Normalized()

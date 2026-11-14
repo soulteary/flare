@@ -142,16 +142,20 @@ func TestEveryThemeTokenHasACheck(t *testing.T) {
 // A file written for a later release stays usable: what this release does not
 // know is left out and reported, and the rest is used.
 func TestReadThemeFileReportsWhatItDoesNotUse(t *testing.T) {
-	raw := validThemeFile + "  shadow: \"#000000\"\n  font-scale: \"1.1\"\n  radius: 8px\nmodes:\n  dark:\n    background: \"#000000\"\nlayout:\n  DesktopColumns: 4\n"
+	raw := validThemeFile + "  shadow: \"#000000\"\n  font-scale: \"1.1\"\n  radius: 8px\noptions:\n  - id: density\nlayout:\n  DesktopColumns: 4\n" +
+		"modes:\n  dark:\n    background: \"#000000\"\n    glow: \"#ffffff\"\n  sepia:\n    background: \"#f4ecd8\"\n"
 	file, unused, err := ReadThemeFile([]byte(raw))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := unused.Keys; len(got) != 2 || got[0] != "layout" || got[1] != "modes" {
+	if got := unused.Keys; len(got) != 3 || got[0] != "layout" || got[1] != "modes.sepia" || got[2] != "options" {
 		t.Fatalf("unused keys: %v", got)
 	}
-	if got := unused.Tokens; len(got) != 2 || got[0] != "font-scale" || got[1] != "shadow" {
+	if got := unused.Tokens; len(got) != 3 || got[0] != "modes.dark.glow" || got[1] != "tokens.font-scale" || got[2] != "tokens.shadow" {
 		t.Fatalf("unused tokens: %v", got)
+	}
+	if len(file.Modes) != 1 || len(file.Modes[ThemeModeDark]) != 1 || file.Modes[ThemeModeDark][TokenBackground] != "#000000" {
+		t.Fatalf("modes in use: %+v", file.Modes)
 	}
 	if unused.Empty() {
 		t.Fatal("unused parts were reported as none")
@@ -179,11 +183,11 @@ func TestReadThemeFileReportsWhatItDoesNotUse(t *testing.T) {
 
 	// What is used still has to be valid, and the unused parts of a rejected
 	// file are reported with the rejection.
-	file, unused, err = ReadThemeFile([]byte(validThemeFile + "  radius: 4em\nmodes: {}\n"))
+	file, unused, err = ReadThemeFile([]byte(validThemeFile + "  radius: 4em\nlayout: {}\n"))
 	if !errors.Is(err, ErrThemeTokenValue) || file.Tokens != nil {
 		t.Fatalf("got %v %+v", err, file)
 	}
-	if len(unused.Keys) != 1 || unused.Keys[0] != "modes" {
+	if len(unused.Keys) != 1 || unused.Keys[0] != "layout" {
 		t.Fatalf("unused keys of a rejected file: %v", unused.Keys)
 	}
 }
@@ -199,13 +203,17 @@ func TestThemeFileRejectionNamesItsSubject(t *testing.T) {
 	}{
 		"contract missing":        {"tokens:\n" + colors, ErrThemeContract, "0"},
 		"contract of a later one": {"contract: 3\ntokens:\n" + colors, ErrThemeContract, "3"},
-		"token value":             {validThemeFile + "  radius: 4em\n", ErrThemeTokenValue, "radius"},
-		"first of two values":     {validThemeFile + "  radius: 4em\n  icon: red\n  hover: blue\n", ErrThemeTokenValue, "icon"},
-		"value before a missing":  {"contract: 1\ntokens:\n  background: \"#1a1a1a\"\n  radius: 4em\n", ErrThemeTokenValue, "radius"},
-		"missing background":      {"contract: 1\ntokens:\n  primary: \"#FFFDEA\"\n  accent: \"#5c5c5c\"\n", ErrPaletteColor, "background"},
-		"missing primary first":   {"contract: 1\ntokens:\n  background: \"#1a1a1a\"\n", ErrPaletteColor, "primary"},
-		"missing accent":          {"contract: 1\ntokens:\n  background: \"#1a1a1a\"\n  primary: \"#FFFDEA\"\n", ErrPaletteColor, "accent"},
+		"token value":             {validThemeFile + "  radius: 4em\n", ErrThemeTokenValue, "tokens.radius"},
+		"first of two values":     {validThemeFile + "  radius: 4em\n  icon: red\n  hover: blue\n", ErrThemeTokenValue, "tokens.icon"},
+		"value before a missing":  {"contract: 1\ntokens:\n  background: \"#1a1a1a\"\n  radius: 4em\n", ErrThemeTokenValue, "tokens.radius"},
+		"missing background":      {"contract: 1\ntokens:\n  primary: \"#FFFDEA\"\n  accent: \"#5c5c5c\"\n", ErrPaletteColor, "tokens.background"},
+		"missing primary first":   {"contract: 1\ntokens:\n  background: \"#1a1a1a\"\n", ErrPaletteColor, "tokens.primary"},
+		"missing accent":          {"contract: 1\ntokens:\n  background: \"#1a1a1a\"\n  primary: \"#FFFDEA\"\n", ErrPaletteColor, "tokens.accent"},
 		"contrast":                {"contract: 1\ntokens:\n  background: \"#202020\"\n  primary: \"#2a2a2a\"\n  accent: \"#5c5c5c\"\n", ErrPaletteContrast, ""},
+		"value in a mode":         {validThemeFile + "modes:\n  light:\n    radius: 4em\n", ErrThemeTokenValue, "modes.light.radius"},
+		"dark before light":       {validThemeFile + "modes:\n  light:\n    radius: 4em\n  dark:\n    icon: red\n", ErrThemeTokenValue, "modes.dark.icon"},
+		"contrast in a mode":      {validThemeFile + "modes:\n  light:\n    background: \"#fffdea\"\n", ErrPaletteContrast, "modes.light"},
+		"theme before its modes":  {validThemeFile + "  radius: 4em\nmodes:\n  dark:\n    icon: red\n", ErrThemeTokenValue, "tokens.radius"},
 		"name":                    {validThemeFile + "name: \" padded\"\n", ErrThemeText, "name"},
 		"name in a language":      {validThemeFile + "name:\n  en: fine\n  zh: \"" + strings.Repeat("字", 49) + "\"\n", ErrThemeText, `name: "zh"`},
 		"language code":           {validThemeFile + "name:\n  \"not a code\": text\n", ErrThemeText, `name: "not a code"`},
@@ -244,7 +252,7 @@ func TestThemeFileRejectionNamesItsSubject(t *testing.T) {
 	}
 	// An unknown token is a rejection of Validate, which strict reading uses.
 	err = ThemeFile{Contract: 1, Tokens: map[string]string{"zeta": "1", "shadow": "2"}}.Validate()
-	if !errors.As(err, &rejection) || !errors.Is(err, ErrThemeToken) || rejection.Subject != "shadow" {
+	if !errors.As(err, &rejection) || !errors.Is(err, ErrThemeToken) || rejection.Subject != "tokens.shadow" {
 		t.Fatalf("unknown token: %v", err)
 	}
 }
@@ -423,5 +431,122 @@ func TestThemeFileWithAliases(t *testing.T) {
 	// Unused keys are not expanded at all, so the rest of the file decides.
 	if _, _, err = ReadThemeFile([]byte(bomb.String())); !errors.Is(err, ErrPaletteColor) {
 		t.Fatalf("a growing list under unknown keys: %v", err)
+	}
+}
+
+// A theme can replace token values in light and in dark mode. What a mode
+// does not replace stays as the theme has it.
+func TestThemeFileModes(t *testing.T) {
+	raw := validThemeFile + "  radius: 8px\n  muted: \"#808080\"\n" +
+		"modes:\n  light:\n    background: \"#f6f3ea\"\n    primary: \"#2b2a27\"\n    muted: \"#6b6860\"\n    hover: \"#0000001a\"\n"
+	file, err := ParseThemeFile([]byte(raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	theme := file.Theme("paired")
+	if len(theme.Modes) != 1 || len(theme.Modes[ThemeModeLight]) != 4 {
+		t.Fatalf("modes: %+v", theme.Modes)
+	}
+
+	light := theme.In(ThemeModeLight)
+	if light.Colors != (Palette{Background: "#f6f3ea", Primary: "#2b2a27", Accent: "#5c5c5c"}) {
+		t.Fatalf("light colors: %+v", light.Colors)
+	}
+	if len(light.Tokens) != 3 || light.Tokens[TokenRadius] != "8px" || light.Tokens[TokenMuted] != "#6b6860" || light.Tokens[TokenHover] != "#0000001a" {
+		t.Fatalf("light tokens: %+v", light.Tokens)
+	}
+	// The theme without values for a mode is the theme as written.
+	dark := theme.In(ThemeModeDark)
+	if dark.Colors != theme.Colors || len(dark.Tokens) != 2 || dark.Tokens[TokenMuted] != "#808080" {
+		t.Fatalf("dark: %+v", dark)
+	}
+	for _, resolved := range []Theme{light, dark, theme.In(ThemeModeAuto), theme.In("")} {
+		if resolved.Modes != nil || resolved.Name != "paired" {
+			t.Fatalf("a theme in a mode has no modes of its own: %+v", resolved)
+		}
+	}
+	// Resolving a mode does not change the theme it came from.
+	if theme.Colors.Background != "#1a1a1a" || theme.Tokens[TokenMuted] != "#808080" || len(theme.Tokens) != 2 {
+		t.Fatalf("the theme changed: %+v", theme)
+	}
+	light.Tokens[TokenRadius] = "0"
+	if theme.Tokens[TokenRadius] != "8px" || theme.In(ThemeModeLight).Tokens[TokenRadius] != "8px" {
+		t.Fatal("a resolved theme shares its tokens with the theme")
+	}
+
+	// Both modes, and a mode that sets a token the theme does not set.
+	file, err = ParseThemeFile([]byte(validThemeFile + "modes:\n  light:\n    background: \"#ffffff\"\n    primary: \"#222222\"\n  dark:\n    accent: \"#ffcc66\"\n    radius: 0\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	theme = file.Theme("both")
+	if theme.Tokens != nil {
+		t.Fatalf("tokens of the theme: %+v", theme.Tokens)
+	}
+	if got := theme.In(ThemeModeLight); got.Colors != (Palette{Background: "#ffffff", Primary: "#222222", Accent: "#5c5c5c"}) || got.Tokens != nil {
+		t.Fatalf("light: %+v", got)
+	}
+	if got := theme.In(ThemeModeDark); got.Colors != (Palette{Background: "#1a1a1a", Primary: "#FFFDEA", Accent: "#ffcc66"}) || len(got.Tokens) != 1 || got.Tokens[TokenRadius] != "0" {
+		t.Fatalf("dark: %+v", got)
+	}
+
+	// A mode without values, and a theme without modes, have no modes.
+	for _, raw := range []string{validThemeFile, validThemeFile + "modes: {}\n", validThemeFile + "modes:\n  light: {}\n  dark:\n", validThemeFile + "modes:\n"} {
+		file, err = ParseThemeFile([]byte(raw))
+		if err != nil {
+			t.Fatalf("%q: %v", raw, err)
+		}
+		if theme = file.Theme("plain"); theme.Modes != nil {
+			t.Fatalf("%q: modes %+v", raw, theme.Modes)
+		}
+	}
+}
+
+func TestThemeFileModesAreChecked(t *testing.T) {
+	cases := map[string]struct {
+		modes string
+		want  error
+	}{
+		"value":                  {"modes:\n  dark:\n    radius: 4em\n", ErrThemeTokenValue},
+		"declaration in a color": {"modes:\n  light:\n    background: \"#fff;background:url(//example.test/)\"\n", ErrThemeTokenValue},
+		"contrast after merging": {"modes:\n  dark:\n    primary: \"#222222\"\n", ErrPaletteContrast},
+		"unknown token":          {"modes:\n  dark:\n    shadow: \"#000000\"\n", ErrThemeToken},
+		"unknown mode":           {"modes:\n  sepia:\n    background: \"#f4ecd8\"\n", ErrThemeSyntax},
+		"mode as text":           {"modes:\n  dark: \"#000000\"\n", ErrThemeSyntax},
+		"modes as a list":        {"modes:\n  - dark\n", ErrThemeSyntax},
+		"nested token":           {"modes:\n  dark:\n    background:\n      value: \"#000000\"\n", ErrThemeSyntax},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			file, err := ParseThemeFile([]byte(validThemeFile + tc.modes))
+			if !errors.Is(err, tc.want) {
+				t.Fatalf("got %v, want %v", err, tc.want)
+			}
+			if file.Modes != nil || file.Tokens != nil {
+				t.Fatalf("a rejected file must not be returned: %+v", file)
+			}
+		})
+	}
+	// A theme that is checked without being read from a file has to name
+	// only the two modes and only known tokens.
+	colors := map[string]string{TokenBackground: "#1a1a1a", TokenPrimary: "#FFFDEA", TokenAccent: "#5c5c5c"}
+	var rejection *ThemeFileError
+	err := ThemeFile{Contract: 1, Tokens: colors, Modes: map[string]map[string]string{"sepia": {TokenBackground: "#f4ecd8"}}}.Validate()
+	if !errors.As(err, &rejection) || !errors.Is(err, ErrThemeSyntax) || rejection.Subject != `unknown mode "sepia"` {
+		t.Fatalf("unknown mode: %v", err)
+	}
+	err = ThemeFile{Contract: 1, Tokens: colors, Modes: map[string]map[string]string{ThemeModeDark: {"shadow": "#000000"}}}.Validate()
+	if !errors.As(err, &rejection) || !errors.Is(err, ErrThemeToken) || rejection.Subject != "modes.dark.shadow" {
+		t.Fatalf("unknown token in a mode: %v", err)
+	}
+	for _, mode := range []string{ThemeModeAuto, ThemeModeLight, ThemeModeDark} {
+		if !IsThemeMode(mode) {
+			t.Errorf("%q is a mode setting", mode)
+		}
+	}
+	for _, mode := range []string{"", "Auto", "LIGHT", "night", "light ", "system"} {
+		if IsThemeMode(mode) {
+			t.Errorf("%q is not a mode setting", mode)
+		}
 	}
 }
