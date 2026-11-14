@@ -107,6 +107,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 		{Name: "plain", Colors: colors},
 		{Name: "signed", Colors: colors, Author: "Example Author"},
 		{Name: "licensed", Colors: colors, Version: "2", License: "CC0-1.0", Title: model.ThemeText{Plain: "Licensed"}},
+		{Name: "zelda", Colors: colors, Directory: true},
 	}
 	for locale, want := range map[string][]themeFileCard{
 		"en": {
@@ -114,12 +115,14 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 			{Name: "plain", Title: "plain", Colors: colors},
 			{Name: "signed", Title: "signed", About: "Example Author", Colors: colors},
 			{Name: "licensed", Title: "Licensed", About: "2 · CC0-1.0", Colors: colors},
+			{Name: "zelda", Title: "zelda", Colors: colors, Directory: true},
 		},
 		"zh": {
 			{Name: "forest", Title: "暮色森林", About: "1.2 · Example Author · MIT", Colors: colors},
 			{Name: "plain", Title: "plain", Colors: colors},
 			{Name: "signed", Title: "signed", About: "Example Author", Colors: colors},
 			{Name: "licensed", Title: "Licensed", About: "2 · CC0-1.0", Colors: colors},
+			{Name: "zelda", Title: "zelda", Colors: colors, Directory: true},
 		},
 	} {
 		got := themeFileCards(locale, themes)
@@ -140,6 +143,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 func TestThemeFileLinesExplainEveryReason(t *testing.T) {
 	reasons := []string{
 		define.ThemeProblemExtension, define.ThemeProblemName, define.ThemeProblemReserved, define.ThemeProblemType,
+		define.ThemeProblemLink, define.ThemeProblemDuplicate,
 		define.ThemeProblemSize, define.ThemeProblemLimit, define.ThemeProblemRead, define.ThemeProblemSyntax,
 		define.ThemeProblemContract, define.ThemeProblemValue, define.ThemeProblemColor, define.ThemeProblemContrast,
 		define.ThemeProblemText,

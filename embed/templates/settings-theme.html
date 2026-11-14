@@ -58,7 +58,7 @@
                 {{ if .About }}<p class="theme-about">{{ .About }}</p>{{ end }}
                 {{ if .Layout }}<p class="theme-about">{{ .Layout }}</p>{{ end }}
                 <a class="theme-card-link theme-preview-link" href="/?theme-preview={{ .Name }}">{{ T $.Locale "theme_preview" }}</a>
-                <a class="theme-card-link theme-export-link" href="{{ $.ThemeExportPath }}?name={{ .Name }}">{{ T $.Locale "theme_export" }}</a>
+                {{ if not .Directory }}<a class="theme-card-link theme-export-link" href="{{ $.ThemeExportPath }}?name={{ .Name }}">{{ T $.Locale "theme_export" }}</a>{{ end }}
             </div>
             {{ end }}
         </div>

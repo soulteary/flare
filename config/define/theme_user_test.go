@@ -32,7 +32,7 @@ func userThemeDirectory(t *testing.T, selected string) {
 	t.Cleanup(func() {
 		themeMu.Lock()
 		defer themeMu.Unlock()
-		userThemeState, selectedThemeStamp = userThemeScan{}, themeFileStamp{}
+		userThemeState, selectedThemeStamp = userThemeScan{}, themeStamp{}
 	})
 	require.NoError(t, os.Mkdir(UserThemeDirectory, 0700))
 	require.NoError(t, os.WriteFile("config.yml", []byte("Theme: "+selected+"\n"), 0600))
@@ -434,7 +434,7 @@ func TestThemeSelectionThatIsNoFileName(t *testing.T) {
 	writeUserTheme(t, "Mixed.yml", userThemeColors)
 	for _, name := range []string{"", "../outside", "..", "Mixed", "a/b", "forest.yml", "blackboard", model.ThemeCustomName} {
 		require.False(t, isUserThemeName(name), "%q", name)
-		require.Equal(t, themeFileStamp{}, statThemeFile(name), "%q", name)
+		require.Equal(t, themeStamp{}, statTheme(name), "%q", name)
 	}
 	for _, name := range []string{"", "../outside", "Mixed"} {
 		SetTheme(name)

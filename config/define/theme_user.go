@@ -15,14 +15,18 @@ import (
 	"github.com/soulteary/flare/config/model"
 )
 
-// An instance reads its own themes from files: one theme per file in the
-// themes directory of its working directory, next to config.yml. The name of
-// the file without the extension is the name of the theme.
+// An instance reads its own themes from the themes directory of its working
+// directory, next to config.yml. A theme is a file there, named after the
+// theme, or a directory named after the theme that holds a theme file named
+// theme.yml. The directory is the form for a theme of more than one file.
 const (
 	UserThemeDirectory = "themes"
 	userThemeExtension = ".yml"
-	// MaximumUserThemeFiles is the number of theme files looked at, in the
-	// order of their names. Files after them are neither read nor reported.
+	// userThemeManifest is the theme file of a theme that is a directory.
+	userThemeManifest = "theme.yml"
+	// MaximumUserThemeFiles is the number of entries of the themes directory
+	// looked at, in the order of their names: theme files, directories and
+	// links. Entries after them are neither read nor reported.
 	MaximumUserThemeFiles = 64
 	// MaximumThemeFileBytes is the largest theme file read.
 	MaximumThemeFileBytes = 64 << 10
@@ -34,6 +38,8 @@ const (
 	ThemeProblemName      = "name"
 	ThemeProblemReserved  = "reserved"
 	ThemeProblemType      = "type"
+	ThemeProblemLink      = "link"
+	ThemeProblemDuplicate = "duplicate"
 	ThemeProblemSize      = "size"
 	ThemeProblemLimit     = "limit"
 	ThemeProblemRead      = "read"
@@ -45,9 +51,11 @@ const (
 	ThemeProblemText      = "text"
 )
 
-// ThemeProblem is a file in the themes directory that is not in use. Subject
-// is the part of the file the reason is about, such as tokens.radius or
-// modes.light, or the message of the YAML parser; it can be empty.
+// ThemeProblem is a file in the themes directory that is not in use. File is
+// its name in that directory, and for the theme file of a directory the path
+// with a slash, such as forest/theme.yml. Subject is the part of the file the
+// reason is about, such as tokens.radius or modes.light, or the message of the
+// YAML parser; it can be empty.
 type ThemeProblem struct {
 	File    string
 	Reason  string
@@ -72,18 +80,38 @@ type themeFileStamp struct {
 // A file modified this recently is read again instead of trusted.
 const themeStampSettle = 2 * time.Second
 
-// statThemeFile returns the state of the file a theme name is read from. A
-// name that cannot be a theme file, and a file that cannot be examined, have
-// the state of a missing file.
-func statThemeFile(name string) themeFileStamp {
-	if !isUserThemeName(name) {
-		return themeFileStamp{}
-	}
-	info, err := os.Lstat(filepath.Join(UserThemeDirectory, name+userThemeExtension))
+// statThemeFile returns the state of a file. A file that cannot be examined
+// has the state of a missing file.
+func statThemeFile(path string) themeFileStamp {
+	info, err := os.Lstat(path)
 	if err != nil {
 		return themeFileStamp{}
 	}
 	return themeFileStamp{modTime: info.ModTime(), size: info.Size(), exists: true}
+}
+
+// themeStamp is the state of the two files a theme of one name can be read
+// from: the file of that name, and theme.yml in the directory of that name.
+// Both are watched, because each can take the place of the other.
+type themeStamp struct {
+	file, manifest themeFileStamp
+}
+
+// statTheme returns the state of the files a theme name is read from. A name
+// that cannot be a theme of the directory has the state of missing files.
+func statTheme(name string) themeStamp {
+	if !isUserThemeName(name) {
+		return themeStamp{}
+	}
+	return themeStamp{
+		file:     statThemeFile(filepath.Join(UserThemeDirectory, name+userThemeExtension)),
+		manifest: statThemeFile(filepath.Join(UserThemeDirectory, name, userThemeManifest)),
+	}
+}
+
+// current reports whether both files are still in the state they were read at.
+func (stamp themeStamp) current(now themeStamp, clock time.Time) bool {
+	return stamp.file.current(now.file, clock) && stamp.manifest.current(now.manifest, clock)
 }
 
 // current reports whether a file is still in the state it was read at.
@@ -112,13 +140,13 @@ var (
 	userThemeScanMu sync.Mutex
 	// userThemeState holds the theme files in use. Guarded by themeMu.
 	userThemeState userThemeScan
-	// selectedThemeStamp is the state of the selected theme's file at the
+	// selectedThemeStamp is the state of the selected theme's files at the
 	// reading userThemeState comes from. Guarded by themeMu.
-	selectedThemeStamp themeFileStamp
+	selectedThemeStamp themeStamp
 )
 
-// isUserThemeName reports whether a theme name can belong to a theme file.
-// The bundled themes do not change after startup.
+// isUserThemeName reports whether a theme name can belong to a theme of the
+// themes directory. The bundled themes do not change after startup.
 func isUserThemeName(name string) bool {
 	return model.IsThemeName(name) && name != model.ThemeCustomName && !isBundledTheme(name)
 }
@@ -132,8 +160,52 @@ func isBundledTheme(name string) bool {
 	return false
 }
 
+// What a reading of the themes directory does with an entry.
+const (
+	// themeEntryIgnored is left alone without a remark.
+	themeEntryIgnored = iota
+	// themeEntryFile is named <name>.yml and read as the file of a theme.
+	themeEntryFile
+	// themeEntryMisnamed is named <name>.yaml and reported.
+	themeEntryMisnamed
+	// themeEntryDirectory is a theme if it holds a theme.yml.
+	themeEntryDirectory
+	// themeEntryLink is reported: a link is not followed.
+	themeEntryLink
+)
+
+// themeEntryKind says what a reading of the themes directory does with an
+// entry, going by its name and its type alone. Hidden entries are left alone,
+// because editors and file managers create them, and so is a file with an
+// extension other than the two of YAML. The other usual extension of YAML is
+// reported: such a file is most likely meant as a theme file.
+func themeEntryKind(entry fs.DirEntry) int {
+	name := entry.Name()
+	switch {
+	case strings.HasPrefix(name, "."):
+		return themeEntryIgnored
+	case strings.HasSuffix(name, userThemeExtension):
+		return themeEntryFile
+	case strings.HasSuffix(name, ".yaml"):
+		return themeEntryMisnamed
+	case entry.IsDir():
+		return themeEntryDirectory
+	case entry.Type()&fs.ModeSymlink != 0:
+		return themeEntryLink
+	}
+	return themeEntryIgnored
+}
+
+// isThemeDirectory reports whether a directory of the themes directory holds
+// a theme.yml. That makes it the theme of its name, whether or not the file
+// is usable.
+func isThemeDirectory(root *os.Root, directory string) bool {
+	_, err := root.Lstat(filepath.Join(directory, userThemeManifest))
+	return err == nil
+}
+
 // scanUserThemes reads the themes directory. An instance without the
-// directory has no theme files; that is not an error.
+// directory has no themes of its own; that is not an error.
 func scanUserThemes() userThemeScan {
 	scan := userThemeScan{themes: map[string]model.Theme{}}
 	root, err := os.OpenRoot(UserThemeDirectory)
@@ -145,55 +217,114 @@ func scanUserThemes() userThemeScan {
 	if err != nil {
 		return scan
 	}
+	// A name has one theme. Where a directory is the theme of a name, the
+	// file of that name is reported instead of read. Which entries are
+	// directories is taken from the listing, so the result does not depend on
+	// the order the two are looked at in.
+	directories := map[string]bool{}
+	for _, entry := range entries {
+		if themeEntryKind(entry) == themeEntryDirectory {
+			directories[entry.Name()] = true
+		}
+	}
 	examined := 0
 	for _, entry := range entries {
+		kind := themeEntryKind(entry)
+		if kind == themeEntryIgnored {
+			continue
+		}
 		file := entry.Name()
-		// Hidden files are left alone: editors and file managers create them.
-		if strings.HasPrefix(file, ".") {
-			continue
-		}
-		name, isTheme := strings.CutSuffix(file, userThemeExtension)
-		// The other usual extension of YAML is reported: such a file is most
-		// likely meant as a theme file.
-		misnamed := !isTheme && strings.HasSuffix(file, ".yaml")
-		if !isTheme && !misnamed {
-			continue
-		}
-		// The limit covers every file that is read or reported, so it also
+		// The limit covers every entry that is read or reported, so it also
 		// bounds what the settings page lists.
 		if examined == MaximumUserThemeFiles {
-			scan.problems = append(scan.problems, ThemeProblem{File: file, Reason: ThemeProblemLimit})
+			scan.report(file, ThemeProblemLimit)
 			break
 		}
 		examined++
-		if misnamed {
-			scan.problems = append(scan.problems, ThemeProblem{File: file, Reason: ThemeProblemExtension})
-			continue
+		switch kind {
+		case themeEntryMisnamed:
+			scan.report(file, ThemeProblemExtension)
+		case themeEntryLink:
+			scan.report(file, ThemeProblemLink)
+		case themeEntryDirectory:
+			scan.readThemeDirectory(root, file)
+		default:
+			name := strings.TrimSuffix(file, userThemeExtension)
+			if !scan.acceptName(name, file) {
+				continue
+			}
+			if directories[name] && isThemeDirectory(root, name) {
+				scan.report(file, ThemeProblemDuplicate)
+				continue
+			}
+			scan.readTheme(root, name, file, file, false)
 		}
-		if !model.IsThemeName(name) {
-			scan.problems = append(scan.problems, ThemeProblem{File: file, Reason: ThemeProblemName})
-			continue
-		}
-		if !isUserThemeName(name) {
-			scan.problems = append(scan.problems, ThemeProblem{File: file, Reason: ThemeProblemReserved})
-			continue
-		}
-		theme, unused, problem := readUserTheme(root, file)
-		if !unused.Empty() {
-			scan.notices = append(scan.notices, ThemeNotice{File: file, Unused: unused})
-		}
-		if problem != nil {
-			problem.File = file
-			scan.problems = append(scan.problems, *problem)
-			continue
-		}
-		scan.themes[name] = theme.Theme(name)
-		scan.order = append(scan.order, name)
 	}
 	return scan
 }
 
-// readUserTheme reads one theme file. A theme file is a regular file in the
+// report notes a file of the themes directory that is not in use.
+func (scan *userThemeScan) report(file, reason string) {
+	scan.problems = append(scan.problems, ThemeProblem{File: file, Reason: reason})
+}
+
+// acceptName reports whether a name can be the name of a theme of the
+// directory, and notes a name that cannot for the file it was found with.
+func (scan *userThemeScan) acceptName(name, shown string) bool {
+	switch {
+	case !model.IsThemeName(name):
+		scan.report(shown, ThemeProblemName)
+	case !isUserThemeName(name):
+		scan.report(shown, ThemeProblemReserved)
+	default:
+		return true
+	}
+	return false
+}
+
+// readThemeDirectory looks at a directory of the themes directory. One that
+// holds a theme.yml is the theme of its name. Any other directory is left
+// alone, except that a theme.yaml in it is reported, as that extension is for
+// a file.
+func (scan *userThemeScan) readThemeDirectory(root *os.Root, directory string) {
+	manifest := filepath.Join(directory, userThemeManifest)
+	shown := directory + "/" + userThemeManifest
+	if _, err := root.Lstat(manifest); err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			scan.report(shown, ThemeProblemRead)
+			return
+		}
+		if _, err = root.Lstat(filepath.Join(directory, "theme.yaml")); err == nil {
+			scan.report(directory+"/theme.yaml", ThemeProblemExtension)
+		}
+		return
+	}
+	if scan.acceptName(directory, shown) {
+		scan.readTheme(root, directory, manifest, shown, true)
+	}
+}
+
+// readTheme reads the theme file of a name and takes the theme into use, or
+// notes why it does not. file is the path of the theme file in the themes
+// directory, shown is how the settings page names it, and directory reports
+// the theme.yml of a directory.
+func (scan *userThemeScan) readTheme(root *os.Root, name, file, shown string, directory bool) {
+	theme, unused, problem := readUserTheme(root, file)
+	if !unused.Empty() {
+		scan.notices = append(scan.notices, ThemeNotice{File: shown, Unused: unused})
+	}
+	if problem != nil {
+		problem.File = shown
+		scan.problems = append(scan.problems, *problem)
+		return
+	}
+	definition := theme.Theme(name)
+	definition.Directory = directory
+	scan.themes[name] = definition
+	scan.order = append(scan.order, name)
+}
+
+// readUserTheme reads one theme file. A theme file is a regular file of the
 // directory: a link is reported instead of followed. The file is examined
 // again once it is open, and no more than the size limit is read from it,
 // because the entry can be replaced between the two steps.
@@ -309,7 +440,7 @@ func reloadUserThemes() {
 	themeMu.RUnlock()
 	// The state is taken before the files are read: a change made in between
 	// differs from it, and the next check reads the directory again.
-	stamp := statThemeFile(selected)
+	stamp := statTheme(selected)
 	scan := scanUserThemes()
 	themeMu.Lock()
 	defer themeMu.Unlock()
@@ -324,9 +455,10 @@ func reloadUserThemes() {
 }
 
 // refreshSelectedTheme notices a change of the selected theme's file without
-// a restart. While the selection can belong to a theme file it costs one stat
-// per call, as reading apps.yml and bookmarks.yml does; a bundled theme and
-// the custom colors cost nothing.
+// a restart. While the selection can belong to a theme of the directory it
+// costs two stats per call, one for each form the theme can have, as reading
+// apps.yml and bookmarks.yml costs one each; a bundled theme and the custom
+// colors cost nothing.
 func refreshSelectedTheme() {
 	if selectedThemeFileCurrent() {
 		return
@@ -347,5 +479,5 @@ func selectedThemeFileCurrent() bool {
 	themeMu.RLock()
 	selected, stamp := ThemeCurrent, selectedThemeStamp
 	themeMu.RUnlock()
-	return !isUserThemeName(selected) || stamp.current(statThemeFile(selected), time.Now())
+	return !isUserThemeName(selected) || stamp.current(statTheme(selected), time.Now())
 }

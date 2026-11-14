@@ -198,6 +198,8 @@ func importTheme(c fiber.Ctx, replace bool) error {
 		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_size"))
 	case errors.Is(stored, define.ErrThemeStoreExists):
 		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_exists"))
+	case errors.Is(stored, define.ErrThemeStoreDirectory):
+		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_directory"))
 	case errors.Is(stored, define.ErrThemeStoreFull):
 		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_full"))
 	case errors.As(stored, &rejection):
@@ -387,10 +389,12 @@ func paletteErrorText(locale string, err error) string {
 	return i18n.T(locale, "theme_custom_invalid_color")
 }
 
-// themeFileCard is a theme file in use, as the page shows it.
+// themeFileCard is a theme of the themes directory in use, as the page shows
+// it.
 type themeFileCard struct {
-	// Name is the name of the file without its extension, the value stored
-	// in config.yml when the theme is selected.
+	// Name is the name of the file without its extension, or the name of
+	// the directory: the value stored in config.yml when the theme is
+	// selected.
 	Name string
 	// Title is the name to show, About the version, author and license the
 	// file gives.
@@ -403,6 +407,9 @@ type themeFileCard struct {
 	// Layout names the layout options the theme specifies, so that it is
 	// known before the theme is selected that it changes more than colors.
 	Layout string
+	// Directory reports a theme that is a directory. Such a theme is not
+	// offered as a download of one file.
+	Directory bool
 }
 
 func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
@@ -419,6 +426,8 @@ func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
 			Title:  theme.DisplayName(locale),
 			About:  strings.Join(about, " · "),
 			Colors: theme.In(model.ThemeModeLight).Colors,
+			// The form of the theme decides what the card offers.
+			Directory: theme.Directory,
 		}
 		if dark := theme.In(model.ThemeModeDark).Colors; dark != card.Colors {
 			card.Dark = &dark

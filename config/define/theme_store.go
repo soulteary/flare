@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"strings"
 
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/logger"
@@ -23,9 +22,13 @@ var (
 	// ErrThemeStoreExists reports a theme file of the same name that the
 	// caller did not ask to replace.
 	ErrThemeStoreExists = errors.New("a theme file of this name exists")
+	// ErrThemeStoreDirectory reports a directory that is the theme of this
+	// name. A file of the name would not be read, and a directory is not
+	// for an upload to replace.
+	ErrThemeStoreDirectory = errors.New("a directory is the theme of this name")
 	// ErrThemeStoreFull reports a themes directory that already holds as
-	// many files as are read.
-	ErrThemeStoreFull = errors.New("the themes directory holds as many files as are read")
+	// many entries as are looked at.
+	ErrThemeStoreFull = errors.New("the themes directory holds as many entries as are looked at")
 	// ErrThemeStoreSize reports a file larger than a theme file can be.
 	ErrThemeStoreSize = errors.New("the file is larger than a theme file can be")
 	// ErrThemeStoreWrite reports that the file could not be written.
@@ -44,8 +47,9 @@ const (
 // given theme name and reads the directory again. The content has to be a
 // usable theme file, and it is written as given, so comments and parts for
 // later releases stay. An existing theme file is replaced only if replace is
-// set. The file is written beside its place and moved into it, so a reader
-// sees the previous file or the new one.
+// set, and nothing is stored under a name whose theme is a directory. The
+// file is written beside its place and moved into it, so a reader sees the
+// previous file or the new one.
 func StoreUserTheme(name string, raw []byte, replace bool) error {
 	if !isUserThemeName(name) {
 		return ErrThemeStoreName
@@ -66,6 +70,9 @@ func StoreUserTheme(name string, raw []byte, replace bool) error {
 		return errors.Join(ErrThemeStoreWrite, err)
 	}
 	defer root.Close()
+	if entry, statErr := root.Lstat(name); statErr == nil && entry.IsDir() && isThemeDirectory(root, name) {
+		return ErrThemeStoreDirectory
+	}
 	file := name + userThemeExtension
 	mode := os.FileMode(0600)
 	existing, err := root.Lstat(file)
@@ -81,8 +88,8 @@ func StoreUserTheme(name string, raw []byte, replace bool) error {
 	case !errors.Is(err, fs.ErrNotExist):
 		return errors.Join(ErrThemeStoreWrite, err)
 	default:
-		// One more file is only read while the directory holds fewer than
-		// the number that are looked at.
+		// One more file is only read while the directory holds fewer
+		// entries than the number that are looked at.
 		if count, countErr := countThemeFiles(root); countErr != nil {
 			return errors.Join(ErrThemeStoreWrite, countErr)
 		} else if count >= MaximumUserThemeFiles {
@@ -105,8 +112,7 @@ func countThemeFiles(root *os.Root) (int, error) {
 	}
 	count := 0
 	for _, entry := range entries {
-		name := entry.Name()
-		if !strings.HasPrefix(name, ".") && (strings.HasSuffix(name, userThemeExtension) || strings.HasSuffix(name, ".yaml")) {
+		if themeEntryKind(entry) != themeEntryIgnored {
 			count++
 		}
 	}
@@ -154,7 +160,8 @@ func writeThemeFile(root *os.Root, file string, raw []byte, mode os.FileMode) er
 // for it: the file of a theme in the themes directory as it is, the file a
 // bundled theme is defined by, or a file written from the custom colors. The
 // copies of the last two have names under which they can be stored again. It
-// reports false for a name that is not a theme in use.
+// reports false for a name that is not a theme in use, and for a theme that
+// is a directory.
 func ExportTheme(name string) (string, []byte, bool) {
 	if name == model.ThemeCustomName {
 		themeMu.RLock()
@@ -173,7 +180,12 @@ func ExportTheme(name string) (string, []byte, bool) {
 		}
 		return name + bundledThemeCopySuffix + userThemeExtension, raw, true
 	}
-	if !IsUserTheme(name) {
+	// A theme that is a directory is not handed out as a single file: the
+	// directory is the form for a theme of more than one file.
+	themeMu.RLock()
+	definition, known := userThemeState.themes[name]
+	themeMu.RUnlock()
+	if !known || definition.Directory {
 		return "", nil, false
 	}
 	root, err := os.OpenRoot(UserThemeDirectory)

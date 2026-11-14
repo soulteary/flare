@@ -5,7 +5,8 @@
 A theme can be added to an instance as a file. The file gives the three colors
 of a [theme](theme-colors.md) and, if wanted, values for the other
 [style tokens](theme-tokens.md) and a name to show. The bundled themes are
-files of the same format.
+files of the same format. A theme can also be
+[a directory](#a-theme-as-a-directory) with such a file in it.
 
 ## Location and name
 
@@ -28,16 +29,47 @@ of the selected theme leaves the selection without a theme.
 - A name uses lower-case letters, digits and single hyphens between them, and
   has at most 32 characters: `forest`, `solarized-light`.
 - The names of the bundled themes and `custom` cannot be used.
-- A theme file is a regular file in the directory itself. Links, and files in
-  subdirectories, are not read.
+- A theme file is a regular file in the directory itself, or the `theme.yml`
+  of [a theme that is a directory](#a-theme-as-a-directory). Links are not
+  followed, and no other file of a subdirectory is read.
 - A `.yaml` file is not read. It is reported on the theme page, because the
   extension of a theme file is `.yml`. Files with any other extension and
   hidden files are left alone.
-- Up to 64 files are looked at, in the order of their names, counting the
-  `.yaml` files that are only reported. A theme file can have up to 64 KiB.
+- Up to 64 entries of the directory are looked at, in the order of their
+  names: theme files, directories, and the `.yaml` files and links that are
+  only reported. A theme file can have up to 64 KiB.
 
 The directory is optional. Files in it are read, and nothing is written to it
 except by an [import](#import-and-export) on the theme page.
+
+### A theme as a directory
+
+A theme can be a directory of the themes directory instead of a file. The
+name of the directory is the name of the theme, and the file `theme.yml` in
+it is its theme file, in the [format](#format) below.
+
+```text
+themes/
+    forest.yml
+    zelda/
+        theme.yml
+```
+
+The directory is the form for a theme of more than one file. Of a directory,
+`theme.yml` is read and nothing else, so a theme in a directory is the same
+theme as its `theme.yml` would be as a file. It is listed, previewed and
+selected by the name of the directory: `Theme: zelda`.
+
+- The name of the directory has the rules of the name of a file without
+  `.yml`, and cannot be the name of a bundled theme or `custom`.
+- A directory without a `theme.yml` is not a theme and is left alone. One
+  that holds a `theme.yaml` instead is reported, as a `.yaml` file is.
+- The directory and its `theme.yml` have to be a directory and a regular
+  file. A link in the themes directory, and a `theme.yml` that is a link, are
+  reported on the theme page and not followed.
+- A name has one theme. With both `forest.yml` and `forest/theme.yml`, the
+  directory is the theme, and the file is reported and not read. That holds
+  also when the `theme.yml` is not usable: the file does not stand in for it.
 
 ## Format
 
@@ -294,6 +326,8 @@ Both are for the administrator, and neither selects a theme.
 The name of a bundled theme and `custom` cannot be the name of a theme file,
 so those two downloads have a name under which they can be imported. The
 download of a bundled theme is a starting point for a theme of one's own.
+A theme that is a directory has no download: it is not one file, and it is
+copied as a directory.
 
 **Import a theme file** stores an uploaded file in the themes directory:
 
@@ -306,21 +340,28 @@ download of a bundled theme is a starting point for a theme of one's own.
 - A theme file of the same name is replaced only with **Replace a theme file
   of the same name** ticked. Something else of that name in the directory, a
   folder or a link, is never replaced.
+- A file is not imported under the name of a theme that is a directory, with
+  the box ticked or not: the file would not be read, and an import does not
+  replace a directory.
 - A file can have up to 64 KiB, and a new file is refused while the directory
-  holds 64 files, because more are not read.
+  holds the 64 entries that are looked at, because more are not read.
 - The directory is created by the first import. A new file is readable and
   writable for the user the instance runs as; a replaced file keeps its
   permissions.
 
-A theme file is removed by deleting it from the directory.
+A theme is removed by deleting its file or its directory from the themes
+directory.
 
 ## Changes while the instance runs
 
-The pages follow the file of the selected theme. Each page load compares the
-modification time and the size of that file with the values it was read at,
-and reads the directory again when they differ. An edit therefore shows on the
-next page load, without a restart. While a bundled theme or the custom colors
-are selected, no theme file is looked at for a page.
+The pages follow the theme file of the selected theme. Each page load compares
+the modification time and the size of that file with the values it was read
+at, and reads the directory again when they differ. An edit therefore shows on
+the next page load, without a restart. Both places a theme of the selected
+name can be read from are compared, `<name>.yml` and `<name>/theme.yml`, so a
+theme that is turned from a file into a directory, or back, is followed as
+well. While a bundled theme or the custom colors are selected, no theme file
+is looked at for a page.
 
 The theme page reads the directory every time it is shown, so files that were
 added, corrected or removed are listed as they are.
@@ -339,16 +380,19 @@ is read again on every page load.
 
 The theme page lists each theme file that is not in use with the reason, in
 the interface language, and with the part of the file the reason is about
-where there is one.
+where there is one. The theme file of a directory is listed with the
+directory, as `zelda/theme.yml`.
 
 | Reason | Cause |
 | --- | --- |
-| The extension has to be `.yml` | The file is named `.yaml` |
-| File name not accepted | Upper-case letters, spaces, underscores, other characters, or more than 32 characters |
-| Name belongs to a bundled theme or the custom colors | For example `blackboard.yml` or `custom.yml` |
-| Not a regular file | A directory or a link named like a theme file |
+| The extension has to be `.yml` | The file is named `.yaml`, or a directory holds a `theme.yaml` and no `theme.yml` |
+| Name not accepted | Upper-case letters, spaces, underscores, other characters, or more than 32 characters, in the name of the file or of the directory |
+| Name belongs to a bundled theme or the custom colors | For example `blackboard.yml`, `custom.yml` or `blackboard/theme.yml` |
+| Not a regular file | A directory or a link named like a theme file, or a `theme.yml` that is one |
+| A link is not followed | A link in the themes directory with a name that is not that of a theme file |
+| The directory of the same name is the theme | A file `<name>.yml` beside a directory `<name>` with a `theme.yml` |
 | Larger than 64 KiB | |
-| More than 64 files | Reported for the first file that is not looked at; the files after it are not looked at either |
+| More than 64 files and directories | Reported for the first entry that is not looked at; what comes after it is not looked at either |
 | Cannot be read | For example missing read permission |
 | Not a usable theme file | Not YAML, not a mapping, a key given twice, or a value of the wrong shape; the message of the parser is shown |
 | `contract: 1` is required | `contract` is missing or has another value |
@@ -378,6 +422,10 @@ directory are shown as text.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/files.browser.cjs`
 selects a theme file in Chromium, edits it, breaks it, removes it and puts it
 back, and checks the pages after each step.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/directories.browser.cjs`
+selects a theme that is a directory, edits its `theme.yml`, puts a file of the
+same name beside it, turns the theme into a file and back, and checks the
+pages after each step.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/modes.browser.cjs`
 loads the pages of a theme with light and dark values for a device that asks
 for light and for one that asks for dark, under each of the three settings.

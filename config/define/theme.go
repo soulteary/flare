@@ -318,7 +318,7 @@ func SetCustomTheme(palette model.Palette) error {
 func applyTheme(theme string) {
 	themeGeneration++
 	ThemeCurrent = theme
-	selectedThemeStamp = themeFileStamp{}
+	selectedThemeStamp = themeStamp{}
 	ThemePrimaryColor = themePrimaryColor(theme)
 	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor
 	_CACHE_PAGE_BODY_THEME_NAME, _CACHE_PAGE_THEME_RULES = emptyPageBodyStyle, emptyPageBodyStyle
@@ -368,7 +368,7 @@ func UpdatePagePalettes() {
 		options = model.Application{}
 	}
 	theme, custom, mode := options.Theme, options.ThemeCustom, options.ThemeMode
-	stamp := statThemeFile(theme)
+	stamp := statTheme(theme)
 	scan := scanUserThemes()
 	themeMu.Lock()
 	defer themeMu.Unlock()

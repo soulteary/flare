@@ -62,6 +62,9 @@ type Theme struct {
 	Version string    `json:"-"`
 	Author  string    `json:"-"`
 	License string    `json:"-"`
+	// Directory reports a theme that is a directory of the themes directory,
+	// read from the theme.yml in it, instead of a single file.
+	Directory bool `json:"-"`
 }
 
 // DisplayName returns the name to show for the theme in an interface

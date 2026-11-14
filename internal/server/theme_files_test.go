@@ -27,11 +27,13 @@ const (
 	forestThemeStyle = themeFileStyle + "--flare-muted:#9db8a6;--flare-hover:#ffffff1a;--flare-radius:10px;--flare-font-family:Georgia, serif;"
 )
 
-// writeThemeFile writes a theme file that was last modified a minute ago, as
-// a file nobody is editing.
+// writeThemeFile writes a file of the themes directory that was last modified
+// a minute ago, as a file nobody is editing. A file in a directory of the
+// themes directory has that directory made for it.
 func writeThemeFile(t *testing.T, file, content string) {
 	t.Helper()
 	path := filepath.Join(define.UserThemeDirectory, file)
+	require.NoError(t, os.MkdirAll(filepath.Dir(path), 0700))
 	require.NoError(t, os.WriteFile(path, []byte(content), 0600))
 	modified := time.Now().Add(-time.Minute)
 	require.NoError(t, os.Chtimes(path, modified, modified))
