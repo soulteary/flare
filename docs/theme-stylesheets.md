@@ -143,7 +143,10 @@ every release that reads this format:
 
 A module is on the page while the site shows it. Everything else of the pages
 can change from one release to the next: other ids and class names, and how
-the elements are ordered and nested. The [style tokens](theme-tokens.md) are
+the elements are ordered and nested. A theme whose stylesheet relies on more
+than this table names the release it was written for with
+[`requires`](theme-files.md#files-written-for-another-release) in its theme
+file, and is then not used by an earlier one. The [style tokens](theme-tokens.md) are
 the way to change a color, the corner radius, the font or the text size, and
 keep working when the pages change.
 

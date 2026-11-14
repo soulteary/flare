@@ -10,6 +10,7 @@ import (
 
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/logger"
+	version "github.com/soulteary/version-kit/v4"
 )
 
 // Reasons a theme file is not stored. A file that is not a usable theme is
@@ -57,7 +58,7 @@ func StoreUserTheme(name string, raw []byte, replace bool) error {
 	if len(raw) > MaximumThemeFileBytes {
 		return ErrThemeStoreSize
 	}
-	if _, _, err := model.ReadThemeFile(raw); err != nil {
+	if _, _, err := model.ReadThemeFileFor(raw, version.Version); err != nil {
 		return err
 	}
 	userThemeScanMu.Lock()
