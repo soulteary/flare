@@ -71,6 +71,23 @@ var templateFuncMap = template.FuncMap{
 	"ThemeFaviconURL": assets.ThemeFaviconURL,
 }
 
+// HomeComponents names the parts that the home page, the application page and
+// the bookmark page are put together from, in the order home.html has them.
+// Each is a template of that name, defined in place in home.html, so that a
+// part can be rendered by itself. A part includes the condition under which
+// the site shows it: it renders nothing when its module is turned off.
+var HomeComponents = []string{
+	"flare/search",
+	"flare/clock",
+	"flare/greeting",
+	"flare/weather",
+	"flare/subpage-header",
+	"flare/apps",
+	"flare/bookmarks",
+	"flare/toolbar",
+	"flare/footer",
+}
+
 // Load satisfies fiber.Views. NewRenderer parses templates before app creation.
 func (r *Renderer) Load() error { return nil }
 
