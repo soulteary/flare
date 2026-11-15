@@ -22,19 +22,19 @@ func TestNavigationLoadsSettingsWhenOptionsOmitted(t *testing.T) {
 	require.True(t, data.SaveFavoriteBookmarks(model.Bookmarks{Items: []model.Bookmark{{Name: "App sentinel", URL: "https://app.example"}}}))
 	require.True(t, data.SaveNormalBookmarks(model.Bookmarks{Items: []model.Bookmark{{Name: "Bookmark sentinel", URL: "https://bookmark.example"}}}))
 	for _, existing := range []bool{false, true} {
-		markup, message := generateApplicationsForRead("", nil, false, existing)
+		markup, message := generateApplicationsForRead(nil, "", nil, false, existing)
 		require.Empty(t, message)
 		require.Contains(t, string(markup), "App sentinel")
-		markup, message = generateBookmarkNavigationForRead("", "", "/", nil, false, existing)
+		markup, message = generateBookmarkNavigationForRead(nil, "", "", "/", nil, false, existing)
 		require.Empty(t, message)
 		require.Contains(t, string(markup), "Bookmark sentinel")
 	}
 	require.NoError(t, os.WriteFile("config.yml", []byte("ShowApps: [invalid"), 0600))
 	for _, existing := range []bool{false, true} {
-		markup, message := generateApplicationsForRead("", nil, false, existing)
+		markup, message := generateApplicationsForRead(nil, "", nil, false, existing)
 		require.Empty(t, markup)
 		require.NotEmpty(t, message)
-		markup, message = generateBookmarkNavigationForRead("", "", "/", nil, false, existing)
+		markup, message = generateBookmarkNavigationForRead(nil, "", "", "/", nil, false, existing)
 		require.Empty(t, markup)
 		require.NotEmpty(t, message)
 	}

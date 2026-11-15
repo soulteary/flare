@@ -111,7 +111,7 @@ func (p *parts) Slot(string) template.HTML         { return "" }
 
 // WriteSlot renders a part straight into the page, so that a long list of
 // entries is not copied on its way there.
-func (p *parts) WriteSlot(out *bytes.Buffer, name string) {
+func (p *parts) WriteSlot(out io.Writer, name string) {
 	if p.err == nil {
 		p.err = p.templates.ExecuteTemplate(out, name, p.data)
 	}

@@ -24,7 +24,10 @@ type navigationFragmentKey struct {
 	themeGeneration                                              uint64
 	version                                                      uint64
 	revision, locale, iconMode, categoryMode, path, theme, color string
-	apps, appNewTab, bookmarkNewTab, inline                      bool
+	// templates stands for the item templates the entries are written with
+	// and what they are compiled for, and is empty without any.
+	templates                               string
+	apps, appNewTab, bookmarkNewTab, inline bool
 }
 type navigationBuild struct {
 	done     chan struct{}
@@ -92,15 +95,16 @@ func (cache *navigationHTMLCache) get(key navigationFragmentKey, build func() te
 }
 
 func navigationFragment(view data.NavigationView, options *model.Application, apps bool, filter, selected, path string, info *fn.DynamicURL) template.HTML {
-	markup, _ := navigationFragmentShown(view, options, apps, filter, selected, path, info)
+	markup, _ := navigationFragmentShown(nil, view, options, apps, filter, selected, path, info)
 	return markup
 }
 
 // navigationFragmentShown is navigationFragment with the number of entries
 // the fragment shows. The number is known for a fragment that is rendered
 // for the request, as every fragment for a search is. For one that is taken
-// from the cache it is fragmentCountUnknown.
-func navigationFragmentShown(view data.NavigationView, options *model.Application, apps bool, filter, selected, path string, info *fn.DynamicURL) (template.HTML, int) {
+// from the cache it is fragmentCountUnknown. The entries are written with
+// the item templates of the theme, if the response uses any.
+func navigationFragmentShown(items *define.ThemeItems, view data.NavigationView, options *model.Application, apps bool, filter, selected, path string, info *fn.DynamicURL) (template.HTML, int) {
 	shown := fragmentCountUnknown
 	build := func() template.HTML {
 		category := ""
@@ -109,11 +113,11 @@ func navigationFragmentShown(view data.NavigationView, options *model.Applicatio
 		}
 		matches := view.Matches(filter, apps, category, func(raw string) string { return expandNavigationURL(raw, info) })
 		if apps {
-			value, _ := renderApplicationSelection(options, view.Item, matches, info)
+			value, _ := renderApplicationSelectionWith(items, options, view.Item, matches, info)
 			shown = len(matches)
 			return value
 		}
-		value, count := renderBookmarkSelectionShown(filter, selected, path, options, view.Categories(), view.Item, matches, info)
+		value, count := renderBookmarkSelectionShown(items, filter, selected, path, options, view.Categories(), view.Item, matches, info)
 		shown = count
 		return value
 	}
@@ -130,7 +134,8 @@ func navigationFragmentShown(view data.NavigationView, options *model.Applicatio
 	theme, color, generation := define.ThemeRenderSnapshot()
 	key := navigationFragmentKey{version: view.Version(), themeGeneration: generation, revision: options.ConfigRevision, locale: options.Locale,
 		iconMode: options.IconMode, path: path, theme: theme, color: color, apps: apps,
-		appNewTab: options.OpenAppNewTab, bookmarkNewTab: options.OpenBookmarkNewTab, inline: define.AppFlags.EnableMinimumRequest}
+		appNewTab: options.OpenAppNewTab, bookmarkNewTab: options.OpenBookmarkNewTab, inline: define.AppFlags.EnableMinimumRequest,
+		templates: items.State()}
 	if options.Homepage != nil {
 		key.categoryMode = options.Homepage.CategoryNavigation
 	}

@@ -61,7 +61,7 @@ func TestThemeBringsPageTemplates(t *testing.T) {
 	writeThemeTemplate(t, "zelda", "applications.html", applicationsTemplateSource)
 	writeThemeTemplate(t, "zelda", "bookmarks.html", `<div><script>x()</script></div>`)
 	// Other files of the directory are left alone.
-	writeThemeTemplate(t, "zelda", "app.html", `<script>x()</script>`)
+	writeThemeTemplate(t, "zelda", "apps.html", `<script>x()</script>`)
 	writeThemeTemplate(t, "zelda", "notes.txt", "notes")
 	ReloadUserThemes()
 

@@ -122,7 +122,7 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 | `config.yml` `Theme`, `ThemeCustom` | A bundled theme name, the name of a theme file (since 0.7.0), or `custom` with three `#RRGGBB` colors in `ThemeCustom` (since 0.7.0); read at startup | [Themes and custom colors](theme-colors.md), [theme files](theme-files.md) |
 | `config.yml` `ThemeMode` | `auto`, `light` or `dark` for a theme with light and dark values (since 0.7.0); read at startup | [Light and dark](theme-files.md#light-and-dark) |
 | `themes/*.yml`, `themes/*/theme.yml`, `themes/*/theme.css`, `themes/*/assets/*` | Themes of the instance, one per file or per directory, and the stylesheet, images and fonts of a theme that is a directory (since 0.7.0); optional | [Theme files](theme-files.md), [theme stylesheets](theme-stylesheets.md) |
-| `themes/*/templates/home.html`, `applications.html`, `bookmarks.html` | After 0.7.0: page templates of a theme that is a directory; optional, and used only once allowed and confirmed | [Theme templates](theme-templates.md) |
+| `themes/*/templates/home.html`, `applications.html`, `bookmarks.html`, `app.html`, `bookmark.html`, `group.html` | After 0.7.0: page templates and item templates of a theme that is a directory; optional, and used only once allowed and confirmed | [Theme templates](theme-templates.md) |
 | `config.yml` `Footer` | Administrator-controlled internal HTML | Treat it as trusted site content, unlike ordinary bookmark text |
 | `config.yml` `LoginFooter` | Current main: public login-page text/filtered HTTP(S) links | [Accounts](accounts.md); separate from internal Footer |
 

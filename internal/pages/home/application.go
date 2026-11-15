@@ -7,8 +7,10 @@ import (
 	"sync"
 
 	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/fn"
+	"github.com/soulteary/flare/internal/themetemplate"
 )
 
 var builderPool = sync.Pool{
@@ -25,9 +27,9 @@ func generateApplications(filter string, options *model.Application, requestInfo
 }
 
 func generateApplicationsFor(filter string, options *model.Application, administrator bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
-	return generateApplicationsForRead(filter, options, administrator, false, requestInfo...)
+	return generateApplicationsForRead(nil, filter, options, administrator, false, requestInfo...)
 }
-func generateApplicationsForRead(filter string, options *model.Application, administrator, existingOnly bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
+func generateApplicationsForRead(items *define.ThemeItems, filter string, options *model.Application, administrator, existingOnly bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	if options == nil {
 		readSettings := data.GetAllSettingsOptions
 		if existingOnly {
@@ -43,7 +45,8 @@ func generateApplicationsForRead(filter string, options *model.Application, admi
 	if err != nil {
 		return "", navigationDataError("applications", options.Locale, err)
 	}
-	return navigationFragment(view, options, true, filter, "", "/applications", firstRequestInfo(requestInfo)), ""
+	markup, _ := navigationFragmentShown(items, view, options, true, filter, "", "/applications", firstRequestInfo(requestInfo))
+	return markup, ""
 }
 func generateApplicationsSnapshot(filter string, options *model.Application, appsData model.Bookmarks, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	info := firstRequestInfo(requestInfo)
@@ -60,6 +63,14 @@ func generateApplicationsSnapshot(filter string, options *model.Application, app
 }
 
 func renderApplicationSelection(options *model.Application, item func(int) model.Bookmark, matches []int, info *fn.DynamicURL) (template.HTML, string) {
+	return renderApplicationSelectionWith(nil, options, item, matches, info)
+}
+
+// renderApplicationSelectionWith renders the applications that match, each
+// with the item template of the theme where it has one that compiles for
+// what the application has, and with the markup of the application otherwise.
+func renderApplicationSelectionWith(items *define.ThemeItems, options *model.Application, item func(int) model.Bookmark, matches []int, info *fn.DynamicURL) (template.HTML, string) {
+	var entry entryContent
 	b, ok := builderPool.Get().(*strings.Builder)
 	if !ok {
 		b = &strings.Builder{}
@@ -82,6 +93,19 @@ func renderApplicationSelection(options *model.Application, item func(int) model
 		}
 		templateURL := navigationHref(app.URL, options.EnableEncryptedLink, info)
 		templateIcon := navigationIcon(app.Icon, app.URL, options.IconMode, app.Private)
+		if items != nil {
+			// An application whose description the site hides is one
+			// without a description for the template.
+			values := themetemplate.ItemValues{Icon: templateIcon != "", Description: app.Desc != "" && !items.HideDescriptions(), NewTab: options.OpenAppNewTab}
+			if fragment := items.Fragment(themetemplate.ItemApp, values); fragment != nil {
+				entry = entryContent{name: app.Name, host: entryHost(app.URL), initial: entryInitial(app.Name), href: templateURL, icon: templateIcon, newTab: options.OpenAppNewTab}
+				if values.Description {
+					entry.description = app.Desc
+				}
+				fragment.RenderString(b, &entry)
+				continue
+			}
+		}
 		if options.OpenAppNewTab {
 			b.WriteString(`<div class="app-container" data-id="`)
 			b.WriteString(html.EscapeString(app.Icon))

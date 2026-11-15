@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/soulteary/flare/config/model"
-	"github.com/soulteary/flare/internal/themetemplate"
 	version "github.com/soulteary/version-kit/v4"
 )
 
@@ -141,9 +140,10 @@ func statThemeFile(path string) themeFileStamp {
 type themeStamp struct {
 	file, manifest, stylesheet, assets themeFileStamp
 	files                              []themeAssetStamp
-	// pages is the state of the template of each page. A template that is
-	// added, with or without its directory, changes it as an edit does.
-	pages [3]themeFileStamp
+	// pages is the state of each template, those of the pages and those of
+	// the items. A template that is added, with or without its directory,
+	// changes it as an edit does.
+	pages [6]themeFileStamp
 	// bases holds the same state for the themes a theme is based on, one
 	// below another, as far as a reading of the themes directory followed
 	// them. It is set for the selected theme, whose pages take from all of
@@ -180,8 +180,8 @@ func statTheme(name string) themeStamp {
 	if stamp.manifest.exists {
 		stamp.stylesheet = statThemeFile(filepath.Join(UserThemeDirectory, name, userThemeStylesheet))
 		stamp.assets = statThemeFile(filepath.Join(UserThemeDirectory, name, model.ThemeAssetDirectory))
-		for i, kind := range themetemplate.PageKinds {
-			stamp.pages[i] = statThemeFile(filepath.Join(UserThemeDirectory, name, model.ThemeTemplateDirectory, kind.File()))
+		for i, file := range themeTemplateFiles() {
+			stamp.pages[i] = statThemeFile(filepath.Join(UserThemeDirectory, name, model.ThemeTemplateDirectory, file))
 		}
 	}
 	return stamp

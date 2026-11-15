@@ -413,6 +413,7 @@ func TestUnconfirmedThemeTemplatesAreNotShownToVisitorsHTTP(t *testing.T) {
 	for file, content := range map[string]string{
 		"zelda/theme.yml": themeFileColors, "zelda/templates/home.html": themeShellTemplate,
 		"other/theme.yml": themeFileColors, "other/templates/home.html": themeShellTemplate,
+		"zelda/templates/app.html": itemAppTemplate, "other/templates/bookmark.html": itemBookmarkTemplate,
 	} {
 		writeThemeFile(t, file, content)
 	}
@@ -426,10 +427,14 @@ func TestUnconfirmedThemeTemplatesAreNotShownToVisitorsHTTP(t *testing.T) {
 		require.Equal(t, http.StatusOK, rec.Code, path)
 		require.NotContains(t, rec.Body.String(), "theme-shell", path)
 		require.NotContains(t, rec.Body.String(), i18n.T("en", "theme_templates_preview_page"), path)
+		require.NotContains(t, rec.Body.String(), "t-app", path)
+		require.NotContains(t, rec.Body.String(), "t-mark", path)
 		require.Contains(t, rec.Body.String(), "id=hero-container", path)
 	}
 	// Once they are confirmed, they are what every visitor gets.
 	require.NoError(t, data.SaveThemeTemplatesConfirmed("zelda", true))
 	require.Contains(t, getPage(t, handler, "/"), `<div class="theme-shell"`)
+	require.Contains(t, getPage(t, handler, "/"), `class="t-app"`)
 	require.NotContains(t, getPage(t, handler, "/?theme-preview=other"), i18n.T("en", "theme_preview_use"))
+	require.NotContains(t, getPage(t, handler, "/?theme-preview=other"), "t-mark")
 }

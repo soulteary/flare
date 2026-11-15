@@ -2,6 +2,7 @@ package define
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 	"strconv"
 	"strings"
@@ -12,11 +13,12 @@ import (
 	"github.com/soulteary/flare/internal/themetemplate"
 )
 
-// maximumCompiledThemePages is how many compiled page templates are kept.
-// A template is compiled once for each set of values it can branch on, and
-// those values are settings, so an instance has few sets. Everything kept is
-// dropped when the number is reached.
-const maximumCompiledThemePages = 128
+// maximumCompiledThemePages is how many compiled templates are kept, those
+// of pages and those of items. A template is compiled once for each set of
+// values it can branch on. Those values are settings and what an entry has,
+// so an instance has few sets. Everything kept is dropped when the number is
+// reached.
+const maximumCompiledThemePages = 256
 
 // compiledThemePage is a page template compiled for one set of values, or
 // the reason it does not compile for them.
@@ -71,17 +73,8 @@ func ThemeTemplatesAvailable() bool {
 //
 // The settings are those of the request, with the layout in effect.
 func ThemePageTemplate(options model.Application, page ThemePage) *themetemplate.Fragment {
-	if !ThemeTemplatesAvailable() || !options.ThemeTemplates || page.Theme == "" {
-		return nil
-	}
-	chosen := options.ThemeSettings[page.Theme]
-	if !page.Preview && !chosen.Templates {
-		return nil
-	}
-	themeMu.RLock()
-	definition, known := themeDefinition(page.Theme)
-	themeMu.RUnlock()
-	if !known {
+	definition, chosen, used := themeTemplatesInUse(options, page.Theme, page.Preview)
+	if !used {
 		return nil
 	}
 	source, found := themePageSource(definition, page.Kind)
@@ -124,6 +117,140 @@ func ThemePageTemplate(options model.Application, page ThemePage) *themetemplate
 		logger.GetLogger().Warn("A template of the theme does not compile for the settings of this page; the page keeps the markup of the application", "file", compiled.problem.File, "reason", compiled.problem.Reason, "subject", compiled.problem.Subject)
 	}
 	compiledThemePages.entries[key.String()] = compiled
+	return fragment
+}
+
+// themeTemplatesInUse returns a theme whose templates a response uses, with
+// what the administrator has set for it: the instance and the site allow
+// templates, and those of the theme are confirmed or the response is a
+// preview of it.
+func themeTemplatesInUse(options model.Application, theme string, preview bool) (model.Theme, model.ThemeSettings, bool) {
+	if !ThemeTemplatesAvailable() || !options.ThemeTemplates || theme == "" {
+		return model.Theme{}, model.ThemeSettings{}, false
+	}
+	chosen := options.ThemeSettings[theme]
+	if !preview && !chosen.Templates {
+		return model.Theme{}, model.ThemeSettings{}, false
+	}
+	themeMu.RLock()
+	definition, known := themeDefinition(theme)
+	themeMu.RUnlock()
+	return definition, chosen, known && len(definition.Templates) > 0
+}
+
+// ThemeItems are the item templates of a theme for the entries one response
+// shows. A list is rendered by one request, so it is not for several
+// goroutines.
+type ThemeItems struct {
+	theme   model.Theme
+	lang    string
+	t       func(key string) string
+	options map[string]any
+	// hideDescriptions is the layout option of the site: an application is
+	// then reported as one without a description.
+	hideDescriptions bool
+	state            string
+	// compiled holds what was asked for before, by the kind and the values.
+	compiled map[themeItemSet]*themetemplate.Fragment
+}
+
+// themeItemSet is a kind of item with what an entry of it has.
+type themeItemSet struct {
+	kind                                          themetemplate.ItemKind
+	icon, description, newTab, named, collapsible bool
+}
+
+// ThemeItemTemplates returns the item templates of the theme a response is
+// shown with, or nil where the entries have the markup of the application:
+// where no template of the theme is in use, as for ThemePageTemplate, and
+// where the theme brings no template for an item. The settings are those of
+// the request, with the layout in effect.
+func ThemeItemTemplates(options model.Application, theme string, preview bool, lang string, t func(key string) string) *ThemeItems {
+	definition, chosen, used := themeTemplatesInUse(options, theme, preview)
+	if !used {
+		return nil
+	}
+	items := &ThemeItems{
+		theme: definition, lang: lang, t: t, options: make(map[string]any, len(definition.Options)),
+		hideDescriptions: options.Homepage != nil && options.Homepage.HideAppDescriptions,
+		compiled:         map[themeItemSet]*themetemplate.Fragment{},
+	}
+	var state strings.Builder
+	for _, template := range definition.Templates {
+		if _, isItem := themeItemKind(template.Name); isItem {
+			state.WriteString("\x00" + template.Name + "\x00" + template.Hash)
+		}
+	}
+	if state.Len() == 0 {
+		return nil
+	}
+	for _, option := range definition.Options {
+		value := option.Value(chosen.Options[option.ID])
+		items.options[option.ID] = value
+		state.WriteString("\x00" + value)
+	}
+	items.state = definition.Name + "\x00" + definition.Hash + "\x00" + lang + "\x00" + strconv.FormatBool(items.hideDescriptions) + state.String()
+	return items
+}
+
+// State stands for everything the markup of an entry depends on besides the
+// entry: the theme, its templates, the values of its options, the language
+// and whether descriptions are hidden. It is empty for no templates.
+func (items *ThemeItems) State() string {
+	if items == nil {
+		return ""
+	}
+	return items.state
+}
+
+// HideDescriptions reports whether an application is to be shown as one
+// without a description.
+func (items *ThemeItems) HideDescriptions() bool { return items != nil && items.hideDescriptions }
+
+// Fragment returns the template of a kind of item, compiled for what an
+// entry has, or nil for an entry that is rendered with the markup of the
+// application: where the theme has no template for the kind, and where the
+// template does not compile for these values.
+func (items *ThemeItems) Fragment(kind themetemplate.ItemKind, values themetemplate.ItemValues) *themetemplate.Fragment {
+	if items == nil {
+		return nil
+	}
+	set := themeItemSet{kind: kind, icon: values.Icon, description: values.Description, newTab: values.NewTab, named: values.Named, collapsible: values.Collapsible}
+	if fragment, asked := items.compiled[set]; asked {
+		return fragment
+	}
+	fragment := items.compile(kind, set, values)
+	items.compiled[set] = fragment
+	return fragment
+}
+
+func (items *ThemeItems) compile(kind themetemplate.ItemKind, set themeItemSet, values themetemplate.ItemValues) *themetemplate.Fragment {
+	var source model.ThemeTemplate
+	for _, template := range items.theme.Templates {
+		if template.Name == kind.File() {
+			source = template
+		}
+	}
+	if source.Name == "" {
+		return nil
+	}
+	key := items.state + "\x00" + source.Name + fmt.Sprintf("\x00%t\x00%t\x00%t\x00%t\x00%t", set.icon, set.description, set.newTab, set.named, set.collapsible)
+	compiledThemePages.Lock()
+	defer compiledThemePages.Unlock()
+	if compiled, kept := compiledThemePages.entries[key]; kept {
+		return compiled.fragment
+	}
+	if len(compiledThemePages.entries) >= maximumCompiledThemePages {
+		clear(compiledThemePages.entries)
+	}
+	values.Lang, values.Options = items.lang, items.options
+	fragment, err := themetemplate.CompileItem(source.Source, kind, values, ThemeTemplateFuncs(items.theme, items.t))
+	compiled := compiledThemePage{fragment: fragment, theme: items.theme.Name, source: source.Name + "\x00" + source.Hash}
+	if err != nil {
+		compiled.problem = themeTemplateProblem(items.theme.Name, source.Name, err)
+		logger.GetLogger().Warn("A template of the theme does not compile for the settings of this page; the entries keep the markup of the application", "file", compiled.problem.File, "reason", compiled.problem.Reason, "subject", compiled.problem.Subject)
+	}
+	compiledThemePages.entries[key] = compiled
 	return fragment
 }
 
