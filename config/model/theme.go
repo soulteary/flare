@@ -100,6 +100,21 @@ type Theme struct {
 	// where that is a theme below this one. It is empty where the image is
 	// among the assets of this theme, and for a theme without one.
 	BackgroundSource ThemeSource `json:"-"`
+	// Templates are the page templates a theme that is a directory brings,
+	// in the order of the pages. Each compiled when the themes directory
+	// was read.
+	Templates []ThemeTemplate `json:"-"`
+}
+
+// ThemeTemplateDirectory is the directory of a theme that holds its
+// templates.
+const ThemeTemplateDirectory = "templates"
+
+// ThemeTemplate is a template of a theme: the name of its file in the
+// templates of the theme, such as home.html, and its source.
+type ThemeTemplate struct {
+	Name   string
+	Source string
 }
 
 // ThemeSource names a theme of the themes directory in the state it was read

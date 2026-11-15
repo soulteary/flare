@@ -655,6 +655,9 @@ type themeFileCard struct {
 	// Based says which theme the theme is based on, and is empty for a
 	// theme that stands on its own.
 	Based string
+	// Templates names the page templates the theme brings and says that
+	// they are not applied.
+	Templates string
 }
 
 func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
@@ -689,6 +692,13 @@ func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
 				base = theme.Extends
 			}
 			card.Based = i18n.Format(locale, "theme_extends_note", map[string]any{"name": base})
+		}
+		if len(theme.Templates) > 0 {
+			files := make([]string, 0, len(theme.Templates))
+			for _, template := range theme.Templates {
+				files = append(files, template.Name)
+			}
+			card.Templates = i18n.Format(locale, "theme_templates_note", map[string]any{"files": strings.Join(files, ", ")})
 		}
 		if specified := (*model.HomepageOptions)(nil).ThemeLayoutApplied(theme.Layout, nil); len(specified) > 0 {
 			card.Layout = i18n.Format(locale, "theme_layout_sets", map[string]any{"options": settings.LayoutOptionList(locale, specified)})
