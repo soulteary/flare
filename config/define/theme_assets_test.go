@@ -723,7 +723,7 @@ func TestThemeAssetsAreSafeForConcurrentPages(t *testing.T) {
 				default:
 				}
 				page := GetPageTheme()
-				if page == (PageTheme{}) {
+				if page.BodyStyle == "" && page.Stylesheet == "" && page.Background == "" {
 					continue
 				}
 				found := address.FindStringSubmatch(page.Stylesheet)

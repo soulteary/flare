@@ -439,6 +439,7 @@ func setPageTheme(c fiber.Ctx, m map[string]any, locale string) {
 	m["PageAppearance"] = theme.BodyStyle
 	m["PageThemeRules"] = theme.Rules
 	m["PageThemeStylesheet"] = theme.Stylesheet
+	m["PageThemeInherited"] = theme.Inherited
 	m["PageThemeBackground"] = theme.Background
 	m["PageThemeAttributes"] = theme.Attributes
 }

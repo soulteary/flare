@@ -126,13 +126,22 @@ func TestThemeFileColorOptionDefault(t *testing.T) {
 		"a default left as nothing": {"", "token: accent\n    default: \"\"\n", "#5c5c5c"},
 	} {
 		file, _, err := ReadThemeFile([]byte(validThemeFile + tc.tokens + "options:\n  - id: highlight\n    type: color\n    " + tc.option))
-		if err != nil || len(file.Options) != 1 || file.Options[0].Default != tc.want {
+		if err != nil || len(file.Options) != 1 {
 			t.Errorf("%s: %v %+v", name, err, file.Options)
 			continue
 		}
+		// The theme has the default; the file keeps the option as it is
+		// written, for a theme that is based on this one.
+		theme := file.Theme("zelda")
+		if len(theme.Options) != 1 || theme.Options[0].Default != tc.want {
+			t.Errorf("%s: the option of the theme is %+v", name, theme.Options)
+			continue
+		}
+		if written := strings.Contains(tc.option, "default: \"#"); (file.Options[0].Default != "") != written {
+			t.Errorf("%s: the option of the file is %+v", name, file.Options)
+		}
 		// With its default the option leaves the colors of the theme as
 		// they are.
-		theme := file.Theme("zelda")
 		if with := theme.WithOptions(nil); tc.want == theme.Colors.Accent && with.Colors != theme.Colors {
 			t.Errorf("%s: the colors changed to %+v", name, with.Colors)
 		}

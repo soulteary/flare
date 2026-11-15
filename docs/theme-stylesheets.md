@@ -124,6 +124,29 @@ of the theme file follow the stylesheet:
 A [preview](theme-files.md#preview) loads the stylesheet of the previewed
 theme.
 
+### A theme based on another
+
+A theme can be [based on another theme](theme-files.md#a-theme-based-on-another).
+Its pages load the stylesheet of every theme below it that has one, the one
+of the theme that stands on its own first, and then its own:
+
+```html
+<link rel="stylesheet" href="/theme/zelda/…/theme.css">
+<link rel="stylesheet" href="/theme/night/…/theme.css">
+```
+
+- A rule of the theme wins over a rule of a theme below it with the same
+  selector, as it wins over a rule of the application.
+- Each stylesheet is the file of its theme, checked with the assets of that
+  theme and served at the address of that theme: `url(assets/<name>)` in the
+  stylesheet of the theme below is a file of the theme below. A stylesheet
+  cannot refer to an asset of another theme.
+- A theme that is a single file can be based on a directory, and its pages
+  then load the stylesheet of that directory.
+- The [attributes](#options-of-the-theme) on the body are those of the theme
+  with the values chosen for it, also for an option it has from a theme below
+  it. A rule of that theme that selects by one follows them.
+
 ## What a stylesheet can contain
 
 The stylesheet of a theme loads nothing but the [assets](#images-and-fonts) of
@@ -278,6 +301,8 @@ attribute: its color is the value of a token.
   `theme.css`, of the `assets` directory and of each asset too, and an edit
   shows on the next page load without a restart. See
   [changes while the instance runs](theme-files.md#changes-while-the-instance-runs).
+- For a theme that is based on another, the stylesheet and the assets of
+  each theme below it are followed in the same way.
 - The content of an asset is not compared. An asset that is replaced by a
   file of the same size and the same modification time keeps its address,
   and a browser that has the earlier file keeps showing it.

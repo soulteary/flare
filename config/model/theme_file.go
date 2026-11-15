@@ -1,6 +1,7 @@
 package model
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"maps"
@@ -78,7 +79,21 @@ var (
 	// the images in the assets of the theme. A theme that is a single file
 	// has no assets.
 	ErrThemeBackgroundAsset = errors.New("theme file names a background image that is not among the assets of the theme")
+	// ErrThemeExtends reports an extends that is not the name of a theme.
+	ErrThemeExtends = errors.New("theme file names the theme it is based on in a form that is not accepted")
+	// ErrThemeBase reports a theme file based on a theme that is not in use.
+	ErrThemeBase = errors.New("theme file is based on a theme that is not in use")
+	// ErrThemeBaseCycle reports a theme file that is based on itself, by way
+	// of the themes it is based on.
+	ErrThemeBaseCycle = errors.New("theme file is based on itself")
+	// ErrThemeBaseDepth reports a theme file with more themes below it, one
+	// based on another, than a theme can have.
+	ErrThemeBaseDepth = errors.New("theme file is based on more themes, one on another, than a theme can be")
 )
+
+// MaximumThemeBases is the number of themes a theme can have below it: the
+// theme it is based on, the theme that one is based on, and so on.
+const MaximumThemeBases = 3
 
 // ThemeFileError is the reason a theme file is rejected. Reason is one of the
 // errors above or one of the palette errors. Subject names the part of the
@@ -129,6 +144,10 @@ type ThemeFile struct {
 	// Requires names the first release the theme works with, as three
 	// numbers such as 0.7.0. It is empty for a theme that names none.
 	Requires string
+	// Extends names the theme this one is based on. A file that names one
+	// gives only what it has of its own, and is a theme once it is read On
+	// that theme. It is empty for a theme that stands on its own.
+	Extends string
 	// Background is the image the theme lays behind the navigation pages.
 	// It is nil for a theme without one.
 	Background *ThemeBackground
@@ -256,6 +275,11 @@ func (u ThemeFileUnused) Empty() bool { return len(u.Keys) == 0 && len(u.Tokens)
 // has to be valid, or the file is rejected as a whole. A rejection is a
 // *ThemeFileError. The release a file needs is checked for its form only:
 // ReadThemeFileFor compares it with a release.
+//
+// A file that names a theme it is based on, in Extends, is read as far as it
+// goes: each of its parts is checked, and what only holds for a whole theme,
+// such as the three colors and their contrast, is checked by On, with the
+// theme it is based on.
 func ReadThemeFile(raw []byte) (ThemeFile, ThemeFileUnused, error) {
 	return ReadThemeFileFor(raw, "")
 }
@@ -328,6 +352,17 @@ func ReadThemeFileFor(raw []byte, version string) (ThemeFile, ThemeFileUnused, e
 			target = &file.Modes
 		case "layout":
 			target = &file.Layout
+		case "extends":
+			// A name can be written as a number, as 2048 is.
+			base, written := themeText(document[key])
+			if !written {
+				return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeExtends, "extends")
+			}
+			if !isThemeWord(base) {
+				return ThemeFile{}, ThemeFileUnused{}, themeFileError(ErrThemeExtends, shortThemeValue(base))
+			}
+			file.Extends = base
+			continue
 		case "background":
 			background, parts, err := readThemeBackground(document[key])
 			if err != nil {
@@ -364,16 +399,11 @@ func ReadThemeFileFor(raw []byte, version string) (ThemeFile, ThemeFileUnused, e
 		unused.Tokens = dropUnknownTokens(replaced, "modes."+mode+".", unused.Tokens)
 	}
 	unused.Keys = dropUnknownLayout(file.Layout, "layout.", unused.Keys)
-	// A color option that gives no default has the color the theme gives
-	// its token, so that the color is written in one place.
-	for i, option := range file.Options {
-		if option.Kind == ThemeOptionColor && option.Default == "" {
-			file.Options[i].Default = file.Tokens[option.Token]
-		}
-	}
 	slices.Sort(unused.Keys)
 	slices.Sort(unused.Tokens)
-	if err := file.Validate(); err != nil {
+	// A file that is based on another theme is checked as a whole with
+	// that theme, by On.
+	if err := file.validate(file.Extends == ""); err != nil {
 		return ThemeFile{}, unused, err
 	}
 	return file, unused, nil
@@ -522,6 +552,10 @@ func ParseThemeFile(raw []byte) (ThemeFile, error) {
 	if len(unused.Tokens) > 0 {
 		return ThemeFile{}, themeFileError(ErrThemeToken, unused.Tokens[0])
 	}
+	// A file that is used in full stands on its own.
+	if file.Extends != "" {
+		return ThemeFile{}, themeFileError(ErrThemeBase, file.Extends)
+	}
 	return file, nil
 }
 
@@ -531,23 +565,35 @@ func ParseThemeFile(raw []byte) (ThemeFile, error) {
 // and the result has to pass the same checks. The first reason found is
 // returned as a *ThemeFileError that names the part of the file, and the
 // order of the checks does not vary.
-func (f ThemeFile) Validate() error {
+func (f ThemeFile) Validate() error { return f.validate(true) }
+
+// validate is Validate for a file that is a whole theme, and the checks of
+// its parts alone for a file that is based on another theme and is not read
+// On it yet. Such a file need not give the three colors, their contrast
+// depends on what the other theme gives, and a color option can take its
+// default from a token of that theme.
+func (f ThemeFile) validate(whole bool) error {
 	if f.Contract != ThemeContract {
 		return themeFileError(ErrThemeContract, strconv.Itoa(f.Contract))
 	}
 	if _, accepted := themeRelease(f.Requires, false); f.Requires != "" && !accepted {
 		return themeFileError(ErrThemeRequiresValue, shortThemeValue(f.Requires))
 	}
+	if f.Extends != "" && !isThemeWord(f.Extends) {
+		return themeFileError(ErrThemeExtends, shortThemeValue(f.Extends))
+	}
 	if err := validateThemeTokens(f.Tokens, "tokens."); err != nil {
 		return err
 	}
-	for _, name := range ThemeTokenNames[:3] {
-		if _, set := f.Tokens[name]; !set {
-			return themeFileError(ErrPaletteColor, "tokens."+name)
+	if whole {
+		for _, name := range ThemeTokenNames[:3] {
+			if _, set := f.Tokens[name]; !set {
+				return themeFileError(ErrPaletteColor, "tokens."+name)
+			}
 		}
-	}
-	if err := f.Palette().Validate(); err != nil {
-		return themeFileError(err, "")
+		if err := f.Palette().Validate(); err != nil {
+			return themeFileError(err, "")
+		}
 	}
 	modes := make([]string, 0, len(f.Modes))
 	for mode := range f.Modes {
@@ -560,6 +606,9 @@ func (f ThemeFile) Validate() error {
 		}
 		if err := validateThemeTokens(f.Modes[mode], "modes."+mode+"."); err != nil {
 			return err
+		}
+		if !whole {
+			continue
 		}
 		if err := f.Theme("").In(mode).Colors.Validate(); err != nil {
 			return themeFileError(err, "modes."+mode)
@@ -575,7 +624,7 @@ func (f ThemeFile) Validate() error {
 			return themeFileError(ErrThemeSyntax, "layout."+option)
 		}
 	}
-	if err := validateThemeOptions(f.Options); err != nil {
+	if err := validateThemeOptions(f.optionsWithDefaults(), whole); err != nil {
 		return err
 	}
 	if f.Background != nil {
@@ -699,8 +748,86 @@ func (f ThemeFile) Theme(name string) Theme {
 		theme.BackgroundImage, _ = f.Background.Asset()
 		theme.BackgroundDim = f.Background.Dim
 	}
-	theme.Options = slices.Clone(f.Options)
+	theme.Options = f.optionsWithDefaults()
+	theme.Extends = f.Extends
 	return theme
+}
+
+// optionsWithDefaults returns the options of the file, each with a default.
+// A color option that names none has the color the file gives its token, so
+// that the color is written in one place. The file keeps such an option as
+// it is written: read On another theme, it takes the color that theme and
+// the file give the token together.
+func (f ThemeFile) optionsWithDefaults() []ThemeOption {
+	options := slices.Clone(f.Options)
+	for i, option := range options {
+		if option.Kind == ThemeOptionColor && option.Default == "" {
+			options[i].Default = f.Tokens[option.Token]
+		}
+	}
+	return options
+}
+
+// On returns the theme file as it is read on the theme it is based on: with
+// what that theme gives where the file gives nothing of its own. The file is
+// read as if the parts of the other theme were written first. A token of
+// the file replaces the token of the other theme in tokens and in each mode
+// of modes, and a layout option replaces the layout option. An option of the
+// file replaces the option of the same ID where that one stands, and the
+// other options of the file follow those of the other theme. The background
+// of the other theme stays unless the file has one. What describes a file,
+// its name, version, author, license and the release it needs, is that of
+// the file alone.
+//
+// The result is a whole theme and is checked as one, so what holds only for
+// the two together is found here: the contrast of a color of the file with
+// a color of the other theme, the number of options, and a color option
+// whose token neither gives a color. base is a whole theme itself.
+func (f ThemeFile) On(base ThemeFile) (ThemeFile, error) {
+	merged := f
+	merged.Tokens = overlayThemeValues(base.Tokens, f.Tokens)
+	merged.Layout = overlayThemeValues(base.Layout, f.Layout)
+	merged.Modes = nil
+	for _, mode := range []string{ThemeModeLight, ThemeModeDark} {
+		if values := overlayThemeValues(base.Modes[mode], f.Modes[mode]); values != nil {
+			if merged.Modes == nil {
+				merged.Modes = make(map[string]map[string]string)
+			}
+			merged.Modes[mode] = values
+		}
+	}
+	merged.Options = slices.Clone(base.Options)
+	for _, option := range f.Options {
+		place := slices.IndexFunc(merged.Options, func(other ThemeOption) bool { return other.ID == option.ID })
+		if place < 0 {
+			merged.Options = append(merged.Options, option)
+			continue
+		}
+		merged.Options[place] = option
+	}
+	// The background is that of the file, or else that of the other theme,
+	// and belongs to the result alone.
+	if source := cmp.Or(f.Background, base.Background); source != nil {
+		background := *source
+		merged.Background = &background
+	}
+	if err := merged.Validate(); err != nil {
+		return ThemeFile{}, err
+	}
+	return merged, nil
+}
+
+// overlayThemeValues returns the values of one mapping of a theme file with
+// those of another in place: what the second gives replaces what the first
+// gives. Neither is changed, and two mappings without values give none.
+func overlayThemeValues(below, above map[string]string) map[string]string {
+	if len(below) == 0 && len(above) == 0 {
+		return nil
+	}
+	values := make(map[string]string, len(below)+len(above))
+	maps.Copy(values, below)
+	maps.Copy(values, above)
+	return values
 }
 
 var themeTokenChecks = map[string]func(string) bool{

@@ -546,10 +546,19 @@ type themeFileCard struct {
 	// Options reports a theme with options, which are offered on this page
 	// once the theme is selected.
 	Options bool
+	// Based says which theme the theme is based on, and is empty for a
+	// theme that stands on its own.
+	Based string
 }
 
 func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
 	cards := make([]themeFileCard, 0, len(themes))
+	// A theme of the directory is named as its card names it, and a bundled
+	// theme by its name.
+	titles := make(map[string]string, len(themes))
+	for _, theme := range themes {
+		titles[theme.Name] = theme.DisplayName(locale)
+	}
 	for _, theme := range themes {
 		about := make([]string, 0, 3)
 		for _, text := range []string{theme.Version, theme.Author, theme.License} {
@@ -569,6 +578,13 @@ func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
 		}
 		if dark := theme.In(model.ThemeModeDark).Colors; dark != card.Colors {
 			card.Dark = &dark
+		}
+		if theme.Extends != "" {
+			base := titles[theme.Extends]
+			if base == "" {
+				base = theme.Extends
+			}
+			card.Based = i18n.Format(locale, "theme_extends_note", map[string]any{"name": base})
 		}
 		if specified := (*model.HomepageOptions)(nil).ThemeLayoutApplied(theme.Layout, nil); len(specified) > 0 {
 			card.Layout = i18n.Format(locale, "theme_layout_sets", map[string]any{"options": settings.LayoutOptionList(locale, specified)})

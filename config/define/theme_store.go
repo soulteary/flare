@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"strings"
 
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/logger"
@@ -75,6 +76,13 @@ func StoreUserTheme(name string, raw []byte, replace bool) error {
 	}
 	userThemeScanMu.Lock()
 	defer userThemeScanMu.Unlock()
+	// A file that is based on another theme is stored if it is a theme in
+	// use once it is there.
+	if theme.Extends != "" {
+		if err := checkThemeBase(name, theme); err != nil {
+			return err
+		}
+	}
 	if err := os.Mkdir(UserThemeDirectory, 0700); err != nil && !errors.Is(err, fs.ErrExist) {
 		return errors.Join(ErrThemeStoreWrite, err)
 	}
@@ -114,6 +122,32 @@ func StoreUserTheme(name string, raw []byte, replace bool) error {
 	}
 	reloadUserThemes()
 	return nil
+}
+
+// checkThemeBase reports why a theme file that is based on another theme
+// would not be in use under a name, as a *model.ThemeFileError: the theme it
+// is based on is not in use, the themes below it lead back to the name or
+// are more than a theme can have, or the file and the themes below it are
+// not a theme together. The themes directory is read as it is now, and the
+// file is looked at in the place of the theme of that name. Callers hold
+// userThemeScanMu.
+func checkThemeBase(name string, file model.ThemeFile) error {
+	scan := scanUserThemes()
+	scan.candidates[name] = &themeCandidate{file: file}
+	below, reason := scan.followBases(name)
+	if _, inUse := scan.themes[file.Extends]; reason == "" && !inUse && !isBundledTheme(file.Extends) {
+		reason = ThemeProblemExtends
+	}
+	switch reason {
+	case ThemeProblemExtends:
+		return &model.ThemeFileError{Reason: model.ErrThemeBase, Subject: file.Extends}
+	case ThemeProblemExtendsCycle:
+		return &model.ThemeFileError{Reason: model.ErrThemeBaseCycle, Subject: strings.Join(below, " → ")}
+	case ThemeProblemExtendsDepth:
+		return &model.ThemeFileError{Reason: model.ErrThemeBaseDepth, Subject: strings.Join(below, " → ")}
+	}
+	_, err := file.On(scan.wholeFile(file.Extends))
+	return err
 }
 
 // countThemeFiles counts the entries of the themes directory that a reading

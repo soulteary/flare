@@ -88,6 +88,26 @@ type Theme struct {
 	// in, in the addresses they are served at. It is empty for a theme that
 	// has neither.
 	Hash string `json:"-"`
+	// Extends names the theme this one is based on, and is empty for a
+	// theme that stands on its own. Colors, Tokens, Modes, Layout, Options
+	// and the background hold what the two give together.
+	Extends string `json:"-"`
+	// Inherited names the themes below this one that bring a stylesheet,
+	// the one that stands on its own first. A page loads their stylesheets
+	// in that order before the one of this theme.
+	Inherited []ThemeSource `json:"-"`
+	// BackgroundSource names the theme whose assets hold BackgroundImage
+	// where that is a theme below this one. It is empty where the image is
+	// among the assets of this theme, and for a theme without one.
+	BackgroundSource ThemeSource `json:"-"`
+}
+
+// ThemeSource names a theme of the themes directory in the state it was read
+// in: Hash is the one of the addresses its stylesheet and its assets are
+// served at.
+type ThemeSource struct {
+	Name string
+	Hash string
 }
 
 // DisplayName returns the name to show for the theme in an interface
