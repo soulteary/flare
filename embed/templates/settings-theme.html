@@ -57,7 +57,7 @@
                 {{ if .About }}<p class="theme-about">{{ .About }}</p>{{ end }}
                 {{ if .Based }}<p class="theme-about">{{ .Based }}</p>{{ end }}{{ if .Layout }}<p class="theme-about">{{ .Layout }}</p>{{ end }}{{ if .Stylesheet }}<p class="theme-about">{{ T $.Locale "theme_stylesheet_note" }}</p>{{ end }}{{ if .Options }}<p class="theme-about">{{ T $.Locale "theme_options_note" }}</p>{{ end }}
                 <a class="theme-card-link theme-preview-link" href="/?theme-preview={{ .Name }}">{{ T $.Locale "theme_preview" }}</a>
-                {{ if not .Directory }}<a class="theme-card-link theme-export-link" href="{{ $.ThemeExportPath }}?name={{ .Name }}">{{ T $.Locale "theme_export" }}</a>{{ end }}
+                <a class="theme-card-link theme-export-link" href="{{ $.ThemeExportPath }}?name={{ .Name }}">{{ T $.Locale "theme_export" }}</a>
             </div>
             {{ end }}
         </div>
@@ -74,11 +74,11 @@
         <input type="hidden" name="action" value="{{ .ThemeImportAction }}">
         <h2>{{ T .Locale "theme_import" }}</h2>
         {{ if .ThemeImportRefused }}<p class="theme-notice" role="alert">{{ .ThemeImportRefused }}</p>{{ end }}
-        {{ if .ThemeImported }}<p class="theme-notice" role="status">{{ .ThemeImported }}</p>{{ end }}
+        {{ if .ThemeImported }}<p class="theme-notice" role="status">{{ .ThemeImported }}</p>{{ end }}{{ if .ThemeImportLeftOut }}<p class="theme-notice theme-import-left-out" role="status">{{ .ThemeImportLeftOut }}</p>{{ end }}
         <p class="theme-help">{{ T .Locale "theme_import_help" }}</p>
         <div class="form-group">
             <label for="theme-import-file">{{ T .Locale "theme_import_file" }}</label>
-            <input type="file" id="theme-import-file" name="theme-file" accept=".yml">
+            <input type="file" id="theme-import-file" name="theme-file" accept=".yml,.zip">
         </div>
         <div class="form-group">
             <label class="theme-import-replace"><input type="checkbox" name="replace" value="1"> {{ T .Locale "theme_import_replace" }}</label>

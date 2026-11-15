@@ -67,6 +67,7 @@ FLARE_BINARY=/tmp/flare node tests/theme/assets.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/theme/background.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/theme/options.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/theme/extends.browser.cjs
+FLARE_BINARY=/tmp/flare node tests/theme/archives.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/theme/safe-mode.browser.cjs
 FLARE_WEATHER_BROWSER=1 go test ./internal/settings/weather -run '^TestWeatherBrowser$' -count=1 -v
 ```

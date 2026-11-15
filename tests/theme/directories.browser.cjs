@@ -113,14 +113,14 @@ const measure = page => page.evaluate(() => {
     const file = path.join(server.themes, 'zelda.yml');
 
     // A directory with a theme.yml is listed as a theme among the theme
-    // files. It has a preview and no download. A directory without a
-    // theme.yml is left alone, and of a file and a directory of one name the
-    // file is reported.
+    // files, with a preview and a download like a theme file. A directory
+    // without a theme.yml is left alone, and of a file and a directory of
+    // one name the file is reported.
     let listed = await settings();
     assert.deepEqual(listed.cards, [
       {value: 'plain', title: 'plain', links: ['Preview', 'Download']},
-      {value: 'shadowed', title: 'shadowed', links: ['Preview']},
-      {value: 'zelda', title: 'Zelda', links: ['Preview']},
+      {value: 'shadowed', title: 'shadowed', links: ['Preview', 'Download']},
+      {value: 'zelda', title: 'Zelda', links: ['Preview', 'Download']},
     ]);
     assert.deepEqual(listed.lines, [
       ['broken/theme.yml', 'tokens.radius'],
@@ -151,7 +151,7 @@ const measure = page => page.evaluate(() => {
     assert.equal(listed.cards.filter(card => card.value === 'zelda').length, 1);
 
     // Without its theme.yml the directory is no theme, and the file is the
-    // theme of the name: it is offered as a download again.
+    // theme of the name.
     await fs.rm(manifest);
     const asFile = {background: 'rgb(64, 32, 32)', radius: '6px'};
     assert.deepEqual(await home(), asFile);

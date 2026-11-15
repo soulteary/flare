@@ -3,6 +3,7 @@ package theme
 import (
 	"errors"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"sort"
 	"strings"
@@ -229,6 +230,10 @@ func importTheme(c fiber.Ctx, replace bool) error {
 	}
 	name, isThemeFile := strings.CutSuffix(filename, ".yml")
 	if !isThemeFile {
+		// A theme that is a directory comes as an archive.
+		if archived, isArchive := strings.CutSuffix(filename, ".zip"); isArchive {
+			return importThemeArchive(c, header, archived, replace)
+		}
 		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_name"))
 	}
 	if header.Size > define.MaximumThemeFileBytes {
@@ -249,54 +254,134 @@ func importTheme(c fiber.Ctx, replace bool) error {
 	if done, err := commitThemeChange(c, func() error { stored = define.StoreUserTheme(name, raw, replace); return nil }); done {
 		return err
 	}
+	if stored != nil {
+		return refuse(importRefusal(locale, stored))
+	}
+	return renderTheme(c, http.StatusOK, themeNotice{imported: name})
+}
+
+// importThemeArchive stores the theme of an uploaded archive in the themes
+// directory, as a directory of the name of the uploaded file. Only the files
+// of a theme are stored, and they are checked like a theme of the directory.
+// The entries that were left out are named on the page.
+func importThemeArchive(c fiber.Ctx, header *multipart.FileHeader, name string, replace bool) error {
+	locale := settingsLocale()
+	refuse := func(status int, text string) error {
+		return renderTheme(c, status, themeNotice{importRefused: text})
+	}
+	if header.Size > model.MaximumThemeArchiveBytes {
+		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_archive_size"))
+	}
+	upload, err := header.Open()
+	if err != nil {
+		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_missing"))
+	}
+	defer upload.Close()
+	// The name is kept beyond the request, in the list of themes.
+	name = strings.Clone(name)
+	var stored error
+	var leftOut []string
+	if done, err := commitThemeChange(c, func() error {
+		leftOut, stored = define.StoreUserThemeArchive(name, upload, header.Size, replace)
+		return nil
+	}); done {
+		return err
+	}
+	if stored != nil {
+		return refuse(importRefusal(locale, stored))
+	}
+	return renderTheme(c, http.StatusOK, themeNotice{imported: name, leftOut: leftOut})
+}
+
+// importRefusal words why a theme was not imported, with the status of the
+// response. A file that is not a usable part of a theme is named with the
+// reason the list of files that are not used gives for such a file, after
+// the statement every refusal makes.
+func importRefusal(locale string, stored error) (int, string) {
 	var rejection *model.ThemeFileError
-	switch {
-	case stored == nil:
-		return renderTheme(c, http.StatusOK, themeNotice{imported: name})
-	case errors.Is(stored, define.ErrThemeStoreName):
-		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_name"))
-	case errors.Is(stored, define.ErrThemeStoreSize):
-		return refuse(http.StatusBadRequest, i18n.T(locale, "theme_import_size"))
-	case errors.Is(stored, define.ErrThemeStoreExists):
-		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_exists"))
-	case errors.Is(stored, define.ErrThemeStoreDirectory):
-		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_directory"))
-	case errors.Is(stored, define.ErrThemeStoreSafeMode):
-		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_safe_mode"))
-	case errors.Is(stored, define.ErrThemeStoreFull):
-		return refuse(http.StatusConflict, i18n.T(locale, "theme_import_full"))
-	case errors.As(stored, &rejection):
-		// The reason is worded as in the list of files that are not used,
-		// after the statement every refusal makes.
-		problem := define.ThemeFileProblem(stored)
+	var entry *define.ThemeArchiveFileError
+	var part *define.ThemeArchiveProblem
+	rejected := func(problem define.ThemeProblem) string {
 		text := i18n.Format(locale, "theme_import_rejected", map[string]any{"reason": i18n.T(locale, "theme_file_problem_"+problem.Reason)})
-		if problem.Subject != "" {
-			text += " " + plainText(problem.Subject, maximumShownDetail)
+		for _, detail := range []string{problem.File, problem.Subject} {
+			if detail != "" {
+				text += " " + plainText(detail, maximumShownDetail)
+			}
 		}
-		return refuse(http.StatusBadRequest, text)
+		return text
+	}
+	switch {
+	case errors.Is(stored, define.ErrThemeStoreName):
+		return http.StatusBadRequest, i18n.T(locale, "theme_import_name")
+	case errors.Is(stored, define.ErrThemeStoreSize):
+		return http.StatusBadRequest, i18n.T(locale, "theme_import_size")
+	case errors.Is(stored, define.ErrThemeStoreExists):
+		return http.StatusConflict, i18n.T(locale, "theme_import_exists")
+	case errors.Is(stored, define.ErrThemeStoreDirectory):
+		return http.StatusConflict, i18n.T(locale, "theme_import_directory")
+	case errors.Is(stored, define.ErrThemeStoreOccupied):
+		return http.StatusConflict, i18n.T(locale, "theme_import_occupied")
+	case errors.Is(stored, define.ErrThemeStoreSafeMode):
+		return http.StatusConflict, i18n.T(locale, "theme_import_safe_mode")
+	case errors.Is(stored, define.ErrThemeStoreFull):
+		return http.StatusConflict, i18n.T(locale, "theme_import_full")
+	case errors.Is(stored, define.ErrThemeArchiveSize):
+		return http.StatusBadRequest, i18n.T(locale, "theme_import_archive_size")
+	case errors.Is(stored, define.ErrThemeArchiveEntries):
+		return http.StatusBadRequest, i18n.T(locale, "theme_import_archive_entries")
+	case errors.Is(stored, define.ErrThemeArchiveEmpty):
+		return http.StatusBadRequest, i18n.T(locale, "theme_import_archive_empty")
+	case errors.Is(stored, define.ErrThemeArchiveSeveral):
+		return http.StatusBadRequest, i18n.T(locale, "theme_import_archive_several")
+	case errors.As(stored, &entry):
+		// A refusal about one file of the archive names the file.
+		key := "theme_import_archive_read"
+		if errors.Is(stored, define.ErrThemeArchiveTwice) {
+			key = "theme_import_archive_twice"
+		} else if errors.Is(stored, define.ErrThemeArchiveDocument) {
+			key = "theme_import_archive_document"
+		}
+		return http.StatusBadRequest, i18n.T(locale, key) + " " + plainText(entry.File, maximumShownDetail)
+	case errors.Is(stored, define.ErrThemeArchiveRead):
+		return http.StatusBadRequest, i18n.T(locale, "theme_import_archive_read")
+	case errors.As(stored, &part):
+		return http.StatusBadRequest, rejected(part.Problem)
+	case errors.As(stored, &rejection):
+		return http.StatusBadRequest, rejected(define.ThemeFileProblem(stored))
 	default:
-		return refuse(http.StatusInternalServerError, i18n.T(locale, "theme_import_write"))
+		return http.StatusInternalServerError, i18n.T(locale, "theme_import_write")
 	}
 }
 
-// exportTheme hands a theme out as a theme file to download: a file of the
-// themes directory as it is, the file a bundled theme is defined by, or the
-// custom colors written as a file.
+// exportTheme hands a theme out to download: a theme file of the themes
+// directory as it is, the file a bundled theme is defined by, the custom
+// colors written as a file, or a theme that is a directory as an archive.
 func exportTheme(c fiber.Ctx) error {
 	if auth.PersistentSecurity(c) && !auth.Revalidate(c) {
 		return c.Status(http.StatusUnauthorized).SendString("AUTH_REQUIRED")
 	}
 	// The directory is read first, so that the file is the one there now.
 	define.ReloadUserThemes()
+	contentType := "application/yaml; charset=utf-8"
 	filename, raw, known := define.ExportTheme(c.Query("name"))
 	if !known {
-		return c.Status(http.StatusNotFound).SendString("Unknown theme")
+		// A theme that is a directory is handed out as an archive.
+		archive, packed, err := define.ExportThemeArchive(c.Query("name"))
+		switch {
+		case errors.Is(err, define.ErrThemeArchiveSize):
+			return c.Status(http.StatusConflict).SendString(i18n.T(settingsLocale(), "theme_export_archive_size"))
+		case errors.Is(err, define.ErrThemeArchiveRead):
+			return c.Status(http.StatusConflict).SendString(i18n.T(settingsLocale(), "theme_export_archive_read"))
+		case err != nil:
+			return c.Status(http.StatusNotFound).SendString("Unknown theme")
+		}
+		filename, raw, contentType = archive, packed, "application/zip"
 	}
 	// The file name consists of a theme name and fixed text.
 	c.Set("Content-Disposition", `attachment; filename="`+filename+`"`)
 	c.Set("Cache-Control", "no-store")
 	c.Set("X-Content-Type-Options", "nosniff")
-	c.Set("Content-Type", "application/yaml; charset=utf-8")
+	c.Set("Content-Type", contentType)
 	return c.Status(http.StatusOK).Send(raw)
 }
 
@@ -356,6 +441,9 @@ type themeNotice struct {
 	// why one was not.
 	imported      string
 	importRefused string
+	// leftOut names the entries of an imported archive that are no files of
+	// a theme and were not stored.
+	leftOut []string
 	// optionsSaved reports stored values for the options of the theme.
 	optionsSaved bool
 }
@@ -407,6 +495,9 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	m["ThemeImportRefused"] = notice.importRefused
 	if notice.imported != "" {
 		m["ThemeImported"] = i18n.Format(locale, "theme_import_done", map[string]any{"name": define.ThemeTitle(notice.imported, locale)})
+	}
+	if len(notice.leftOut) > 0 {
+		m["ThemeImportLeftOut"] = i18n.Format(locale, "theme_import_left_out", map[string]any{"files": leftOutText(notice.leftOut)})
 	}
 	if selected, _ := define.ThemeSnapshot(); selected != "" && !define.IsKnownTheme(selected) {
 		reason := "theme_unavailable"
@@ -519,6 +610,24 @@ func paletteErrorText(locale string, err error) string {
 	return i18n.T(locale, "theme_custom_invalid_color")
 }
 
+// maximumLeftOutShown is the number of entries of an archive the page names
+// as left out. An archive can hold many more.
+const maximumLeftOutShown = 12
+
+// leftOutText names the entries of an archive that were left out, as one
+// line of text of a bounded length: the names come from the archive.
+func leftOutText(entries []string) string {
+	shown := make([]string, 0, maximumLeftOutShown+1)
+	for i, entry := range entries {
+		if i == maximumLeftOutShown {
+			shown = append(shown, "…")
+			break
+		}
+		shown = append(shown, plainText(entry, maximumShownName))
+	}
+	return strings.Join(shown, ", ")
+}
+
 // themeFileCard is a theme of the themes directory in use, as the page shows
 // it.
 type themeFileCard struct {
@@ -537,9 +646,6 @@ type themeFileCard struct {
 	// Layout names the layout options the theme specifies, so that it is
 	// known before the theme is selected that it changes more than colors.
 	Layout string
-	// Directory reports a theme that is a directory. Such a theme is not
-	// offered as a download of one file.
-	Directory bool
 	// Stylesheet reports a theme that brings a stylesheet, so that it is
 	// known before the theme is selected that it changes more than colors.
 	Stylesheet bool
@@ -567,12 +673,10 @@ func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
 			}
 		}
 		card := themeFileCard{
-			Name:   theme.Name,
-			Title:  theme.DisplayName(locale),
-			About:  strings.Join(about, " · "),
-			Colors: theme.In(model.ThemeModeLight).Colors,
-			// The form of the theme decides what the card offers.
-			Directory:  theme.Directory,
+			Name:       theme.Name,
+			Title:      theme.DisplayName(locale),
+			About:      strings.Join(about, " · "),
+			Colors:     theme.In(model.ThemeModeLight).Colors,
 			Stylesheet: theme.Stylesheet != "",
 			Options:    len(theme.Options) > 0,
 		}

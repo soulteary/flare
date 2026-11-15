@@ -65,6 +65,8 @@ The directory is the form for a theme of more than one file. Of a directory,
 named `assets` are read, and nothing else. Without a stylesheet, a theme in a
 directory is the same theme as its `theme.yml` would be as a file. It is
 listed, previewed and selected by the name of the directory: `Theme: zelda`.
+A license or other [text documents](#text-documents) beside `theme.yml` are
+not read either, and travel with the theme when it is downloaded.
 
 - The name of the directory has the rules of the name of a file without
   `.yml`, and cannot be the name of a bundled theme or `custom`.
@@ -550,24 +552,25 @@ directory out, for one page or for the whole instance. It changes neither
 
 ## Import and export
 
-The theme page hands a theme out as a theme file and takes a theme file in.
-Both are for the administrator, and neither selects a theme.
+The theme page hands a theme out as a file and takes one in: a theme file, or
+an archive for a theme that is a directory. Both are for the administrator,
+and neither selects a theme.
 
-**Download** next to a theme sends a theme file:
+**Download** next to a theme sends a file:
 
 | Theme | File |
 | --- | --- |
 | A theme file | The file of the themes directory as it is, `<name>.yml` |
+| A theme that is a directory | An [archive](#archives), `<name>.zip` |
 | A bundled theme | The file the theme is defined by, as `<name>-copy.yml` |
 | Custom colors | A theme file with the three colors, as `custom-colors.yml` |
 
 The name of a bundled theme and `custom` cannot be the name of a theme file,
 so those two downloads have a name under which they can be imported. The
 download of a bundled theme is a starting point for a theme of one's own.
-A theme that is a directory has no download: it is not one file, and it is
-copied as a directory.
 
-**Import a theme file** stores an uploaded file in the themes directory:
+**Import a theme** stores an uploaded theme file, or the theme of an uploaded
+[archive](#archives), in the themes directory. For a theme file:
 
 - The name of the file is the name of the theme, with the rules under
   [location and name](#location-and-name): `<name>.yml`, and not the name of a
@@ -581,12 +584,12 @@ copied as a directory.
   imported if it is a theme in use once it is there: the theme it names is in
   use, and the two are a theme together. Otherwise it is refused with the
   reason.
-- A theme file of the same name is replaced only with **Replace a theme file
-  of the same name** ticked. Something else of that name in the directory, a
+- A theme file of the same name is replaced only with **Replace a theme of
+  the same name** ticked. Something else of that name in the directory, a
   folder or a link, is never replaced.
-- A file is not imported under the name of a theme that is a directory, with
-  the box ticked or not: the file would not be read, and an import does not
-  replace a directory.
+- A theme file is not imported under the name of a theme that is a directory,
+  with the box ticked or not: the file would not be read, and a theme file
+  does not replace a directory.
 - A file can have up to 64 KiB, and a new file is refused while the directory
   holds the 64 entries that are looked at, because more are not read.
 - The directory is created by the first import. A new file is readable and
@@ -595,6 +598,80 @@ copied as a directory.
 
 A theme is removed by deleting its file or its directory from the themes
 directory.
+
+### Archives
+
+A theme that is a directory is downloaded as a ZIP file, and a ZIP file with
+a theme is imported as a directory of the themes directory.
+
+```text
+zelda.zip
+    zelda/
+        theme.yml
+        theme.css
+        assets/
+            paper.png
+        LICENSE.txt
+```
+
+The download holds a directory of the name of the theme with the files of
+the theme, and nothing else of its directory:
+
+| File | In the archive |
+| --- | --- |
+| `theme.yml` | As it is in the directory |
+| `theme.css` | As it was checked when the directory was read |
+| `assets/` | The [images and fonts](theme-stylesheets.md#images-and-fonts) that are part of the theme |
+| [Text documents](#text-documents) | Those beside `theme.yml` |
+
+- A theme that is [based on another](#a-theme-based-on-another) is downloaded
+  by itself. The theme it is based on is downloaded separately.
+- An archive has up to 24 MiB. A theme whose archive would be larger has no
+  download, and is copied as a directory.
+
+An import takes an archive made this way, and one made by hand:
+
+- The name of the uploaded file is the name of the theme: `<name>.zip`, with
+  the rules of the name of a [directory](#a-theme-as-a-directory).
+- The files of the theme stand at the top of the archive, or all of them in
+  one directory, whose name does not matter. An archive holds one theme: with
+  a `theme.yml` in more than one directory it is refused.
+- Only the files of a theme are stored: `theme.yml`, `theme.css`, the images
+  and fonts in `assets`, and text documents. Each is written under the name
+  it has in a theme, never under a path of the archive. Every other entry is
+  left out, and the page names the entries that were, so that nothing of an
+  archive is in the directory without being a part of the theme. Hidden
+  entries, and those a system adds to an archive by itself, are left out
+  without a remark.
+- The theme gets the checks of a theme of the directory: its theme file, its
+  stylesheet, its assets, the image of its background and the theme it is
+  based on. One that would not be in use is refused with the reason and the
+  file, such as `theme.css`, and nothing stays in the directory.
+- An archive has up to 24 MiB and up to 256 entries, and each file in it has
+  the size it can have in a theme, whatever the archive says about it. A file
+  of the theme that the archive holds twice, also under names that differ in
+  case alone, is refused.
+- A theme of the same name is replaced only with **Replace a theme of the
+  same name** ticked: a directory as a whole, with everything in it, and a
+  theme file by the directory. A directory of that name that is no theme, a
+  link or another file is never replaced.
+- A new theme is refused while the themes directory holds the 64 entries that
+  are looked at.
+
+### Text documents
+
+A theme that is a directory can hold text documents beside its `theme.yml`,
+such as the license of a font it brings:
+
+- `LICENSE`, `NOTICE`, `COPYING` and `README`, and files whose names end in
+  `.txt` or `.md`, with names of letters, digits, dots, hyphens and
+  underscores.
+- Up to 8 of them, each UTF-8 text of up to 64 KiB.
+
+They are not read and not served. They are part of the [archive](#archives)
+of the theme: a download holds them, and an import stores them. A document
+that is not text of that size, or one more than 8, is not part of a download,
+and an archive with one is refused.
 
 ## Changes while the instance runs
 
@@ -713,6 +790,11 @@ change on the pages, puts the defaults back, and edits the values in
 selects themes that are based on a theme with a stylesheet, an image and an
 option, checks what their pages take from that theme, edits and removes it,
 and checks the pages after each step.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/archives.browser.cjs`
+downloads a theme that is a directory as an archive, imports it under another
+name and selects it, and imports archives with entries that are no files of
+a theme, with entries named to reach other places, and with files that are
+not accepted.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/safe-mode.browser.cjs`
 selects a theme whose stylesheet hides parts of the home page, opens the page
 in safe mode and goes back to the settings from its notice, and starts an

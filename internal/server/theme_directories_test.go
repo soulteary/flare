@@ -79,20 +79,27 @@ func TestThemeDirectoriesHTTP(t *testing.T) {
 	require.Empty(t, page.alerts)
 	require.Contains(t, page.help, i18n.T("en", "theme_files_help"))
 
-	// Every theme has a preview. A file is offered as a download; a
-	// directory is not, because it is not one file.
+	// Every theme has a preview and a download: a file is handed out as it
+	// is, and a directory as an archive. The name with both forms is the
+	// directory.
 	require.Equal(t, map[string][]string{
 		"plain":    {"/?theme-preview=plain", "/settings/theme/export?name=plain"},
-		"shadowed": {"/?theme-preview=shadowed"},
-		"zelda":    {"/?theme-preview=zelda"},
+		"shadowed": {"/?theme-preview=shadowed", "/settings/theme/export?name=shadowed"},
+		"zelda":    {"/?theme-preview=zelda", "/settings/theme/export?name=zelda"},
 	}, themeCardLinks(t, raw))
-	for name, status := range map[string]int{
-		"plain": http.StatusOK, "zelda": http.StatusNotFound, "shadowed": http.StatusNotFound,
-		"zelda/theme": http.StatusNotFound, "zelda/theme.yml": http.StatusNotFound, "broken": http.StatusNotFound,
+	for name, want := range map[string]struct {
+		status int
+		kind   string
+	}{
+		"plain": {http.StatusOK, "application/yaml; charset=utf-8"}, "zelda": {http.StatusOK, "application/zip"}, "shadowed": {http.StatusOK, "application/zip"},
+		"zelda/theme": {http.StatusNotFound, ""}, "zelda/theme.yml": {http.StatusNotFound, ""}, "broken": {http.StatusNotFound, ""},
 	} {
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/settings/theme/export?name="+url.QueryEscape(name), nil))
-		require.Equal(t, status, rec.Code, name)
+		require.Equal(t, want.status, rec.Code, name)
+		if want.kind != "" {
+			require.Equal(t, want.kind, rec.Header().Get("Content-Type"), name)
+		}
 	}
 
 	// The preview of the name with both forms shows the directory.
