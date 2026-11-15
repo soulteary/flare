@@ -158,6 +158,8 @@
   "theme_file_problem_template_slot_repeated": "The template is not used: a part of the application is placed more than once.",
   "theme_file_problem_template_link_count": "The template is not used: it needs exactly one link to the address.",
   "theme_file_problem_template_text_missing": "The template is not used: a field that has to be shown as text is not.",
+  "theme_file_problem_template_root": "The template is not used: what it writes is not the one element it has to be.",
+  "theme_file_problem_template_element_missing": "The template is not used: an element it has to write is missing.",
   "theme_stylesheet_note": "Has a stylesheet of its own.",
   "theme_safe_mode_notice": "Safe mode is on: the themes directory is not read, so its themes are not listed and cannot be used. It is turned on with FLARE_THEME_SAFE_MODE or --theme_safe_mode when the instance starts. Bundled themes and custom colors work as always.",
   "theme_safe_mode_selected": "The selected theme “{name}” is a theme of the themes directory, which is not read in safe mode, so the default colors are shown.",

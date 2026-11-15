@@ -158,6 +158,8 @@
   "theme_file_problem_template_slot_repeated": "模板未使用：程序的部件摆放了不止一次。",
   "theme_file_problem_template_link_count": "模板未使用：需要恰好一个指向该地址的链接。",
   "theme_file_problem_template_text_missing": "模板未使用：必须以文字显示的字段没有显示。",
+  "theme_file_problem_template_root": "模板未使用：输出的不是规定的那一个元素。",
+  "theme_file_problem_template_element_missing": "模板未使用：缺少必须输出的元素。",
   "theme_stylesheet_note": "带有自己的样式表。",
   "theme_safe_mode_notice": "安全模式已开启：不读取 themes 目录，其中的主题不会列出，也不能使用。它在启动实例时用 FLARE_THEME_SAFE_MODE 或 --theme_safe_mode 开启。内置主题和自定义配色照常可用。",
   "theme_safe_mode_selected": "当前选用的主题“{name}”是 themes 目录里的主题，安全模式下不读取这个目录，所以显示的是默认配色。",

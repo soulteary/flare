@@ -14,6 +14,10 @@ const navigationCacheBytes = 16 << 20
 const navigationCacheEntryBytes = 1 << 20
 const navigationCacheEntries = 64
 
+// fragmentCountUnknown stands for the number of entries of a fragment that
+// was not rendered for the request.
+const fragmentCountUnknown = -1
+
 // Keys retain numeric identities, not snapshots (which may contain large private
 // collections). Public views have independent identities from administrator views.
 type navigationFragmentKey struct {
@@ -88,6 +92,16 @@ func (cache *navigationHTMLCache) get(key navigationFragmentKey, build func() te
 }
 
 func navigationFragment(view data.NavigationView, options *model.Application, apps bool, filter, selected, path string, info *fn.DynamicURL) template.HTML {
+	markup, _ := navigationFragmentShown(view, options, apps, filter, selected, path, info)
+	return markup
+}
+
+// navigationFragmentShown is navigationFragment with the number of entries
+// the fragment shows. The number is known for a fragment that is rendered
+// for the request, as every fragment for a search is. For one that is taken
+// from the cache it is fragmentCountUnknown.
+func navigationFragmentShown(view data.NavigationView, options *model.Application, apps bool, filter, selected, path string, info *fn.DynamicURL) (template.HTML, int) {
+	shown := fragmentCountUnknown
 	build := func() template.HTML {
 		category := ""
 		if options.Homepage != nil && options.Homepage.CategoryNavigation == "tabs" {
@@ -96,9 +110,11 @@ func navigationFragment(view data.NavigationView, options *model.Application, ap
 		matches := view.Matches(filter, apps, category, func(raw string) string { return expandNavigationURL(raw, info) })
 		if apps {
 			value, _ := renderApplicationSelection(options, view.Item, matches, info)
+			shown = len(matches)
 			return value
 		}
-		value, _ := renderBookmarkSelection(filter, selected, path, options, view.Categories(), view.Item, matches, info)
+		value, count := renderBookmarkSelectionShown(filter, selected, path, options, view.Categories(), view.Item, matches, info)
+		shown = count
 		return value
 	}
 	// Arbitrary queries/categories/URL contexts do not create cache entries.
@@ -106,7 +122,10 @@ func navigationFragment(view data.NavigationView, options *model.Application, ap
 	// when the destination itself has no dynamic placeholder.
 	if filter != "" || selected != "" || options.EnableEncryptedLink || !view.RequestIndependent() ||
 		(path != "/" && path != "/applications" && path != "/bookmarks") {
-		return build()
+		// The number is set while the fragment is built, so it is read
+		// afterwards.
+		markup := build()
+		return markup, shown
 	}
 	theme, color, generation := define.ThemeRenderSnapshot()
 	key := navigationFragmentKey{version: view.Version(), themeGeneration: generation, revision: options.ConfigRevision, locale: options.Locale,
@@ -115,5 +134,7 @@ func navigationFragment(view data.NavigationView, options *model.Application, ap
 	if options.Homepage != nil {
 		key.categoryMode = options.Homepage.CategoryNavigation
 	}
-	return navigationFragments.get(key, build)
+	// Another request may have rendered what the cache returns, so the
+	// number is not known here even when this request rendered it.
+	return navigationFragments.get(key, build), fragmentCountUnknown
 }
