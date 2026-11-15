@@ -28,12 +28,17 @@ type Application struct {
 	ThemeMode               string           `yaml:"ThemeMode,omitempty"`
 	// ThemeSettings holds what the administrator has set for single themes,
 	// by the name of the theme.
-	ThemeSettings       map[string]ThemeSettings `yaml:"ThemeSettings,omitempty"`
-	ShowWeather         bool                     `yaml:"ShowWeather"`
-	WeatherLocation     *WeatherLocation         `yaml:"WeatherLocation,omitempty"`
-	Location            string                   `yaml:"Location"`
-	EnableEncryptedLink bool                     `yaml:"EnableEncryptedLink"`
-	IconMode            string                   `yaml:"IconMode"`
-	KeepLetterCase      bool                     `yaml:"KeepLetterCase"`
-	Locale              string                   `yaml:"Locale"`
+	ThemeSettings map[string]ThemeSettings `yaml:"ThemeSettings,omitempty"`
+	// ThemeTemplates allows themes to bring the markup of the navigation
+	// pages. A theme uses its templates once this is on and the templates
+	// of that theme are confirmed in its ThemeSettings. It is encoded when
+	// it is off, so that saving can turn it off again.
+	ThemeTemplates      bool             `yaml:"ThemeTemplates"`
+	ShowWeather         bool             `yaml:"ShowWeather"`
+	WeatherLocation     *WeatherLocation `yaml:"WeatherLocation,omitempty"`
+	Location            string           `yaml:"Location"`
+	EnableEncryptedLink bool             `yaml:"EnableEncryptedLink"`
+	IconMode            string           `yaml:"IconMode"`
+	KeepLetterCase      bool             `yaml:"KeepLetterCase"`
+	Locale              string           `yaml:"Locale"`
 }

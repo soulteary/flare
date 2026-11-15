@@ -41,8 +41,19 @@ const (
 	// for in the field optionsTheme.
 	actionSaveOptions  = "save-options"
 	actionResetOptions = "reset-options"
-	optionField        = "option-"
-	optionsTheme       = "theme-options-theme"
+	// actionSaveTemplates is submitted by the form that allows themes to
+	// use templates, with a box named templatesAllowed. actionConfirmTemplates
+	// and actionWithdrawTemplates are submitted by the form about the
+	// templates of the selected theme, which names the theme in the field
+	// templatesTheme and the templates it listed in the field templatesFiles.
+	actionSaveTemplates     = "save-templates"
+	actionConfirmTemplates  = "confirm-templates"
+	actionWithdrawTemplates = "withdraw-templates"
+	templatesAllowed        = "theme-templates-allowed"
+	templatesTheme          = "theme-templates-theme"
+	templatesFiles          = "theme-templates-files"
+	optionField             = "option-"
+	optionsTheme            = "theme-options-theme"
 )
 
 // exportPath is where a theme is handed out as a theme file, by its name.
@@ -85,6 +96,12 @@ func updateThemes(c fiber.Ctx) error {
 	}
 	if body.Action == actionSaveOptions || body.Action == actionResetOptions {
 		return updateThemeOptions(c, body.Action == actionResetOptions)
+	}
+	if body.Action == actionSaveTemplates {
+		return updateThemeTemplates(c, formvalue.Has(c, templatesAllowed))
+	}
+	if body.Action == actionConfirmTemplates || body.Action == actionWithdrawTemplates {
+		return confirmThemeTemplates(c, body.Action == actionConfirmTemplates)
 	}
 	if body.Action == actionSaveMode {
 		// The mode is one of three constants once it is accepted, so nothing
@@ -207,6 +224,56 @@ func updateThemeOptions(c fiber.Ctx, reset bool) error {
 		return err
 	}
 	return renderTheme(c, http.StatusOK, themeNotice{optionsSaved: true})
+}
+
+// updateThemeTemplates stores whether themes can use templates. An instance
+// that uses none, because it sends no Content-Security-Policy or runs in
+// safe mode, does not offer the setting and does not take it.
+func updateThemeTemplates(c fiber.Ctx, allowed bool) error {
+	if !define.ThemeTemplatesAvailable() {
+		return c.Status(http.StatusBadRequest).SendString("This instance uses no templates of themes")
+	}
+	if done, err := commitThemeChange(c, func() error { return data.SaveThemeTemplatesAllowed(allowed) }); done {
+		return err
+	}
+	return renderTheme(c, http.StatusOK, themeNotice{templatesSaved: true})
+}
+
+// confirmThemeTemplates stores that the administrator has confirmed the
+// templates of the selected theme, or withdraws that. A confirmation is
+// about the templates the page listed: when the theme has others by now,
+// nothing is stored and the page lists them again.
+func confirmThemeTemplates(c fiber.Ctx, confirmed bool) error {
+	// The themes directory is read first, so that the templates are those
+	// of the theme as it is now.
+	define.ReloadUserThemes()
+	name, _ := define.ThemeSnapshot()
+	// As with the options: a form that was shown while another theme was
+	// selected is not about the theme that is selected now.
+	if formvalue.Get(c, templatesTheme) != name {
+		return c.Status(http.StatusBadRequest).SendString("The form is not about the selected theme")
+	}
+	if confirmed {
+		files := define.ThemeTemplateFiles(name)
+		options, err := data.GetAllSettingsOptions()
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).SendString("config error")
+		}
+		if !define.ThemeTemplatesAvailable() || !options.ThemeTemplates || len(files) == 0 {
+			return c.Status(http.StatusBadRequest).SendString("The selected theme has no templates that can be used")
+		}
+		if formvalue.Get(c, templatesFiles) != strings.Join(files, ",") {
+			return renderTheme(c, http.StatusConflict, themeNotice{templatesNotice: "theme_templates_changed"})
+		}
+	}
+	if done, err := commitThemeChange(c, func() error { return data.SaveThemeTemplatesConfirmed(name, confirmed) }); done {
+		return err
+	}
+	notice := "theme_templates_withdraw_done"
+	if confirmed {
+		notice = "theme_templates_confirm_done"
+	}
+	return renderTheme(c, http.StatusOK, themeNotice{templatesNotice: notice})
 }
 
 // importTheme stores an uploaded theme file in the themes directory. The
@@ -446,6 +513,45 @@ type themeNotice struct {
 	leftOut []string
 	// optionsSaved reports stored values for the options of the theme.
 	optionsSaved bool
+	// templatesSaved reports a stored setting for the templates of themes,
+	// and templatesNotice is the key of what the form about the templates
+	// of the selected theme says.
+	templatesSaved  bool
+	templatesNotice string
+}
+
+// themeTemplatesSwitch is the form that allows themes to use templates.
+type themeTemplatesSwitch struct {
+	Action  string
+	Field   string
+	Allowed bool
+	Saved   bool
+	// Unavailable says why this instance uses no templates. The setting is
+	// not offered then.
+	Unavailable string
+}
+
+// themeTemplatesConfirm is the form about the templates of the selected
+// theme: it lists them, says what they can do, and confirms them or
+// withdraws the confirmation.
+type themeTemplatesConfirm struct {
+	Action     string
+	ThemeField string
+	Theme      string
+	FilesField string
+	// Files are the templates the form is about, as it submits them, and
+	// Listed is the sentence that names them.
+	Files     string
+	Listed    string
+	Title     string
+	Notice    string
+	Submit    string
+	Confirmed bool
+	// Preview is the address of the home page, which a form opens with the
+	// theme named in the field PreviewField to show the templates before
+	// they are confirmed.
+	Preview      string
+	PreviewField string
 }
 
 func pageTheme(c fiber.Ctx) error {
@@ -481,8 +587,43 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	m["Themes"] = themes
 	m["OptionTitle"] = options.Title
 	fileThemes, problems, notices := define.UserThemes()
-	m["ThemeFiles"] = themeFileCards(locale, fileThemes)
+	m["ThemeFiles"] = themeFileCards(locale, fileThemes, options)
+	if selected, _ := define.ThemeSnapshot(); selected != "" {
+		// A template that passed its check and did not compile for the
+		// settings of a page is listed with the other remarks.
+		problems = append(problems, define.ThemePageTemplateProblems(selected)...)
+	}
 	m["ThemeFileLines"] = themeFileLines(locale, problems, notices)
+	templates := themeTemplatesSwitch{Action: actionSaveTemplates, Field: templatesAllowed, Allowed: options.ThemeTemplates, Saved: notice.templatesSaved}
+	switch {
+	case define.AppFlags.ThemeSafeMode:
+		templates.Unavailable = i18n.T(locale, "theme_templates_unavailable_safe_mode")
+	case !define.ThemeTemplatesAvailable():
+		templates.Unavailable = i18n.T(locale, "theme_templates_unavailable_csp")
+	}
+	m["ThemeTemplates"] = templates
+	if selected, _ := define.ThemeSnapshot(); templates.Unavailable == "" && options.ThemeTemplates {
+		if files := define.ThemeTemplateFiles(selected); len(files) > 0 {
+			confirm := themeTemplatesConfirm{
+				Action: actionConfirmTemplates, ThemeField: templatesTheme, Theme: selected,
+				FilesField: templatesFiles, Files: strings.Join(files, ","),
+				Listed:    i18n.Format(locale, "theme_templates_confirm_files", map[string]any{"files": strings.Join(files, ", ")}),
+				Title:     i18n.Format(locale, "theme_templates_confirm_title", map[string]any{"name": define.ThemeTitle(selected, locale)}),
+				Submit:    i18n.T(locale, "theme_templates_confirm_submit"),
+				Confirmed: options.ThemeSettings[selected].Templates,
+			}
+			if !confirm.Confirmed {
+				confirm.Preview, confirm.PreviewField = define.RegularPages.Home.Path, "theme-preview"
+			}
+			if confirm.Confirmed {
+				confirm.Action, confirm.Submit = actionWithdrawTemplates, i18n.T(locale, "theme_templates_withdraw_submit")
+			}
+			if notice.templatesNotice != "" {
+				confirm.Notice = i18n.T(locale, notice.templatesNotice)
+			}
+			m["ThemeTemplatesConfirm"] = confirm
+		}
+	}
 	// The setting for light and dark is offered while it has an effect: on a
 	// theme with different values for the two.
 	mode, choice := define.ThemeModeState()
@@ -655,12 +796,12 @@ type themeFileCard struct {
 	// Based says which theme the theme is based on, and is empty for a
 	// theme that stands on its own.
 	Based string
-	// Templates names the page templates the theme brings and says that
-	// they are not applied.
+	// Templates names the page templates the theme brings and says whether
+	// they are used.
 	Templates string
 }
 
-func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
+func themeFileCards(locale string, themes []model.Theme, options model.Application) []themeFileCard {
 	cards := make([]themeFileCard, 0, len(themes))
 	// A theme of the directory is named as its card names it, and a bundled
 	// theme by its name.
@@ -698,7 +839,16 @@ func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
 			for _, template := range theme.Templates {
 				files = append(files, template.Name)
 			}
-			card.Templates = i18n.Format(locale, "theme_templates_note", map[string]any{"files": strings.Join(files, ", ")})
+			note := "theme_templates_note"
+			switch {
+			case !define.ThemeTemplatesAvailable():
+				note = "theme_templates_note_unavailable"
+			case options.ThemeTemplates && options.ThemeSettings[theme.Name].Templates:
+				note = "theme_templates_note_used"
+			case options.ThemeTemplates:
+				note = "theme_templates_note_unconfirmed"
+			}
+			card.Templates = i18n.Format(locale, note, map[string]any{"files": strings.Join(files, ", ")})
 		}
 		if specified := (*model.HomepageOptions)(nil).ThemeLayoutApplied(theme.Layout, nil); len(specified) > 0 {
 			card.Layout = i18n.Format(locale, "theme_layout_sets", map[string]any{"options": settings.LayoutOptionList(locale, specified)})

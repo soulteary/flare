@@ -1,6 +1,8 @@
 package define
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"io/fs"
 	"os"
@@ -56,7 +58,8 @@ func readThemeTemplates(root *os.Root, theme string) ([]model.ThemeTemplate, []T
 			problems = append(problems, ThemeProblem{File: shown + "/" + kind.File(), Reason: reason})
 			continue
 		}
-		templates = append(templates, model.ThemeTemplate{Name: kind.File(), Source: string(raw)})
+		digest := sha256.Sum256(raw)
+		templates = append(templates, model.ThemeTemplate{Name: kind.File(), Source: string(raw), Hash: hex.EncodeToString(digest[:16])})
 	}
 	return templates, problems
 }
@@ -84,11 +87,7 @@ func checkThemeTemplates(theme model.Theme, templates []model.ThemeTemplate) ([]
 		kind := themetemplate.PageKind(template.Name[:len(template.Name)-len(".html")])
 		values := themetemplate.PageValues{Lang: "en", Kind: kind, Modules: modules, Options: options}
 		if _, err := themetemplate.CompilePage(template.Source, kind, values, funcs); err != nil {
-			problem := ThemeProblem{File: theme.Name + "/" + model.ThemeTemplateDirectory + "/" + template.Name, Reason: ThemeProblemTemplate + string(themetemplate.ReasonExecute)}
-			var refused *themetemplate.Error
-			if errors.As(err, &refused) {
-				problem.Reason, problem.Subject = ThemeProblemTemplate+string(refused.Reason), refused.Subject
-			}
+			problem := themeTemplateProblem(theme.Name, template.Name, err)
 			problems = append(problems, problem)
 			continue
 		}

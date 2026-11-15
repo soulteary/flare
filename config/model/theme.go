@@ -111,10 +111,12 @@ type Theme struct {
 const ThemeTemplateDirectory = "templates"
 
 // ThemeTemplate is a template of a theme: the name of its file in the
-// templates of the theme, such as home.html, and its source.
+// templates of the theme, such as home.html, and its source. Hash stands for
+// the source where what is compiled from it is kept.
 type ThemeTemplate struct {
 	Name   string
 	Source string
+	Hash   string
 }
 
 // ThemeSource names a theme of the themes directory in the state it was read

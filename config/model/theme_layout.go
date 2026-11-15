@@ -57,6 +57,11 @@ type ThemeSettings struct {
 	// and the option can have the value; the option has its default
 	// otherwise.
 	Options map[string]string `yaml:"Options,omitempty"`
+	// Templates records that the administrator has confirmed the templates
+	// of the theme. They are used while it is set and the site allows
+	// themes to use templates. It is encoded when it is off, so that saving
+	// can withdraw the confirmation.
+	Templates bool `yaml:"Templates"`
 }
 
 // ThemeLayoutApplied lists the options of a theme's layout that take effect,
@@ -74,6 +79,33 @@ func (o *HomepageOptions) ThemeLayoutApplied(layout map[string]string, ignored [
 		}
 	}
 	return applied
+}
+
+// LayoutValues returns the options a theme can specify with the values they
+// have, written as a theme writes them. An option without a usable value
+// has its default.
+func (o *HomepageOptions) LayoutValues() map[string]string {
+	var options HomepageOptions
+	if o != nil {
+		options = *o
+	}
+	values := map[string]string{
+		LayoutMobileBookmarkLayout: options.MobileBookmarkLayout,
+		LayoutTitleSize:            options.TitleSize,
+		LayoutHideAppDescriptions:  "false",
+		LayoutCategoryNavigation:   options.CategoryNavigation,
+		LayoutBookmarkLayout:       options.BookmarkLayout,
+		LayoutDesktopColumns:       options.DesktopColumns,
+	}
+	if options.HideAppDescriptions {
+		values[LayoutHideAppDescriptions] = "true"
+	}
+	for option, value := range values {
+		if !IsThemeLayoutValue(option, value) {
+			values[option] = themeLayoutValues[option][0]
+		}
+	}
+	return values
 }
 
 // WithThemeLayout returns the layout in effect: the options of the site with

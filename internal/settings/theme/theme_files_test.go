@@ -139,7 +139,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 			{Name: "soft", Title: "soft", Colors: colors, Based: "基于 tron。"},
 		},
 	} {
-		got := themeFileCards(locale, themes)
+		got := themeFileCards(locale, themes, model.Application{})
 		if len(got) != len(want) {
 			t.Fatalf("%s: %d cards", locale, len(got))
 		}
@@ -149,7 +149,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 			}
 		}
 	}
-	if cards := themeFileCards("en", nil); len(cards) != 0 {
+	if cards := themeFileCards("en", nil, model.Application{}); len(cards) != 0 {
 		t.Fatalf("no theme files: %+v", cards)
 	}
 }
@@ -384,7 +384,7 @@ func TestThemeFileCardsShowBothSetsOfColors(t *testing.T) {
 		// The colors are the same in both modes; only another token differs.
 		{Name: "same-colors", Colors: base, Modes: map[string]map[string]string{model.ThemeModeDark: {"radius": "0"}}},
 	}
-	cards := themeFileCards("en", themes)
+	cards := themeFileCards("en", themes, model.Application{})
 	if len(cards) != len(themes) {
 		t.Fatalf("%d cards", len(cards))
 	}
