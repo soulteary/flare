@@ -39,6 +39,17 @@ func loadBundledThemes() ([]model.Theme, error) {
 	return themes, nil
 }
 
+// bundledThemeFile returns the file a bundled theme is defined by, for a
+// theme of the themes directory that is based on it.
+func bundledThemeFile(name string) (model.ThemeFile, bool) {
+	raw, err := bundledThemeFiles.ReadFile("bundled/" + name + ".yml")
+	if err != nil {
+		return model.ThemeFile{}, false
+	}
+	file, err := model.ParseThemeFile(raw)
+	return file, err == nil
+}
+
 // getDefaultThemePalettes returns the bundled themes. The files are compiled
 // into the binary and covered by tests, so a failure is a build defect.
 func getDefaultThemePalettes() []model.Theme {

@@ -392,8 +392,10 @@ func sortedKeys(parts map[string]yaml.Node) []string {
 // validateThemeOptions accepts options whose values can be offered on the
 // settings page, stored in config.yml and written into a page. The first
 // reason found is returned as a *ThemeFileError that names the part of the
-// file, and the order of the checks does not vary.
-func validateThemeOptions(options []ThemeOption) error {
+// file, and the order of the checks does not vary. The options of a file
+// that is not a whole theme yet can have a color option without a default:
+// it takes the color of a token of the theme the file is based on.
+func validateThemeOptions(options []ThemeOption, whole bool) error {
 	if len(options) > MaximumThemeOptions {
 		return themeFileError(ErrThemeOption, "options")
 	}
@@ -445,6 +447,9 @@ func validateThemeOptions(options []ThemeOption) error {
 			}
 		default:
 			return themeFileError(ErrThemeOption, path+".type")
+		}
+		if !whole && option.Kind == ThemeOptionColor && option.Default == "" {
+			continue
 		}
 		if !option.accepts(option.Default) {
 			return themeFileError(ErrThemeOption, path+".default")

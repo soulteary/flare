@@ -70,6 +70,14 @@ const (
 	ThemeProblemStyleCharacter = "style_character"
 	// ThemeProblemOption is an option of a theme that is not accepted.
 	ThemeProblemOption = "option"
+	// Reasons a theme that is based on another is not in use: an extends
+	// that is not the name of a theme, a theme below it that is not in use,
+	// a theme that is based on itself by way of the themes below it, and
+	// more themes below it than a theme can have.
+	ThemeProblemExtendsValue = "extends_value"
+	ThemeProblemExtends      = "extends"
+	ThemeProblemExtendsCycle = "extends_cycle"
+	ThemeProblemExtendsDepth = "extends_depth"
 	// Reasons the background of a theme is not accepted: one that is not
 	// written in the accepted form, and an image that is not among the
 	// images in the assets of the theme.
@@ -132,6 +140,18 @@ func statThemeFile(path string) themeFileStamp {
 type themeStamp struct {
 	file, manifest, stylesheet, assets themeFileStamp
 	files                              []themeAssetStamp
+	// bases holds the same state for the themes a theme is based on, one
+	// below another, as far as a reading of the themes directory followed
+	// them. It is set for the selected theme, whose pages take from all of
+	// them.
+	bases []themeBaseStamp
+}
+
+// themeBaseStamp is the state of the files of a theme another theme is based
+// on.
+type themeBaseStamp struct {
+	name  string
+	stamp themeStamp
 }
 
 // themeAssetStamp is the state of a file in the assets of a theme when a
@@ -201,6 +221,42 @@ type userThemeScan struct {
 	problems []ThemeProblem
 	notices  []ThemeNotice
 	watched  map[string][]themeAssetStamp
+	// files holds the theme file of each theme in use as a whole theme:
+	// what its file gives together with the themes it is based on.
+	files map[string]model.ThemeFile
+	// bases holds, for a theme that is based on another, the names of the
+	// themes below it as far as they could be followed, the nearest first,
+	// whether or not the theme is in use.
+	bases map[string][]string
+	// stamps holds the state of the files of each name the reading looked
+	// at, as it was before they were read, and listed the names the themes
+	// directory had entries for.
+	stamps map[string]themeStamp
+	listed map[string]bool
+	// candidates holds the theme files that were read and accepted as far
+	// as they go, by the names of their themes, and pending those names in
+	// the order they were read. A candidate is a theme in use once the
+	// themes it is based on are known to be.
+	candidates map[string]*themeCandidate
+	pending    []string
+}
+
+// themeCandidate is a theme file of the themes directory that was read and
+// accepted as far as it goes, with what its directory brings.
+type themeCandidate struct {
+	file model.ThemeFile
+	// shown is how the settings page names the theme file.
+	shown      string
+	directory  bool
+	stylesheet string
+	assets     []model.ThemeAsset
+	hash       string
+	// rejected is why the theme is not in use after all, found when the
+	// themes it is based on were followed. place is where that remark
+	// belongs among the remarks of the reading, which are in the order of
+	// the entries of the directory.
+	rejected *ThemeProblem
+	place    int
 }
 
 var (
@@ -278,7 +334,10 @@ func isThemeDirectory(root *os.Root, directory string) bool {
 // directory is not opened, so nothing in it can keep the instance from being
 // used: there are no themes of the directory and no remarks about it.
 func scanUserThemes() userThemeScan {
-	scan := userThemeScan{themes: map[string]model.Theme{}, watched: map[string][]themeAssetStamp{}}
+	scan := userThemeScan{
+		themes: map[string]model.Theme{}, watched: map[string][]themeAssetStamp{}, files: map[string]model.ThemeFile{},
+		bases: map[string][]string{}, stamps: map[string]themeStamp{}, listed: map[string]bool{}, candidates: map[string]*themeCandidate{},
+	}
 	if AppFlags.ThemeSafeMode {
 		return scan
 	}
@@ -297,8 +356,12 @@ func scanUserThemes() userThemeScan {
 	// the order the two are looked at in.
 	directories := map[string]bool{}
 	for _, entry := range entries {
-		if themeEntryKind(entry) == themeEntryDirectory {
+		switch themeEntryKind(entry) {
+		case themeEntryDirectory:
 			directories[entry.Name()] = true
+			scan.listed[entry.Name()] = true
+		case themeEntryFile:
+			scan.listed[strings.TrimSuffix(entry.Name(), userThemeExtension)] = true
 		}
 	}
 	examined := 0
@@ -321,12 +384,14 @@ func scanUserThemes() userThemeScan {
 		case themeEntryLink:
 			scan.report(file, ThemeProblemLink)
 		case themeEntryDirectory:
+			scan.noteState(file)
 			scan.readThemeDirectory(root, file)
 		default:
 			name := strings.TrimSuffix(file, userThemeExtension)
 			if !scan.acceptName(name, file) {
 				continue
 			}
+			scan.noteState(name)
 			if directories[name] && isThemeDirectory(root, name) {
 				scan.report(file, ThemeProblemDuplicate)
 				continue
@@ -334,7 +399,18 @@ func scanUserThemes() userThemeScan {
 			scan.readTheme(root, name, file, file, false)
 		}
 	}
+	scan.resolveThemes()
 	return scan
+}
+
+// noteState notes the state of the files a theme name is read from, before
+// they are read. A change made from then on differs from it, and is seen by
+// the next page that depends on the theme. Both forms of a name are noted
+// when the first of the two is come to.
+func (scan *userThemeScan) noteState(name string) {
+	if _, noted := scan.stamps[name]; !noted && isUserThemeName(name) {
+		scan.stamps[name] = statTheme(name)
+	}
 }
 
 // report notes a file of the themes directory that is not in use.
@@ -378,10 +454,12 @@ func (scan *userThemeScan) readThemeDirectory(root *os.Root, directory string) {
 	}
 }
 
-// readTheme reads the theme file of a name and takes the theme into use, or
-// notes why it does not. file is the path of the theme file in the themes
-// directory, shown is how the settings page names it, and directory reports
-// the theme.yml of a directory.
+// readTheme reads the theme file of a name with what its directory brings,
+// and notes why the theme is not in use where one of them is not accepted.
+// What is accepted is a candidate: it is a theme in use once the themes it is
+// based on are followed, by resolveThemes. file is the path of the theme file
+// in the themes directory, shown is how the settings page names it, and
+// directory reports the theme.yml of a directory.
 func (scan *userThemeScan) readTheme(root *os.Root, name, file, shown string, directory bool) {
 	theme, unused, problem := readUserTheme(root, file)
 	if !unused.Empty() {
@@ -392,8 +470,13 @@ func (scan *userThemeScan) readTheme(root *os.Root, name, file, shown string, di
 		scan.problems = append(scan.problems, *problem)
 		return
 	}
-	definition := theme.Theme(name)
-	definition.Directory = directory
+	candidate := &themeCandidate{file: theme, shown: shown, directory: directory}
+	// The image a theme file names is one of the assets beside it. Whether
+	// that is the name of an image was settled when the file was read.
+	image := ""
+	if theme.Background != nil {
+		image, _ = theme.Background.Asset()
+	}
 	if directory {
 		// A theme is used as a whole: with a file of its assets or a
 		// stylesheet that is not accepted it is not applied without them.
@@ -404,8 +487,8 @@ func (scan *userThemeScan) readTheme(root *os.Root, name, file, shown string, di
 			scan.problems = append(scan.problems, *rejected)
 			return
 		}
-		if !hasThemeBackground(definition, assets) {
-			scan.problems = append(scan.problems, themeBackgroundProblem(definition, shown))
+		if !hasThemeBackground(image, assets) {
+			scan.problems = append(scan.problems, themeBackgroundProblem(image, shown))
 			return
 		}
 		stylesheet, rejected := readThemeStylesheet(root, name, assets)
@@ -414,28 +497,181 @@ func (scan *userThemeScan) readTheme(root *os.Root, name, file, shown string, di
 			scan.problems = append(scan.problems, *rejected)
 			return
 		}
-		definition.Stylesheet, definition.Assets = stylesheet, assets
+		candidate.stylesheet, candidate.assets = stylesheet, assets
 		if stylesheet != "" || len(assets) > 0 {
-			definition.Hash = themeFilesHash(stylesheet, assets)
+			candidate.hash = themeFilesHash(stylesheet, assets)
 		}
-	} else if !hasThemeBackground(definition, nil) {
+	} else if !hasThemeBackground(image, nil) {
 		// A theme that is a single file has no assets to take an image from.
-		scan.problems = append(scan.problems, themeBackgroundProblem(definition, shown))
+		scan.problems = append(scan.problems, themeBackgroundProblem(image, shown))
 		return
 	}
-	scan.themes[name] = definition
-	scan.order = append(scan.order, name)
+	candidate.place = len(scan.problems)
+	scan.candidates[name] = candidate
+	scan.pending = append(scan.pending, name)
 }
 
-// hasThemeBackground reports whether the background image a theme names is
-// among its assets. A theme that names none has what it needs. That the name
-// is that of an image was settled when the theme file was read.
-func hasThemeBackground(theme model.Theme, assets []model.ThemeAsset) bool {
-	if theme.BackgroundImage == "" {
+// resolveThemes takes the candidates into use. A theme that stands on its
+// own is in use as it was read. A theme that is based on another is read on
+// that theme, which has to be in use itself, and the two together are checked
+// as one theme. A theme that is not in use after all is noted among the
+// remarks where its file was come to, so the remarks stay in the order of the
+// directory.
+func (scan *userThemeScan) resolveThemes() {
+	settled := make(map[string]bool, len(scan.pending))
+	var resolve func(name string) bool
+	resolve = func(name string) bool {
+		candidate := scan.candidates[name]
+		if candidate == nil {
+			// Not a theme of the directory that was accepted: a bundled
+			// theme can be what a theme is based on, and nothing else.
+			return isBundledTheme(name)
+		}
+		if inUse, known := settled[name]; known {
+			return inUse
+		}
+		file := candidate.file
+		if base := file.Extends; base != "" {
+			below, reason := scan.followBases(name)
+			scan.bases[name] = below
+			// The themes below are followed first, so this one is only
+			// looked into where they end, within the number a theme can
+			// have, and do not lead back.
+			if reason == "" && !resolve(base) {
+				reason = ThemeProblemExtends
+			}
+			if reason != "" {
+				subject := base
+				if reason != ThemeProblemExtends {
+					subject = strings.Join(below, " → ")
+				}
+				candidate.rejected = &ThemeProblem{File: candidate.shown, Reason: reason, Subject: subject}
+				settled[name] = false
+				return false
+			}
+			whole, err := file.On(scan.wholeFile(base))
+			if err != nil {
+				rejected := ThemeFileProblem(err)
+				rejected.File = candidate.shown
+				candidate.rejected = &rejected
+				settled[name] = false
+				return false
+			}
+			file = whole
+		}
+		definition := file.Theme(name)
+		definition.Directory = candidate.directory
+		definition.Stylesheet, definition.Assets, definition.Hash = candidate.stylesheet, candidate.assets, candidate.hash
+		if base, known := scan.themes[file.Extends]; known {
+			// A page loads the stylesheets of the themes below before the
+			// one of the theme, and an image the theme does not replace is
+			// still among the assets of the theme that brings it.
+			definition.Inherited = slices.Clone(base.Inherited)
+			if base.Stylesheet != "" {
+				definition.Inherited = append(definition.Inherited, model.ThemeSource{Name: base.Name, Hash: base.Hash})
+			}
+			if candidate.file.Background == nil && base.BackgroundImage != "" {
+				definition.BackgroundSource = base.BackgroundSource
+				if definition.BackgroundSource.Name == "" {
+					definition.BackgroundSource = model.ThemeSource{Name: base.Name, Hash: base.Hash}
+				}
+			}
+		}
+		scan.themes[name], scan.files[name] = definition, file
+		settled[name] = true
+		return true
+	}
+	var remarks []ThemeProblem
+	noted := 0
+	for _, name := range scan.pending {
+		if resolve(name) {
+			scan.order = append(scan.order, name)
+			continue
+		}
+		candidate := scan.candidates[name]
+		remarks = append(remarks, scan.problems[noted:candidate.place]...)
+		remarks = append(remarks, *candidate.rejected)
+		noted = candidate.place
+	}
+	if remarks != nil {
+		scan.problems = append(remarks, scan.problems[noted:]...)
+	}
+}
+
+// followBases returns the names of the themes below a theme, the nearest
+// first, as far as the theme files that were accepted lead, and why the
+// theme cannot be in use where they do not end as they have to: a theme that
+// comes again, which is the theme itself where it is based on itself, and
+// more themes than a theme can have below it. Whether the last name is a
+// theme at all is for the caller to see. The names are returned in every
+// case: a page of the theme depends on the files of each of them.
+func (scan *userThemeScan) followBases(name string) ([]string, string) {
+	var below []string
+	seen := map[string]bool{name: true}
+	for current := scan.candidates[name]; current != nil && current.file.Extends != ""; {
+		base := current.file.Extends
+		below = append(below, base)
+		switch {
+		case base == name:
+			return below, ThemeProblemExtendsCycle
+		case seen[base]:
+			// The themes below are based on one another in a circle this
+			// theme is not part of. None of them is in use.
+			return below, ThemeProblemExtends
+		}
+		seen[base] = true
+		current = scan.candidates[base]
+	}
+	if len(below) > model.MaximumThemeBases {
+		return below, ThemeProblemExtendsDepth
+	}
+	return below, ""
+}
+
+// wholeFile returns the theme file of a theme in use as a whole theme: that
+// of a theme of the directory with the themes it is based on, or the file a
+// bundled theme is defined by.
+func (scan *userThemeScan) wholeFile(name string) model.ThemeFile {
+	if file, known := scan.files[name]; known {
+		return file
+	}
+	file, _ := bundledThemeFile(name)
+	return file
+}
+
+// baseStamps returns the state of the files of the themes below a theme, as
+// this reading found them: the state noted before a theme was read, with the
+// files of its assets. A name the directory had no entry for has the state of
+// missing files, so the theme is read again once the entry is there. A name
+// with an entry the reading did not come to, in a directory with more entries
+// than are looked at, has the state it is in now: nothing of it was read that
+// a change could differ from.
+func (scan *userThemeScan) baseStamps(name string) []themeBaseStamp {
+	var stamps []themeBaseStamp
+	seen := map[string]bool{name: true}
+	for _, base := range scan.bases[name] {
+		if seen[base] || !isUserThemeName(base) {
+			continue
+		}
+		seen[base] = true
+		stamp, noted := scan.stamps[base]
+		if !noted && scan.listed[base] {
+			stamp = statTheme(base)
+		}
+		stamp.files = scan.watched[base]
+		stamps = append(stamps, themeBaseStamp{name: base, stamp: stamp})
+	}
+	return stamps
+}
+
+// hasThemeBackground reports whether the background image a theme file names
+// is among the assets beside it. A file that names none has what it needs.
+func hasThemeBackground(image string, assets []model.ThemeAsset) bool {
+	if image == "" {
 		return true
 	}
 	for _, asset := range assets {
-		if asset.Name == theme.BackgroundImage {
+		if asset.Name == image {
 			return true
 		}
 	}
@@ -444,8 +680,8 @@ func hasThemeBackground(theme model.Theme, assets []model.ThemeAsset) bool {
 
 // themeBackgroundProblem describes a theme whose background image is not
 // among its assets, for the theme file that names the image.
-func themeBackgroundProblem(theme model.Theme, file string) ThemeProblem {
-	return ThemeProblem{File: file, Reason: ThemeProblemBackgroundAsset, Subject: model.ThemeAssetDirectory + "/" + theme.BackgroundImage}
+func themeBackgroundProblem(image, file string) ThemeProblem {
+	return ThemeProblem{File: file, Reason: ThemeProblemBackgroundAsset, Subject: model.ThemeAssetDirectory + "/" + image}
 }
 
 // themeFilesHash names the stylesheet and the assets of a theme, in the state
@@ -703,6 +939,14 @@ func themeProblemReason(err error) string {
 		return ThemeProblemRequiresValue
 	case errors.Is(err, model.ErrThemeOption):
 		return ThemeProblemOption
+	case errors.Is(err, model.ErrThemeExtends):
+		return ThemeProblemExtendsValue
+	case errors.Is(err, model.ErrThemeBase):
+		return ThemeProblemExtends
+	case errors.Is(err, model.ErrThemeBaseCycle):
+		return ThemeProblemExtendsCycle
+	case errors.Is(err, model.ErrThemeBaseDepth):
+		return ThemeProblemExtendsDepth
 	case errors.Is(err, model.ErrThemeBackground):
 		return ThemeProblemBackground
 	case errors.Is(err, model.ErrThemeBackgroundAsset):
@@ -758,7 +1002,7 @@ func reloadUserThemes() {
 		applyTheme(ThemeCurrent)
 	}
 	if ThemeCurrent == selected {
-		stamp.files = scan.watched[selected]
+		stamp.files, stamp.bases = scan.watched[selected], scan.baseStamps(selected)
 		selectedThemeStamp = stamp
 	}
 }
@@ -769,7 +1013,9 @@ func reloadUserThemes() {
 // apps.yml and bookmarks.yml costs one each. A theme that is a directory
 // costs one more for its stylesheet, one for the directory of its assets and
 // one for each file of them, of which there are at most as many as a theme
-// can bring. A bundled theme and the custom colors cost nothing.
+// can bring. A theme that is based on others costs the same again for each
+// of the directory below it. A bundled theme and the custom colors cost
+// nothing.
 func refreshSelectedTheme() {
 	if selectedThemeFileCurrent() {
 		return
@@ -794,5 +1040,14 @@ func selectedThemeFileCurrent() bool {
 		return true
 	}
 	clock := time.Now()
-	return stamp.current(statTheme(selected), clock) && stamp.assetsCurrent(selected, clock)
+	if !stamp.current(statTheme(selected), clock) || !stamp.assetsCurrent(selected, clock) {
+		return false
+	}
+	// A page of the theme takes from every theme below it.
+	for _, base := range stamp.bases {
+		if !base.stamp.current(statTheme(base.name), clock) || !base.stamp.assetsCurrent(base.name, clock) {
+			return false
+		}
+	}
+	return true
 }

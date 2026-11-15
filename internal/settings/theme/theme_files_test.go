@@ -110,6 +110,10 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 		{Name: "zelda", Colors: colors, Directory: true},
 		{Name: "styled", Colors: colors, Directory: true, Stylesheet: "a { color: red }", Hash: "0123456789abcdef"},
 		{Name: "optioned", Colors: colors, Options: []model.ThemeOption{{ID: "frames", Kind: model.ThemeOptionBoolean}}},
+		// A theme that is based on a theme of the directory names it as the
+		// card of that theme does, and a bundled theme by its name.
+		{Name: "compact", Colors: colors, Extends: "forest", Inherited: []model.ThemeSource{{Name: "styled", Hash: "0123456789abcdef"}}},
+		{Name: "soft", Colors: colors, Extends: "tron", Directory: true},
 	}
 	for locale, want := range map[string][]themeFileCard{
 		"en": {
@@ -120,6 +124,8 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 			{Name: "zelda", Title: "zelda", Colors: colors, Directory: true},
 			{Name: "styled", Title: "styled", Colors: colors, Directory: true, Stylesheet: true},
 			{Name: "optioned", Title: "optioned", Colors: colors, Options: true},
+			{Name: "compact", Title: "compact", Colors: colors, Based: "Based on Forest at dusk."},
+			{Name: "soft", Title: "soft", Colors: colors, Directory: true, Based: "Based on tron."},
 		},
 		"zh": {
 			{Name: "forest", Title: "暮色森林", About: "1.2 · Example Author · MIT", Colors: colors},
@@ -129,6 +135,8 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 			{Name: "zelda", Title: "zelda", Colors: colors, Directory: true},
 			{Name: "styled", Title: "styled", Colors: colors, Directory: true, Stylesheet: true},
 			{Name: "optioned", Title: "optioned", Colors: colors, Options: true},
+			{Name: "compact", Title: "compact", Colors: colors, Based: "基于 暮色森林。"},
+			{Name: "soft", Title: "soft", Colors: colors, Directory: true, Based: "基于 tron。"},
 		},
 	} {
 		got := themeFileCards(locale, themes)
@@ -201,6 +209,7 @@ func TestThemeFileLinesExplainEveryReason(t *testing.T) {
 		define.ThemeProblemAssetName, define.ThemeProblemAssetSize, define.ThemeProblemAssetContent, define.ThemeProblemAssetLimit,
 		define.ThemeProblemRequires, define.ThemeProblemRequiresValue,
 		define.ThemeProblemBackground, define.ThemeProblemBackgroundAsset, define.ThemeProblemOption,
+		define.ThemeProblemExtendsValue, define.ThemeProblemExtends, define.ThemeProblemExtendsCycle, define.ThemeProblemExtendsDepth,
 		define.ThemeProblemSize, define.ThemeProblemLimit, define.ThemeProblemRead, define.ThemeProblemSyntax,
 		define.ThemeProblemContract, define.ThemeProblemValue, define.ThemeProblemColor, define.ThemeProblemContrast,
 		define.ThemeProblemText,

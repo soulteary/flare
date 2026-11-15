@@ -98,11 +98,12 @@ tokens:
 | Key | Required | Value |
 | --- | --- | --- |
 | `contract` | Yes | `1`, the version of this format |
-| `tokens` | Yes | The style tokens the theme sets; `background`, `primary` and `accent` are required |
+| `tokens` | Yes | The style tokens the theme sets; `background`, `primary` and `accent` are required. A theme [based on another](#a-theme-based-on-another) gives only the tokens it changes, or none |
 | `modes` | No | Other token values for light and for dark; see [light and dark](#light-and-dark) |
 | `layout` | No | Layout options the theme specifies; see [layout](#layout) |
 | `background` | No | An image behind the navigation pages, for a theme that is a directory; see [background image](#background-image) |
 | `options` | No | Settings of the theme that the administrator chooses values for; see [options](#options) |
+| `extends` | No | The name of the theme this one is based on; see [a theme based on another](#a-theme-based-on-another) |
 | `name` | No | The name to show, up to 48 characters; without it the name of the file is shown |
 | `version`, `author`, `license` | No | Up to 64 characters each; shown with the theme on the settings page, without any other effect |
 | `requires` | No | The first release of Flare the theme works with, as three numbers such as `0.7.0`; see [files written for another release](#files-written-for-another-release) |
@@ -383,6 +384,53 @@ ThemeSettings:
   nothing and is not an error.
 - A [preview](#preview) shows a theme with the values stored for it.
 
+### A theme based on another
+
+A theme can be based on another theme and give only what it changes:
+
+```yaml
+contract: 1
+name: Zelda at night
+extends: zelda
+tokens:
+  accent: "#00ff88"
+  radius: 2px
+```
+
+`extends` names the other theme: a theme of the themes directory, as a file
+or as a directory, or a bundled theme such as `tron`. The file is read as if
+what that theme gives were written first:
+
+| Part | What the theme has |
+| --- | --- |
+| `tokens` | The tokens of the theme below, with those of the file in their place. No token is required |
+| `modes` | The same for the values of `light` and for those of `dark`, each by itself |
+| `layout` | The layout options of the theme below, with those of the file in their place |
+| `options` | The options of the theme below, then those of the file. An option of the file with the `id` of one below stands in the place of that one. Together they are the up to 8 options of a theme |
+| `background` | The image of the theme below, served from the assets of that theme, unless the file has a `background` of its own with an image among its own assets |
+| `theme.css` | The pages load the stylesheet of the theme below before the one of the theme; see [theme stylesheets](theme-stylesheets.md#a-theme-based-on-another) |
+| `name`, `version`, `author`, `license`, `requires` | Those of the file alone |
+
+- A theme that is a single file can be based on a directory, and the other
+  way round.
+- The result is checked as one theme. What holds only for the two together is
+  reported for the file: a `primary` color that is too close to the
+  `background` of the theme below is a contrast below 3:1.
+- A value the theme below gives for one mode still holds in that mode. A file
+  that sets `accent` under `tokens`, above a theme with an `accent` under
+  `modes.light`, has the accent of that theme in light mode. It writes
+  `modes.light.accent` as well where it wants its own in both.
+- The values chosen for [options](#options) are stored for each theme by its
+  name. A theme does not take the values chosen for the theme below it.
+- A file cannot take away what the theme below gives: a token, a layout
+  option, an option or the image.
+- The theme below can be based on a theme itself. A theme can have up to
+  three themes below it, one based on another.
+- A theme is used as a whole. It is not in use while a theme below it is not
+  in use, and the theme page names that theme. Themes that are based on each
+  other in a circle are not in use.
+- The card of a theme says which theme it is based on.
+
 ### Names in several languages
 
 `name` can give one text for each interface language instead of a single text:
@@ -529,6 +577,10 @@ copied as a directory.
   as it was uploaded, with its comments and with parts for later releases.
 - A file with a [background image](#background-image) is refused: what is
   imported is a theme of one file, and the image would not be there.
+- A file that is [based on another theme](#a-theme-based-on-another) is
+  imported if it is a theme in use once it is there: the theme it names is in
+  use, and the two are a theme together. Otherwise it is refused with the
+  reason.
 - A theme file of the same name is replaced only with **Replace a theme file
   of the same name** ticked. Something else of that name in the directory, a
   folder or a link, is never replaced.
@@ -553,8 +605,12 @@ the next page load, without a restart. Both places a theme of the selected
 name can be read from are compared, `<name>.yml` and `<name>/theme.yml`, so a
 theme that is turned from a file into a directory, or back, is followed as
 well. For a theme that is a directory its `theme.css`, its `assets` directory
-and each image and font in it are compared too. While a bundled theme or the
-custom colors are selected, no theme file is looked at for a page.
+and each image and font in it are compared too. For a theme that is
+[based on another](#a-theme-based-on-another), the files of every theme below
+it are compared in the same way: an edit of one of them shows on the next
+page load, and a theme below that is removed leaves the pages without the
+theme until it is back. While a bundled theme or the custom colors are
+selected, no theme file is looked at for a page.
 
 The theme page reads the directory every time it is shown, so files that were
 added, corrected or removed are listed as they are.
@@ -601,6 +657,10 @@ file, as `zelda/assets/paper.png`; those reasons are described with
 | The theme needs a later release | `requires` names a release after this one; shown with that release |
 | Release under `requires` not accepted | `requires` is not three numbers; shown with what is written |
 | An option not accepted | An option, a value of one or a default is not written as described under [options](#options); shown with the part, for example `options.density.choices` or `options[2].id` |
+| Theme under `extends` not accepted | `extends` is not written as the name of a theme; shown with what is written |
+| The theme it is based on is not in use | The theme `extends` names is not there, is not in use itself, or is the custom colors; shown with its name |
+| Based on itself | The themes below lead back to the theme; shown with them, for example `night → zelda` |
+| More than three themes below | Shown with the themes below, for example `d → c → b → a` |
 | Background not accepted | `background.image` is not `assets/` and the name of an image, or `background.dim` is not a whole number from 0 to 100; shown with the key |
 | Background image not among the images in the assets | The file is not there, or the theme is a single file; shown with the image, for example `assets/wallpaper.jpg` |
 
@@ -649,6 +709,10 @@ and the image, and checks the pages after each step.
 chooses values for the options of a theme on the theme page, checks what they
 change on the pages, puts the defaults back, and edits the values in
 `config.yml`.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/extends.browser.cjs`
+selects themes that are based on a theme with a stylesheet, an image and an
+option, checks what their pages take from that theme, edits and removes it,
+and checks the pages after each step.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/safe-mode.browser.cjs`
 selects a theme whose stylesheet hides parts of the home page, opens the page
 in safe mode and goes back to the settings from its notice, and starts an

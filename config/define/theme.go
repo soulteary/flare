@@ -68,6 +68,10 @@ var _CACHE_PAGE_THEME_RULES template.CSS
 // The address of the stylesheet the selected theme brings, or nothing.
 var _CACHE_PAGE_THEME_STYLESHEET string
 
+// The addresses of the stylesheets of the themes the selected theme is based
+// on, in the order a page loads them, or nothing.
+var _CACHE_PAGE_THEME_INHERITED []string
+
 // The rule for the background image of the selected theme, or nothing.
 var _CACHE_PAGE_THEME_BACKGROUND template.CSS
 
@@ -91,6 +95,9 @@ const (
 // the two and the site leaves the choice to the device. The one that is not
 // used is empty. Stylesheet is the address of the stylesheet the theme
 // brings, for the pages that take one, and empty for a theme without one.
+// Inherited holds the addresses of the stylesheets of the themes it is based
+// on, for the same pages, which load them before that of the theme: the one
+// of the theme that stands on its own first.
 // Background is a rule for a style element that lays the background image of
 // the theme behind those same pages, and empty for a theme without one.
 // Attributes are the values of the options of the theme as attributes of the
@@ -100,6 +107,7 @@ type PageTheme struct {
 	BodyStyle  template.CSS
 	Rules      template.CSS
 	Stylesheet string
+	Inherited  []string
 	Background template.CSS
 	Attributes template.HTMLAttr
 }
@@ -168,7 +176,8 @@ func ThemeOptions(name string) ([]model.ThemeOption, map[string]string, bool) {
 func selectedPageTheme() PageTheme {
 	return PageTheme{
 		BodyStyle: _CACHE_PAGE_BODY_THEME_NAME, Rules: _CACHE_PAGE_THEME_RULES,
-		Stylesheet: _CACHE_PAGE_THEME_STYLESHEET, Background: _CACHE_PAGE_THEME_BACKGROUND,
+		Stylesheet: _CACHE_PAGE_THEME_STYLESHEET, Inherited: slices.Clone(_CACHE_PAGE_THEME_INHERITED),
+		Background: _CACHE_PAGE_THEME_BACKGROUND,
 	}
 }
 
@@ -267,6 +276,18 @@ func themeStylesheetAddress(theme model.Theme) string {
 	return themeStylesheetBase + theme.Name + "/" + theme.Hash + "/" + userThemeStylesheet
 }
 
+// themeInheritedAddresses returns the addresses of the stylesheets of the
+// themes a theme is based on, in the order a page loads them. Each is the
+// address that theme is served at by itself, so the assets its stylesheet
+// refers to are its own.
+func themeInheritedAddresses(theme model.Theme) []string {
+	var addresses []string
+	for _, source := range theme.Inherited {
+		addresses = append(addresses, themeStylesheetBase+source.Name+"/"+source.Hash+"/"+userThemeStylesheet)
+	}
+	return addresses
+}
+
 // ThemeTitle returns the name a theme file gives itself in an interface
 // language, and the name of the theme where the file gives none or the theme
 // is not a file.
@@ -299,7 +320,7 @@ func GetPageThemeFor(name string) (PageTheme, bool) {
 func pageThemeOf(theme model.Theme, mode string) PageTheme {
 	shown, dark, deviceChooses := themeInMode(theme, mode)
 	// #nosec G203 -- the rule holds the name of a theme of the directory, a hash, the name of an asset and a number, each of a form that is safe to write into a stylesheet; the attributes hold identifiers of a theme file that ThemeFile.Validate accepted.
-	page := PageTheme{Stylesheet: themeStylesheetAddress(theme), Background: template.CSS(themeBackgroundRule(theme)), Attributes: template.HTMLAttr(themeAttributes(theme))}
+	page := PageTheme{Stylesheet: themeStylesheetAddress(theme), Inherited: themeInheritedAddresses(theme), Background: template.CSS(themeBackgroundRule(theme)), Attributes: template.HTMLAttr(themeAttributes(theme))}
 	if deviceChooses {
 		// #nosec G203 -- CSS values come from theme files accepted by ThemeFile.Validate.
 		page.Rules = template.CSS(themeRules(shown, dark))
@@ -535,10 +556,12 @@ func applyTheme(theme string) {
 	CACHE_APP_CURRENT_THEME_PRIMARY_COLOR = ThemePrimaryColor
 	_CACHE_PAGE_BODY_THEME_NAME, _CACHE_PAGE_THEME_RULES = emptyPageBodyStyle, emptyPageBodyStyle
 	_CACHE_PAGE_THEME_STYLESHEET, _CACHE_PAGE_THEME_BACKGROUND = "", emptyPageBodyStyle
+	_CACHE_PAGE_THEME_INHERITED = nil
 	if definition, known := themeDefinition(theme); known {
 		page := pageThemeOf(definition, themeMode)
 		_CACHE_PAGE_BODY_THEME_NAME, _CACHE_PAGE_THEME_RULES = page.BodyStyle, page.Rules
 		_CACHE_PAGE_THEME_STYLESHEET, _CACHE_PAGE_THEME_BACKGROUND = page.Stylesheet, page.Background
+		_CACHE_PAGE_THEME_INHERITED = page.Inherited
 	}
 }
 
@@ -549,11 +572,17 @@ func applyTheme(theme string) {
 // of that strength; the color is taken from the token, so it is the one of
 // the mode the page is shown in. The rule follows the stylesheet of the
 // theme, as the tokens of the theme file do: what the theme file says holds.
+// An image the theme takes from a theme it is based on is served among the
+// assets of that theme.
 func themeBackgroundRule(theme model.Theme) string {
 	if theme.BackgroundImage == "" {
 		return ""
 	}
-	layers := `url(` + themeStylesheetBase + theme.Name + "/" + theme.Hash + "/" + model.ThemeAssetDirectory + "/" + theme.BackgroundImage + `)`
+	source := model.ThemeSource{Name: theme.Name, Hash: theme.Hash}
+	if theme.BackgroundSource.Name != "" {
+		source = theme.BackgroundSource
+	}
+	layers := `url(` + themeStylesheetBase + source.Name + "/" + source.Hash + "/" + model.ThemeAssetDirectory + "/" + theme.BackgroundImage + `)`
 	if theme.BackgroundDim > 0 {
 		veil := `color-mix(in srgb,var(--flare-background) ` + strconv.Itoa(theme.BackgroundDim) + `%,transparent)`
 		layers = `linear-gradient(` + veil + `,` + veil + `),` + layers
@@ -603,7 +632,7 @@ func UpdatePagePalettes() {
 	theme, custom, mode := options.Theme, options.ThemeCustom, options.ThemeMode
 	stamp := statTheme(theme)
 	scan := scanUserThemes()
-	stamp.files = scan.watched[theme]
+	stamp.files, stamp.bases = scan.watched[theme], scan.baseStamps(theme)
 	themeMu.Lock()
 	defer themeMu.Unlock()
 	userThemeState = scan
