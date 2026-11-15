@@ -58,6 +58,9 @@ const (
 	homeSkeleton = "home/skeleton"
 	// homeBody is the key under which the page gets the mark.
 	homeBody = "PageBody"
+	// homeTitle is the key of the title of the site, the one field a page
+	// template of a theme shows.
+	homeTitle = "OptionTitle"
 )
 
 // prepareHome compiles the skeleton of home.html. It runs before any template
@@ -94,7 +97,14 @@ type parts struct {
 	err error
 }
 
-func (p *parts) Text(string) string                { return "" }
+// Text is the title of the site, which is all a page template can show.
+func (p *parts) Text(string) string {
+	if title, set := p.data[homeTitle].(string); set {
+		return title
+	}
+	return ""
+}
+
 func (p *parts) Address() string                   { return "" }
 func (p *parts) LinkAttributes() template.HTMLAttr { return "" }
 func (p *parts) Slot(string) template.HTML         { return "" }
@@ -111,8 +121,14 @@ var errHomeMark = errors.New("the page does not hold the place of its skeleton")
 
 // render writes the page: the page around the skeleton is rendered with a
 // mark in its place, and the skeleton is written where the mark stands, each
-// part rendered by itself into its hole.
+// part rendered by itself into its hole. Where a theme brings the template
+// of the page, its skeleton stands in place of the one of home.html; the
+// parts are rendered the same way, and the page around them is the same.
 func (h *homePage) render(buf *bytes.Buffer, templates *template.Template, data map[string]any) error {
+	skeleton := h.skeleton
+	if custom, given := data[themetemplate.PageData].(*themetemplate.Fragment); given && custom != nil {
+		skeleton = custom
+	}
 	around := getTemplateBuffer()
 	defer releaseTemplateBuffer(around)
 	data[homeBody] = h.mark
@@ -127,7 +143,7 @@ func (h *homePage) render(buf *bytes.Buffer, templates *template.Template, data 
 	}
 	buf.Write(around.Bytes()[:at])
 	filled := parts{templates: templates, data: data}
-	h.skeleton.Render(buf, &filled)
+	skeleton.Render(buf, &filled)
 	if filled.err != nil {
 		return filled.err
 	}

@@ -19,6 +19,11 @@ var PageKinds = []PageKind{PageHome, PageApplications, PageBookmarks}
 // File is the name of the template of a page in the templates of a theme.
 func (kind PageKind) File() string { return string(kind) + ".html" }
 
+// PageData is the key under which a page hands the compiled template of its
+// theme to the renderer, as a *Fragment. A page without one is rendered with
+// the markup of the application.
+const PageData = "PageTemplate"
+
 // MaximumPageBytes is what a page template can write.
 const MaximumPageBytes = 256 << 10
 

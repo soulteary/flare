@@ -20,6 +20,7 @@ import (
 	"github.com/soulteary/flare/internal/pool"
 	searchcore "github.com/soulteary/flare/internal/search"
 	weatherui "github.com/soulteary/flare/internal/settings/weather"
+	"github.com/soulteary/flare/internal/themetemplate"
 )
 
 const _cspValue = "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';"
@@ -192,6 +193,7 @@ func pageBookmark(c fiber.Ctx) error {
 	m["OptionShowBookmarks"] = options.ShowBookmarks
 	m["OptionHideSettingsButton"] = options.HideSettingsButton
 	m["OptionHideHelpButton"] = options.HideHelpButton
+	usePageTemplate(c, m, options, themetemplate.PageBookmarks)
 	return c.Status(http.StatusOK).Render("home.html", m)
 }
 
@@ -228,6 +230,7 @@ func pageApplication(c fiber.Ctx) error {
 	m["OptionShowApps"] = options.ShowApps
 	m["OptionHideSettingsButton"] = options.HideSettingsButton
 	m["OptionHideHelpButton"] = options.HideHelpButton
+	usePageTemplate(c, m, options, themetemplate.PageApplications)
 	return c.Status(http.StatusOK).Render("home.html", m)
 }
 
@@ -343,6 +346,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["OptionHideSettingsButton"] = options.HideSettingsButton
 	m["OptionHideHelpButton"] = options.HideHelpButton
 	m["BodyClassName"] = homepageBodyClasses(options)
+	usePageTemplate(c, m, options, themetemplate.PageHome)
 	return renderClockPage(c, m, options, true)
 }
 
@@ -389,7 +393,8 @@ type themePreview struct {
 }
 
 // themeSafeMode is the notice of a page that is shown in safe mode, with the
-// way back to the theme settings.
+// way back to the theme settings. A page that shows the templates of the
+// selected theme before they are confirmed has a notice of the same form.
 type themeSafeMode struct {
 	Text   string
 	Back   string
@@ -442,6 +447,65 @@ func setPageTheme(c fiber.Ctx, m map[string]any, locale string) {
 	m["PageThemeInherited"] = theme.Inherited
 	m["PageThemeBackground"] = theme.Background
 	m["PageThemeAttributes"] = theme.Attributes
+}
+
+// usePageTemplate hands the page the template its theme brings for it, where
+// the theme has one and it is in use. The theme is the one the page is shown
+// with: the selected one, or the one this response previews. Safe mode uses
+// no template, and neither does the guide, whose script finds its elements
+// by the markup of the application. It is called once everything the page
+// shows is known, because a template can branch on which parts are shown.
+func usePageTemplate(c fiber.Ctx, m map[string]any, options model.Application, kind themetemplate.PageKind) {
+	if !options.ThemeTemplates || requestSafeMode(c) || guideAssetsURI(c) != "" {
+		return
+	}
+	page := define.ThemePage{Theme: requestPreview(c), Preview: true, Kind: kind, Searching: m["HasKeyword"] == true}
+	unconfirmed := false
+	if page.Theme == "" {
+		page.Theme, _ = define.ThemeSnapshot()
+		// The selected theme is what the page shows anyway, so it is no
+		// preview, with one exception: the administrator can look at its
+		// templates before confirming them.
+		unconfirmed = !options.ThemeSettings[page.Theme].Templates
+		page.Preview = unconfirmed && c.Query(previewParameter) == page.Theme && auth.CheckUserIsLogin(c)
+	}
+	if locale, set := m["Locale"].(string); set {
+		page.Lang = locale
+	}
+	page.T = func(key string) string { return i18n.T(page.Lang, key) }
+	page.Modules = pageModules(m)
+	fragment := define.ThemePageTemplate(options, page)
+	if fragment == nil {
+		return
+	}
+	m[themetemplate.PageData] = fragment
+	if unconfirmed {
+		// Visitors see this page without the templates, so the response
+		// says what it is and nothing may keep a copy of it.
+		c.Set("Cache-Control", "private, no-store")
+		m["ThemeSafeMode"] = themeSafeMode{
+			Text:   i18n.T(page.Lang, "theme_templates_preview_page"),
+			Back:   i18n.T(page.Lang, "theme_preview_back"),
+			Action: define.SettingPages.Theme.Path,
+		}
+	}
+}
+
+// pageModules says which parts a page shows, by the name of each part
+// without its prefix, from what the page hands to its template. A part is
+// shown under the condition its own markup has.
+func pageModules(m map[string]any) map[string]bool {
+	return map[string]bool{
+		"search":         m["ShowSearchComponent"] == true,
+		"clock":          m["OptionShowDateTime"] == true,
+		"greeting":       m["OptionShowTitle"] == true,
+		"weather":        m["OptionShowTitle"] == true && m["ShowWeatherModule"] == true,
+		"subpage-header": m["SubPage"] == true,
+		"apps":           m["OptionShowApps"] == true,
+		"bookmarks":      m["OptionShowBookmarks"] == true,
+		"toolbar":        m["OptionHideSettingsButton"] != true || m["OptionHideHelpButton"] != true,
+		"footer":         m["OptionFooter"] != nil && m["OptionFooter"] != template.HTML(""),
+	}
 }
 
 // homepageBodyClasses keeps appearance and letter-case preferences consistent on navigation pages.

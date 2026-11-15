@@ -118,6 +118,44 @@ func SaveThemeOptions(theme string, chosen map[string]string) error {
 	return saveAppConfig("config", options)
 }
 
+// SaveThemeTemplatesAllowed stores whether themes can use templates.
+func SaveThemeTemplatesAllowed(allowed bool) error {
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		return saveError(SaveFailureConfigUnreadable, err)
+	}
+	options.ThemeTemplates = allowed
+	return saveAppConfig("config", options)
+}
+
+// SaveThemeTemplatesConfirmed stores the confirmation of the templates of a
+// theme, or withdraws it. Whether the theme brings templates is for the
+// caller.
+func SaveThemeTemplatesConfirmed(theme string, confirmed bool) error {
+	if !model.IsThemeName(theme) {
+		return saveError(SaveFailureInvalidInput, fmt.Errorf("invalid theme name %q", theme))
+	}
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		return saveError(SaveFailureConfigUnreadable, err)
+	}
+	current, stored := options.ThemeSettings[theme]
+	// A theme nothing was ever stored for gets no entry for no confirmation.
+	if !stored && !confirmed {
+		return nil
+	}
+	if options.ThemeSettings == nil {
+		options.ThemeSettings = make(map[string]model.ThemeSettings)
+	}
+	current.Templates = confirmed
+	options.ThemeSettings[theme] = current
+	return saveAppConfig("config", options)
+}
+
 // SaveThemeCustom stores a custom palette and selects it in a single write.
 // Choosing a built-in theme afterwards keeps the stored palette.
 func SaveThemeCustom(palette model.Palette) error {

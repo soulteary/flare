@@ -57,12 +57,16 @@ themes/
         theme.css
         assets/
             paper.png
+        templates/
+            home.html
 ```
 
 The directory is the form for a theme of more than one file. Of a directory,
-`theme.yml`, a [stylesheet](theme-stylesheets.md) named `theme.css` and the
+`theme.yml`, a [stylesheet](theme-stylesheets.md) named `theme.css`, the
 [images and fonts](theme-stylesheets.md#images-and-fonts) in a directory
-named `assets` are read, and nothing else. Without a stylesheet, a theme in a
+named `assets` and, in releases after 0.7.0, the
+[page templates](theme-templates.md) in a directory named `templates` are
+read, and nothing else. Without a stylesheet, a theme in a
 directory is the same theme as its `theme.yml` would be as a file. It is
 listed, previewed and selected by the name of the directory: `Theme: zelda`.
 A license or other [text documents](#text-documents) beside `theme.yml` are

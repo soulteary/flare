@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -229,5 +230,35 @@ func TestThemeFileLayoutFromAnotherRelease(t *testing.T) {
 		if !errors.As(err, &rejection) || !errors.Is(err, ErrThemeSyntax) || rejection.Subject != subject {
 			t.Errorf("%s: %v", layout, err)
 		}
+	}
+}
+
+// The layout a page template branches on has every option a theme can
+// specify, written as a theme writes it, and the default where the stored
+// value is absent, legacy or unknown.
+func TestLayoutValues(t *testing.T) {
+	defaults := map[string]string{
+		LayoutMobileBookmarkLayout: "classic", LayoutTitleSize: "standard", LayoutHideAppDescriptions: "false",
+		LayoutCategoryNavigation: "all", LayoutBookmarkLayout: "groups", LayoutDesktopColumns: "legacy",
+	}
+	for name, options := range map[string]*HomepageOptions{
+		"none":    nil,
+		"empty":   {},
+		"unknown": {MobileBookmarkLayout: "single", TitleSize: "huge", CategoryNavigation: "x", BookmarkLayout: "y", DesktopColumns: "7", NavigationTextSize: "large"},
+	} {
+		if got := options.LayoutValues(); !maps.Equal(got, defaults) {
+			t.Errorf("%s: %v", name, got)
+		}
+	}
+	chosen := &HomepageOptions{MobileBookmarkLayout: "compact", TitleSize: "prominent", HideAppDescriptions: true, CategoryNavigation: "tabs", BookmarkLayout: "sections", DesktopColumns: "6"}
+	want := map[string]string{
+		LayoutMobileBookmarkLayout: "compact", LayoutTitleSize: "prominent", LayoutHideAppDescriptions: "true",
+		LayoutCategoryNavigation: "tabs", LayoutBookmarkLayout: "sections", LayoutDesktopColumns: "6",
+	}
+	if got := chosen.LayoutValues(); !maps.Equal(got, want) {
+		t.Errorf("chosen: %v", got)
+	}
+	if len(want) != len(ThemeLayoutOptions) {
+		t.Fatalf("the test knows %d options of %d", len(want), len(ThemeLayoutOptions))
 	}
 }
