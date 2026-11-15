@@ -2,7 +2,10 @@ package templates
 
 import (
 	"bytes"
+	"crypto/rand"
 	"embed"
+	"encoding/hex"
+	"errors"
 	"html/template"
 	"io"
 	"sync"
@@ -14,6 +17,7 @@ import (
 	"github.com/soulteary/flare/internal/i18n"
 	"github.com/soulteary/flare/internal/resources/assets"
 	"github.com/soulteary/flare/internal/searchui"
+	"github.com/soulteary/flare/internal/themetemplate"
 )
 
 //go:embed html
@@ -30,6 +34,114 @@ var bufPool = sync.Pool{
 // Renderer implements fiber.Views for HTML templates.
 type Renderer struct {
 	templates *template.Template
+	// home renders home.html the way a page template of a theme is
+	// rendered. It is nil for a set of templates without that page.
+	home *homePage
+}
+
+// homePage is home.html taken apart: the skeleton that places the parts,
+// compiled once, and the page around it.
+type homePage struct {
+	// skeleton is the text between the parts, with a hole for each.
+	skeleton *themetemplate.Fragment
+	// page is the set of templates with the skeleton replaced by mark.
+	page *template.Template
+	// mark stands in the rendered page where the skeleton belongs. It is
+	// made anew for each start, and nothing a request brings can hold it:
+	// what the page shows outside its skeleton is escaped.
+	mark template.HTML
+}
+
+const (
+	homeTemplate = "home.html"
+	// homeSkeleton is the block of home.html that places the parts.
+	homeSkeleton = "home/skeleton"
+	// homeBody is the key under which the page gets the mark.
+	homeBody = "PageBody"
+)
+
+// prepareHome compiles the skeleton of home.html. It runs before any template
+// of the set is executed, because a set cannot be cloned afterwards.
+func prepareHome(templates *template.Template) (*homePage, error) {
+	marked, err := templates.Clone()
+	if err != nil {
+		return nil, err
+	}
+	skeleton, err := themetemplate.Builtin(marked, homeSkeleton, HomeComponents, nil)
+	if err != nil {
+		return nil, err
+	}
+	page, err := templates.Clone()
+	if err != nil {
+		return nil, err
+	}
+	if _, err = page.New(homeSkeleton).Parse("{{." + homeBody + "}}"); err != nil {
+		return nil, err
+	}
+	var raw [16]byte
+	if _, err = rand.Read(raw[:]); err != nil {
+		return nil, err
+	}
+	// #nosec G203 -- a comment with a random name, written by the application.
+	return &homePage{skeleton: skeleton, page: page, mark: template.HTML("<!--flare-body-" + hex.EncodeToString(raw[:]) + "-->")}, nil
+}
+
+// parts renders the parts of one page where the skeleton has them.
+type parts struct {
+	templates *template.Template
+	data      map[string]any
+	// err is the first failure of a part. Nothing is rendered after it.
+	err error
+}
+
+func (p *parts) Text(string) string                { return "" }
+func (p *parts) Address() string                   { return "" }
+func (p *parts) LinkAttributes() template.HTMLAttr { return "" }
+func (p *parts) Slot(string) template.HTML         { return "" }
+
+// WriteSlot renders a part straight into the page, so that a long list of
+// entries is not copied on its way there.
+func (p *parts) WriteSlot(out *bytes.Buffer, name string) {
+	if p.err == nil {
+		p.err = p.templates.ExecuteTemplate(out, name, p.data)
+	}
+}
+
+var errHomeMark = errors.New("the page does not hold the place of its skeleton")
+
+// render writes the page: the page around the skeleton is rendered with a
+// mark in its place, and the skeleton is written where the mark stands, each
+// part rendered by itself into its hole.
+func (h *homePage) render(buf *bytes.Buffer, templates *template.Template, data map[string]any) error {
+	around := getTemplateBuffer()
+	defer releaseTemplateBuffer(around)
+	data[homeBody] = h.mark
+	err := h.page.ExecuteTemplate(around, homeTemplate, data)
+	delete(data, homeBody)
+	if err != nil {
+		return err
+	}
+	at := bytes.Index(around.Bytes(), []byte(h.mark))
+	if at < 0 {
+		return errHomeMark
+	}
+	buf.Write(around.Bytes()[:at])
+	filled := parts{templates: templates, data: data}
+	h.skeleton.Render(buf, &filled)
+	if filled.err != nil {
+		return filled.err
+	}
+	buf.Write(around.Bytes()[at+len(h.mark):])
+	return nil
+}
+
+func getTemplateBuffer() *bytes.Buffer {
+	buf, ok := bufPool.Get().(*bytes.Buffer)
+	if !ok || buf == nil {
+		buf = &bytes.Buffer{}
+	}
+	buf.Reset()
+	return buf
 }
 
 func (r *Renderer) Render(w io.Writer, templateName string, data any, _ ...string) error {
@@ -40,13 +152,13 @@ func (r *Renderer) Render(w io.Writer, templateName string, data any, _ ...strin
 			break
 		}
 	}
-	buf, ok := bufPool.Get().(*bytes.Buffer)
-	if !ok || buf == nil {
-		buf = &bytes.Buffer{}
-	}
-	buf.Reset()
+	buf := getTemplateBuffer()
 	defer releaseTemplateBuffer(buf)
-	if err := r.templates.ExecuteTemplate(buf, tmplName, data); err != nil {
+	if values, ok := data.(map[string]any); ok && r.home != nil && tmplName == homeTemplate {
+		if err := r.home.render(buf, r.templates, values); err != nil {
+			return err
+		}
+	} else if err := r.templates.ExecuteTemplate(buf, tmplName, data); err != nil {
 		return err
 	}
 	_, err := buf.WriteTo(w)
@@ -107,5 +219,9 @@ func NewRenderer() (fiber.Views, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Renderer{templates: t}, nil
+	home, err := prepareHome(t)
+	if err != nil {
+		return nil, err
+	}
+	return &Renderer{templates: t, home: home}, nil
 }

@@ -55,8 +55,15 @@ type Content interface {
 	Slot(name string) template.HTML
 }
 
+// SlotWriter is a Content that writes a part itself, where it belongs,
+// instead of handing its markup over. Render uses it in place of Slot.
+type SlotWriter interface {
+	WriteSlot(out *bytes.Buffer, name string)
+}
+
 // Render writes the fragment with its holes filled in.
 func (f *Fragment) Render(out *bytes.Buffer, content Content) {
+	writer, direct := content.(SlotWriter)
 	for i := range f.pieces {
 		out.WriteString(f.pieces[i].text)
 		switch f.pieces[i].hole.Kind {
@@ -67,7 +74,11 @@ func (f *Fragment) Render(out *bytes.Buffer, content Content) {
 		case HoleLink:
 			out.WriteString(string(content.LinkAttributes()))
 		case HoleSlot:
-			out.WriteString(string(content.Slot(f.pieces[i].hole.Name)))
+			if direct {
+				writer.WriteSlot(out, f.pieces[i].hole.Name)
+			} else {
+				out.WriteString(string(content.Slot(f.pieces[i].hole.Name)))
+			}
 		}
 	}
 }
