@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/soulteary/flare/config/model"
+	"github.com/soulteary/flare/internal/themetemplate"
 	version "github.com/soulteary/version-kit/v4"
 )
 
@@ -140,6 +141,9 @@ func statThemeFile(path string) themeFileStamp {
 type themeStamp struct {
 	file, manifest, stylesheet, assets themeFileStamp
 	files                              []themeAssetStamp
+	// pages is the state of the template of each page. A template that is
+	// added, with or without its directory, changes it as an edit does.
+	pages [3]themeFileStamp
 	// bases holds the same state for the themes a theme is based on, one
 	// below another, as far as a reading of the themes directory followed
 	// them. It is set for the selected theme, whose pages take from all of
@@ -176,6 +180,9 @@ func statTheme(name string) themeStamp {
 	if stamp.manifest.exists {
 		stamp.stylesheet = statThemeFile(filepath.Join(UserThemeDirectory, name, userThemeStylesheet))
 		stamp.assets = statThemeFile(filepath.Join(UserThemeDirectory, name, model.ThemeAssetDirectory))
+		for i, kind := range themetemplate.PageKinds {
+			stamp.pages[i] = statThemeFile(filepath.Join(UserThemeDirectory, name, model.ThemeTemplateDirectory, kind.File()))
+		}
 	}
 	return stamp
 }
@@ -183,6 +190,11 @@ func statTheme(name string) themeStamp {
 // current reports whether the files are still in the state they were read at.
 // The files of the assets are compared by assetsCurrent.
 func (stamp themeStamp) current(now themeStamp, clock time.Time) bool {
+	for i := range stamp.pages {
+		if !stamp.pages[i].current(now.pages[i], clock) {
+			return false
+		}
+	}
 	return stamp.file.current(now.file, clock) && stamp.manifest.current(now.manifest, clock) &&
 		stamp.stylesheet.current(now.stylesheet, clock) && stamp.assets.current(now.assets, clock)
 }
@@ -239,6 +251,10 @@ type userThemeScan struct {
 	// themes it is based on are known to be.
 	candidates map[string]*themeCandidate
 	pending    []string
+	// templateRemarks are the templates of themes that are not accepted.
+	// Their themes are in use without them, so they are kept apart from
+	// the remarks about themes that are not in use.
+	templateRemarks []ThemeProblem
 }
 
 // themeCandidate is a theme file of the themes directory that was read and
@@ -251,6 +267,8 @@ type themeCandidate struct {
 	stylesheet string
 	assets     []model.ThemeAsset
 	hash       string
+	// templates are the page templates as they were read.
+	templates []model.ThemeTemplate
 	// rejected is why the theme is not in use after all, found when the
 	// themes it is based on were followed. place is where that remark
 	// belongs among the remarks of the reading, which are in the order of
@@ -397,6 +415,7 @@ func scanUserThemes() userThemeScan {
 		}
 	}
 	scan.resolveThemes()
+	scan.problems = append(scan.problems, scan.templateRemarks...)
 	return scan
 }
 
@@ -507,6 +526,11 @@ func (scan *userThemeScan) readTheme(root *os.Root, name, file, shown string, di
 		if stylesheet != "" || len(assets) > 0 {
 			candidate.hash = themeFilesHash(stylesheet, assets)
 		}
+		// A template that is not accepted leaves the theme in use: its
+		// page keeps the markup of the application.
+		var remarks []ThemeProblem
+		candidate.templates, remarks = readThemeTemplates(root, name)
+		scan.templateRemarks = append(scan.templateRemarks, remarks...)
 	} else if !hasThemeBackground(image, nil) {
 		// A theme that is a single file has no assets to take an image from.
 		scan.problems = append(scan.problems, themeBackgroundProblem(image, shown))
@@ -583,6 +607,11 @@ func (scan *userThemeScan) resolveThemes() {
 				}
 			}
 		}
+		// The templates are compiled with what the theme is as a whole:
+		// its options and its assets.
+		var remarks []ThemeProblem
+		definition.Templates, remarks = checkThemeTemplates(definition, candidate.templates)
+		scan.templateRemarks = append(scan.templateRemarks, remarks...)
 		scan.themes[name], scan.files[name] = definition, file
 		settled[name] = true
 		return true
