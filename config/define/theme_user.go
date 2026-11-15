@@ -68,6 +68,8 @@ const (
 	ThemeProblemStyleRule      = "style_rule"
 	ThemeProblemStyleFunction  = "style_function"
 	ThemeProblemStyleCharacter = "style_character"
+	// ThemeProblemOption is an option of a theme that is not accepted.
+	ThemeProblemOption = "option"
 	// Reasons the background of a theme is not accepted: one that is not
 	// written in the accepted form, and an image that is not among the
 	// images in the assets of the theme.
@@ -699,6 +701,8 @@ func themeProblemReason(err error) string {
 		return ThemeProblemRequires
 	case errors.Is(err, model.ErrThemeRequiresValue):
 		return ThemeProblemRequiresValue
+	case errors.Is(err, model.ErrThemeOption):
+		return ThemeProblemOption
 	case errors.Is(err, model.ErrThemeBackground):
 		return ThemeProblemBackground
 	case errors.Is(err, model.ErrThemeBackgroundAsset):

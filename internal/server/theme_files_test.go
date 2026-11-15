@@ -170,7 +170,7 @@ func readThemeFilePage(t *testing.T, page string) themeFilePage {
 func TestThemeFilesHTTP(t *testing.T) {
 	handler := themeFilesRouter(t, "Locale: en\nTheme: blackboard\nShowApps: true\n", map[string]string{
 		"forest.yml":   forestThemeFile,
-		"later.yml":    themeFileColors + "  space: 4px\noptions:\n  - id: density\n",
+		"later.yml":    themeFileColors + "  space: 4px\nsounds:\n  - id: chime\n",
 		"rejected.yml": themeFileColors + "  radius: 4em\n",
 		"Mixed.yml":    themeFileColors,
 		"notes.yaml":   themeFileColors,
@@ -189,13 +189,13 @@ func TestThemeFilesHTTP(t *testing.T) {
 	}, page.cards)
 	require.Equal(t, [][]string{
 		{"Mixed.yml"},
-		{"later.yml", "options, tokens.space"},
+		{"later.yml", "sounds, tokens.space"},
 		{"notes.yaml"},
 		{"rejected.yml", "tokens.radius"},
 	}, page.lines)
 	require.Equal(t, []string{
 		"Mixed.yml " + i18n.T("en", "theme_file_problem_name"),
-		"later.yml " + i18n.T("en", "theme_file_unused") + " options, tokens.space",
+		"later.yml " + i18n.T("en", "theme_file_unused") + " sounds, tokens.space",
 		"notes.yaml " + i18n.T("en", "theme_file_problem_extension"),
 		"rejected.yml " + i18n.T("en", "theme_file_problem_value") + " tokens.radius",
 	}, page.lineTexts)

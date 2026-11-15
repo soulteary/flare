@@ -52,6 +52,11 @@ type ThemeSettings struct {
 	// applied. The site settings are used for them. The list is encoded
 	// when it is empty, so that saving can clear a previous one.
 	IgnoreLayout []string `yaml:"IgnoreLayout"`
+	// Options holds the values chosen for the options of the theme, by the
+	// ID of each option. A value is used only if the theme has the option
+	// and the option can have the value; the option has its default
+	// otherwise.
+	Options map[string]string `yaml:"Options,omitempty"`
 }
 
 // ThemeLayoutApplied lists the options of a theme's layout that take effect,

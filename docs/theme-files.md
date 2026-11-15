@@ -102,6 +102,7 @@ tokens:
 | `modes` | No | Other token values for light and for dark; see [light and dark](#light-and-dark) |
 | `layout` | No | Layout options the theme specifies; see [layout](#layout) |
 | `background` | No | An image behind the navigation pages, for a theme that is a directory; see [background image](#background-image) |
+| `options` | No | Settings of the theme that the administrator chooses values for; see [options](#options) |
 | `name` | No | The name to show, up to 48 characters; without it the name of the file is shown |
 | `version`, `author`, `license` | No | Up to 64 characters each; shown with the theme on the settings page, without any other effect |
 | `requires` | No | The first release of Flare the theme works with, as three numbers such as `0.7.0`; see [files written for another release](#files-written-for-another-release) |
@@ -287,6 +288,101 @@ background:
 - `dim` is written as a whole number. A fraction such as `0.6` is not read as
   six tenths; it is refused.
 
+### Options
+
+A theme can offer settings of its own. The administrator chooses their values
+on the theme page, and a value changes tokens and layout of the theme:
+
+```yaml
+options:
+  - id: density
+    type: enum
+    label: { en: Density, zh: 密度 }
+    choices:
+      - value: normal
+        label: { en: Normal, zh: 标准 }
+      - value: compact
+        label: { en: Compact, zh: 紧凑 }
+        tokens: { radius: 2px, font-scale: 0.9 }
+        layout: { HideAppDescriptions: true }
+  - id: frames
+    type: boolean
+    label: Frames
+    tokens: { border: "#ffffff" }
+  - id: highlight
+    type: color
+    label: Highlight
+    token: accent
+```
+
+| Key | Required | Value |
+| --- | --- | --- |
+| `id` | Yes | The name of the option: lower-case letters, digits and single hyphens, up to 32 characters, and not the name of another option of the theme |
+| `type` | Yes | `enum`, `boolean` or `color` |
+| `label` | No | The text shown with the option, up to 48 characters, as one text or as one for each language like `name`. Without it the `id` is shown |
+| `default` | No | The value the option has until another is chosen |
+
+| Type | What it offers | Further keys |
+| --- | --- | --- |
+| `enum` | One of two to six values | `choices`, a list. Each has a `value`, written like an `id`, and can have a `label`, `tokens` and `layout`. The default is the first value, or the one `default` names |
+| `boolean` | On or off | `tokens` and `layout`, which apply while the option is on. The default is off, or `default: true` |
+| `color` | A color for one token | `token`: `accent`, `icon`, `muted`, `border`, `focus` or `inverse`. The default is the color the theme gives that token, or the `#RRGGBB` color `default` names; a theme that gives the token no color has to name one |
+
+- A theme can have up to 8 options.
+- `tokens` and `layout` of a value are written as they are at the top of the
+  theme file. A value cannot set `background` or `primary`: the contrast
+  between those two is checked for the theme, and stays as it was checked
+  whatever is chosen.
+- A token a value sets holds over the token of the theme, also over the
+  values the theme has for [light and dark](#light-and-dark): it is the same
+  in both. A layout option holds over the [layout](#layout) of the theme, and
+  the administrator turns it off like any layout of the theme. Where two
+  options set the same token or layout option, the later one in the file
+  holds.
+- A `color` option that has the color the theme gives its token changes
+  nothing: the theme keeps the colors it has for light and dark until another
+  color is picked, and that color is then the color of both.
+- The settings take the tokens as the navigation pages do.
+- The values of `enum` and `boolean` options are on the body of the navigation
+  pages, as `data-theme-<id>="<value>"`, for the
+  [stylesheet](theme-stylesheets.md#options-of-the-theme) of the theme.
+- A theme file is used as a whole. An option that is not written as above
+  leaves the file out of use, and the theme page names the part, for example
+  `options.density.choices`. An option of a `type` this release does not
+  have is left out and listed, like [other parts of a later
+  release](#files-written-for-another-release), and so are keys, tokens and
+  layout options of an option that it does not know.
+
+While a theme with options is selected, the theme page has a form with them:
+a list for `enum`, a box to tick for `boolean` and a color to pick for
+`color`. **Use the defaults of the theme** puts every option back. The card
+of a theme says that it has options, so this is known before the theme is
+selected. The form is about the theme it was shown for: submitted from a tab
+that was left open after another theme was selected, it is refused and
+nothing is saved.
+
+The values are stored in `config.yml`, for each theme by its name:
+
+```yaml
+ThemeSettings:
+    zelda:
+        Options:
+            density: compact
+            frames: "true"
+            highlight: "#00ff88"
+```
+
+- Only values other than the defaults are stored. An option that is left
+  alone follows the default of the theme when a later version of the theme
+  has another.
+- The values are read for every page, so an edit of `config.yml` shows on the
+  next page load, like the other settings there.
+- A stored value is used if the theme has the option and the option can have
+  the value. Otherwise the option has its default: a value for an option the
+  theme no longer has, or one that is no value of the option, changes
+  nothing and is not an error.
+- A [preview](#preview) shows a theme with the values stored for it.
+
 ### Names in several languages
 
 `name` can give one text for each interface language instead of a single text:
@@ -306,9 +402,10 @@ the order of the codes.
 
 Keys, tokens, modes, layout options and parts of `background` that this
 release does not know are not used, and neither is a layout value it does not
-have. The theme remains usable, and the settings page lists the parts that
-were left out. A theme file written for a later release therefore works with
-what this release knows.
+have, nor an [option](#options) of a type it does not have. The theme remains
+usable, and the settings page lists the parts that were left out. A theme
+file written for a later release therefore works with what this release
+knows.
 
 Everything this release does use has to be valid. A file with one value that
 is not accepted is not used at all; the theme is not applied in part.
@@ -503,6 +600,7 @@ file, as `zelda/assets/paper.png`; those reasons are described with
 | Text not accepted | `name`, `version`, `author` or `license` is too long, has leading or trailing spaces, or contains control characters |
 | The theme needs a later release | `requires` names a release after this one; shown with that release |
 | Release under `requires` not accepted | `requires` is not three numbers; shown with what is written |
+| An option not accepted | An option, a value of one or a default is not written as described under [options](#options); shown with the part, for example `options.density.choices` or `options[2].id` |
 | Background not accepted | `background.image` is not `assets/` and the name of an image, or `background.dim` is not a whole number from 0 to 100; shown with the key |
 | Background image not among the images in the assets | The file is not there, or the theme is a single file; shown with the image, for example `assets/wallpaper.jpg` |
 
@@ -547,6 +645,10 @@ and checks the pages after each step.
 opens the pages of a theme with a background image, checks the color the
 image and its dim give the page for light and for dark, edits the theme file
 and the image, and checks the pages after each step.
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/options.browser.cjs`
+chooses values for the options of a theme on the theme page, checks what they
+change on the pages, puts the defaults back, and edits the values in
+`config.yml`.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/safe-mode.browser.cjs`
 selects a theme whose stylesheet hides parts of the home page, opens the page
 in safe mode and goes back to the settings from its notice, and starts an

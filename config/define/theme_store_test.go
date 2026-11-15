@@ -35,7 +35,7 @@ func TestStoreUserTheme(t *testing.T) {
 
 	// The directory is made when the first theme is stored, and the file is
 	// written as given: comments and parts for later releases stay.
-	raw := "# A comment of the author.\n" + userThemeColors + "  radius: 10px\noptions:\n  - id: density\n"
+	raw := "# A comment of the author.\n" + userThemeColors + "  radius: 10px\nsounds:\n  - id: chime\n"
 	require.NoError(t, StoreUserTheme("forest", []byte(raw), false))
 	directory, err := os.Stat(UserThemeDirectory)
 	require.NoError(t, err)
@@ -56,7 +56,7 @@ func TestStoreUserTheme(t *testing.T) {
 	themes, problems, notices := UserThemes()
 	require.Equal(t, []string{"forest"}, userThemeNames(themes))
 	require.Empty(t, problems)
-	require.Equal(t, []ThemeNotice{{File: "forest.yml", Unused: model.ThemeFileUnused{Keys: []string{"options"}}}}, notices)
+	require.Equal(t, []ThemeNotice{{File: "forest.yml", Unused: model.ThemeFileUnused{Keys: []string{"sounds"}}}}, notices)
 	SetTheme("forest")
 	require.Equal(t, userThemeStyle+"--flare-radius:10px;", GetAppBodyStyle())
 

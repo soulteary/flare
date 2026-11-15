@@ -109,6 +109,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 		{Name: "licensed", Colors: colors, Version: "2", License: "CC0-1.0", Title: model.ThemeText{Plain: "Licensed"}},
 		{Name: "zelda", Colors: colors, Directory: true},
 		{Name: "styled", Colors: colors, Directory: true, Stylesheet: "a { color: red }", Hash: "0123456789abcdef"},
+		{Name: "optioned", Colors: colors, Options: []model.ThemeOption{{ID: "frames", Kind: model.ThemeOptionBoolean}}},
 	}
 	for locale, want := range map[string][]themeFileCard{
 		"en": {
@@ -118,6 +119,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 			{Name: "licensed", Title: "Licensed", About: "2 · CC0-1.0", Colors: colors},
 			{Name: "zelda", Title: "zelda", Colors: colors, Directory: true},
 			{Name: "styled", Title: "styled", Colors: colors, Directory: true, Stylesheet: true},
+			{Name: "optioned", Title: "optioned", Colors: colors, Options: true},
 		},
 		"zh": {
 			{Name: "forest", Title: "暮色森林", About: "1.2 · Example Author · MIT", Colors: colors},
@@ -126,6 +128,7 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 			{Name: "licensed", Title: "Licensed", About: "2 · CC0-1.0", Colors: colors},
 			{Name: "zelda", Title: "zelda", Colors: colors, Directory: true},
 			{Name: "styled", Title: "styled", Colors: colors, Directory: true, Stylesheet: true},
+			{Name: "optioned", Title: "optioned", Colors: colors, Options: true},
 		},
 	} {
 		got := themeFileCards(locale, themes)
@@ -143,6 +146,52 @@ func TestThemeFileCardsShowTheTextsOfTheFile(t *testing.T) {
 	}
 }
 
+// The options of a theme are prepared for the form with the values they have
+// and the labels of the interface language.
+func TestThemeOptionFields(t *testing.T) {
+	options := []model.ThemeOption{
+		{ID: "density", Kind: model.ThemeOptionEnum, Label: model.ThemeText{Localized: map[string]string{"en": "Density", "zh": "密度"}}, Default: "normal", Choices: []model.ThemeOptionChoice{
+			{Value: "normal", Label: model.ThemeText{Localized: map[string]string{"en": "Normal", "zh": "标准"}}},
+			{Value: "compact"},
+		}},
+		{ID: "frames", Kind: model.ThemeOptionBoolean, Default: model.ThemeOptionOff, Choices: []model.ThemeOptionChoice{{Value: model.ThemeOptionOff}, {Value: model.ThemeOptionOn}}},
+		{ID: "highlight", Kind: model.ThemeOptionColor, Label: model.ThemeText{Plain: "Highlight"}, Token: "accent", Default: "#ffcc66"},
+	}
+	values := map[string]string{"density": "compact", "frames": "true", "highlight": "#00ff88"}
+	want := map[string][]themeOptionField{
+		"en": {
+			{ID: "density", Kind: "enum", Label: "Density", Choices: []themeOptionFieldChoice{{"normal", "Normal", false}, {"compact", "compact", true}}},
+			{ID: "frames", Kind: "boolean", Label: "frames", On: true},
+			{ID: "highlight", Kind: "color", Label: "Highlight", Value: "#00ff88"},
+		},
+		"zh": {
+			{ID: "density", Kind: "enum", Label: "密度", Choices: []themeOptionFieldChoice{{"normal", "标准", false}, {"compact", "compact", true}}},
+			{ID: "frames", Kind: "boolean", Label: "frames", On: true},
+			{ID: "highlight", Kind: "color", Label: "Highlight", Value: "#00ff88"},
+		},
+	}
+	for locale, expected := range want {
+		got := themeOptionFields(locale, options, values)
+		if len(got) != len(expected) {
+			t.Fatalf("%s: %d fields", locale, len(got))
+		}
+		for i := range expected {
+			if got[i].ID != expected[i].ID || got[i].Kind != expected[i].Kind || got[i].Label != expected[i].Label || got[i].On != expected[i].On ||
+				got[i].Value != expected[i].Value || !slices.Equal(got[i].Choices, expected[i].Choices) {
+				t.Errorf("%s: field %d: got %+v, want %+v", locale, i, got[i], expected[i])
+			}
+		}
+	}
+	// An option that is off, and a value that is not the chosen one.
+	off := themeOptionFields("en", options, map[string]string{"density": "normal", "frames": "false", "highlight": "#ffcc66"})
+	if off[1].On || !off[0].Choices[0].Selected || off[0].Choices[1].Selected {
+		t.Fatalf("the defaults: %+v", off)
+	}
+	if fields := themeOptionFields("en", nil, nil); len(fields) != 0 {
+		t.Fatalf("no options: %+v", fields)
+	}
+}
+
 func TestThemeFileLinesExplainEveryReason(t *testing.T) {
 	reasons := []string{
 		define.ThemeProblemExtension, define.ThemeProblemName, define.ThemeProblemReserved, define.ThemeProblemType,
@@ -151,7 +200,7 @@ func TestThemeFileLinesExplainEveryReason(t *testing.T) {
 		define.ThemeProblemStyleRule, define.ThemeProblemStyleFunction, define.ThemeProblemStyleCharacter,
 		define.ThemeProblemAssetName, define.ThemeProblemAssetSize, define.ThemeProblemAssetContent, define.ThemeProblemAssetLimit,
 		define.ThemeProblemRequires, define.ThemeProblemRequiresValue,
-		define.ThemeProblemBackground, define.ThemeProblemBackgroundAsset,
+		define.ThemeProblemBackground, define.ThemeProblemBackgroundAsset, define.ThemeProblemOption,
 		define.ThemeProblemSize, define.ThemeProblemLimit, define.ThemeProblemRead, define.ThemeProblemSyntax,
 		define.ThemeProblemContract, define.ThemeProblemValue, define.ThemeProblemColor, define.ThemeProblemContrast,
 		define.ThemeProblemText,

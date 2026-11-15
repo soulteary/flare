@@ -1,6 +1,7 @@
 package data
 
 import (
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -78,6 +79,7 @@ func cloneApplication(value model.Application) model.Application {
 		copy := make(map[string]model.ThemeSettings, len(value.ThemeSettings))
 		for name, settings := range value.ThemeSettings {
 			settings.IgnoreLayout = slices.Clone(settings.IgnoreLayout)
+			settings.Options = maps.Clone(settings.Options)
 			copy[name] = settings
 		}
 		value.ThemeSettings = copy

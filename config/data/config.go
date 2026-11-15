@@ -231,6 +231,33 @@ func sameAppSettings(original, result model.Application) bool {
 	return reflect.DeepEqual(original, compare)
 }
 
+// dropThemeOptionNodes takes the values chosen for the options of every theme
+// out of a configuration document that is about to be merged with the
+// settings to save. The merge keeps what a mapping of the document holds and
+// the settings do not name, so that keys of a later release stay in the file.
+// The values of the options are a mapping too, and there a key that is not
+// named is a value that was given up: an option that has its default again
+// has no entry. They are therefore written as a whole, from the settings,
+// which hold them for every theme as they were read from this document.
+func dropThemeOptionNodes(root *yaml.Node) {
+	themes := mappingValue(root, "ThemeSettings")
+	if themes == nil || themes.Kind != yaml.MappingNode {
+		return
+	}
+	for i := 1; i < len(themes.Content); i += 2 {
+		theme := themes.Content[i]
+		if theme.Kind != yaml.MappingNode {
+			continue
+		}
+		for key := 0; key+1 < len(theme.Content); key += 2 {
+			if theme.Content[key].Value == "Options" {
+				theme.Content = append(theme.Content[:key], theme.Content[key+2:]...)
+				break
+			}
+		}
+	}
+}
+
 func encodeAppConfig(doc *yaml.Node, original, result model.Application, writer string) ([]byte, error) {
 	result.AppVersion = writer
 	var patch yaml.Node
@@ -244,6 +271,7 @@ func encodeAppConfig(doc *yaml.Node, original, result model.Application, writer 
 	if original.WeatherLocation != nil && result.WeatherLocation == nil {
 		patch.Content = append(patch.Content, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: "WeatherLocation"}, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!null", Value: "null"})
 	}
+	dropThemeOptionNodes(doc.Content[0])
 	mergeSearchNodes(doc.Content[0], &patch)
 	out, err := yaml.Marshal(doc)
 	if err != nil {

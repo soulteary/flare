@@ -33,6 +33,15 @@ const (
 	actionImport  = "import"
 	importField   = "theme-file"
 	importReplace = "replace"
+	// actionSaveOptions is submitted by the form with the options of the
+	// selected theme, each in a field named optionField and the ID of the
+	// option, and actionResetOptions by the form that gives the options
+	// the defaults of the theme again. Both name the theme they were shown
+	// for in the field optionsTheme.
+	actionSaveOptions  = "save-options"
+	actionResetOptions = "reset-options"
+	optionField        = "option-"
+	optionsTheme       = "theme-options-theme"
 )
 
 // exportPath is where a theme is handed out as a theme file, by its name.
@@ -72,6 +81,9 @@ func updateThemes(c fiber.Ctx) error {
 	}
 	if body.Action == actionImport {
 		return importTheme(c, formvalue.Has(c, importReplace))
+	}
+	if body.Action == actionSaveOptions || body.Action == actionResetOptions {
+		return updateThemeOptions(c, body.Action == actionResetOptions)
 	}
 	if body.Action == actionSaveMode {
 		// The mode is one of three constants once it is accepted, so nothing
@@ -145,6 +157,55 @@ func updateThemeMode(c fiber.Ctx, submitted string) error {
 	}
 	define.SetThemeMode(mode)
 	return renderTheme(c, http.StatusOK, themeNotice{modeSaved: true})
+}
+
+// updateThemeOptions stores the values the administrator chooses for the
+// options of the selected theme, or removes them, so that the options have
+// the defaults of the theme again. A value is checked against the option as
+// the theme has it now; one the option cannot have is refused, and nothing is
+// saved. Only values other than the defaults are stored: an option that is
+// left alone follows the default of the theme when a later version of the
+// theme has another.
+func updateThemeOptions(c fiber.Ctx, reset bool) error {
+	// The themes directory is read first, so that the options are those of
+	// the theme file as it is now.
+	define.ReloadUserThemes()
+	name, _ := define.ThemeSnapshot()
+	// A form is about the theme it was shown for. One that was shown while
+	// another theme was selected, in a tab that was left open, is not read
+	// as values for the options of the theme that is selected now.
+	if formvalue.Get(c, optionsTheme) != name {
+		return c.Status(http.StatusBadRequest).SendString("The form is not about the selected theme")
+	}
+	options, _, known := define.ThemeOptions(name)
+	if !known || len(options) == 0 {
+		return c.Status(http.StatusBadRequest).SendString("The selected theme has no options")
+	}
+	chosen := map[string]string{}
+	for _, option := range options {
+		if reset {
+			break
+		}
+		field := optionField + option.ID
+		value := model.ThemeOptionOff
+		if option.Kind == model.ThemeOptionBoolean {
+			// A box that is not ticked is not submitted.
+			if formvalue.Has(c, field) {
+				value = model.ThemeOptionOn
+			}
+		} else if value = formvalue.Get(c, field); option.Value(value) != value {
+			// An option has its default for a value it cannot have, so a
+			// value that comes back as another one is not one of its values.
+			return c.Status(http.StatusBadRequest).SendString("Unknown value for an option of the theme")
+		}
+		if !option.IsDefault(value) {
+			chosen[option.ID] = value
+		}
+	}
+	if done, err := commitThemeChange(c, func() error { return data.SaveThemeOptions(name, chosen) }); done {
+		return err
+	}
+	return renderTheme(c, http.StatusOK, themeNotice{optionsSaved: true})
 }
 
 // importTheme stores an uploaded theme file in the themes directory. The
@@ -295,6 +356,8 @@ type themeNotice struct {
 	// why one was not.
 	imported      string
 	importRefused string
+	// optionsSaved reports stored values for the options of the theme.
+	optionsSaved bool
 }
 
 func pageTheme(c fiber.Ctx) error {
@@ -356,6 +419,18 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	if define.AppFlags.ThemeSafeMode {
 		m["ThemeSafeMode"] = i18n.T(locale, "theme_safe_mode_notice")
 	}
+	// The options of the selected theme are offered with the values they
+	// have now.
+	if selected, _ := define.ThemeSnapshot(); selected != "" {
+		if declared, values, known := define.ThemeOptions(selected); known && len(declared) > 0 {
+			m["ThemeOptions"] = themeOptionFields(locale, declared, values)
+			m["ThemeOptionsTitle"] = i18n.Format(locale, "theme_options_title", map[string]any{"name": define.ThemeTitle(selected, locale)})
+			m["ThemeOptionsTheme"] = selected
+			m["ThemeOptionsAction"] = actionSaveOptions
+			m["ThemeOptionsReset"] = actionResetOptions
+			m["ThemeOptionsSaved"] = notice.optionsSaved
+		}
+	}
 
 	if custom, stored := storedCustomPalette(options); stored {
 		m["ThemeCustom"] = custom
@@ -373,6 +448,51 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 		m["ThemeCustomError"] = paletteErrorText(locale, notice.rejected)
 	}
 	return c.Status(status).Render("settings.html", m)
+}
+
+// themeOptionField is an option of the selected theme as the page offers it:
+// a box to tick for a boolean option, a list for an option with values, and a
+// color to pick for a color option.
+type themeOptionField struct {
+	// ID is the ID of the option, which names the field of the form.
+	ID    string
+	Kind  string
+	Label string
+	// On is the state of a boolean option, Value the color of a color
+	// option, and Choices are the values of an option with values.
+	On      bool
+	Value   string
+	Choices []themeOptionFieldChoice
+}
+
+// themeOptionFieldChoice is a value of an option, and whether it is the one
+// the option has now.
+type themeOptionFieldChoice struct {
+	Value    string
+	Label    string
+	Selected bool
+}
+
+// themeOptionFields prepares the options of a theme for the page, with the
+// values they have now and the labels of the interface language.
+func themeOptionFields(locale string, options []model.ThemeOption, values map[string]string) []themeOptionField {
+	fields := make([]themeOptionField, 0, len(options))
+	for _, option := range options {
+		value := values[option.ID]
+		field := themeOptionField{ID: option.ID, Kind: option.Kind, Label: option.DisplayName(locale)}
+		switch option.Kind {
+		case model.ThemeOptionBoolean:
+			field.On = value == model.ThemeOptionOn
+		case model.ThemeOptionColor:
+			field.Value = value
+		default:
+			for _, choice := range option.Choices {
+				field.Choices = append(field.Choices, themeOptionFieldChoice{Value: choice.Value, Label: choice.DisplayName(locale), Selected: choice.Value == value})
+			}
+		}
+		fields = append(fields, field)
+	}
+	return fields
 }
 
 // keepColors overlays the submitted values that are colors. A color input
@@ -423,6 +543,9 @@ type themeFileCard struct {
 	// Stylesheet reports a theme that brings a stylesheet, so that it is
 	// known before the theme is selected that it changes more than colors.
 	Stylesheet bool
+	// Options reports a theme with options, which are offered on this page
+	// once the theme is selected.
+	Options bool
 }
 
 func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
@@ -442,6 +565,7 @@ func themeFileCards(locale string, themes []model.Theme) []themeFileCard {
 			// The form of the theme decides what the card offers.
 			Directory:  theme.Directory,
 			Stylesheet: theme.Stylesheet != "",
+			Options:    len(theme.Options) > 0,
 		}
 		if dark := theme.In(model.ThemeModeDark).Colors; dark != card.Colors {
 			card.Dark = &dark
