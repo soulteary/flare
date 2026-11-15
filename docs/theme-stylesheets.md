@@ -29,6 +29,8 @@ themes/
   page says where and why; the theme is not applied without its stylesheet.
 - The card of a theme on the theme page says that the theme has a stylesheet,
   so this is known before the theme is selected.
+- A theme with its stylesheet and its assets is downloaded and imported as
+  one file, an [archive](theme-files.md#archives).
 
 ## Images and fonts
 

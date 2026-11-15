@@ -27,8 +27,8 @@ func writeThemeDirectory(t *testing.T, name, content string) {
 }
 
 // A theme that is a directory is selected by the name of the directory. It
-// is not offered as a download of one file, and no file is imported under
-// its name.
+// is handed out as an archive, not as one file, and no theme file is
+// imported under its name.
 func TestThemeDirectoryOnTheThemePage(t *testing.T) {
 	app := isolateTheme(t)
 	t.Cleanup(func() { _ = os.RemoveAll(define.UserThemeDirectory) })
@@ -88,7 +88,7 @@ func TestThemeDirectoryOnTheThemePage(t *testing.T) {
 	}
 	for name, want := range map[string]int{
 		"plain":           http.StatusOK,
-		"zelda":           http.StatusNotFound,
+		"zelda":           http.StatusOK,
 		"zelda/theme":     http.StatusNotFound,
 		"zelda/theme.yml": http.StatusNotFound,
 	} {

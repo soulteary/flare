@@ -193,14 +193,20 @@ func writeThemeFile(root *os.Root, file string, raw []byte, mode os.FileMode) er
 		// the failure; a reading of the directory leaves it alone.
 		return errors.Join(err, root.Remove(temporary))
 	}
-	// The new entry should survive an interruption as the content does. The
-	// file is in place by now, so a failure here is logged, not returned.
+	syncThemesDirectory(root)
+	return nil
+}
+
+// syncThemesDirectory asks for the entries of the themes directory to be
+// written through, so that a new entry survives an interruption as its
+// content does. What was stored is in place by now, so a failure here is
+// logged, not returned.
+func syncThemesDirectory(root *os.Root) {
 	if directory, openErr := root.Open("."); openErr == nil {
 		if syncErr := errors.Join(directory.Sync(), directory.Close()); syncErr != nil {
-			logger.GetLogger().Warn("The themes directory could not be synced after storing a theme file", "reason", syncErr.Error())
+			logger.GetLogger().Warn("The themes directory could not be synced after storing a theme", "reason", syncErr.Error())
 		}
 	}
-	return nil
 }
 
 // ExportTheme returns a theme as a theme file, with the file name to offer
@@ -208,7 +214,7 @@ func writeThemeFile(root *os.Root, file string, raw []byte, mode os.FileMode) er
 // bundled theme is defined by, or a file written from the custom colors. The
 // copies of the last two have names under which they can be stored again. It
 // reports false for a name that is not a theme in use, and for a theme that
-// is a directory.
+// is a directory, which ExportThemeArchive hands out.
 func ExportTheme(name string) (string, []byte, bool) {
 	if name == model.ThemeCustomName {
 		themeMu.RLock()

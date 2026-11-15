@@ -20,6 +20,89 @@ import (
 	"github.com/soulteary/flare/internal/security"
 )
 
+// revocableTheme is the handler of the theme page behind sessions. Between
+// the check of the route and the handler is a step that can revoke every
+// session, as a sign-out on another device does while a request is on its
+// way.
+type revocableTheme struct {
+	t      *testing.T
+	app    *fiber.App
+	store  *security.Store
+	revoke atomic.Bool
+}
+
+// newRevocableTheme puts the handler behind sessions. It follows isolateTheme,
+// whose cleanup gives the flags back.
+func newRevocableTheme(t *testing.T) *revocableTheme {
+	t.Helper()
+	define.AppFlags.DisableLoginMode = false
+	define.AppFlags.CookieName = "flare"
+	define.AppFlags.Port = 5005
+	define.AppFlags.CookieSecure = false
+	store, err := security.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	if err = store.Initialize("admin", "legacy short", "local"); err != nil {
+		t.Fatal(err)
+	}
+	guarded := &revocableTheme{t: t, store: store, app: fiber.New(fiber.Config{Immutable: true, Views: themeTestViews{}})}
+	if err = auth.RequestHandle(guarded.app, store); err != nil {
+		t.Fatal(err)
+	}
+	guarded.app.Get("/token", auth.AuthRequired, func(c fiber.Ctx) error { return c.SendString(auth.CSRFToken(c)) })
+	guarded.app.Post(define.SettingPages.Theme.Path, auth.AuthRequired, func(c fiber.Ctx) error {
+		if guarded.revoke.Load() {
+			if e := store.RevokeAll(); e != nil {
+				return e
+			}
+		}
+		return c.Next()
+	}, updateThemes)
+	return guarded
+}
+
+func (guarded *revocableTheme) send(req *http.Request) (int, string) {
+	guarded.t.Helper()
+	res, err := guarded.app.Test(req, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
+	if err != nil {
+		guarded.t.Fatal(err)
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		guarded.t.Fatal(err)
+	}
+	return res.StatusCode, string(body)
+}
+
+// post submits a form to the theme page. Every request has a session of its
+// own, with the token of that session, which body is given to put into the
+// form: a session that was revoked is not let in a second time. With revoked
+// set, every session is revoked after the request was let in.
+func (guarded *revocableTheme) post(body func(csrf string) (io.Reader, string), revoked bool) (int, string) {
+	guarded.t.Helper()
+	token, err := guarded.store.Authenticate("admin", "legacy short")
+	if err != nil {
+		guarded.t.Fatal(err)
+	}
+	session := &http.Cookie{Name: auth.RequestHandleSessionName(define.AppFlags.CookieName, define.AppFlags.Port) + "_" + guarded.store.Info().InstanceID, Value: token}
+	req := httptest.NewRequest(http.MethodGet, "http://flare.test/token", nil)
+	req.AddCookie(session)
+	status, csrf := guarded.send(req)
+	if status != http.StatusOK || csrf == "" {
+		guarded.t.Fatalf("token of the session: %d %q", status, csrf)
+	}
+	content, kind := body(csrf)
+	req = httptest.NewRequest(http.MethodPost, "http://flare.test"+define.SettingPages.Theme.Path, content)
+	req.Header.Set("Content-Type", kind)
+	req.AddCookie(session)
+	guarded.revoke.Store(revoked)
+	defer guarded.revoke.Store(false)
+	return guarded.send(req)
+}
+
 // The values of the options are stored with the checks of every write of the
 // theme page: the session is looked at again when they are stored. A session
 // that is revoked after the request was let in stores nothing, and neither
@@ -35,72 +118,14 @@ func TestThemeOptionsAreNotStoredForARevokedSession(t *testing.T) {
 		t.Fatalf("select: %d %s", status, body)
 	}
 
-	// The handler of the page behind sessions. Between the check of the route
-	// and the handler is a step that can revoke every session, as a sign-out
-	// on another device does while a request is on its way.
-	define.AppFlags.DisableLoginMode = false
-	define.AppFlags.CookieName = "flare"
-	define.AppFlags.Port = 5005
-	define.AppFlags.CookieSecure = false
-	store, err := security.Open(t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = store.Close() })
-	if err = store.Initialize("admin", "legacy short", "local"); err != nil {
-		t.Fatal(err)
-	}
-	app := fiber.New(fiber.Config{Immutable: true, Views: themeTestViews{}})
-	if err = auth.RequestHandle(app, store); err != nil {
-		t.Fatal(err)
-	}
-	var revoke atomic.Bool
-	app.Get("/token", auth.AuthRequired, func(c fiber.Ctx) error { return c.SendString(auth.CSRFToken(c)) })
-	app.Post(define.SettingPages.Theme.Path, auth.AuthRequired, func(c fiber.Ctx) error {
-		if revoke.Load() {
-			if e := store.RevokeAll(); e != nil {
-				return e
-			}
-		}
-		return c.Next()
-	}, updateThemes)
-
-	send := func(req *http.Request) (int, string) {
-		t.Helper()
-		res, e := app.Test(req, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
-		if e != nil {
-			t.Fatal(e)
-		}
-		defer res.Body.Close()
-		body, e := io.ReadAll(res.Body)
-		if e != nil {
-			t.Fatal(e)
-		}
-		return res.StatusCode, string(body)
-	}
-	// Every request has a session of its own, with the token of that session:
-	// a session that was revoked is not let in a second time.
+	guarded := newRevocableTheme(t)
 	submit := func(form url.Values, revoked bool) (int, string) {
 		t.Helper()
-		token, e := store.Authenticate("admin", "legacy short")
-		if e != nil {
-			t.Fatal(e)
-		}
-		session := &http.Cookie{Name: auth.RequestHandleSessionName(define.AppFlags.CookieName, define.AppFlags.Port) + "_" + store.Info().InstanceID, Value: token}
-		req := httptest.NewRequest(http.MethodGet, "http://flare.test/token", nil)
-		req.AddCookie(session)
-		status, csrf := send(req)
-		if status != http.StatusOK || csrf == "" {
-			t.Fatalf("token of the session: %d %q", status, csrf)
-		}
-		form.Set("csrf-token", csrf)
-		form.Set(optionsTheme, "zelda")
-		req = httptest.NewRequest(http.MethodPost, "http://flare.test"+define.SettingPages.Theme.Path, strings.NewReader(form.Encode()))
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		req.AddCookie(session)
-		revoke.Store(revoked)
-		defer revoke.Store(false)
-		return send(req)
+		return guarded.post(func(csrf string) (io.Reader, string) {
+			form.Set("csrf-token", csrf)
+			form.Set(optionsTheme, "zelda")
+			return strings.NewReader(form.Encode()), "application/x-www-form-urlencoded"
+		}, revoked)
 	}
 	stored := func() map[string]string {
 		t.Helper()

@@ -443,7 +443,7 @@ func TestStoreUserThemeIntoADirectoryFullOfDirectories(t *testing.T) {
 }
 
 // A theme that is a directory is not handed out as a single file.
-func TestThemeDirectoryIsNotExported(t *testing.T) {
+func TestThemeDirectoryIsNotExportedAsOneFile(t *testing.T) {
 	userThemeDirectory(t, "blackboard")
 	writeThemeDirectory(t, "zelda", userThemeColors)
 	writeUserTheme(t, "plain.yml", userThemeColors)

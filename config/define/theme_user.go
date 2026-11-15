@@ -27,9 +27,9 @@ const (
 	UserThemeDirectory = "themes"
 	userThemeExtension = ".yml"
 	// userThemeManifest is the theme file of a theme that is a directory.
-	userThemeManifest = "theme.yml"
+	userThemeManifest = model.ThemeManifestName
 	// userThemeStylesheet is the stylesheet such a theme can bring.
-	userThemeStylesheet = "theme.css"
+	userThemeStylesheet = model.ThemeStylesheetName
 	// MaximumUserThemeFiles is the number of entries of the themes directory
 	// looked at, in the order of their names: theme files, directories and
 	// links. Entries after them are neither read nor reported.
@@ -334,10 +334,7 @@ func isThemeDirectory(root *os.Root, directory string) bool {
 // directory is not opened, so nothing in it can keep the instance from being
 // used: there are no themes of the directory and no remarks about it.
 func scanUserThemes() userThemeScan {
-	scan := userThemeScan{
-		themes: map[string]model.Theme{}, watched: map[string][]themeAssetStamp{}, files: map[string]model.ThemeFile{},
-		bases: map[string][]string{}, stamps: map[string]themeStamp{}, listed: map[string]bool{}, candidates: map[string]*themeCandidate{},
-	}
+	scan := newUserThemeScan()
 	if AppFlags.ThemeSafeMode {
 		return scan
 	}
@@ -401,6 +398,15 @@ func scanUserThemes() userThemeScan {
 	}
 	scan.resolveThemes()
 	return scan
+}
+
+// newUserThemeScan returns a reading of the themes directory that has not
+// looked at anything yet.
+func newUserThemeScan() userThemeScan {
+	return userThemeScan{
+		themes: map[string]model.Theme{}, watched: map[string][]themeAssetStamp{}, files: map[string]model.ThemeFile{},
+		bases: map[string][]string{}, stamps: map[string]themeStamp{}, listed: map[string]bool{}, candidates: map[string]*themeCandidate{},
+	}
 }
 
 // noteState notes the state of the files a theme name is read from, before
