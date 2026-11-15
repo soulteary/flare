@@ -301,11 +301,13 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	var apps template.HTML
+	// How many entries each list shows, for a search without results.
+	appsShown, bookmarksShown := 0, 0
 	if options.ShowApps {
 		if appsErr != nil {
 			m["ApplicationsError"] = navigationDataError("applications", options.Locale, appsErr)
 		} else {
-			apps = navigationFragment(appsView, &options, true, filter, "", c.Path(), &requestURL)
+			apps, appsShown = navigationFragmentShown(appsView, &options, true, filter, "", c.Path(), &requestURL)
 		}
 	}
 	selected := c.Query("category")
@@ -318,13 +320,13 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 		if bookmarksErr != nil {
 			m["BookmarksError"] = navigationDataError("bookmarks", options.Locale, bookmarksErr)
 		} else {
-			bookmarks = navigationFragment(bookmarksView, &options, false, filter, selected, c.Path(), &requestURL)
+			bookmarks, bookmarksShown = navigationFragmentShown(bookmarksView, &options, false, filter, selected, c.Path(), &requestURL)
 		}
 	}
 	m["Applications"] = apps
 	m["Bookmarks"] = bookmarks
 	if filter != "" {
-		m["SearchNoResults"] = searchHasNoResults(m, options, apps, bookmarks)
+		m["SearchNoResults"] = searchHasNoResults(m, options, appsShown, bookmarksShown)
 	}
 	m["SearchKeyword"] = searchKeyword
 	PopulateSearch(m, options, query, target, searchError)
@@ -517,9 +519,13 @@ func homepageBodyClasses(options model.Application) string {
 	return classes
 }
 
-func searchHasNoResults(m map[string]any, options model.Application, apps, bookmarks template.HTML) bool {
+// searchHasNoResults reports a search that shows no entry in any list the
+// page has. It goes by the number of entries each list shows, not by their
+// markup, which is the theme's to decide. A list that could not be read is
+// no list without results.
+func searchHasNoResults(m map[string]any, options model.Application, appsShown, bookmarksShown int) bool {
 	dataFailed := m["ApplicationsError"] != nil && m["ApplicationsError"] != "" || m["BookmarksError"] != nil && m["BookmarksError"] != ""
-	return !dataFailed && (!options.ShowApps || !strings.Contains(string(apps), `class="app-item"`)) && (!options.ShowBookmarks || !strings.Contains(string(bookmarks), `class="bookmark"`))
+	return !dataFailed && (!options.ShowApps || appsShown == 0) && (!options.ShowBookmarks || bookmarksShown == 0)
 }
 
 func isMobileUserAgent(ua string) bool {

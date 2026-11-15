@@ -22,6 +22,7 @@ import (
 	"html/template"
 	"io"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -41,6 +42,9 @@ type Slot struct {
 	Required bool
 	// Inline parts can stand inside a link, as an icon does.
 	Inline bool
+	// Within names the elements the part can stand directly in. A part
+	// without any can stand in every element and beside the others.
+	Within []string
 }
 
 // Spec says what a template can show and what it has to hold.
@@ -64,6 +68,12 @@ type Spec struct {
 	AssetPrefix string
 	// Limit is the number of bytes the template can write.
 	Limit int
+	// Root names the one element the template writes: everything else it
+	// writes is inside that element. Without it a template can write
+	// several elements and text beside them.
+	Root string
+	// Elements are elements the template has to write at least once.
+	Elements []string
 }
 
 // Fields hands out the placeholders for the model a template is run with.
@@ -142,7 +152,7 @@ func Compile(source string, spec Spec, model func(Fields) any) (*Fragment, error
 	p := &parser{
 		spec: spec, fields: fields, slots: slots, slotElement: slotElement,
 		placeholder: regexp.MustCompile(fields.prefix + `(t[0-9]+|a)z`),
-		shown:       make(map[string]int), placed: make(map[string]int),
+		shown:       make(map[string]int), placed: make(map[string]int), written: make(map[string]bool),
 	}
 	return p.parse(out.String())
 }
@@ -162,6 +172,13 @@ type parser struct {
 	// and placed how often a part is placed.
 	shown, placed map[string]int
 	entryLinks    int
+	// roots counts the elements that are in no other element, root is the
+	// first of them, and loose reports text or a part beside them.
+	roots int
+	root  string
+	loose bool
+	// written are the elements the template has written.
+	written map[string]bool
 }
 
 func (p *parser) hole(h Hole) {
@@ -172,6 +189,9 @@ func (p *parser) hole(h Hole) {
 // text writes a value that can hold placeholders of text fields: what is
 // between them is escaped, and each of them becomes a hole.
 func (p *parser) text(value string, content bool) error {
+	if content && len(p.stack) == 0 && strings.TrimSpace(value) != "" {
+		p.loose = true
+	}
 	for {
 		at := p.placeholder.FindStringSubmatchIndex(value)
 		if at == nil {
@@ -264,6 +284,14 @@ func (p *parser) parse(output string) (*Fragment, error) {
 			return nil, refuse(ReasonTextMissing, name)
 		}
 	}
+	if p.spec.Root != "" && (p.roots != 1 || p.root != p.spec.Root || p.loose) {
+		return nil, refuse(ReasonRoot, p.spec.Root)
+	}
+	for _, name := range p.spec.Elements {
+		if !p.written[name] {
+			return nil, refuse(ReasonElementMissing, name)
+		}
+	}
 	return fragment, nil
 }
 
@@ -295,6 +323,13 @@ func (p *parser) start(token html.Token) error {
 	}
 	if name == "a" && p.links > 0 {
 		return refuse(ReasonMarkup, "a link inside a link")
+	}
+	p.written[name] = true
+	if len(p.stack) == 0 {
+		if p.roots == 0 {
+			p.root = name
+		}
+		p.roots++
 	}
 	// The tokenizer keeps the first of two attributes of one name, as a
 	// browser does.
@@ -385,6 +420,12 @@ func (p *parser) slot(token html.Token) error {
 		return refuse(ReasonSlotPosition, name)
 	}
 	if p.links > 0 && !slot.Inline {
+		return refuse(ReasonSlotPosition, name)
+	}
+	if len(p.stack) == 0 {
+		p.loose = true
+	}
+	if len(slot.Within) > 0 && (len(p.stack) == 0 || !slices.Contains(slot.Within, p.stack[len(p.stack)-1])) {
 		return refuse(ReasonSlotPosition, name)
 	}
 	p.placed[name]++

@@ -74,7 +74,7 @@ func TestThemeTemplateReasonsHaveTexts(t *testing.T) {
 		themetemplate.ReasonMarkup, themetemplate.ReasonElement, themetemplate.ReasonAttribute, themetemplate.ReasonUnbalanced,
 		themetemplate.ReasonFieldPosition, themetemplate.ReasonAddressPosition, themetemplate.ReasonComputed, themetemplate.ReasonLink,
 		themetemplate.ReasonResource, themetemplate.ReasonSlotPosition, themetemplate.ReasonSlotMissing, themetemplate.ReasonSlotRepeated,
-		themetemplate.ReasonLinkCount, themetemplate.ReasonTextMissing,
+		themetemplate.ReasonLinkCount, themetemplate.ReasonTextMissing, themetemplate.ReasonRoot, themetemplate.ReasonElementMissing,
 	}
 	keys := []string{"theme_file_problem_" + define.ThemeProblemTemplateEncoding}
 	for _, reason := range reasons {

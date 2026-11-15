@@ -61,6 +61,15 @@ func generateBookmarkSnapshot(filter, selected, path string, options *model.Appl
 }
 
 func renderBookmarkSelection(filter, selected, path string, options *model.Application, categories []model.Category, item func(int) model.Bookmark, matches []int, info *fn.DynamicURL) (template.HTML, string) {
+	markup, _ := renderBookmarkSelectionShown(filter, selected, path, options, categories, item, matches, info)
+	return markup, ""
+}
+
+// renderBookmarkSelectionShown renders the bookmarks that match and reports
+// how many of them it shows, which is fewer than those that match where a
+// category is selected.
+func renderBookmarkSelectionShown(filter, selected, path string, options *model.Application, categories []model.Category, item func(int) model.Bookmark, matches []int, info *fn.DynamicURL) (template.HTML, int) {
+	shown := 0
 	privateCategories := make(map[string]bool, len(categories))
 	for _, c := range categories {
 		privateCategories[c.ID] = c.Private
@@ -72,6 +81,7 @@ func renderBookmarkSelection(filter, selected, path string, options *model.Appli
 	b.Reset()
 	defer releaseNavigationBuilder(b)
 	writeItem := func(index int) {
+		shown++
 		bookmark := item(index)
 		bookmark.URL = expandNavigationURL(bookmark.URL, info)
 		bookmark.Private = bookmark.Private || privateCategories[bookmark.Category]
@@ -88,7 +98,7 @@ func renderBookmarkSelection(filter, selected, path string, options *model.Appli
 		renderBookmarkIndexGroupsRead(b, categories, item, matches, selected, filter, path, options, writeItem)
 	}
 	// #nosec G203 -- Names/categories are escaped and URL/icon policies are enforced at item emission.
-	return template.HTML(b.String()), ""
+	return template.HTML(b.String()), shown
 }
 
 func writeBookmarkItem(b *strings.Builder, bookmark model.Bookmark, newTab, encoded bool, iconMode string, info *fn.DynamicURL) {

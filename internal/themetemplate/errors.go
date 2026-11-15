@@ -52,6 +52,12 @@ const (
 	ReasonLinkCount Reason = "link_count"
 	// ReasonTextMissing: a field that has to be shown as text is not.
 	ReasonTextMissing Reason = "text_missing"
+	// ReasonRoot: the template does not write exactly the one element it
+	// has to, with everything else inside it.
+	ReasonRoot Reason = "root"
+	// ReasonElementMissing: an element the template has to write is not
+	// written.
+	ReasonElementMissing Reason = "element_missing"
 )
 
 // Error is why a template was not compiled. Subject is what the reason is
