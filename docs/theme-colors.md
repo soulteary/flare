@@ -1,7 +1,7 @@
 # Themes and custom colors
 
 > Availability: the 15 bundled themes are available in every release. Custom
-> colors are in current source and are not part of 0.6.15.
+> colors are available in 0.7.0 and later.
 
 A theme is three colors: the page background, the primary color used for text
 and icons, and the accent color used for group titles, descriptions and
@@ -38,8 +38,8 @@ icons exist only for the bundled themes, so custom colors use the default icon.
 
 ## Bundled icons
 
-> Availability: the behavior in this section is in current source and is not
-> part of 0.6.15, which writes one icon file per theme with the color in it.
+> Availability: the behavior in this section applies to 0.7.0 and later.
+> Releases up to 0.6.15 write one icon file per theme with the color in it.
 
 An icon from the bundled icon set is drawn in the primary color of the theme in
 use. The page takes the color from the theme; the icon file,

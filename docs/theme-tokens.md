@@ -1,6 +1,6 @@
 # Style tokens
 
-> Availability: in current source; not part of 0.6.15, whose stylesheets use the
+> Availability: 0.7.0 and later. The stylesheets of 0.6.15 and earlier use the
 > three color variables directly.
 
 The stylesheets of the themed pages take their colors, corner radius and font

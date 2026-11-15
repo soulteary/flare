@@ -1,6 +1,6 @@
 # Theme stylesheets
 
-> Availability: in current source; not part of 0.6.15.
+> Availability: 0.7.0 and later.
 
 A [theme that is a directory](theme-files.md#a-theme-as-a-directory) can bring
 a stylesheet, and the images and fonts the stylesheet uses. The theme file

@@ -1,6 +1,6 @@
 # Theme files
 
-> Availability: in current source; not part of 0.6.15.
+> Availability: 0.7.0 and later.
 
 A theme can be added to an instance as a file. The file gives the three colors
 of a [theme](theme-colors.md) and, if wanted, values for the other

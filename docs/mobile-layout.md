@@ -79,7 +79,7 @@ and category navigation across the 599/600 and 767/768/769 boundaries.
 Configuration and HTTP tests reject invalid
 choices without writing and preserve saved choices when an older form omits them.
 
-## Current development: compact phone and tablet density
+## 0.6.10: compact phone and tablet density
 
 The existing `Homepage.MobileBookmarkLayout: compact` option now also reduces
 navigation spacing through 1024 CSS pixels, including landscape iPad Mini widths.

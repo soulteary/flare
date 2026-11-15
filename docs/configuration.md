@@ -45,7 +45,7 @@ credentials or initialization, and invalid security inputs still block startup.
 | `FLARE_MINI_REQUEST` | `--mini_request`, `-m` | `false` | Boolean; inline icon SVGs, trade fewer HTTP requests for larger HTML |
 | `FLARE_DEPRECATED_NOTICE` | `--enable_notice`, `-n` | `true` | Boolean; deprecated-feature notices |
 | `FLARE_DISABLE_CSP` | `--disable_csp`, `-c` | `false` | Boolean; disabling the page script policy reduces browser protection |
-| `FLARE_THEME_SAFE_MODE` | `--theme_safe_mode` | `false` | Current source: Boolean; do not read the themes directory, see [safe mode](theme-files.md#safe-mode) |
+| `FLARE_THEME_SAFE_MODE` | `--theme_safe_mode` | `false` | Since 0.7.0: Boolean; do not read the themes directory, see [safe mode](theme-files.md#safe-mode) |
 | `FLARE_COOKIE_NAME` | `--cookie_name`, `-k` | `flare` | Session cookie prefix; current main also includes the instance identity |
 | `FLARE_COOKIE_SECRET` | `--cookie_secret`, `-r` | Legacy: secure initialized key | Stable/legacy signed-cookie setting (at least 32 bytes); does not replace current-main security state |
 | `FLARE_COOKIE_SECURE` | `--cookie_secure` | `false` | Boolean; force HTTPS-only cookies behind TLS termination, after which pages opened over HTTP cannot sign in or save; direct TLS is secure automatically. Current source no longer needs it for writes behind TLS termination; 0.6.8–0.6.14 do |
@@ -116,11 +116,11 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 | `apps.yml` / `bookmarks.yml` | Navigation entries and categories | [Editor](editor.md), [transfer](bookmark-transfer.md) |
 | `config.yml` `Clock` | Display time, seconds, zone; since 0.6.3 | [Clock](clock.md) |
 | `config.yml` `Search` | Engines/hybrid since 0.6.5; additional modes and save protections in 0.6.6 | [Search](search.md) |
-| `config.yml` `Homepage` | Layout controls since 0.6.5; adaptive tablet columns in 0.6.6. `IgnoreThemeLayout` (current source) turns off the layout that themes specify | [Mobile](mobile-layout.md), [desktop](desktop-columns-and-scale.md), [layout of a theme](theme-files.md#layout) |
-| `config.yml` `ThemeSettings` | Per theme: the layout options of the theme that are turned off, and the values chosen for the [options](theme-files.md#options) of the theme (current source) | [Layout of a theme](theme-files.md#layout) |
-| `config.yml` `Theme`, `ThemeCustom` | A bundled theme name, the name of a theme file (current source), or `custom` with three `#RRGGBB` colors in `ThemeCustom` (current source); read at startup | [Themes and custom colors](theme-colors.md), [theme files](theme-files.md) |
-| `config.yml` `ThemeMode` | `auto`, `light` or `dark` for a theme with light and dark values (current source); read at startup | [Light and dark](theme-files.md#light-and-dark) |
-| `themes/*.yml`, `themes/*/theme.yml`, `themes/*/theme.css`, `themes/*/assets/*` | Themes of the instance, one per file or per directory, and the stylesheet, images and fonts of a theme that is a directory (current source); optional | [Theme files](theme-files.md), [theme stylesheets](theme-stylesheets.md) |
+| `config.yml` `Homepage` | Layout controls since 0.6.5; adaptive tablet columns in 0.6.6. `IgnoreThemeLayout` (since 0.7.0) turns off the layout that themes specify | [Mobile](mobile-layout.md), [desktop](desktop-columns-and-scale.md), [layout of a theme](theme-files.md#layout) |
+| `config.yml` `ThemeSettings` | Per theme: the layout options of the theme that are turned off, and the values chosen for the [options](theme-files.md#options) of the theme (since 0.7.0) | [Layout of a theme](theme-files.md#layout) |
+| `config.yml` `Theme`, `ThemeCustom` | A bundled theme name, the name of a theme file (since 0.7.0), or `custom` with three `#RRGGBB` colors in `ThemeCustom` (since 0.7.0); read at startup | [Themes and custom colors](theme-colors.md), [theme files](theme-files.md) |
+| `config.yml` `ThemeMode` | `auto`, `light` or `dark` for a theme with light and dark values (since 0.7.0); read at startup | [Light and dark](theme-files.md#light-and-dark) |
+| `themes/*.yml`, `themes/*/theme.yml`, `themes/*/theme.css`, `themes/*/assets/*` | Themes of the instance, one per file or per directory, and the stylesheet, images and fonts of a theme that is a directory (since 0.7.0); optional | [Theme files](theme-files.md), [theme stylesheets](theme-stylesheets.md) |
 | `config.yml` `Footer` | Administrator-controlled internal HTML | Treat it as trusted site content, unlike ordinary bookmark text |
 | `config.yml` `LoginFooter` | Current main: public login-page text/filtered HTTP(S) links | [Accounts](accounts.md); separate from internal Footer |
 
