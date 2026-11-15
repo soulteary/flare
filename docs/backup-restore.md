@@ -8,8 +8,9 @@ configuration files. Keep the original volume/project identity during upgrades.
 
 | Artifact | Contains | Restore/use | Limits |
 | --- | --- | --- | --- |
-| Full data-directory backup | `config.yml`, `apps.yml`, `bookmarks.yml`, application `.env`, legacy cookie key, current-main security state and backup/recovery directories | Stop writers; preserve current data; restore directory with original ownership/modes; restart and verify | External environment, Compose file, proxy and externally configured secrets need separate backup |
+| Full data-directory backup | `config.yml`, `apps.yml`, `bookmarks.yml`, the `themes` directory (since 0.7.0), application `.env`, legacy cookie key, current-main security state and backup/recovery directories | Stop writers; preserve current data; restore directory with original ownership/modes; restart and verify | External environment, Compose file, proxy and externally configured secrets need separate backup |
 | `.flare-security/` or custom `FLARE_STATE_DIR` (current main) | Instance identity, password hash/ownership, sessions, transaction and migration state | Restore the complete consistent directory while stopped; revoke sessions before starting | Required even with read-only YAML; separate volumes and external directories need separate backup |
+| `themes/` (since 0.7.0) | [Theme files](theme-files.md), and the stylesheets, images, fonts and text documents of themes that are directories | Restore the directory with the rest of the data directory; a single theme can be downloaded and imported on the theme page | `config.yml` holds the selected theme and the values of its options, not the theme itself |
 | Browser HTML export | Names, links, categories | Preview and merge through import/export | No account, search settings or full Flare configuration |
 | Flare YAML export | One navigation collection | Preview and merge, or replace that collection while stopped | Merge is not full replacement or full-site restore |
 | `.flare-bookmark-backups/` | Import-before copies | Download recent backup or inspect filesystem copies | Import backups only; not all ordinary edits or `config.yml` |

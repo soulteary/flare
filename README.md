@@ -7,9 +7,9 @@
 
 A lightweight self-hosted bookmark dashboard and start page, written in Go.
 
-The current release is [**0.6.15**](https://github.com/soulteary/flare/releases/tag/0.6.15).
-It makes saves work behind TLS-terminating reverse proxies without extra configuration, restores the classic phone layout
-and 30-day sign-in, and changes several defaults. Read the [release and upgrade notes](docs/release-0.6.15.md) before updating.
+The current release is [**0.7.0**](https://github.com/soulteary/flare/releases/tag/0.7.0).
+It adds custom theme colors and themes that an instance brings itself, as theme files and as directories with a stylesheet,
+images and fonts; the bundled themes look as before. Read the [release and upgrade notes](docs/release-0.7.0.md) before updating.
 See the [documentation index](docs/README.md) for version scope and usage.
 
 ## Features
@@ -27,6 +27,15 @@ See the [documentation index](docs/README.md) for version scope and usage.
 The editor includes browser HTML and native Flare YAML import/export, with
 preview, duplicate handling, conflict detection, and automatic pre-import backups.
 See [Bookmark transfer](docs/bookmark-transfer.md) for usage and limits.
+
+### Themes
+
+Fifteen themes are bundled. Since 0.7.0 the theme page also takes custom colors,
+and an instance can bring themes of its own in a `themes` directory: a theme file
+sets colors, style tokens, values for light and dark and layout options, and a
+theme that is a directory adds a checked stylesheet, images and fonts. See
+[themes and custom colors](docs/theme-colors.md), [theme files](docs/theme-files.md)
+and [theme stylesheets](docs/theme-stylesheets.md).
 
 ## Screenshots
 
@@ -80,8 +89,8 @@ Echo is no longer part of the production dependency graph. See
 Published stable versions are available from both registries:
 
 ```sh
-docker pull soulteary/flare:0.6.15
-docker pull ghcr.io/soulteary/flare:0.6.15
+docker pull soulteary/flare:0.7.0
+docker pull ghcr.io/soulteary/flare:0.7.0
 ```
 
 Both images support `linux/amd64`, `linux/arm64`, `linux/arm/v7`, and
@@ -109,7 +118,7 @@ precedence, and rebuilding existing containers while preserving application data
 
 ### Accounts and private access
 
-**Version scope:** stable 0.6.15 includes persistent single-administrator accounts,
+**Version scope:** stable 0.7.0 includes persistent single-administrator accounts,
 session revocation and per-entry/category privacy. Stable 0.6.7 retains the legacy
 login model.
 Use [the documentation index](docs/README.md) to choose the matching instructions.
@@ -125,7 +134,7 @@ is prepared automatically. Anyone who can access the instance can modify content
 when the editor is enabled. Enable `FLARE_DISABLE_LOGIN=false` for protected
 management; add `FLARE_VISIBILITY=PRIVATE` for whole-site protection. Previously
 recorded private defaults remain effective. Published 0.6.8 used private defaults
-for new installations; 0.6.15 retains the restored behavior already present in 0.6.12.
+for new installations; 0.7.0 retains the restored behavior already present in 0.6.12.
 Persist the security directory as well as YAML. Read [accounts](docs/accounts.md),
 [configuration](docs/configuration.md), [upgrade/rollback](docs/login-private-upgrade.md),
 [backup/restore](docs/backup-restore.md) and [reverse proxies](docs/reverse-proxy.md)
