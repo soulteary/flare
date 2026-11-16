@@ -4,10 +4,15 @@
 > theme.
 
 A [theme that is a directory](theme-files.md#a-theme-as-a-directory) can bring
-templates for the home page, the application page and the bookmark page. A
-template decides where the parts of a page stand and what stands between
-them. The parts themselves, such as the search form, the list of applications
-and the footer, are rendered by the application.
+templates of two kinds:
+
+- **Page templates** for the home page, the application page and the
+  bookmark page. A page template decides where the parts of a page stand and
+  what stands between them. The parts themselves, such as the search form,
+  the list of applications and the footer, are rendered by the application.
+- **Item templates** for an application, a bookmark and a group of
+  bookmarks. An [item template](#item-templates) decides the markup of one
+  entry. Its name, its address and its icon are filled in by the application.
 
 Templates are turned off until the administrator allows them and confirms
 those of the selected theme.
@@ -23,17 +28,23 @@ themes/
             home.html
             applications.html
             bookmarks.html
+            app.html
+            bookmark.html
+            group.html
 ```
 
 - The templates are the files `home.html`, `applications.html` and
-  `bookmarks.html` in the directory `templates` beside `theme.yml`. Other
-  files of that directory are not read. A theme that is a single file has no
-  templates.
+  `bookmarks.html` for the pages, and `app.html`, `bookmark.html` and
+  `group.html` for the items, in the directory `templates` beside
+  `theme.yml`. Other files of that directory are not read. A theme that is a
+  single file has no templates.
 - A template is a regular file of up to 64 KiB in UTF-8. A link is not
   followed.
 - Each file is optional. The application page and the bookmark page take
   `home.html` from a theme that has no template of their own for them, and a
-  theme without `home.html` leaves the home page to the application.
+  theme without `home.html` leaves the home page to the application. What a
+  theme has no item template for is written with the markup of the
+  application.
 - A template that is [not accepted](#what-a-template-can-contain) counts as
   absent, and the theme stays in use: the theme page lists the file with the
   reason and what it is about. This differs from a stylesheet, which a theme
@@ -88,7 +99,8 @@ ThemeSettings:
 | The instance runs with `FLARE_DISABLE_CSP` | No template of a theme is used, and the theme page says so in place of the setting. That a template runs no script is finally enforced by the Content-Security-Policy of the navigation pages; without it only the check below remains. Tokens, stylesheets and layout of themes are not affected |
 | [Safe mode](theme-files.md#safe-mode) for the instance | The themes directory is not read, so there are no templates |
 | Safe mode for one page | That response has the markup of the application |
-| The help page and the guide | Always the markup of the application: the help page describes the default interface, and the script of the guide finds its elements by it |
+| The help page and the guide | Always the markup of the application, for the page and for the entries: the help page describes the default interface, and the script of the guide finds its elements by it |
+| The bar that selects a category | Where categories are selected one at a time, the bar is the application's, above the group of the theme |
 | Settings, the editor, sign-in | Not pages of a theme |
 
 ## Writing a template
@@ -181,13 +193,107 @@ other than those above, nothing of the request and nothing of the session.
 The entries of a page reach it only inside the parts, which the application
 renders after the template has run.
 
+## Item templates
+
+```html
+<!-- templates/app.html -->
+<div class="tile">
+  <a href="{{.Href}}" title="{{.Name}}">
+    {{if .Has.Icon}}{{template "flare/icon"}}{{else}}<span class="letter">{{.Initial}}</span>{{end}}
+    <strong>{{.Name}}</strong>
+    {{if .Has.Description}}<small>{{.Description}}</small>{{else}}<small>{{.Host}}</small>{{end}}
+  </a>
+</div>
+```
+
+```html
+<!-- templates/bookmark.html -->
+<li class="mark"><a href="{{.Href}}">{{template "flare/icon"}}<span>{{.Name}}</span></a></li>
+```
+
+```html
+<!-- templates/group.html -->
+{{if .Collapsible}}
+<details class="pack"><summary>{{.Name}}</summary><ul>{{template "flare/items"}}</ul></details>
+{{else}}
+<section class="pack">{{if .Has.Name}}<h3>{{.Name}}</h3>{{end}}<ul>{{template "flare/items"}}</ul></section>
+{{end}}
+```
+
+| File | For | Can show | Can branch on |
+| --- | --- | --- | --- |
+| `app.html` | An application | `.Name`, `.Description`, `.Host`, `.Initial`, the address as `.Href`, the icon as `{{template "flare/icon"}}` | `.Has.Icon`, `.Has.Description`, `.NewTab` |
+| `bookmark.html` | A bookmark | `.Name`, `.Host`, `.Initial`, `.Href`, the icon | `.Has.Icon`, `.NewTab` |
+| `group.html` | A group of bookmarks: a category with its bookmarks | `.Name`, the bookmarks as `{{template "flare/items"}}` | `.Has.Name`, `.Collapsible` |
+
+Every item template can also branch on `.Site.Lang` and
+`.Theme.Options.<id>` and call `T` and `asset`, as a page template can.
+
+**What is filled in**
+
+| Field | Value |
+| --- | --- |
+| `.Name` | The name of the entry or of the category |
+| `.Description` | The description of an application, and nothing where `.Has.Description` is false |
+| `.Host` | The host the address leads to, without the port, for an `http` or `https` address; nothing for any other |
+| `.Initial` | The first character of the name, as it is written |
+| `.Href` | The address the application links to. With encoded links turned on it is the encoded address |
+| `flare/icon` | The icon as the application writes it: an `svg` that refers to a bundled icon, or an `img` for an icon given as an address. Nothing for an entry without an icon |
+| `flare/items` | The bookmarks of the group, each an `li` |
+
+- The fields are filled in after the template has run, as text: a name is
+  escaped wherever it stands. A template cannot compute with a field or
+  branch on it. It can place it in the content of an element and in the
+  attributes `title`, `alt`, `aria-label` and `data-*`.
+- `.Href` is the whole `href` of one link and can stand nowhere else. The
+  link gets `rel` and `target` from the application, by the setting for
+  opening entries in a new window; what the template writes for them is
+  dropped.
+
+**What a template has to hold**
+
+- **An application and a bookmark** have exactly one link to the entry, and
+  show `.Name` in the content of an element. An entry can then be opened and
+  is read out under every theme.
+- **A bookmark** is one `li`, with everything else inside it.
+- **A group** places `flare/items` once, directly in a `ul` or an `ol`. A
+  bookmark is an item of a list whichever of the two templates a theme
+  brings, so each fits the markup of the application for the other.
+- **A group shows `.Name`** in the content of an element where it has one.
+  The bookmarks of a site without categories are one group without a name,
+  and `.Has.Name` is false for it.
+- **A group that is opened and closed**, where `.Collapsible` is true, is
+  written with `details` and `summary`, which open and close without script.
+  The setting for collapsed categories does not collapse the results of a
+  search, so `.Collapsible` is false there.
+- An item template writes at most 64 KiB.
+
+**What the application decides**
+
+- **Hidden descriptions.** With the layout option that hides the
+  descriptions of applications, `.Has.Description` is false and
+  `.Description` is empty for every application.
+- **An application without a description.** The markup of the application
+  shows the address in its place. A template is given `.Host` for that.
+- **Icons.** `.Has.Icon` is false for an entry without an icon. The size of
+  an icon is for the stylesheet of the theme: the rules of the application
+  for icons select by its own markup around them.
+- **Layout options.** Options that act on the markup of the entries, such as
+  the bookmark layouts and the columns, select by the classes of the
+  application and have no effect on entries a template writes.
+
+An item template is checked for every combination of what an entry has:
+eight for an application, four for a bookmark and three for a group. One that
+is not accepted for any of them is not used at all.
+
 ## What a template can contain
 
 A template is not run for a request. It is run once for a set of values, with
-a placeholder in place of the title, and what it writes is read as HTML,
-checked and written out again as text with holes for the title and the
-parts. A page is rendered by filling the holes. The check is therefore about
-what the template writes, whichever way it is written.
+placeholders in place of the title of the site or the fields of an entry, and
+what it writes is read as HTML, checked and written out again as text with
+holes for the fields and the parts. A page and an entry are rendered by
+filling the holes. The check is therefore about what the template writes,
+whichever way it is written.
 
 - **Elements.** `a`, `abbr`, `address`, `article`, `aside`, `b`,
   `blockquote`, `br`, `caption`, `cite`, `code`, `col`, `colgroup`, `dd`,
@@ -213,21 +319,24 @@ what the template writes, whichever way it is written.
   writes, and its `target` can be `_blank` or `_self`.
 - **Images.** `src` and `srcset` name assets of the theme through `asset`.
   Nothing is loaded from elsewhere.
-- **The title.** `.Site.Title` can stand in the content of an element and in
-  the attributes `title`, `alt`, `aria-label` and `data-*`. A template cannot
-  compute with it: what a template makes of the placeholder is not the title.
+- **Fields.** `.Site.Title` and the fields of an entry can stand in the
+  content of an element and in the attributes `title`, `alt`, `aria-label`
+  and `data-*`. A template cannot compute with one: what a template makes of
+  a placeholder is not the value.
 - **Structure.** Every element is closed, in order. Comments are dropped,
   and a doctype is not accepted.
-- **Size.** What a template writes is at most 256 KiB.
+- **Size.** What a page template writes is at most 256 KiB, and an item
+  template 64 KiB.
 
-A template is checked when the themes directory is read, for a page with
-every part shown and the options of the theme at their defaults, and the
-result is on the theme page. It is compiled again for each set of values a
-page is rendered with, once, and the result is kept. If it is not accepted
+A template is checked when the themes directory is read, with the options of
+the theme at their defaults, and the result is on the theme page: a page
+template for a page with every part shown, an item template for every
+combination of what an entry has. It is compiled again for each set of values
+a page is rendered with, once, and the result is kept. If it is not accepted
 for some set, for example because a branch for a value of an option writes
-an element that is not accepted, pages with those values have the markup of
-the application, the log has a warning, and the theme page lists the file
-with the reason.
+an element that is not accepted, pages and entries with those values have the
+markup of the application, the log has a warning, and the theme page lists
+the file with the reason.
 
 ### What the check does not cover
 
@@ -267,3 +376,9 @@ Covered by Go tests:
   what a template is told about the page for two sets of settings.
 - Writes of the settings by a session that was revoked after the request was
   let in store nothing.
+- Item templates: what each kind renders for its sets of values; templates
+  that are refused, each with its reason; a theme that brings one, two or all
+  three; the entries over HTTP with names that need escaping, both settings
+  for a new window, hidden descriptions, an option of the theme, every mode
+  of the categories, a site without categories, encoded links and a search
+  with and without results; the help page, safe mode, a preview and visitors.

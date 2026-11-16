@@ -2,7 +2,10 @@ package themetemplate
 
 import (
 	"bytes"
+	"html"
 	"html/template"
+	"io"
+	"strings"
 )
 
 // HoleKind is what a hole of a fragment is filled with.
@@ -56,28 +59,39 @@ type Content interface {
 }
 
 // SlotWriter is a Content that writes a part itself, where it belongs,
-// instead of handing its markup over. Render uses it in place of Slot.
+// instead of handing its markup over. Rendering uses it in place of Slot.
+// The part is written to out, which is what the fragment is rendered into.
 type SlotWriter interface {
-	WriteSlot(out *bytes.Buffer, name string)
+	WriteSlot(out io.Writer, name string)
 }
 
-// Render writes the fragment with its holes filled in.
+// Render writes the fragment into a buffer with its holes filled in.
 func (f *Fragment) Render(out *bytes.Buffer, content Content) {
+	f.render(func(text string) { out.WriteString(text) }, out, content)
+}
+
+// RenderString writes the fragment into the builder of a string with its
+// holes filled in.
+func (f *Fragment) RenderString(out *strings.Builder, content Content) {
+	f.render(func(text string) { out.WriteString(text) }, out, content)
+}
+
+func (f *Fragment) render(write func(text string), out io.Writer, content Content) {
 	writer, direct := content.(SlotWriter)
 	for i := range f.pieces {
-		out.WriteString(f.pieces[i].text)
+		write(f.pieces[i].text)
 		switch f.pieces[i].hole.Kind {
 		case HoleText:
-			template.HTMLEscape(out, []byte(content.Text(f.pieces[i].hole.Name)))
+			write(html.EscapeString(content.Text(f.pieces[i].hole.Name)))
 		case HoleAddress:
-			template.HTMLEscape(out, []byte(content.Address()))
+			write(html.EscapeString(content.Address()))
 		case HoleLink:
-			out.WriteString(string(content.LinkAttributes()))
+			write(string(content.LinkAttributes()))
 		case HoleSlot:
 			if direct {
 				writer.WriteSlot(out, f.pieces[i].hole.Name)
 			} else {
-				out.WriteString(string(content.Slot(f.pieces[i].hole.Name)))
+				write(string(content.Slot(f.pieces[i].hole.Name)))
 			}
 		}
 	}

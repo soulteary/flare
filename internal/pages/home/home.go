@@ -183,7 +183,7 @@ func pageBookmark(c fiber.Ctx) error {
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	if options.ShowBookmarks {
-		m["Bookmarks"], m["BookmarksError"] = generateBookmarkNavigationForRead(strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options, auth.CheckUserIsLogin(c), auth.BufferedReadTentative(c), &requestURL)
+		m["Bookmarks"], m["BookmarksError"] = generateBookmarkNavigationForRead(requestThemeItems(c, options, locale), strings.TrimSpace(c.Query("search")), c.Query("category"), c.Path(), &options, auth.CheckUserIsLogin(c), auth.BufferedReadTentative(c), &requestURL)
 		if auth.BufferedReadTentative(c) && m["BookmarksError"] != "" {
 			return c.Status(http.StatusInternalServerError).SendString("navigation unavailable")
 		}
@@ -216,7 +216,7 @@ func pageApplication(c fiber.Ctx) error {
 	m["ApplicationsURI"] = define.RegularPages.Applications.Path
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	if options.ShowApps {
-		m["Applications"], m["ApplicationsError"] = generateApplicationsForRead("", &options, auth.CheckUserIsLogin(c), auth.BufferedReadTentative(c), &requestURL)
+		m["Applications"], m["ApplicationsError"] = generateApplicationsForRead(requestThemeItems(c, options, locale), "", &options, auth.CheckUserIsLogin(c), auth.BufferedReadTentative(c), &requestURL)
 		if auth.BufferedReadTentative(c) && m["ApplicationsError"] != "" {
 			return c.Status(http.StatusInternalServerError).SendString("navigation unavailable")
 		}
@@ -303,11 +303,12 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 	var apps template.HTML
 	// How many entries each list shows, for a search without results.
 	appsShown, bookmarksShown := 0, 0
+	items := requestThemeItems(c, options, locale)
 	if options.ShowApps {
 		if appsErr != nil {
 			m["ApplicationsError"] = navigationDataError("applications", options.Locale, appsErr)
 		} else {
-			apps, appsShown = navigationFragmentShown(appsView, &options, true, filter, "", c.Path(), &requestURL)
+			apps, appsShown = navigationFragmentShown(items, appsView, &options, true, filter, "", c.Path(), &requestURL)
 		}
 	}
 	selected := c.Query("category")
@@ -320,7 +321,7 @@ func renderSearch(c fiber.Ctx, filter, query, target, searchError string) error 
 		if bookmarksErr != nil {
 			m["BookmarksError"] = navigationDataError("bookmarks", options.Locale, bookmarksErr)
 		} else {
-			bookmarks, bookmarksShown = navigationFragmentShown(bookmarksView, &options, false, filter, selected, c.Path(), &requestURL)
+			bookmarks, bookmarksShown = navigationFragmentShown(items, bookmarksView, &options, false, filter, selected, c.Path(), &requestURL)
 		}
 	}
 	m["Applications"] = apps
@@ -461,16 +462,9 @@ func usePageTemplate(c fiber.Ctx, m map[string]any, options model.Application, k
 	if !options.ThemeTemplates || requestSafeMode(c) || guideAssetsURI(c) != "" {
 		return
 	}
-	page := define.ThemePage{Theme: requestPreview(c), Preview: true, Kind: kind, Searching: m["HasKeyword"] == true}
-	unconfirmed := false
-	if page.Theme == "" {
-		page.Theme, _ = define.ThemeSnapshot()
-		// The selected theme is what the page shows anyway, so it is no
-		// preview, with one exception: the administrator can look at its
-		// templates before confirming them.
-		unconfirmed = !options.ThemeSettings[page.Theme].Templates
-		page.Preview = unconfirmed && c.Query(previewParameter) == page.Theme && auth.CheckUserIsLogin(c)
-	}
+	page := define.ThemePage{Kind: kind, Searching: m["HasKeyword"] == true}
+	var unconfirmed bool
+	page.Theme, page.Preview, unconfirmed = requestTemplateTheme(c, options)
 	if locale, set := m["Locale"].(string); set {
 		page.Lang = locale
 	}
@@ -491,6 +485,21 @@ func usePageTemplate(c fiber.Ctx, m map[string]any, options model.Application, k
 			Action: define.SettingPages.Theme.Path,
 		}
 	}
+}
+
+// requestTemplateTheme returns the theme whose templates a response uses,
+// whether the response is a preview of it, and whether it is the selected
+// theme shown before its templates are confirmed.
+func requestTemplateTheme(c fiber.Ctx, options model.Application) (string, bool, bool) {
+	if theme := requestPreview(c); theme != "" {
+		return theme, true, false
+	}
+	theme, _ := define.ThemeSnapshot()
+	// The selected theme is what the page shows anyway, so it is no
+	// preview, with one exception: the administrator can look at its
+	// templates before confirming them.
+	unconfirmed := !options.ThemeSettings[theme].Templates
+	return theme, unconfirmed && c.Query(previewParameter) == theme && auth.CheckUserIsLogin(c), unconfirmed
 }
 
 // pageModules says which parts a page shows, by the name of each part

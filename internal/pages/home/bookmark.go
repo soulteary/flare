@@ -7,9 +7,11 @@ import (
 	"strings"
 
 	"github.com/soulteary/flare/config/data"
+	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/fn"
 	"github.com/soulteary/flare/internal/i18n"
+	"github.com/soulteary/flare/internal/themetemplate"
 )
 
 func GenerateBookmarkTemplate(filter string, options *model.Application) template.HTML {
@@ -27,9 +29,9 @@ func generateBookmarkNavigation(filter, selected, path string, options *model.Ap
 }
 
 func generateBookmarkNavigationFor(filter, selected, path string, options *model.Application, administrator bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
-	return generateBookmarkNavigationForRead(filter, selected, path, options, administrator, false, requestInfo...)
+	return generateBookmarkNavigationForRead(nil, filter, selected, path, options, administrator, false, requestInfo...)
 }
-func generateBookmarkNavigationForRead(filter, selected, path string, options *model.Application, administrator, existingOnly bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
+func generateBookmarkNavigationForRead(items *define.ThemeItems, filter, selected, path string, options *model.Application, administrator, existingOnly bool, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	if options == nil {
 		readSettings := data.GetAllSettingsOptions
 		if existingOnly {
@@ -45,7 +47,8 @@ func generateBookmarkNavigationForRead(filter, selected, path string, options *m
 	if err != nil {
 		return "", navigationDataError("bookmarks", options.Locale, err)
 	}
-	return navigationFragment(view, options, false, filter, selected, path, firstRequestInfo(requestInfo)), ""
+	markup, _ := navigationFragmentShown(items, view, options, false, filter, selected, path, firstRequestInfo(requestInfo))
+	return markup, ""
 }
 func generateBookmarkSnapshot(filter, selected, path string, options *model.Application, bookmarksData model.Bookmarks, requestInfo ...*fn.DynamicURL) (template.HTML, string) {
 	info := firstRequestInfo(requestInfo)
@@ -61,15 +64,19 @@ func generateBookmarkSnapshot(filter, selected, path string, options *model.Appl
 }
 
 func renderBookmarkSelection(filter, selected, path string, options *model.Application, categories []model.Category, item func(int) model.Bookmark, matches []int, info *fn.DynamicURL) (template.HTML, string) {
-	markup, _ := renderBookmarkSelectionShown(filter, selected, path, options, categories, item, matches, info)
+	markup, _ := renderBookmarkSelectionShown(nil, filter, selected, path, options, categories, item, matches, info)
 	return markup, ""
 }
 
 // renderBookmarkSelectionShown renders the bookmarks that match and reports
 // how many of them it shows, which is fewer than those that match where a
-// category is selected.
-func renderBookmarkSelectionShown(filter, selected, path string, options *model.Application, categories []model.Category, item func(int) model.Bookmark, matches []int, info *fn.DynamicURL) (template.HTML, int) {
+// category is selected. A bookmark and a group are written with the item
+// templates of the theme where it has them and they compile for what the
+// bookmark or the group has, and with the markup of the application
+// otherwise.
+func renderBookmarkSelectionShown(items *define.ThemeItems, filter, selected, path string, options *model.Application, categories []model.Category, item func(int) model.Bookmark, matches []int, info *fn.DynamicURL) (template.HTML, int) {
 	shown := 0
+	var entry entryContent
 	privateCategories := make(map[string]bool, len(categories))
 	for _, c := range categories {
 		privateCategories[c.ID] = c.Private
@@ -85,17 +92,44 @@ func renderBookmarkSelectionShown(filter, selected, path string, options *model.
 		bookmark := item(index)
 		bookmark.URL = expandNavigationURL(bookmark.URL, info)
 		bookmark.Private = bookmark.Private || privateCategories[bookmark.Category]
+		if items != nil {
+			icon := navigationIcon(bookmark.Icon, bookmark.URL, options.IconMode, bookmark.Private)
+			values := themetemplate.ItemValues{Icon: icon != "", NewTab: options.OpenBookmarkNewTab}
+			if fragment := items.Fragment(themetemplate.ItemBookmark, values); fragment != nil {
+				entry = entryContent{
+					name: bookmark.Name, host: entryHost(bookmark.URL), initial: entryInitial(bookmark.Name),
+					href: navigationHref(bookmark.URL, options.EnableEncryptedLink, info), icon: icon, newTab: options.OpenBookmarkNewTab,
+				}
+				fragment.RenderString(b, &entry)
+				return
+			}
+		}
 		writeBookmarkItem(b, bookmark, options.OpenBookmarkNewTab, options.EnableEncryptedLink, options.IconMode, info)
+	}
+	// A group is written around its bookmarks. The bookmarks of a site
+	// without categories are one group without a name.
+	writeGroup := func(category model.Category, named, collapse bool, bookmarks func()) {
+		if fragment := items.Fragment(themetemplate.ItemGroup, themetemplate.ItemValues{Named: named, Collapsible: collapse}); fragment != nil {
+			fragment.RenderString(b, &groupContent{name: category.Name, bookmarks: bookmarks})
+			return
+		}
+		if named {
+			writeBookmarkGroupStart(b, category, collapse)
+		} else {
+			b.WriteString(`<div class="bookmark-group-container pull-left"><ul class="bookmark-list">`)
+		}
+		bookmarks()
+		writeBookmarkGroupEnd(b, collapse)
 	}
 	if len(categories) == 0 {
 		growNavigationBuilder(b, bookmarkSelectionEstimate(item, matches))
-		b.WriteString(`<div class="bookmark-group-container pull-left"><ul class="bookmark-list">`)
-		for _, index := range matches {
-			writeItem(index)
-		}
-		b.WriteString(`</ul></div>`)
+		writeGroup(model.Category{}, false, false, func() {
+			for _, index := range matches {
+				writeItem(index)
+			}
+		})
 	} else {
-		renderBookmarkIndexGroupsRead(b, categories, item, matches, selected, filter, path, options, writeItem)
+		renderBookmarkIndexGroupsRead(b, categories, item, matches, selected, filter, path, options, writeItem, writeGroup)
 	}
 	// #nosec G203 -- Names/categories are escaped and URL/icon policies are enforced at item emission.
 	return template.HTML(b.String()), shown
@@ -136,7 +170,7 @@ func writeBookmarkGroupEnd(b *strings.Builder, collapse bool) {
 	}
 }
 
-func renderBookmarkIndexGroupsRead(b *strings.Builder, categories []model.Category, item func(int) model.Bookmark, matches []int, selected, filter, path string, options *model.Application, writeItem func(int)) {
+func renderBookmarkIndexGroupsRead(b *strings.Builder, categories []model.Category, item func(int) model.Bookmark, matches []int, selected, filter, path string, options *model.Application, writeItem func(int), writeGroup func(category model.Category, named, collapse bool, bookmarks func())) {
 	mode := "all"
 	if options.Homepage != nil && options.Homepage.CategoryNavigation != "" {
 		mode = options.Homepage.CategoryNavigation
@@ -179,13 +213,13 @@ func renderBookmarkIndexGroupsRead(b *strings.Builder, categories []model.Catego
 		growNavigationBuilder(b, boundedNavigationEstimate(estimate, 128+len(chosen.Name)))
 		renderCategoryNavigation(b, categories, selected, filter, path, options.Locale)
 		if count > 0 {
-			writeBookmarkGroupStart(b, chosen, false)
-			for _, index := range matches {
-				if belongs(index) {
-					writeItem(index)
+			writeGroup(chosen, true, false, func() {
+				for _, index := range matches {
+					if belongs(index) {
+						writeItem(index)
+					}
 				}
-			}
-			writeBookmarkGroupEnd(b, false)
+			})
 		}
 		return
 	}
@@ -237,11 +271,11 @@ func renderBookmarkIndexGroupsRead(b *strings.Builder, categories []model.Catego
 		if len(indexes) == 0 {
 			continue
 		}
-		writeBookmarkGroupStart(b, category, collapse)
-		for _, index := range indexes {
-			writeItem(index)
-		}
-		writeBookmarkGroupEnd(b, collapse)
+		writeGroup(category, true, collapse, func() {
+			for _, index := range indexes {
+				writeItem(index)
+			}
+		})
 	}
 }
 

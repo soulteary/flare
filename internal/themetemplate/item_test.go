@@ -1,7 +1,9 @@
 package themetemplate
 
 import (
+	"bytes"
 	"html/template"
+	"io"
 	"reflect"
 	"strings"
 	"testing"
@@ -174,5 +176,38 @@ func TestItemTemplatesThatAreRefused(t *testing.T) {
 	}
 	if got := compileItem(t, `<h3>{{.Name}}</h3><p>{{.Href}}</p><ul>{{template "flare/items"}}</ul>`, ItemGroup, ItemValues{Named: true}); !strings.Contains(got, "<p></p>") {
 		t.Errorf("a group with an address: %s", got)
+	}
+}
+
+// A fragment is rendered into a buffer and into the builder of a string
+// alike, and a content that writes a part itself is handed what the
+// fragment is rendered into.
+func TestFragmentRendersIntoABufferAndABuilder(t *testing.T) {
+	fragment, err := CompileItem(groupTemplate, ItemGroup, ItemValues{Named: true}, pageFuncs())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := render(fragment, itemEntry())
+	var built strings.Builder
+	fragment.RenderString(&built, itemEntry())
+	if built.String() != want || !strings.Contains(want, "<li>one</li>") {
+		t.Errorf("into a builder:\n%s\ninto a buffer:\n%s", built.String(), want)
+	}
+	var buffer bytes.Buffer
+	fragment.Render(&buffer, directItems{itemEntry()})
+	built.Reset()
+	fragment.RenderString(&built, directItems{itemEntry()})
+	direct := strings.Replace(want, "<li>one</li><li>two</li>", "<li>written</li>", 1)
+	if buffer.String() != direct || built.String() != direct {
+		t.Errorf("written by the content:\n%s\n%s", buffer.String(), built.String())
+	}
+}
+
+// directItems writes the bookmarks of a group itself.
+type directItems struct{ entry }
+
+func (directItems) WriteSlot(out io.Writer, name string) {
+	if name == SlotItems {
+		_, _ = io.WriteString(out, "<li>written</li>")
 	}
 }

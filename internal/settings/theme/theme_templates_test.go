@@ -53,7 +53,7 @@ func TestThemeTemplatesOnTheThemePage(t *testing.T) {
 	for _, card := range themeFileCards("en", themes, model.Application{}) {
 		notes[card.Name] = card.Templates
 	}
-	want := "Brings page templates: home.html, applications.html. Templates of themes are turned off, so the pages keep the markup of the application."
+	want := "Brings templates: home.html, applications.html. Templates of themes are turned off, so the pages keep the markup of the application."
 	if len(notes) != 2 || notes["zelda"] != want || notes["plain"] != "" {
 		t.Fatalf("notes of the cards: %q", notes)
 	}
