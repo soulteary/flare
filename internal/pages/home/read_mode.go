@@ -18,6 +18,12 @@ type settingsSnapshot struct {
 	// safeMode reports a response that is shown without the themes of the
 	// themes directory.
 	safeMode bool
+	// choice is the theme the visitor has the pages shown with instead of
+	// the selected theme, or empty. A preview and safe mode come before it.
+	choice string
+	// choices reports that the administrator lets visitors choose among
+	// themes, so that a response depends on the cookie of the choice.
+	choices bool
 }
 
 // safeModeParameter asks for one response without the themes of the themes
@@ -92,9 +98,12 @@ func requestSettings(c fiber.Ctx) (model.Application, error) {
 			// site has it: no theme changes it.
 		} else if snapshot.preview = previewedTheme(c); snapshot.preview != "" {
 			snapshot.value.Homepage = define.HomepageInEffectFor(snapshot.value, snapshot.preview)
+		} else if snapshot.choice = chosenTheme(c, snapshot.value); snapshot.choice != "" {
+			snapshot.value.Homepage = define.HomepageInEffectFor(snapshot.value, snapshot.choice)
 		} else {
 			snapshot.value.Homepage = define.HomepageInEffect(snapshot.value)
 		}
+		snapshot.choices = len(snapshot.value.ThemeChoices) > 0 && len(define.ThemeChoices(snapshot.value)) > 0
 	}
 	c.Locals(requestSettingsKey{}, snapshot)
 	return snapshot.value, snapshot.err

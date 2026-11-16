@@ -52,12 +52,14 @@ func RegisterRouting(e *fiber.App) {
 		e.Post(define.RegularPages.Home.Path, pageSearch)
 		e.Get(define.RegularPages.Applications.Path, pageApplication)
 		e.Get(define.RegularPages.Bookmarks.Path, pageBookmark)
+		e.Post(ThemeChoicePath, chooseTheme)
 	} else {
 		e.Get(define.RegularPages.Home.Path, auth.AuthRequired, pageHome)
 		e.Get(define.RegularPages.Help.Path, auth.AuthRequired, renderHelp)
 		e.Post(define.RegularPages.Home.Path, auth.AuthRequired, pageSearch)
 		e.Get(define.RegularPages.Applications.Path, auth.AuthRequired, pageApplication)
 		e.Get(define.RegularPages.Bookmarks.Path, auth.AuthRequired, pageBookmark)
+		e.Post(ThemeChoicePath, auth.AuthRequired, chooseTheme)
 	}
 	registerSearchSuggestions(e)
 }
@@ -443,6 +445,20 @@ func setPageTheme(c fiber.Ctx, m map[string]any, locale string) {
 				Action: define.SettingPages.Theme.Path,
 			}
 		}
+	} else if name := requestChoice(c); name != "" {
+		if chosen, known := define.GetPageThemeFor(name); known {
+			theme = chosen
+			// The response is the page of this visitor, which a cache
+			// between the two must not hand to another. A response that
+			// nothing may keep at all stays that.
+			if c.GetRespHeader("Cache-Control") == "" {
+				c.Set("Cache-Control", "private")
+			}
+		}
+	}
+	if requestChoices(c) {
+		// The same address shows another theme to a visitor who chose one.
+		c.Response().Header.Add("Vary", "Cookie")
 	}
 	m["PageAppearance"] = theme.BodyStyle
 	m["PageThemeRules"] = theme.Rules
@@ -493,6 +509,11 @@ func usePageTemplate(c fiber.Ctx, m map[string]any, options model.Application, k
 func requestTemplateTheme(c fiber.Ctx, options model.Application) (string, bool, bool) {
 	if theme := requestPreview(c); theme != "" {
 		return theme, true, false
+	}
+	// A theme the visitor chose is shown as it is when it is selected: with
+	// its templates once they are confirmed, and never as a preview.
+	if theme := requestChoice(c); theme != "" {
+		return theme, false, false
 	}
 	theme, _ := define.ThemeSnapshot()
 	// The selected theme is what the page shows anyway, so it is no
