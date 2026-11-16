@@ -722,7 +722,8 @@ theme with templates [what a template can do](theme-templates.md#what-the-check-
   transparent proxies do this, with addresses from `198.18.0.0/15`. The
   theme is then downloaded on another machine and imported as a file.
 - There is no list of themes in the application and no search. The address
-  comes from wherever the theme is published.
+  comes from wherever the theme is published, such as the
+  [theme repository](theme-repository.md), which the theme page links to.
 
 ### Text documents
 

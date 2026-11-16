@@ -76,6 +76,7 @@
         {{ if .ThemeImportRefused }}<p class="theme-notice" role="alert">{{ .ThemeImportRefused }}</p>{{ end }}
         {{ if .ThemeImported }}<p class="theme-notice" role="status">{{ .ThemeImported }}</p>{{ end }}{{ if .ThemeImportLeftOut }}<p class="theme-notice theme-import-left-out" role="status">{{ .ThemeImportLeftOut }}</p>{{ end }}{{ if .ThemeImportWithdrawn }}<p class="theme-notice theme-import-withdrawn" role="status">{{ .ThemeImportWithdrawn }}</p>{{ end }}
         <p class="theme-help">{{ T .Locale "theme_import_help" }}</p>
+        <p class="theme-help theme-repository">{{ T .Locale "theme_repository" }} <a href="{{ .ThemeRepository }}" target="_blank" rel="noopener noreferrer">{{ .ThemeRepository }}</a></p>
         <div class="form-group">
             <label for="theme-import-file">{{ T .Locale "theme_import_file" }}</label>
             <input type="file" id="theme-import-file" name="theme-file" accept=".yml,.zip">

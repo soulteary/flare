@@ -670,6 +670,7 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	m["ThemeModeSaved"] = notice.modeSaved
 	m["ThemeExportPath"] = define.SettingPages.Theme.Path + exportPath
 	m["ThemeImportAction"] = actionImport
+	m["ThemeRepository"] = define.ThemeRepositoryURL
 	m["ThemeInstall"] = installForm(locale, notice)
 	m["ThemeImportRefused"] = notice.importRefused
 	if notice.imported != "" {

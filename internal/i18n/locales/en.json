@@ -190,6 +190,7 @@
   "theme_export": "Download",
   "theme_import": "Import a theme",
   "theme_import_help": "Upload a theme file, or the archive of a theme that is a directory, to add it to the themes directory. The name of the file is the name of the theme. What is uploaded is checked like the themes in the directory, and importing does not select the theme.",
+  "theme_repository": "Themes for Flare are listed in the theme repository, which this instance never contacts by itself:",
   "theme_import_file": "Theme file (.yml, up to 64 KiB) or archive (.zip, up to 24 MiB)",
   "theme_import_replace": "Replace a theme of the same name",
   "theme_import_submit": "Import",
