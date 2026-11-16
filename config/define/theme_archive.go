@@ -219,6 +219,67 @@ func (file themeArchiveFile) unpack() ([]byte, error) {
 	return raw, nil
 }
 
+// openThemeArchive reads the directory of an archive and picks the files of
+// the theme out of it, with the entries that are none.
+func openThemeArchive(archive io.ReaderAt, size int64) ([]themeArchiveFile, []string, error) {
+	if size > model.MaximumThemeArchiveBytes {
+		return nil, nil, ErrThemeArchiveSize
+	}
+	// The reader can be told to refuse an archive with an entry that names
+	// another place, such as ../a. It still hands the archive out with that
+	// refusal, and such an entry is no file of a theme here in any case, so
+	// the archive is read the same way whatever the reader is told.
+	reader, err := zip.NewReader(archive, size)
+	if err != nil && !errors.Is(err, zip.ErrInsecurePath) {
+		return nil, nil, ErrThemeArchiveRead
+	}
+	if len(reader.File) > model.MaximumThemeArchiveEntries {
+		return nil, nil, ErrThemeArchiveEntries
+	}
+	return themeArchiveFiles(reader)
+}
+
+// ThemeArchiveContents says what an archive of a theme holds, before any of
+// it is unpacked.
+type ThemeArchiveContents struct {
+	// Stylesheet reports a stylesheet, Assets and Documents count the
+	// images and fonts and the text documents, and Templates names the
+	// templates.
+	Stylesheet bool
+	Assets     int
+	Documents  int
+	Templates  []string
+	// Others names the entries that are no files of a theme, which an
+	// import leaves out.
+	Others []string
+}
+
+// InspectThemeArchive says what an archive holds, by its directory alone:
+// nothing is unpacked and nothing is written. It refuses what an import
+// refuses before it unpacks: an archive that is too large or cannot be read,
+// one without a theme file or with several, and a file that is there twice.
+// Whether the theme is accepted is found when it is stored.
+func InspectThemeArchive(archive io.ReaderAt, size int64) (ThemeArchiveContents, error) {
+	files, others, err := openThemeArchive(archive, size)
+	if err != nil {
+		return ThemeArchiveContents{}, err
+	}
+	contents := ThemeArchiveContents{Others: others}
+	for _, file := range files {
+		switch file.kind {
+		case model.ThemeArchiveStylesheet:
+			contents.Stylesheet = true
+		case model.ThemeArchiveAsset:
+			contents.Assets++
+		case model.ThemeArchiveDocument:
+			contents.Documents++
+		case model.ThemeArchiveTemplate:
+			contents.Templates = append(contents.Templates, file.name)
+		}
+	}
+	return contents, nil
+}
+
 // StoreUserThemeArchive stores the theme of an archive in the themes
 // directory, as the directory of the given theme name, and reads the
 // directory again. It returns the entries of the archive that are no files
@@ -242,21 +303,7 @@ func StoreUserThemeArchive(name string, archive io.ReaderAt, size int64, replace
 	if !isUserThemeName(name) {
 		return nil, ErrThemeStoreName
 	}
-	if size > model.MaximumThemeArchiveBytes {
-		return nil, ErrThemeArchiveSize
-	}
-	// The reader can be told to refuse an archive with an entry that names
-	// another place, such as ../a. It still hands the archive out with that
-	// refusal, and such an entry is no file of a theme here in any case, so
-	// the archive is read the same way whatever the reader is told.
-	reader, err := zip.NewReader(archive, size)
-	if err != nil && !errors.Is(err, zip.ErrInsecurePath) {
-		return nil, ErrThemeArchiveRead
-	}
-	if len(reader.File) > model.MaximumThemeArchiveEntries {
-		return nil, ErrThemeArchiveEntries
-	}
-	files, others, err := themeArchiveFiles(reader)
+	files, others, err := openThemeArchive(archive, size)
 	if err != nil {
 		return nil, err
 	}

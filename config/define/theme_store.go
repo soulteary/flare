@@ -48,6 +48,37 @@ const (
 	customThemeCopyName    = "custom-colors"
 )
 
+// IsUserThemeName reports whether a name is one a theme of the themes
+// directory can have: the name of a theme that no bundled theme has and that
+// is not the name of the custom colors.
+func IsUserThemeName(name string) bool { return isUserThemeName(name) }
+
+// CheckUserThemeFile reports why the content of a theme file would not be
+// stored as a theme of one file, whatever its name and whatever is in the
+// themes directory: its size, and what a reading of the file refuses.
+func CheckUserThemeFile(raw []byte) error {
+	_, err := readStoredThemeFile(raw)
+	return err
+}
+
+// readStoredThemeFile reads the content of a theme file that is to be
+// stored as a theme of one file.
+func readStoredThemeFile(raw []byte) (model.ThemeFile, error) {
+	if len(raw) > MaximumThemeFileBytes {
+		return model.ThemeFile{}, ErrThemeStoreSize
+	}
+	theme, _, rejected := model.ReadThemeFileFor(raw, version.Version)
+	if rejected != nil {
+		return model.ThemeFile{}, rejected
+	}
+	// What is stored here is a theme of one file, which has no assets: a
+	// background image it names would never be there.
+	if theme.Background != nil {
+		return model.ThemeFile{}, &model.ThemeFileError{Reason: model.ErrThemeBackgroundAsset, Subject: theme.Background.Image}
+	}
+	return theme, nil
+}
+
 // StoreUserTheme writes a theme file into the themes directory under the
 // given theme name and reads the directory again. The content has to be a
 // usable theme file, and it is written as given, so comments and parts for
@@ -62,17 +93,9 @@ func StoreUserTheme(name string, raw []byte, replace bool) error {
 	if !isUserThemeName(name) {
 		return ErrThemeStoreName
 	}
-	if len(raw) > MaximumThemeFileBytes {
-		return ErrThemeStoreSize
-	}
-	theme, _, rejected := model.ReadThemeFileFor(raw, version.Version)
+	theme, rejected := readStoredThemeFile(raw)
 	if rejected != nil {
 		return rejected
-	}
-	// What is stored here is a theme of one file, which has no assets: a
-	// background image it names would never be there.
-	if theme.Background != nil {
-		return &model.ThemeFileError{Reason: model.ErrThemeBackgroundAsset, Subject: theme.Background.Image}
 	}
 	userThemeScanMu.Lock()
 	defer userThemeScanMu.Unlock()
