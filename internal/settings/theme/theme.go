@@ -94,6 +94,12 @@ func updateThemes(c fiber.Ctx) error {
 	if body.Action == actionImport {
 		return importTheme(c, formvalue.Has(c, importReplace))
 	}
+	if body.Action == actionFetch {
+		return fetchTheme(c)
+	}
+	if body.Action == actionInstall {
+		return installTheme(c)
+	}
 	if body.Action == actionSaveOptions || body.Action == actionResetOptions {
 		return updateThemeOptions(c, body.Action == actionResetOptions)
 	}
@@ -535,6 +541,13 @@ type themeNotice struct {
 	// withdrawn names the themes whose templates are no longer confirmed
 	// after an import.
 	withdrawn []string
+	// installAddress and installReplace are what the form that fetches a
+	// theme was sent with, installRefused says why nothing was fetched or
+	// installed, and installOffer is a theme that was fetched.
+	installAddress string
+	installReplace bool
+	installRefused string
+	installOffer   *themeInstallOffer
 	// optionsSaved reports stored values for the options of the theme.
 	optionsSaved bool
 	// templatesSaved reports a stored setting for the templates of themes,
@@ -657,6 +670,7 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	m["ThemeModeSaved"] = notice.modeSaved
 	m["ThemeExportPath"] = define.SettingPages.Theme.Path + exportPath
 	m["ThemeImportAction"] = actionImport
+	m["ThemeInstall"] = installForm(locale, notice)
 	m["ThemeImportRefused"] = notice.importRefused
 	if notice.imported != "" {
 		m["ThemeImported"] = i18n.Format(locale, "theme_import_done", map[string]any{"name": define.ThemeTitle(notice.imported, locale)})

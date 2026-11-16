@@ -41,7 +41,7 @@ credentials or initialization, and invalid security inputs still block startup.
 | `FLARE_TRUSTED_PROXIES` | — | Unset | Current main: comma-separated peer IPs/CIDRs allowed to supply supported forwarding headers |
 | `FLARE_EDITOR` | `--enable_editor`, `-e` | `true` | Boolean; expose editor and transfer routes |
 | `FLARE_GUIDE` | `--guide`, `-g` | `true` | Boolean; expose the guide at `/guide`, a walkthrough rendered on the visitor's own homepage |
-| `FLARE_OFFLINE` | `--offline`, `-o` | `false` | Boolean; disable server-side weather/location activity |
+| `FLARE_OFFLINE` | `--offline`, `-o` | `false` | Boolean; disable server-side weather/location activity. After 0.7.0: also [installing a theme from an address](theme-files.md#installing-from-an-address) |
 | `FLARE_MINI_REQUEST` | `--mini_request`, `-m` | `false` | Boolean; inline icon SVGs, trade fewer HTTP requests for larger HTML |
 | `FLARE_DEPRECATED_NOTICE` | `--enable_notice`, `-n` | `true` | Boolean; deprecated-feature notices |
 | `FLARE_DISABLE_CSP` | `--disable_csp`, `-c` | `false` | Boolean; disabling the page script policy reduces browser protection. After 0.7.0: an instance without the policy uses no [templates of themes](theme-templates.md#where-no-template-is-used) |

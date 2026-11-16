@@ -674,6 +674,55 @@ An import takes an archive made this way, and one made by hand:
   that are based on it. This holds for a theme file that is imported as
   well.
 
+### Installing from an address
+
+In releases after 0.7.0, the theme page can fetch a theme from an address
+and install it. This is the same import as an upload, with the file coming
+from a host instead of the device of the administrator. It is for a theme
+its author publishes as a file.
+
+It takes two steps, and the first stores nothing:
+
+1. **Fetch.** Enter the address. The instance fetches the file and the page
+   shows the name of the theme, its size and its SHA-256. For an archive it
+   also says whether it holds a stylesheet, how many images, fonts and text
+   documents, which [templates](theme-templates.md), and which entries are
+   no files of a theme and will be left out.
+2. **Install.** The instance fetches the file again and stores it only if
+   its SHA-256 is the one the page showed. Otherwise nothing is stored and
+   the page says that the address answers with other content.
+
+Compare the SHA-256 with the one the author publishes before installing. It
+shows that the file is the one the author means. It does not show that the
+theme is harmless: read [what a theme can change](#safe-mode), and for a
+theme with templates [what a template can do](theme-templates.md#what-the-check-does-not-cover).
+
+| Rule | What it means |
+| --- | --- |
+| Asked for by the administrator | The instance fetches a theme only when this form is submitted, never by itself, and it never fetches a theme again to update it |
+| `https` only | An `http` address is refused, and so is an address with a user name or a password |
+| The name is the last part of the address | `<name>.yml` or `<name>.zip`, with the rules of the name of a [theme file](#location-and-name). An address that ends otherwise is refused before anything is fetched |
+| Public addresses only | The host has to be reached at an address of the public internet. This machine, private networks, link-local and reserved addresses are refused. The address is checked where the connection is made, also for every address an answer leads on to, and no proxy is used |
+| Up to 5 times an answer can lead on | Each time to an `https` address |
+| Size | 64 KiB for a theme file and 24 MiB for an archive, whatever the host states |
+| Certificates | Those the system of the instance trusts. In a container without certificate authorities nothing is fetched |
+| Time | 30 seconds for one download |
+| What is sent | One `GET` request with the address, without cookies, without a referrer and without anything of the instance or its settings. The host learns the address of the instance on the network, as any host it connects to does |
+| The checks | Those of an [upload](#import-and-export): the theme file, the stylesheet, the assets, the theme it is based on. A theme of the same name is replaced only with **Replace a theme of the same name** ticked, and an import [asks for the confirmation of templates again](theme-templates.md#archives) |
+
+- With `FLARE_OFFLINE` the instance fetches nothing, and the page says so
+  in place of the form.
+- With login disabled, everyone who can reach the instance can use this
+  form, as they can use every setting. The rule about public addresses is
+  what keeps the form from being a way to reach other machines of the
+  network of the instance.
+- An instance whose network answers every name with a reserved address
+  fetches nothing: the host is then "not at a public address". Some
+  transparent proxies do this, with addresses from `198.18.0.0/15`. The
+  theme is then downloaded on another machine and imported as a file.
+- There is no list of themes in the application and no search. The address
+  comes from wherever the theme is published.
+
 ### Text documents
 
 A theme that is a directory can hold text documents beside its `theme.yml`,
