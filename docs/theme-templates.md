@@ -17,6 +17,11 @@ templates of two kinds:
 Templates are turned off until the administrator allows them and confirms
 those of the selected theme.
 
+This page is the reference. [Writing a theme with templates](theme-template-guide.md)
+walks through a complete theme, says what to change for each reason a
+template is not used, and has a list to go through before a theme is passed
+on.
+
 ## The files
 
 ```text
@@ -522,3 +527,48 @@ Covered by Go tests:
   for a new window, hidden descriptions, an option of the theme, every mode
   of the categories, a site without categories, encoded links and a search
   with and without results; the help page, safe mode, a preview and visitors.
+- A theme based on another: what each theme of a chain is shown with for
+  every page and item; the assets of a template below; whose confirmation
+  counts; templates that are not accepted in the theme, in the theme below,
+  and only with the options of the theme above.
+- Layout options: the ways to write `supports`, names of another release,
+  what a theme on another has; the remarks of the appearance page with
+  templates turned off, allowed, confirmed and withdrawn.
+- Archives: an archive with the six templates and other entries of that
+  directory; templates that are not accepted and templates that cannot be
+  read; a download taken in again as the same theme; an import over a
+  confirmed theme with a theme above it.
+- The guide: the example of [the guide](theme-template-guide.md) is read
+  from that page and accepted, for each value of its option.
+
+In a browser:
+
+`FLARE_BINARY=/absolute/path/to/flare node tests/theme/templates.browser.cjs`
+goes the way of the administrator with the example theme of the guide:
+
+- The theme page lists the templates of the theme and the two that are not
+  accepted, one with a `script` and one with an `onclick`.
+- Templates are allowed for the site, previewed, and confirmed for the
+  theme; each step is checked on the pages.
+- The home page has the parts where the template places them and the
+  entries as the item templates write them, with a name that needs
+  escaping, an entry without an icon and one without a description. The
+  stylesheet of the theme lays them out.
+- The clock runs, a group is opened and closed, and a search shows the
+  entries that match, inside the page of the theme.
+- The application page and the bookmark page take the template of the home
+  page. Nothing of the templates that are not accepted runs.
+- The option of the theme changes the page, the appearance page names the
+  layout options that are not supported, and safe mode shows the page of
+  the application.
+- An edit of a template is read by the next page.
+- A theme based on the theme is confirmed by itself and shown with the
+  templates of both.
+- The download holds the templates. Imported over the theme, it asks for
+  the confirmation of both themes again.
+- Withdrawing the confirmation, and turning the setting off, each give the
+  pages of the application.
+- No request leaves the instance, and the pages log no error.
+
+The script runs in Chromium. Other browsers and real devices are not
+covered by it.
