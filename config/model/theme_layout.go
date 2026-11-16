@@ -46,6 +46,23 @@ func IsThemeLayoutValue(option, value string) bool {
 	return slices.Contains(themeLayoutValues[option], value)
 }
 
+// ThemeLayoutUnsupported lists the layout options a theme with templates
+// does not support, in the order of the appearance page: those it does not
+// name among the options it supports and does not specify itself. A theme
+// that does not say what it supports has none.
+func ThemeLayoutUnsupported(supported []string, layout map[string]string) []string {
+	if supported == nil {
+		return nil
+	}
+	var unsupported []string
+	for _, option := range ThemeLayoutOptions {
+		if _, specified := layout[option]; !specified && !slices.Contains(supported, option) {
+			unsupported = append(unsupported, option)
+		}
+	}
+	return unsupported
+}
+
 // ThemeSettings holds what the administrator has set for one theme.
 type ThemeSettings struct {
 	// IgnoreLayout lists the layout options of the theme that are not

@@ -141,6 +141,11 @@ type ThemeFile struct {
 	// Layout holds the layout options the theme specifies, by the names the
 	// options have under Homepage in config.yml.
 	Layout map[string]string
+	// Supports lists the layout options that still work on pages written
+	// with the templates of the theme, in the order of the appearance
+	// page. It is nil for a file that does not say, and empty for one that
+	// names none.
+	Supports []string
 	// Requires names the first release the theme works with, as three
 	// numbers such as 0.7.0. It is empty for a theme that names none.
 	Requires string
@@ -352,6 +357,14 @@ func ReadThemeFileFor(raw []byte, version string) (ThemeFile, ThemeFileUnused, e
 			target = &file.Modes
 		case "layout":
 			target = &file.Layout
+		case "supports":
+			supported, parts, err := readThemeSupports(document[key])
+			if err != nil {
+				return ThemeFile{}, ThemeFileUnused{}, err
+			}
+			file.Supports = supported
+			unused.Keys = append(unused.Keys, parts...)
+			continue
 		case "extends":
 			// A name can be written as a number, as 2048 is.
 			base, written := themeText(document[key])
@@ -407,6 +420,34 @@ func ReadThemeFileFor(raw []byte, version string) (ThemeFile, ThemeFileUnused, e
 		return ThemeFile{}, unused, err
 	}
 	return file, unused, nil
+}
+
+// readThemeSupports reads the layout options a theme file says its
+// templates support: a list of the names the options have under layout. A
+// name this release does not know is left out and returned as a path in the
+// file; a name that is written twice counts once. A list without a value
+// says nothing, and an empty list names none.
+func readThemeSupports(node yaml.Node) ([]string, []string, error) {
+	if node.Kind == yaml.ScalarNode && node.Tag == "!!null" {
+		return nil, nil, nil
+	}
+	var written []string
+	if err := node.Decode(&written); err != nil {
+		return nil, nil, themeFileError(ErrThemeSyntax, "supports: "+err.Error())
+	}
+	var unused []string
+	for _, option := range written {
+		if !IsThemeLayoutOption(option) && !slices.Contains(unused, "supports."+shortThemeValue(option)) {
+			unused = append(unused, "supports."+shortThemeValue(option))
+		}
+	}
+	supported := []string{}
+	for _, option := range ThemeLayoutOptions {
+		if slices.Contains(written, option) {
+			supported = append(supported, option)
+		}
+	}
+	return supported, unused, nil
 }
 
 // readThemeBackground reads the background of a theme file: a mapping with
@@ -750,6 +791,9 @@ func (f ThemeFile) Theme(name string) Theme {
 	}
 	theme.Options = f.optionsWithDefaults()
 	theme.Extends = f.Extends
+	if f.Supports != nil {
+		theme.Supports = append([]string{}, f.Supports...)
+	}
 	return theme
 }
 
@@ -795,6 +839,11 @@ func (f ThemeFile) On(base ThemeFile) (ThemeFile, error) {
 			}
 			merged.Modes[mode] = values
 		}
+	}
+	// What the templates support is said by the file, or else by the other
+	// theme, whose templates the theme has where it brings none.
+	if f.Supports == nil && base.Supports != nil {
+		merged.Supports = append([]string{}, base.Supports...)
 	}
 	merged.Options = slices.Clone(base.Options)
 	for _, option := range f.Options {

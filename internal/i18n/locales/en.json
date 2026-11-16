@@ -181,6 +181,8 @@
   "theme_layout_note_off": "The selected theme sets this to “{value}”. Your setting applies, because the layout of the theme is not in use.",
   "theme_layout_use_mine": "Use my setting",
   "theme_layout_sets": "Sets the layout: {options}",
+  "theme_layout_unsupported": "The selected theme says its templates do not support this option, so it may have no effect. The setting is kept for other themes.",
+  "theme_layout_unsupported_note": "Its templates do not support these layout options: {options}.",
   "theme_preview": "Preview",
   "theme_preview_notice": "Preview of the theme “{name}”. It is not selected: only this page is shown with it.",
   "theme_preview_use": "Use this theme",

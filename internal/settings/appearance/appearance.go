@@ -374,6 +374,11 @@ func themeLayoutNotes(m map[string]any, locale string, options model.Application
 		}
 		notes[option] = note
 	}
+	// An option the templates of the theme do not support keeps its control:
+	// the setting is stored, and applies with another theme.
+	for _, option := range define.ThemeLayoutUnsupported(options) {
+		notes[option] = &themeLayoutNote{Text: i18n.T(locale, "theme_layout_unsupported")}
+	}
 	// The template looks every option up in the remarks, so they are there
 	// for a theme without a layout as well, and then empty.
 	m["ThemeLayout"] = notes
