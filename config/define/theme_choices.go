@@ -6,6 +6,22 @@ import (
 	"github.com/soulteary/flare/config/model"
 )
 
+// SelectableThemes names the themes that can be selected, in the order of
+// the theme page: the bundled themes, the custom colors once a palette is
+// stored for them, and the themes of the themes directory.
+func SelectableThemes() []string {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	names := make([]string, 0, len(ThemePalettes)+1+len(userThemeState.order))
+	for _, theme := range ThemePalettes {
+		names = append(names, theme.Name)
+	}
+	if themeCustomSet {
+		names = append(names, model.ThemeCustomName)
+	}
+	return append(names, userThemeState.order...)
+}
+
 // ThemeChoices returns the themes a visitor can have the pages shown with
 // instead of the selected one: those the administrator allows that are
 // themes in use, each once, in the order they are stored in. The selected

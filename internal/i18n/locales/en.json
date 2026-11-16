@@ -688,5 +688,12 @@
   "privacy.export_confirm": "Export may contain private data. HTML loses permissions.",
   "privacy.new_public_count": "New anonymously visible entries: {0}",
   "privacy.trusted_import": "Trusted mode: anonymous visitors can read and edit after saving.",
-  "privacy.verify_retry": "Verify password in another tab, then submit again (no automatic save)"
+  "privacy.verify_retry": "Verify password in another tab, then submit again (no automatic save)",
+  "theme_choice_label": "Theme",
+  "theme_choice_apply": "Apply",
+  "theme_choice_site": "{name} (theme of the site)",
+  "theme_choices": "Themes visitors can choose",
+  "theme_choices_help": "The pages are shown with the selected theme. A visitor can have them shown with one of the themes ticked here instead, with a control below the footer of each page. The choice is kept in a cookie in the browser of the visitor and changes nothing for anyone else. A theme with templates is shown with them only once its templates were confirmed while it was the selected theme.",
+  "theme_choices_selected": "{name} (the selected theme, shown without a choice)",
+  "theme_choices_saved": "The themes visitors can choose were saved."
 }

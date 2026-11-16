@@ -460,6 +460,14 @@ func setPageTheme(c fiber.Ctx, m map[string]any, locale string) {
 		// The same address shows another theme to a visitor who chose one.
 		c.Response().Header.Add("Vary", "Cookie")
 	}
+	if control := themeChoiceControl(c, locale); control != nil {
+		m["ThemeChoice"] = control
+		// On a site that is shown to the administrator only, the form is a
+		// request of the session and needs its token.
+		if _, set := m["SecurityCSRFToken"]; !set && define.AppFlags.Visibility == "PRIVATE" && auth.PersistentSecurity(c) {
+			m["SecurityCSRFToken"] = auth.CSRFToken(c)
+		}
+	}
 	m["PageAppearance"] = theme.BodyStyle
 	m["PageThemeRules"] = theme.Rules
 	m["PageThemeStylesheet"] = theme.Stylesheet

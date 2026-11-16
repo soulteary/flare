@@ -128,3 +128,31 @@
   background: var(--flare-accent);
   color: var(--flare-inverse);
 }
+
+/* The control a visitor chooses a theme with, below the footer. It is a form
+   that works without a script, and takes its colors from the theme the page
+   is shown with. */
+#page-home .theme-choice {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 16px 0 0;
+}
+
+#page-home .theme-choice select,
+#page-home .theme-choice button {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 8px 14px;
+  border: 1px solid var(--flare-border);
+  border-radius: var(--flare-radius);
+  background: var(--flare-background);
+  color: var(--flare-primary);
+  font: inherit;
+}
+
+#page-home .theme-choice button {
+  cursor: pointer;
+}

@@ -130,6 +130,29 @@ func SaveThemeTemplatesAllowed(allowed bool) error {
 	return saveAppConfig("config", options)
 }
 
+// SaveThemeChoices stores the themes visitors can choose. Whether each is a
+// theme in use is for the caller.
+func SaveThemeChoices(themes []string) error {
+	for _, theme := range themes {
+		if !model.IsThemeName(theme) {
+			return saveError(SaveFailureInvalidInput, fmt.Errorf("invalid theme name %q", theme))
+		}
+	}
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		return saveError(SaveFailureConfigUnreadable, err)
+	}
+	// A list that is stored already, and an empty one where none is, write
+	// nothing.
+	if slices.Equal(options.ThemeChoices, themes) {
+		return nil
+	}
+	options.ThemeChoices = themes
+	return saveAppConfig("config", options)
+}
+
 // SaveThemeTemplatesConfirmed stores the confirmation of the templates of a
 // theme, or withdraws it. Whether the theme brings templates is for the
 // caller.

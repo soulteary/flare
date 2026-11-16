@@ -5,6 +5,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -53,7 +54,11 @@ const (
 	templatesTheme          = "theme-templates-theme"
 	templatesFiles          = "theme-templates-files"
 	optionField             = "option-"
-	optionsTheme            = "theme-options-theme"
+	// actionSaveChoices is submitted by the form with the themes visitors
+	// can choose, each as a box named choiceField and the name of the theme.
+	actionSaveChoices = "save-choices"
+	choiceField       = "theme-choice-"
+	optionsTheme      = "theme-options-theme"
 )
 
 // exportPath is where a theme is handed out as a theme file, by its name.
@@ -108,6 +113,9 @@ func updateThemes(c fiber.Ctx) error {
 	}
 	if body.Action == actionConfirmTemplates || body.Action == actionWithdrawTemplates {
 		return confirmThemeTemplates(c, body.Action == actionConfirmTemplates)
+	}
+	if body.Action == actionSaveChoices {
+		return updateThemeChoices(c)
 	}
 	if body.Action == actionSaveMode {
 		// The mode is one of three constants once it is accepted, so nothing
@@ -243,6 +251,38 @@ func updateThemeTemplates(c fiber.Ctx, allowed bool) error {
 		return err
 	}
 	return renderTheme(c, http.StatusOK, themeNotice{templatesSaved: true})
+}
+
+// updateThemeChoices stores the themes visitors can choose: those of the
+// themes that can be selected now whose box is ticked, in the order of the
+// page. In safe mode the themes of the themes directory are not offered, and
+// those that were stored before stay stored.
+func updateThemeChoices(c fiber.Ctx) error {
+	// The themes directory is read first, so that the themes are those the
+	// instance has now.
+	define.ReloadUserThemes()
+	options, err := data.GetAllSettingsOptions()
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).SendString("config error")
+	}
+	selectable := define.SelectableThemes()
+	chosen := make([]string, 0, len(selectable))
+	for _, name := range selectable {
+		if formvalue.Has(c, choiceField+name) {
+			chosen = append(chosen, name)
+		}
+	}
+	if define.AppFlags.ThemeSafeMode {
+		for _, name := range options.ThemeChoices {
+			if !slices.Contains(selectable, name) && !slices.Contains(chosen, name) && model.IsThemeName(name) {
+				chosen = append(chosen, name)
+			}
+		}
+	}
+	if done, saveErr := commitThemeChange(c, func() error { return data.SaveThemeChoices(chosen) }); done {
+		return saveErr
+	}
+	return renderTheme(c, http.StatusOK, themeNotice{choicesSaved: true})
 }
 
 // confirmThemeTemplates stores that the administrator has confirmed the
@@ -555,6 +595,23 @@ type themeNotice struct {
 	// of the selected theme says.
 	templatesSaved  bool
 	templatesNotice string
+	// choicesSaved reports stored themes for visitors to choose.
+	choicesSaved bool
+}
+
+// themeChoiceBox is one theme of the form with the themes visitors can
+// choose.
+type themeChoiceBox struct {
+	Field   string
+	Title   string
+	Checked bool
+}
+
+// themeChoicesForm is the form with the themes visitors can choose.
+type themeChoicesForm struct {
+	Action string
+	Saved  bool
+	Boxes  []themeChoiceBox
 }
 
 // themeTemplatesSwitch is the form that allows themes to use templates.
@@ -661,6 +718,19 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 			m["ThemeTemplatesConfirm"] = confirm
 		}
 	}
+	choices := themeChoicesForm{Action: actionSaveChoices, Saved: notice.choicesSaved}
+	current, _ := define.ThemeSnapshot()
+	for _, name := range define.SelectableThemes() {
+		title := define.ThemeTitle(name, locale)
+		if name == model.ThemeCustomName {
+			title = i18n.T(locale, "theme_custom")
+		}
+		if name == current {
+			title = i18n.Format(locale, "theme_choices_selected", map[string]any{"name": title})
+		}
+		choices.Boxes = append(choices.Boxes, themeChoiceBox{Field: choiceField + name, Title: title, Checked: slices.Contains(options.ThemeChoices, name)})
+	}
+	m["ThemeChoices"] = choices
 	// The setting for light and dark is offered while it has an effect: on a
 	// theme with different values for the two.
 	mode, choice := define.ThemeModeState()

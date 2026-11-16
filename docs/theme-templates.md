@@ -206,7 +206,7 @@ application.
 | `flare/apps` | The applications with their heading | Required | Required | Optional |
 | `flare/bookmarks` | The bookmarks with their heading | Required | Optional | Required |
 | `flare/toolbar` | The settings and help buttons | Required | Required | Required |
-| `flare/footer` | The footer | Required | Required | Required |
+| `flare/footer` | The footer, and below it the control for [themes a visitor can choose](theme-choices.md#the-control-of-the-pages) while there are any | Required | Required | Required |
 
 - A required part is placed exactly once, and an optional part at most once.
 - `home.html` is also the template of the two other pages for a theme that

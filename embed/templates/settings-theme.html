@@ -204,6 +204,18 @@
             <input class="btn-submit" type="submit" value="{{ T .Locale "theme_templates_preview" }}" />
         </div>
     </form>{{ end }}{{ end }}
+    <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-choices-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
+        <input type="hidden" name="action" value="{{ .ThemeChoices.Action }}">
+        <h2>{{ T .Locale "theme_choices" }}</h2>
+        {{ if .ThemeChoices.Saved }}<p class="theme-notice" role="status">{{ T .Locale "theme_choices_saved" }}</p>{{ end }}
+        <p class="theme-help">{{ T .Locale "theme_choices_help" }}</p>
+        {{ range .ThemeChoices.Boxes }}<div class="form-group">
+            <label class="theme-import-replace"><input type="checkbox" name="{{ .Field }}" value="1"{{ if .Checked }} checked{{ end }}> {{ .Title }}</label>
+        </div>{{ end }}
+        <div class="form-group">
+            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_custom_save" }}" />
+        </div>
+    </form>
     <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-custom-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <input type="hidden" name="action" value="{{ .ThemeCustomAction }}">
         <h2>{{ T .Locale "theme_custom" }}</h2>
