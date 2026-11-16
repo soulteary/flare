@@ -837,7 +837,7 @@ func themeFileCards(locale string, themes []model.Theme, options model.Applicati
 		if len(theme.Templates) > 0 {
 			files := make([]string, 0, len(theme.Templates))
 			for _, template := range theme.Templates {
-				files = append(files, template.Name)
+				files = append(files, template.Label(theme.Name))
 			}
 			note := "theme_templates_note"
 			switch {

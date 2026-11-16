@@ -415,6 +415,7 @@ what that theme gives were written first:
 | `options` | The options of the theme below, then those of the file. An option of the file with the `id` of one below stands in the place of that one. Together they are the up to 8 options of a theme |
 | `background` | The image of the theme below, served from the assets of that theme, unless the file has a `background` of its own with an image among its own assets |
 | `theme.css` | The pages load the stylesheet of the theme below before the one of the theme; see [theme stylesheets](theme-stylesheets.md#a-theme-based-on-another) |
+| `templates/` | After 0.7.0: the templates of the theme, and those of the themes below for what it brings none for; see [theme templates](theme-templates.md#a-theme-based-on-another) |
 | `name`, `version`, `author`, `license`, `requires` | Those of the file alone |
 
 - A theme that is a single file can be based on a directory, and the other

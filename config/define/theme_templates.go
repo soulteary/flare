@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"unicode/utf8"
 
 	"github.com/soulteary/flare/config/model"
@@ -89,13 +90,18 @@ func readThemeTemplates(root *os.Root, theme string) ([]model.ThemeTemplate, []T
 	return templates, problems
 }
 
-// checkThemeTemplates compiles each template with the options of the theme
-// at their defaults, and returns those that compile with the remarks about
-// the others: the template of a page once, for a page with every module
-// turned on, and the template of an item for every combination of what an
-// entry has. Which way a template goes for other values is found when a page
-// is rendered for them.
-func checkThemeTemplates(theme model.Theme, templates []model.ThemeTemplate) ([]model.ThemeTemplate, []ThemeProblem) {
+// checkThemeTemplates returns the templates a theme is shown with, out of
+// those it brings and those of the themes below it, which are given the
+// nearest theme first, with the remarks about those that are not accepted.
+//
+// A template is compiled with the options of the theme at their defaults:
+// the template of a page once, for a page with every module turned on, and
+// the template of an item for every combination of what an entry has. Which
+// way a template goes for other values is found when a page is rendered for
+// them. One that is not accepted is left out, and what it was for is looked
+// for further below. A template of a theme below that is never come to is
+// not compiled. origin returns a theme below by its name.
+func checkThemeTemplates(theme model.Theme, templates []model.ThemeTemplate, origin func(name string) model.Theme) ([]model.ThemeTemplate, []ThemeProblem) {
 	if len(templates) == 0 {
 		return nil, nil
 	}
@@ -107,30 +113,105 @@ func checkThemeTemplates(theme model.Theme, templates []model.ThemeTemplate) ([]
 	for _, name := range themetemplate.PageSlotNames {
 		modules[name[len(themetemplate.ReservedPrefix):]] = true
 	}
-	funcs := ThemeTemplateFuncs(theme, func(key string) string { return key })
-	var accepted []model.ThemeTemplate
-	var problems []ThemeProblem
-	for _, template := range templates {
-		var err error
+	check := func(template model.ThemeTemplate) error {
+		from := theme
+		if template.From.Name != theme.Name {
+			from = origin(template.From.Name)
+		}
+		funcs := ThemeTemplateFuncs(from, func(key string) string { return key })
 		if item, isItem := themeItemKind(template.Name); isItem {
 			for _, values := range themetemplate.ItemValueSets(item) {
 				values.Lang, values.Options = "en", options
-				if _, err = themetemplate.CompileItem(template.Source, item, values, funcs); err != nil {
-					break
+				if _, err := themetemplate.CompileItem(template.Source, item, values, funcs); err != nil {
+					return err
 				}
 			}
-		} else {
-			kind := themetemplate.PageKind(template.Name[:len(template.Name)-len(".html")])
-			values := themetemplate.PageValues{Lang: "en", Kind: kind, Modules: modules, Options: options}
-			_, err = themetemplate.CompilePage(template.Source, kind, values, funcs)
+			return nil
 		}
-		if err != nil {
-			problems = append(problems, themeTemplateProblem(theme.Name, template.Name, err))
-			continue
-		}
-		accepted = append(accepted, template)
+		kind := themetemplate.PageKind(template.Name[:len(template.Name)-len(".html")])
+		values := themetemplate.PageValues{Lang: "en", Kind: kind, Modules: modules, Options: options}
+		_, err := themetemplate.CompilePage(template.Source, kind, values, funcs)
+		return err
 	}
-	return accepted, problems
+	templates = slices.Clone(templates)
+	accepted := map[model.ThemeTemplate]bool{}
+	var problems []ThemeProblem
+	for {
+		reached := reachedThemeTemplates(templates)
+		refused := slices.IndexFunc(reached, func(template model.ThemeTemplate) bool {
+			if accepted[template] {
+				return false
+			}
+			err := check(template)
+			if err != nil {
+				problems = append(problems, themeTemplateProblem(template.From.Name, template.Name, err))
+				return true
+			}
+			accepted[template] = true
+			return false
+		})
+		if refused < 0 {
+			return reached, problems
+		}
+		templates = slices.DeleteFunc(templates, func(template model.ThemeTemplate) bool { return template == reached[refused] })
+	}
+}
+
+// reachedThemeTemplates returns the templates that are come to, out of those
+// of a theme and of the themes below it, the nearest theme first, in the
+// order they are given in. An item has the first template of its kind. A
+// page has the templates of the nearest theme that brings one for it or one
+// for the home page, and of the two the one for the page.
+func reachedThemeTemplates(templates []model.ThemeTemplate) []model.ThemeTemplate {
+	reached := map[model.ThemeTemplate]bool{}
+	for _, kind := range themetemplate.PageKinds {
+		if template, found := themePageSource(templates, kind); found {
+			reached[template] = true
+		}
+	}
+	for _, kind := range themetemplate.ItemKinds {
+		if template, found := themeItemSource(templates, kind); found {
+			reached[template] = true
+		}
+	}
+	var kept []model.ThemeTemplate
+	for _, template := range templates {
+		if reached[template] {
+			kept = append(kept, template)
+		}
+	}
+	return kept
+}
+
+// themePageSource returns the template a page is rendered with, out of
+// templates that are given the nearest theme first: of the nearest theme
+// that has a template for the page or for the home page, the one for the
+// page, and the one for the home page otherwise.
+func themePageSource(templates []model.ThemeTemplate, kind themetemplate.PageKind) (model.ThemeTemplate, bool) {
+	var home model.ThemeTemplate
+	for _, template := range templates {
+		if home.Name != "" && template.From != home.From {
+			break
+		}
+		switch template.Name {
+		case kind.File():
+			return template, true
+		case themetemplate.PageHome.File():
+			home = template
+		}
+	}
+	return home, home.Name != ""
+}
+
+// themeItemSource returns the template a kind of item is rendered with, out
+// of templates that are given the nearest theme first.
+func themeItemSource(templates []model.ThemeTemplate, kind themetemplate.ItemKind) (model.ThemeTemplate, bool) {
+	for _, template := range templates {
+		if template.Name == kind.File() {
+			return template, true
+		}
+	}
+	return model.ThemeTemplate{}, false
 }
 
 // ThemeTemplateFuncs are the functions a page template of the theme is

@@ -25,10 +25,10 @@ const maximumCompiledThemePages = 256
 type compiledThemePage struct {
 	fragment *themetemplate.Fragment
 	problem  ThemeProblem
-	// theme and source name the template that was compiled, in the state
-	// it had.
+	// theme is the theme the template was compiled for, and source the
+	// template in the state it had.
 	theme  string
-	source string
+	source model.ThemeTemplate
 }
 
 var compiledThemePages = struct {
@@ -77,7 +77,7 @@ func ThemePageTemplate(options model.Application, page ThemePage) *themetemplate
 	if !used {
 		return nil
 	}
-	source, found := themePageSource(definition, page.Kind)
+	source, found := themePageSource(definition.Templates, page.Kind)
 	if !found {
 		return nil
 	}
@@ -86,7 +86,7 @@ func ThemePageTemplate(options model.Application, page ThemePage) *themetemplate
 		Layout: options.Homepage.LayoutValues(), Options: make(map[string]any, len(definition.Options)),
 	}
 	var key strings.Builder
-	key.WriteString(definition.Name + "\x00" + definition.Hash + "\x00" + source.Name + "\x00" + source.Hash + "\x00" + string(page.Kind) + "\x00" + page.Lang + "\x00" + strconv.FormatBool(page.Searching))
+	key.WriteString(definition.Name + "\x00" + definition.Hash + "\x00" + source.From.Name + "\x00" + source.From.Hash + "\x00" + source.Name + "\x00" + source.Hash + "\x00" + string(page.Kind) + "\x00" + page.Lang + "\x00" + strconv.FormatBool(page.Searching))
 	for _, name := range themetemplate.PageSlotNames {
 		key.WriteString("\x00" + strconv.FormatBool(page.Modules[name[len(themetemplate.ReservedPrefix):]]))
 	}
@@ -99,6 +99,7 @@ func ThemePageTemplate(options model.Application, page ThemePage) *themetemplate
 		key.WriteString("\x00" + value)
 	}
 
+	funcs := themeTemplateFuncs(definition, source, page.T)
 	compiledThemePages.Lock()
 	defer compiledThemePages.Unlock()
 	if compiled, kept := compiledThemePages.entries[key.String()]; kept {
@@ -110,10 +111,10 @@ func ThemePageTemplate(options model.Application, page ThemePage) *themetemplate
 	// The parts a template has to place are those of the page it is
 	// rendered for: the template of the home page places every part on the
 	// home page, and what the other pages show where it stands in for them.
-	fragment, err := themetemplate.CompilePage(source.Source, page.Kind, values, ThemeTemplateFuncs(definition, page.T))
-	compiled := compiledThemePage{fragment: fragment, theme: definition.Name, source: source.Name + "\x00" + source.Hash}
+	fragment, err := themetemplate.CompilePage(source.Source, page.Kind, values, funcs)
+	compiled := compiledThemePage{fragment: fragment, theme: definition.Name, source: source}
 	if err != nil {
-		compiled.problem = themeTemplateProblem(definition.Name, source.Name, err)
+		compiled.problem = themeTemplateProblem(source.From.Name, source.Name, err)
 		logger.GetLogger().Warn("A template of the theme does not compile for the settings of this page; the page keeps the markup of the application", "file", compiled.problem.File, "reason", compiled.problem.Reason, "subject", compiled.problem.Subject)
 	}
 	compiledThemePages.entries[key.String()] = compiled
@@ -178,7 +179,7 @@ func ThemeItemTemplates(options model.Application, theme string, preview bool, l
 	var state strings.Builder
 	for _, template := range definition.Templates {
 		if _, isItem := themeItemKind(template.Name); isItem {
-			state.WriteString("\x00" + template.Name + "\x00" + template.Hash)
+			state.WriteString("\x00" + template.From.Name + "\x00" + template.From.Hash + "\x00" + template.Name + "\x00" + template.Hash)
 		}
 	}
 	if state.Len() == 0 {
@@ -225,15 +226,11 @@ func (items *ThemeItems) Fragment(kind themetemplate.ItemKind, values themetempl
 }
 
 func (items *ThemeItems) compile(kind themetemplate.ItemKind, set themeItemSet, values themetemplate.ItemValues) *themetemplate.Fragment {
-	var source model.ThemeTemplate
-	for _, template := range items.theme.Templates {
-		if template.Name == kind.File() {
-			source = template
-		}
-	}
-	if source.Name == "" {
+	source, found := themeItemSource(items.theme.Templates, kind)
+	if !found {
 		return nil
 	}
+	funcs := themeTemplateFuncs(items.theme, source, items.t)
 	key := items.state + "\x00" + source.Name + fmt.Sprintf("\x00%t\x00%t\x00%t\x00%t\x00%t", set.icon, set.description, set.newTab, set.named, set.collapsible)
 	compiledThemePages.Lock()
 	defer compiledThemePages.Unlock()
@@ -244,40 +241,40 @@ func (items *ThemeItems) compile(kind themetemplate.ItemKind, set themeItemSet, 
 		clear(compiledThemePages.entries)
 	}
 	values.Lang, values.Options = items.lang, items.options
-	fragment, err := themetemplate.CompileItem(source.Source, kind, values, ThemeTemplateFuncs(items.theme, items.t))
-	compiled := compiledThemePage{fragment: fragment, theme: items.theme.Name, source: source.Name + "\x00" + source.Hash}
+	fragment, err := themetemplate.CompileItem(source.Source, kind, values, funcs)
+	compiled := compiledThemePage{fragment: fragment, theme: items.theme.Name, source: source}
 	if err != nil {
-		compiled.problem = themeTemplateProblem(items.theme.Name, source.Name, err)
+		compiled.problem = themeTemplateProblem(source.From.Name, source.Name, err)
 		logger.GetLogger().Warn("A template of the theme does not compile for the settings of this page; the entries keep the markup of the application", "file", compiled.problem.File, "reason", compiled.problem.Reason, "subject", compiled.problem.Subject)
 	}
 	compiledThemePages.entries[key] = compiled
 	return fragment
 }
 
-// ThemeTemplateFiles names the templates a theme brings that are accepted,
-// in the order they are looked at.
+// themeTemplateFuncs are the functions a template a theme is shown with is
+// compiled with: those of the theme that brings it, which is the theme
+// itself or a theme below it.
+func themeTemplateFuncs(theme model.Theme, template model.ThemeTemplate, t func(key string) string) themetemplate.PageFuncs {
+	if template.From.Name != theme.Name {
+		themeMu.RLock()
+		theme, _ = themeDefinition(template.From.Name)
+		themeMu.RUnlock()
+	}
+	return ThemeTemplateFuncs(theme, t)
+}
+
+// ThemeTemplateFiles names the templates a theme is shown with, in the
+// order they are looked at: the name of the file, after the name of the
+// theme that brings it where that is a theme below.
 func ThemeTemplateFiles(theme string) []string {
 	themeMu.RLock()
 	definition, _ := themeDefinition(theme)
 	themeMu.RUnlock()
 	files := make([]string, 0, len(definition.Templates))
 	for _, template := range definition.Templates {
-		files = append(files, template.Name)
+		files = append(files, template.Label(definition.Name))
 	}
 	return files
-}
-
-// themePageSource returns the template a theme renders a page with: its
-// template for that page, and its template of the home page otherwise.
-func themePageSource(theme model.Theme, kind themetemplate.PageKind) (model.ThemeTemplate, bool) {
-	for _, file := range []string{kind.File(), themetemplate.PageHome.File()} {
-		for _, template := range theme.Templates {
-			if template.Name == file {
-				return template, true
-			}
-		}
-	}
-	return model.ThemeTemplate{}, false
 }
 
 // themeTemplateProblem names a template that does not compile, with the
@@ -306,9 +303,7 @@ func ThemePageTemplateProblems(theme string) []ThemeProblem {
 	defer compiledThemePages.Unlock()
 	var problems []ThemeProblem
 	for _, compiled := range compiledThemePages.entries {
-		if compiled.fragment != nil || compiled.theme != definition.Name || !slices.ContainsFunc(definition.Templates, func(template model.ThemeTemplate) bool {
-			return template.Name+"\x00"+template.Hash == compiled.source
-		}) {
+		if compiled.fragment != nil || compiled.theme != definition.Name || !slices.Contains(definition.Templates, compiled.source) {
 			continue
 		}
 		known := false

@@ -100,9 +100,10 @@ type Theme struct {
 	// where that is a theme below this one. It is empty where the image is
 	// among the assets of this theme, and for a theme without one.
 	BackgroundSource ThemeSource `json:"-"`
-	// Templates are the page templates a theme that is a directory brings,
-	// in the order of the pages. Each compiled when the themes directory
-	// was read.
+	// Templates are the templates the theme is shown with: those a theme
+	// that is a directory brings, and those of the themes below it for what
+	// it brings none for, the nearest first. Each compiled when the themes
+	// directory was read.
 	Templates []ThemeTemplate `json:"-"`
 }
 
@@ -112,11 +113,24 @@ const ThemeTemplateDirectory = "templates"
 
 // ThemeTemplate is a template of a theme: the name of its file in the
 // templates of the theme, such as home.html, and its source. Hash stands for
-// the source where what is compiled from it is kept.
+// the source where what is compiled from it is kept. From names the theme
+// that brings the file, which is the theme itself or a theme below it; the
+// assets a template names are those of that theme.
 type ThemeTemplate struct {
 	Name   string
 	Source string
 	Hash   string
+	From   ThemeSource
+}
+
+// Label names the template for a theme it is listed for: the name of its
+// file, after the name of the theme that brings it where that is a theme
+// below.
+func (t ThemeTemplate) Label(theme string) string {
+	if t.From.Name == "" || t.From.Name == theme {
+		return t.Name
+	}
+	return t.From.Name + "/" + t.Name
 }
 
 // ThemeSource names a theme of the themes directory in the state it was read

@@ -37,7 +37,8 @@ themes/
   `bookmarks.html` for the pages, and `app.html`, `bookmark.html` and
   `group.html` for the items, in the directory `templates` beside
   `theme.yml`. Other files of that directory are not read. A theme that is a
-  single file has no templates.
+  single file brings no templates; it can have those of
+  [a theme it is based on](#a-theme-based-on-another).
 - A template is a regular file of up to 64 KiB in UTF-8. A link is not
   followed.
 - Each file is optional. The application page and the bookmark page take
@@ -50,6 +51,62 @@ themes/
   reason and what it is about. This differs from a stylesheet, which a theme
   is not used without.
 - An archive of a theme does not hold its templates in this release.
+
+## A theme based on another
+
+A theme with [`extends`](theme-files.md#a-theme-based-on-another) is shown
+with the templates of the themes below it for what it brings no template
+for. The themes are looked at one after another, the theme itself first and
+then each theme below it, the nearest first:
+
+| For | The template is |
+| --- | --- |
+| The home page | `home.html` of the first theme that has it |
+| The application page | Of the first theme that has `applications.html` or `home.html`: its `applications.html`, and its `home.html` otherwise |
+| The bookmark page | The same with `bookmarks.html` |
+| An application, a bookmark, a group | `app.html`, `bookmark.html`, `group.html` of the first theme that has it, each by itself |
+
+Where no theme has a template, the markup of the application is used.
+
+```text
+themes/
+    zelda/
+        theme.yml
+        templates/
+            home.html
+            applications.html
+            app.html
+    night/
+        theme.yml            extends: zelda
+        templates/
+            applications.html
+            bookmark.html
+```
+
+Here `night` is shown with its own `applications.html` and `bookmark.html`,
+and with `home.html` and `app.html` of `zelda`. Its bookmark page takes
+`home.html` of `zelda`. The `applications.html` of `zelda` is not used for
+`night`.
+
+- A theme that brings `home.html` uses none of the page templates below it:
+  its `home.html` stands in for its other pages first.
+- A template is compiled for the theme the page is shown with: `.Theme.Options`
+  holds the options of that theme with the values chosen for it.
+- `asset` names an asset of the theme that brings the template. A template
+  of `night` cannot name an image among the assets of `zelda`, and a
+  template of `zelda` that is used for `night` still names the assets of
+  `zelda`.
+- A template that is [not accepted](#what-a-template-can-contain) counts as
+  absent here as well: what it was for is looked for in the themes below. A
+  template of a theme below is checked again with the options of the theme
+  above where it is used for that theme, and is not looked at where the
+  theme above replaces it.
+- The theme page lists a template of a theme below with the name of that
+  theme, as `zelda/home.html`. The confirmation of a theme is about all the
+  templates it is shown with. It is kept for that theme alone: confirming
+  `night` does not confirm `zelda`, and `night` needs its own confirmation
+  where `zelda` is confirmed.
+- A bundled theme brings no templates.
 
 ## Turning templates on
 
@@ -350,7 +407,8 @@ the file with the reason.
 ## Changes while the instance runs
 
 The templates of the selected theme are followed like its other files: one
-that is added, edited or removed is read by the next page. See
+that is added, edited or removed is read by the next page. So are the
+templates of the themes below it. See
 [changes while the instance runs](theme-files.md#changes-while-the-instance-runs).
 
 ## Verification
