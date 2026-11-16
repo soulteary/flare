@@ -210,6 +210,7 @@
   "theme_import_archive_twice": "没有导入任何内容。压缩包里主题的同一个文件出现了两次：",
   "theme_import_archive_document": "没有导入任何内容。有一个说明文本不符合要求；随主题一起的说明文本最多 8 个，每个是不超过 64 KiB 的 UTF-8 文本：",
   "theme_import_left_out": "压缩包里这些条目不是主题的文件，没有导入：{files}",
+  "theme_import_withdrawn": "这些主题的模板此前已确认，导入可能带来别的模板，需要重新确认：{themes}。",
   "theme_export_archive_size": "这个主题的压缩包会超过 24 MiB，请直接复制它的目录。",
   "theme_export_archive_read": "读取时这个主题的某个文件发生了变化，请再试一次。",
   "theme_import_rejected": "没有导入任何内容。{reason}",

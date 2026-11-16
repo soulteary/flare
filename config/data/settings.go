@@ -156,6 +156,30 @@ func SaveThemeTemplatesConfirmed(theme string, confirmed bool) error {
 	return saveAppConfig("config", options)
 }
 
+// WithdrawThemeTemplates withdraws the confirmation of the templates of
+// each of the themes in a single write, and returns those that were
+// confirmed. Nothing is written where none was.
+func WithdrawThemeTemplates(themes []string) ([]string, error) {
+	settingsUpdateMu.Lock()
+	defer settingsUpdateMu.Unlock()
+	options, err := GetAllSettingsOptions()
+	if err != nil {
+		return nil, saveError(SaveFailureConfigUnreadable, err)
+	}
+	var withdrawn []string
+	for _, theme := range themes {
+		if current := options.ThemeSettings[theme]; current.Templates {
+			current.Templates = false
+			options.ThemeSettings[theme] = current
+			withdrawn = append(withdrawn, theme)
+		}
+	}
+	if len(withdrawn) == 0 {
+		return nil, nil
+	}
+	return withdrawn, saveAppConfig("config", options)
+}
+
 // SaveThemeCustom stores a custom palette and selects it in a single write.
 // Choosing a built-in theme afterwards keeps the stored palette.
 func SaveThemeCustom(palette model.Palette) error {

@@ -50,7 +50,7 @@ themes/
   absent, and the theme stays in use: the theme page lists the file with the
   reason and what it is about. This differs from a stylesheet, which a theme
   is not used without.
-- An archive of a theme does not hold its templates in this release.
+- An [archive](#archives) of a theme holds its templates.
 
 ## A theme based on another
 
@@ -344,6 +344,35 @@ Every item template can also branch on `.Site.Lang` and
 An item template is checked for every combination of what an entry has:
 eight for an application, four for a bookmark and three for a group. One that
 is not accepted for any of them is not used at all.
+
+## Archives
+
+The [archive](theme-files.md#archives) of a theme holds its templates, and
+an import stores them.
+
+- **Download.** The archive holds the template files as a reading of the
+  directory reads them: the six names, regular files of up to 64 KiB in
+  UTF-8. A template that is not accepted is in the archive as well. Other
+  files of `templates` are not.
+- **Import.** The six files of `templates` are stored. Every other entry of
+  that directory is left out and named on the page, like any entry that is
+  no file of a theme.
+- **A template that cannot be read**, because it is larger than 64 KiB or
+  not UTF-8, is a reason not to take the archive in, with the file named.
+- **A template that is not accepted** is stored with the theme, as it could
+  be written into the directory. The theme is in use without it and the
+  theme page lists it. Whether a template is accepted can depend on the
+  themes below, which an archive does not hold.
+- **An import asks for the confirmation again.** What was confirmed are the
+  templates that were there. An import of a theme, as an archive or as a
+  theme file, withdraws the confirmation of that theme and of every theme
+  that is based on it, and the page names them. The pages have the markup of
+  the application until the templates are confirmed again. The
+  confirmations of other themes stay.
+- A theme of a name that was confirmed earlier and removed since is asked
+  for again in the same way when it is imported.
+- A release up to 0.7.0 leaves the templates of an archive out and names
+  them among the entries that are no files of a theme.
 
 ## Layout options and templates
 

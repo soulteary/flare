@@ -110,3 +110,41 @@ func TestSaveThemeTemplatesWithUnreadableConfiguration(t *testing.T) {
 		}
 	}
 }
+
+// The confirmations of several themes are withdrawn in one write, and
+// nothing is written where none of them was confirmed.
+func TestWithdrawThemeTemplates(t *testing.T) {
+	t.Chdir(t.TempDir())
+	original := "Title: Mine\nThemeTemplates: true\nThemeSettings:\n    zelda:\n        IgnoreLayout: []\n        Options:\n            frames: \"true\"\n        Templates: true\n" +
+		"    night:\n        IgnoreLayout: []\n        Templates: true\n    other:\n        IgnoreLayout: []\n        Templates: true\n    plain:\n        IgnoreLayout: []\n        Templates: false\n"
+	if err := os.WriteFile("config.yml", []byte(original), 0600); err != nil {
+		t.Fatal(err)
+	}
+	withdrawn, err := WithdrawThemeTemplates([]string{"plain", "absent"})
+	if err != nil || withdrawn != nil {
+		t.Fatalf("%v %v", withdrawn, err)
+	}
+	if _, raw := readThemeSettings(t); raw != original {
+		t.Fatalf("the file was written:\n%s", raw)
+	}
+	if withdrawn, err = WithdrawThemeTemplates(nil); err != nil || withdrawn != nil {
+		t.Fatalf("%v %v", withdrawn, err)
+	}
+
+	withdrawn, err = WithdrawThemeTemplates([]string{"night", "plain", "absent", "zelda"})
+	if err != nil || len(withdrawn) != 2 || withdrawn[0] != "night" || withdrawn[1] != "zelda" {
+		t.Fatalf("%v %v", withdrawn, err)
+	}
+	options, _ := readThemeSettings(t)
+	stored := options.ThemeSettings
+	if stored["zelda"].Templates || stored["night"].Templates || !stored["other"].Templates || stored["plain"].Templates {
+		t.Fatalf("stored: %+v", stored)
+	}
+	if _, known := stored["absent"]; known || len(stored) != 4 {
+		t.Fatalf("stored: %+v", stored)
+	}
+	// What else is stored for a theme is kept, and so is the switch.
+	if stored["zelda"].Options["frames"] != "true" || !options.ThemeTemplates {
+		t.Fatalf("stored: %+v %v", stored, options.ThemeTemplates)
+	}
+}
