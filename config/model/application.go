@@ -33,7 +33,11 @@ type Application struct {
 	// pages. A theme uses its templates once this is on and the templates
 	// of that theme are confirmed in its ThemeSettings. It is encoded when
 	// it is off, so that saving can turn it off again.
-	ThemeTemplates      bool             `yaml:"ThemeTemplates"`
+	ThemeTemplates bool `yaml:"ThemeTemplates"`
+	// ThemeChoices names the themes a visitor can have the pages shown
+	// with instead of the selected one. The list is encoded when it is
+	// empty, so that saving can clear a previous one.
+	ThemeChoices        []string         `yaml:"ThemeChoices"`
 	ShowWeather         bool             `yaml:"ShowWeather"`
 	WeatherLocation     *WeatherLocation `yaml:"WeatherLocation,omitempty"`
 	Location            string           `yaml:"Location"`
