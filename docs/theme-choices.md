@@ -1,9 +1,7 @@
 # Themes a visitor can choose
 
 > Availability: not in a release yet. This page describes the source after
-> 0.7.0, where the list is set in `config.yml` and a choice is made with a
-> form. The settings page does not offer the list, and the pages show no
-> control for the choice.
+> 0.7.0.
 
 The pages of an instance are shown with one theme, the selected one. The
 administrator can name further themes, and a visitor can have the pages
@@ -12,15 +10,33 @@ visitor. Nothing about it is stored on the instance.
 
 Read this page for:
 
-- [Which themes can be chosen](#which-themes-can-be-chosen).
+- [Which themes can be chosen](#which-themes-can-be-chosen): the form of
+  the theme page, and the list in `config.yml`.
+- [The control of the pages](#the-control-of-the-pages) a visitor chooses
+  with.
 - [What a choice changes](#what-a-choice-changes), and what it does not.
 - [How a choice is made](#how-a-choice-is-made): the form and the cookie.
 - [Caches](#caches) between the instance and the visitor.
 
 ## Which themes can be chosen
 
-`ThemeChoices` in `config.yml` lists the names of the themes, as `Theme`
-names the selected one:
+The theme page has a form, **Themes visitors can choose**, with a box for
+every theme that can be selected: the bundled themes, the custom colors once
+colors are stored for them, and the themes of the themes directory. The
+ticked themes are stored, and the pages offer them from the next page load.
+
+- The selected theme has a box too, and the form says which it is. Ticking
+  it changes nothing now. It keeps the theme among the choices when another
+  theme is selected later.
+- With no box ticked, an empty list is stored and the pages have no control.
+- In safe mode for the instance the themes of the themes directory have no
+  box. Those that were ticked before stay on the list when the form is
+  saved, and can be chosen again when the instance runs without safe mode.
+
+The form stores `ThemeChoices` in `config.yml`, which lists the names of the
+themes, as `Theme` names the selected one. The themes are stored in the
+order of the theme page. The list can be written by hand as well, in any
+order, and that order is the one the control offers them in:
 
 ```yaml
 Theme: blackboard
@@ -44,6 +60,32 @@ ThemeChoices:
   next page load.
 - In safe mode for the instance, no theme of the themes directory can be
   chosen. The bundled themes and the custom colors can.
+
+## The control of the pages
+
+While there is a theme to choose, the home page, the application page, the
+bookmark page and the help page have a control below the footer: a list
+with a label, and a button.
+
+| Part | What it is |
+| --- | --- |
+| The first entry of the list | The selected theme, named as the theme of the site. Choosing it gives a choice up |
+| The other entries | The themes that can be chosen, in the order of the list, each under the name its theme file gives in the language of the interface |
+| The marked entry | The theme the page is shown with |
+| The button | Submits the choice. The visitor comes back to the same page, shown with the chosen theme |
+
+- The control is a form and needs no script.
+- It is part of the footer. A theme that brings a
+  [template of a page](theme-templates.md) places the footer, which every
+  template has to, and has the control with it.
+- It is written in the colors of the theme the page is shown with. A
+  stylesheet of a theme styles it as `form.theme-choice` with its `label`,
+  `select` and `button`. A stylesheet that hides it leaves a visitor who
+  chose that theme without the way back; the cookie can still be removed in
+  the browser, and the administrator can take the theme off the list.
+- A response that is a preview, or shown in safe mode for one page, has no
+  control: it is not the page a visitor gets.
+- The pages of the settings and the editor have no control.
 
 ## What a choice changes
 
@@ -89,7 +131,10 @@ A choice is a form sent with `POST` to `/theme-choice`:
 | Field | Value |
 | --- | --- |
 | `theme` | The name of a theme that can be chosen. Empty, or the name of the selected theme, gives the choice up |
-| `back` | `/`, `/applications` or `/bookmarks`: the page the visitor is sent to afterwards. Anything else is read as `/` |
+| `back` | `/`, `/applications`, `/bookmarks` or `/help`: the page the visitor is sent to afterwards. Anything else is read as `/` |
+
+The control of the pages is such a form. Any form of this shape makes a
+choice, for example one with a button for each theme:
 
 ```html
 <form method="POST" action="/theme-choice">
@@ -104,7 +149,10 @@ A choice is a form sent with `POST` to `/theme-choice`:
   left as it is.
 - The address takes no `GET`: a link cannot make a choice.
 - On a site that is shown to the administrator only, the form needs the
-  session and its token like every other form.
+  session and its token like every other form. The control of the pages
+  carries the token there. On a public site it carries none: the form is
+  taken from anyone, and a page every visitor gets holds no token of a
+  session.
 
 The cookie:
 
@@ -149,5 +197,18 @@ was rendered for the theme of another.
   a confirmation is withdrawn; safe mode for the instance; a preview and
   safe mode for one page before a choice; a site shown to the administrator
   only.
-- Not covered: a proxy between the instance and a visitor, and a browser
-  that makes the choice, because the pages have no control for it yet.
+- `internal/server`, for the control and the form of the theme page: the
+  control on the four pages with its entries, the marked one and the page it
+  leads back to; a name of a theme with markup in it; pages without a
+  choice; a page of a theme with templates; the token on a site shown to
+  the administrator only; no control on a preview and in safe mode for one
+  page; the boxes of the form, what it stores and in which order, an empty
+  list, the custom colors, and safe mode for the instance.
+- `tests/theme/choices.browser.cjs`, in Chromium: the administrator ticks
+  themes; a visitor chooses on each of the four pages and comes back to it;
+  the cookie and that no script reads it; a second visitor and the
+  administrator keep the theme of the site; a theme with a stylesheet; a
+  window 320 pixels wide; a browser without scripts; giving the choice up;
+  a theme that is taken off the list, and the last one.
+- Not covered: a proxy between the instance and a visitor; Firefox and
+  WebKit; a screen reader.

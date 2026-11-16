@@ -688,5 +688,12 @@
   "privacy.export_confirm": "导出可能包含私有内容；HTML 丢失权限。",
   "privacy.new_public_count": "新增匿名可见条目：{0}",
   "privacy.trusted_import": "可信免登录模式：保存后匿名可读写。",
-  "privacy.verify_retry": "在新标签页验证密码，返回后重新提交（不会自动保存）"
+  "privacy.verify_retry": "在新标签页验证密码，返回后重新提交（不会自动保存）",
+  "theme_choice_label": "主题",
+  "theme_choice_apply": "应用",
+  "theme_choice_site": "{name}（站点主题）",
+  "theme_choices": "访客可选的主题",
+  "theme_choices_help": "页面默认使用当前选中的主题。访客可以通过每个页面页脚下方的控件，改用这里勾选的某个主题。选择保存在访客浏览器的 Cookie 里，不影响其他人。带模板的主题，只有在它被选为站点主题时确认过模板，访客选用时才会用上模板。",
+  "theme_choices_selected": "{name}（当前选中的主题，不做选择时显示）",
+  "theme_choices_saved": "访客可选的主题已保存。"
 }

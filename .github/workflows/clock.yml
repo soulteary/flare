@@ -184,6 +184,10 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/theme/templates.browser.cjs
+      - name: Theme choices browser acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/theme/choices.browser.cjs
       - name: Theme safe mode browser acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock

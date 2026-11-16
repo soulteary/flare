@@ -140,7 +140,8 @@
 
       <div class="footer-container">
         {{.OptionFooter}}
-      </div>{{ end }}{{ end }}
+      </div>{{ if .ThemeChoice }}
+      <form class="theme-choice" method="POST" action="{{ .ThemeChoice.Action }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}<input type="hidden" name="{{ .ThemeChoice.BackField }}" value="{{ .ThemeChoice.Back }}"><label for="theme-choice">{{ .ThemeChoice.Label }}</label><select id="theme-choice" name="{{ .ThemeChoice.Field }}">{{ range .ThemeChoice.Options }}<option value="{{ .Name }}"{{ if .Selected }} selected{{ end }}>{{ .Title }}</option>{{ end }}</select><button type="submit">{{ .ThemeChoice.Submit }}</button></form>{{ end }}{{ end }}{{ end }}
 
     </div>
   </div>
