@@ -7,8 +7,8 @@ import (
 
 // A theme that is a directory is handed out and taken in as an archive: a ZIP
 // file with the files of one theme. They are the theme file, the stylesheet,
-// the images and fonts of the assets, and text documents such as a license,
-// which travel with a theme without being read or served.
+// the images and fonts of the assets, the templates, and text documents such
+// as a license, which travel with a theme without being read or served.
 const (
 	// ThemeManifestName is the theme file of a theme that is a directory, and
 	// ThemeStylesheetName the stylesheet such a theme can bring.
@@ -44,6 +44,9 @@ const (
 	ThemeArchiveAsset
 	// ThemeArchiveDocument is a text document beside the theme file.
 	ThemeArchiveDocument
+	// ThemeArchiveTemplate is a file in the templates of the theme. Whether
+	// it has the name of a template is for the reader of the theme.
+	ThemeArchiveTemplate
 )
 
 // themeDocumentNames are the names of text documents without an extension.
@@ -82,7 +85,7 @@ func IsThemeDocumentContent(content []byte) bool {
 
 // ThemeArchiveEntry says what an entry of a theme archive is, by its path in
 // the theme with slashes between its parts, and returns the name of the file
-// for an asset and for a document. The path is taken as it is written: a
+// for an asset, for a document and for a template. The path is taken as it is written: a
 // path that is not one of the forms below is no file of a theme, whatever it
 // would name once it were cleaned.
 func ThemeArchiveEntry(path string) (ThemeArchiveKind, string) {
@@ -104,6 +107,8 @@ func ThemeArchiveEntry(path string) (ThemeArchiveKind, string) {
 		return ThemeArchiveDocument, parts[0]
 	case len(parts) == 2 && parts[0] == ThemeAssetDirectory && HasThemeAssetExtension(parts[1]):
 		return ThemeArchiveAsset, parts[1]
+	case len(parts) == 2 && parts[0] == ThemeTemplateDirectory && IsThemeAssetName(parts[1]):
+		return ThemeArchiveTemplate, parts[1]
 	}
 	return ThemeArchiveOther, ""
 }

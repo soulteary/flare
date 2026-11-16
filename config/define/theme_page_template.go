@@ -139,6 +139,28 @@ func themeTemplatesInUse(options model.Application, theme string, preview bool) 
 	return definition, chosen, known && len(definition.Templates) > 0
 }
 
+// ThemesShownWith names the themes in use that can be shown with templates
+// of a theme: the theme itself and every theme of the themes directory that
+// has it below, in the order of their names.
+func ThemesShownWith(name string) []string {
+	themeMu.RLock()
+	defer themeMu.RUnlock()
+	var themes []string
+	for _, theme := range userThemeState.themes {
+		for below, steps := theme, 0; steps <= model.MaximumThemeBases; steps++ {
+			if below.Name == name {
+				themes = append(themes, theme.Name)
+				break
+			}
+			if below, _ = themeDefinition(below.Extends); below.Name == "" {
+				break
+			}
+		}
+	}
+	slices.Sort(themes)
+	return themes
+}
+
 // ThemeLayoutUnsupported lists the layout options of the site that the
 // selected theme does not support, in the order of the appearance page, or
 // nothing where every option works: where no template of the theme is in

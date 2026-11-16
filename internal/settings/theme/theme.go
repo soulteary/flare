@@ -318,13 +318,21 @@ func importTheme(c fiber.Ctx, replace bool) error {
 	// The name is kept beyond the request, in the list of themes.
 	name = strings.Clone(name)
 	var stored error
-	if done, err := commitThemeChange(c, func() error { stored = define.StoreUserTheme(name, raw, replace); return nil }); done {
+	var withdrawn []string
+	if done, err := commitThemeChange(c, func() error {
+		if stored = define.StoreUserTheme(name, raw, replace); stored != nil {
+			return nil
+		}
+		var err error
+		withdrawn, err = withdrawImportedTemplates(name)
+		return err
+	}); done {
 		return err
 	}
 	if stored != nil {
 		return refuse(importRefusal(locale, stored))
 	}
-	return renderTheme(c, http.StatusOK, themeNotice{imported: name})
+	return renderTheme(c, http.StatusOK, themeNotice{imported: name, withdrawn: withdrawn})
 }
 
 // importThemeArchive stores the theme of an uploaded archive in the themes
@@ -348,16 +356,29 @@ func importThemeArchive(c fiber.Ctx, header *multipart.FileHeader, name string, 
 	name = strings.Clone(name)
 	var stored error
 	var leftOut []string
+	var withdrawn []string
 	if done, err := commitThemeChange(c, func() error {
-		leftOut, stored = define.StoreUserThemeArchive(name, upload, header.Size, replace)
-		return nil
+		if leftOut, stored = define.StoreUserThemeArchive(name, upload, header.Size, replace); stored != nil {
+			return nil
+		}
+		var err error
+		withdrawn, err = withdrawImportedTemplates(name)
+		return err
 	}); done {
 		return err
 	}
 	if stored != nil {
 		return refuse(importRefusal(locale, stored))
 	}
-	return renderTheme(c, http.StatusOK, themeNotice{imported: name, leftOut: leftOut})
+	return renderTheme(c, http.StatusOK, themeNotice{imported: name, leftOut: leftOut, withdrawn: withdrawn})
+}
+
+// withdrawImportedTemplates withdraws the confirmation of the templates of
+// a theme that was imported, and of the themes that have it below: what was
+// confirmed are the templates that were there, and an import brings others.
+// It returns the themes a confirmation was withdrawn for.
+func withdrawImportedTemplates(name string) ([]string, error) {
+	return data.WithdrawThemeTemplates(define.ThemesShownWith(name))
 }
 
 // importRefusal words why a theme was not imported, with the status of the
@@ -511,6 +532,9 @@ type themeNotice struct {
 	// leftOut names the entries of an imported archive that are no files of
 	// a theme and were not stored.
 	leftOut []string
+	// withdrawn names the themes whose templates are no longer confirmed
+	// after an import.
+	withdrawn []string
 	// optionsSaved reports stored values for the options of the theme.
 	optionsSaved bool
 	// templatesSaved reports a stored setting for the templates of themes,
@@ -636,6 +660,13 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	m["ThemeImportRefused"] = notice.importRefused
 	if notice.imported != "" {
 		m["ThemeImported"] = i18n.Format(locale, "theme_import_done", map[string]any{"name": define.ThemeTitle(notice.imported, locale)})
+	}
+	if len(notice.withdrawn) > 0 {
+		titles := make([]string, 0, len(notice.withdrawn))
+		for _, theme := range notice.withdrawn {
+			titles = append(titles, define.ThemeTitle(theme, locale))
+		}
+		m["ThemeImportWithdrawn"] = i18n.Format(locale, "theme_import_withdrawn", map[string]any{"themes": strings.Join(titles, i18n.T(locale, "list_separator"))})
 	}
 	if len(notice.leftOut) > 0 {
 		m["ThemeImportLeftOut"] = i18n.Format(locale, "theme_import_left_out", map[string]any{"files": leftOutText(notice.leftOut)})

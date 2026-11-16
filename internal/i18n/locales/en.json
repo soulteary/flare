@@ -210,6 +210,7 @@
   "theme_import_archive_twice": "Nothing was imported. The archive holds a file of the theme twice:",
   "theme_import_archive_document": "Nothing was imported. A text document is not accepted; up to 8 of them travel with a theme, each UTF-8 text of up to 64 KiB:",
   "theme_import_left_out": "These entries of the archive are no files of a theme and were left out: {files}",
+  "theme_import_withdrawn": "The templates of these themes were confirmed and have to be confirmed again, because an import can bring other templates: {themes}.",
   "theme_export_archive_size": "The archive of this theme would be larger than 24 MiB. Copy its directory instead.",
   "theme_export_archive_read": "A file of this theme changed while it was read. Try again.",
   "theme_import_rejected": "Nothing was imported. {reason}",

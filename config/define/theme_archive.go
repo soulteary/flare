@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -137,6 +138,10 @@ func themeArchiveFiles(reader *zip.Reader) ([]themeArchiveFile, []string, error)
 		} else if outside, _ := model.ThemeArchiveEntry(entry.Name); outside == model.ThemeArchiveIgnored {
 			kind = model.ThemeArchiveIgnored
 		}
+		if kind == model.ThemeArchiveTemplate && !slices.Contains(themeTemplateFiles(), name) {
+			// Other files of that directory are not read in a theme.
+			kind = model.ThemeArchiveOther
+		}
 		switch {
 		case kind == model.ThemeArchiveIgnored:
 			continue
@@ -191,6 +196,8 @@ func (file themeArchiveFile) unpack() ([]byte, error) {
 		limit, tooLarge = model.MaximumThemeStylesheetBytes, &ThemeArchiveProblem{Problem: ThemeProblem{File: file.path, Reason: ThemeProblemStyleSize}}
 	case model.ThemeArchiveAsset:
 		limit, tooLarge = model.MaximumThemeAssetBytes, &ThemeArchiveProblem{Problem: ThemeProblem{File: file.path, Reason: ThemeProblemAssetSize}}
+	case model.ThemeArchiveTemplate:
+		limit, tooLarge = MaximumThemeTemplateBytes, &ThemeArchiveProblem{Problem: ThemeProblem{File: file.path, Reason: ThemeProblemSize}}
 	}
 	if file.entry.UncompressedSize64 > uint64(limit) {
 		return nil, tooLarge
@@ -218,8 +225,8 @@ func (file themeArchiveFile) unpack() ([]byte, error) {
 // of a theme and were left out.
 //
 // Only files of a theme are written, under names that are put together here:
-// the theme file, the stylesheet, the images and fonts of the assets, and
-// text documents. A path of the archive is never used as a path of the
+// the theme file, the stylesheet, the images and fonts of the assets, the
+// templates, and text documents. A path of the archive is never used as a path of the
 // directory. The files are written into a hidden directory beside the
 // themes, which a reading of the themes directory leaves alone, and are read
 // there as a theme of the directory is read. A theme that is accepted is
@@ -318,6 +325,15 @@ func StoreUserThemeArchive(name string, archive io.ReaderAt, size int64, replace
 		problem.File = strings.TrimPrefix(problem.File, staging+"/")
 		return nil, &ThemeArchiveProblem{Problem: problem}
 	}
+	// A template that cannot be read is refused like any other file. One
+	// that is read and not accepted is for the theme page to list: the
+	// theme is in use without it, as in the directory, and whether it is
+	// accepted can depend on the themes below.
+	if len(scan.templateRemarks) > 0 {
+		problem := scan.templateRemarks[0]
+		problem.File = strings.TrimPrefix(problem.File, staging+"/")
+		return nil, &ThemeArchiveProblem{Problem: problem}
+	}
 	if candidate := scan.candidates[staging]; candidate.file.Extends != "" {
 		if err = checkThemeBase(name, candidate.file); err != nil {
 			return nil, err
@@ -374,7 +390,7 @@ func hiddenThemeName(prefix string) (string, error) {
 // themes directory. Each is written under the name it has in a theme, which
 // is one of a few fixed names or a name that was checked.
 func unpackThemeArchive(root *os.Root, directory string, files []themeArchiveFile) error {
-	assets := false
+	assets, templates := false, false
 	for _, file := range files {
 		content, err := file.unpack()
 		if err != nil {
@@ -396,6 +412,14 @@ func unpackThemeArchive(root *os.Root, directory string, files []themeArchiveFil
 				assets = true
 			}
 			target = filepath.Join(directory, model.ThemeAssetDirectory, file.name)
+		case model.ThemeArchiveTemplate:
+			if !templates {
+				if err = root.Mkdir(filepath.Join(directory, model.ThemeTemplateDirectory), 0700); err != nil {
+					return errors.Join(ErrThemeStoreWrite, err)
+				}
+				templates = true
+			}
+			target = filepath.Join(directory, model.ThemeTemplateDirectory, file.name)
 		}
 		handle, err := root.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 		if err != nil {
@@ -496,6 +520,15 @@ func ExportThemeArchive(name string) (string, []byte, error) {
 			return "", nil, ErrThemeArchiveRead
 		}
 		if err = add(model.ThemeAssetDirectory+"/"+asset.Name, content, asset.ModTime); err != nil {
+			return "", nil, exportFailure(err)
+		}
+	}
+	// The templates are those a reading of the directory reads, accepted
+	// or not: an import checks them again.
+	templates, _ := readThemeTemplates(root, name)
+	for _, template := range templates {
+		path := model.ThemeTemplateDirectory + "/" + template.Name
+		if err = add(path, []byte(template.Source), modified(path)); err != nil {
 			return "", nil, exportFailure(err)
 		}
 	}

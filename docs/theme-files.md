@@ -618,6 +618,8 @@ zelda.zip
         theme.css
         assets/
             paper.png
+        templates/
+            home.html
         LICENSE.txt
 ```
 
@@ -629,6 +631,7 @@ the theme, and nothing else of its directory:
 | `theme.yml` | As it is in the directory |
 | `theme.css` | As it was checked when the directory was read |
 | `assets/` | The [images and fonts](theme-stylesheets.md#images-and-fonts) that are part of the theme |
+| `templates/` | After 0.7.0: the [templates](theme-templates.md#archives) as they are in the directory, accepted or not |
 | [Text documents](#text-documents) | Those beside `theme.yml` |
 
 - A theme that is [based on another](#a-theme-based-on-another) is downloaded
@@ -644,7 +647,9 @@ An import takes an archive made this way, and one made by hand:
   one directory, whose name does not matter. An archive holds one theme: with
   a `theme.yml` in more than one directory it is refused.
 - Only the files of a theme are stored: `theme.yml`, `theme.css`, the images
-  and fonts in `assets`, and text documents. Each is written under the name
+  and fonts in `assets`, in releases after 0.7.0 the six
+  [templates](theme-templates.md#archives) in `templates`, and text
+  documents. Each is written under the name
   it has in a theme, never under a path of the archive. Every other entry is
   left out, and the page names the entries that were, so that nothing of an
   archive is in the directory without being a part of the theme. Hidden
@@ -664,6 +669,10 @@ An import takes an archive made this way, and one made by hand:
   link or another file is never replaced.
 - A new theme is refused while the themes directory holds the 64 entries that
   are looked at.
+- After 0.7.0: an import withdraws the confirmation of the
+  [templates](theme-templates.md#archives) of the theme, and of the themes
+  that are based on it. This holds for a theme file that is imported as
+  well.
 
 ### Text documents
 
