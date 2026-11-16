@@ -607,11 +607,17 @@ func (scan *userThemeScan) resolveThemes() {
 				}
 			}
 		}
-		// The templates are compiled with what the theme is as a whole:
-		// its options and its assets.
-		var remarks []ThemeProblem
-		definition.Templates, remarks = checkThemeTemplates(definition, candidate.templates)
-		scan.templateRemarks = append(scan.templateRemarks, remarks...)
+		// The templates are compiled with what the theme is as a whole,
+		// and those of the themes below are looked at for what the theme
+		// brings no template for. A theme below has said what is to say
+		// about its own templates.
+		templates, remarks := checkThemeTemplates(definition, scan.templatesBelow(name, definition.Hash), func(below string) model.Theme { return scan.themes[below] })
+		definition.Templates = templates
+		for _, remark := range remarks {
+			if !slices.Contains(scan.templateRemarks, remark) {
+				scan.templateRemarks = append(scan.templateRemarks, remark)
+			}
+		}
 		scan.themes[name], scan.files[name] = definition, file
 		settled[name] = true
 		return true
@@ -631,6 +637,29 @@ func (scan *userThemeScan) resolveThemes() {
 	if remarks != nil {
 		scan.problems = append(remarks, scan.problems[noted:]...)
 	}
+}
+
+// templatesBelow returns the templates a theme brings and those of the
+// themes below it as they were read, the nearest theme first, each with the
+// theme that brings it. The themes below are in use by the time a theme is
+// taken into use; a bundled theme brings no template.
+func (scan *userThemeScan) templatesBelow(name, hash string) []model.ThemeTemplate {
+	var templates []model.ThemeTemplate
+	from := model.ThemeSource{Name: name, Hash: hash}
+	for _, theme := range append([]string{name}, scan.bases[name]...) {
+		candidate := scan.candidates[theme]
+		if candidate == nil {
+			continue
+		}
+		if theme != name {
+			from = model.ThemeSource{Name: theme, Hash: scan.themes[theme].Hash}
+		}
+		for _, template := range candidate.templates {
+			template.From = from
+			templates = append(templates, template)
+		}
+	}
+	return templates
 }
 
 // followBases returns the names of the themes below a theme, the nearest
