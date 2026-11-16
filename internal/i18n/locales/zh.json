@@ -190,6 +190,7 @@
   "theme_export": "下载",
   "theme_import": "导入主题",
   "theme_import_help": "上传一个主题文件，或者一个目录主题的压缩包，把它加入 themes 目录，文件名就是主题的名称。上传的内容会按目录里的主题同样检查，导入不会选用它。",
+  "theme_repository": "Flare 的主题收录在主题仓库里，实例不会自行访问它：",
   "theme_import_file": "主题文件（.yml，不超过 64 KiB）或压缩包（.zip，不超过 24 MiB）",
   "theme_import_replace": "替换同名的主题",
   "theme_import_submit": "导入",

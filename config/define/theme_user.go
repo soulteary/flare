@@ -25,6 +25,9 @@ import (
 // theme.yml. The directory is the form for a theme of more than one file.
 const (
 	UserThemeDirectory = "themes"
+	// ThemeRepositoryURL is where themes for the application are listed.
+	// The settings link to it; the application never asks it for anything.
+	ThemeRepositoryURL = "https://github.com/soulteary/flare-themes"
 	userThemeExtension = ".yml"
 	// userThemeManifest is the theme file of a theme that is a directory.
 	userThemeManifest = model.ThemeManifestName

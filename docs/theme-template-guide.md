@@ -52,6 +52,8 @@ working.
 contract: 1
 name: Harbor
 version: 1.0.0
+author: The Flare documentation
+license: MIT
 tokens:
   background: "#10241b"
   primary: "#e8f1e4"
@@ -330,6 +332,9 @@ markup of the application.
   on more than is documented.
 - The [archive](theme-templates.md#archives) of the theme was downloaded
   and imported under another name, and looks the same.
+- For the [theme repository](theme-repository.md): the theme file names an
+  author and a license the repository takes, and
+  `go run ./tools/themecheck <name>.zip` reports no finding.
 
 Whoever installs the theme allows templates for the site and confirms the
 templates of the theme. The form says what a template can do: it can write
@@ -342,5 +347,7 @@ site, or read anything but what is listed under
 - `config/define`: the files of the example are read from this page, stored
   as a theme and read by the application. Every template is accepted, for
   each value of the option, and the theme is in use.
+- `internal/themerepo`: the example, packed as an archive, meets the rules
+  of the [theme repository](theme-repository.md).
 - `tests/theme/templates.browser.cjs` renders pages with the example in a
   browser; see [theme templates](theme-templates.md#verification).
