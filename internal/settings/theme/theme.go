@@ -787,6 +787,9 @@ type themeFileCard struct {
 	// Layout names the layout options the theme specifies, so that it is
 	// known before the theme is selected that it changes more than colors.
 	Layout string
+	// Unsupported names the layout options the templates of the theme do
+	// not support.
+	Unsupported string
 	// Stylesheet reports a theme that brings a stylesheet, so that it is
 	// known before the theme is selected that it changes more than colors.
 	Stylesheet bool
@@ -849,6 +852,9 @@ func themeFileCards(locale string, themes []model.Theme, options model.Applicati
 				note = "theme_templates_note_unconfirmed"
 			}
 			card.Templates = i18n.Format(locale, note, map[string]any{"files": strings.Join(files, ", ")})
+			if unsupported := model.ThemeLayoutUnsupported(theme.Supports, theme.Layout); len(unsupported) > 0 {
+				card.Unsupported = i18n.Format(locale, "theme_layout_unsupported_note", map[string]any{"options": settings.LayoutOptionList(locale, unsupported)})
+			}
 		}
 		if specified := (*model.HomepageOptions)(nil).ThemeLayoutApplied(theme.Layout, nil); len(specified) > 0 {
 			card.Layout = i18n.Format(locale, "theme_layout_sets", map[string]any{"options": settings.LayoutOptionList(locale, specified)})

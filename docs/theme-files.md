@@ -107,6 +107,7 @@ tokens:
 | `tokens` | Yes | The style tokens the theme sets; `background`, `primary` and `accent` are required. A theme [based on another](#a-theme-based-on-another) gives only the tokens it changes, or none |
 | `modes` | No | Other token values for light and for dark; see [light and dark](#light-and-dark) |
 | `layout` | No | Layout options the theme specifies; see [layout](#layout) |
+| `supports` | No | After 0.7.0: the layout options that work with the templates of the theme; see [layout options and templates](theme-templates.md#layout-options-and-templates) |
 | `background` | No | An image behind the navigation pages, for a theme that is a directory; see [background image](#background-image) |
 | `options` | No | Settings of the theme that the administrator chooses values for; see [options](#options) |
 | `extends` | No | The name of the theme this one is based on; see [a theme based on another](#a-theme-based-on-another) |
@@ -415,6 +416,7 @@ what that theme gives were written first:
 | `options` | The options of the theme below, then those of the file. An option of the file with the `id` of one below stands in the place of that one. Together they are the up to 8 options of a theme |
 | `background` | The image of the theme below, served from the assets of that theme, unless the file has a `background` of its own with an image among its own assets |
 | `theme.css` | The pages load the stylesheet of the theme below before the one of the theme; see [theme stylesheets](theme-stylesheets.md#a-theme-based-on-another) |
+| `supports` | After 0.7.0: the list of the file, or else that of the theme below |
 | `templates/` | After 0.7.0: the templates of the theme, and those of the themes below for what it brings none for; see [theme templates](theme-templates.md#a-theme-based-on-another) |
 | `name`, `version`, `author`, `license`, `requires` | Those of the file alone |
 

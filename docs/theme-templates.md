@@ -337,11 +337,64 @@ Every item template can also branch on `.Site.Lang` and
   for icons select by its own markup around them.
 - **Layout options.** Options that act on the markup of the entries, such as
   the bookmark layouts and the columns, select by the classes of the
-  application and have no effect on entries a template writes.
+  application and have no effect on entries a template writes. A theme says
+  which options work with its templates; see
+  [layout options and templates](#layout-options-and-templates).
 
 An item template is checked for every combination of what an entry has:
 eight for an application, four for a bookmark and three for a group. One that
 is not accepted for any of them is not used at all.
+
+## Layout options and templates
+
+The layout options of the appearance settings are made for the markup of
+the application. With the templates of a theme, some of them have no effect
+any more. A theme lists the options that work with its templates under
+`supports` in `theme.yml`, by the names they have under
+[`layout`](theme-files.md#layout):
+
+```yaml
+contract: 1
+tokens:
+  background: "#1b2a22"
+  primary: "#f2f2f2"
+  accent: "#8fd19e"
+supports:
+  - TitleSize
+  - CategoryNavigation
+  - HideAppDescriptions
+```
+
+While the templates of the selected theme are in use, the appearance page
+says of every other layout option that the theme does not support it. The
+names are `MobileBookmarkLayout`, `TitleSize`, `HideAppDescriptions`,
+`CategoryNavigation`, `BookmarkLayout` and `DesktopColumns`.
+
+- **Nothing is turned off.** The remark is information for the
+  administrator. The control stays, the setting is stored and handed to the
+  templates as before, and it applies with another theme. Whether an option
+  has an effect is decided by the templates and the stylesheet of the theme.
+- **A theme that does not say.** A theme without `supports` has no such
+  remark for any option. `supports: []` names none, so every option has the
+  remark.
+- **Options the theme sets.** An option the theme gives a value under
+  `layout`, or through one of its [options](theme-files.md#options), counts
+  as supported and has the remark about that value.
+- **Only with templates in use.** Where the pages have the markup of the
+  application, every option works and nothing is remarked: templates turned
+  off for the site, not confirmed for the theme, or not used by the
+  instance.
+- **On the theme page.** The card of a theme with templates names the
+  options its templates do not support, before the theme is selected.
+- **A theme based on another** has the list of its file, or else that of the
+  theme below, whose templates it has where it brings none.
+- A name this release does not have is left out and listed on the theme
+  page. A `supports` that is no list is not accepted, and the theme is not
+  used.
+- What the application decides for an item template is listed
+  [above](#item-templates): hidden descriptions and the modes of the
+  categories reach a template as values, so a theme that uses them can list
+  `HideAppDescriptions` and `CategoryNavigation`.
 
 ## What a template can contain
 

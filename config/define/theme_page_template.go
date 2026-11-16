@@ -139,6 +139,21 @@ func themeTemplatesInUse(options model.Application, theme string, preview bool) 
 	return definition, chosen, known && len(definition.Templates) > 0
 }
 
+// ThemeLayoutUnsupported lists the layout options of the site that the
+// selected theme does not support, in the order of the appearance page, or
+// nothing where every option works: where no template of the theme is in
+// use, as for ThemePageTemplate, so the pages have the markup of the
+// application, and where the theme does not say what it supports.
+func ThemeLayoutUnsupported(options model.Application) []string {
+	theme, _ := ThemeSnapshot()
+	definition, chosen, used := themeTemplatesInUse(options, theme, false)
+	if !used {
+		return nil
+	}
+	// An option of the theme can give a layout option its value.
+	return model.ThemeLayoutUnsupported(definition.Supports, definition.WithOptions(chosen.Options).Layout)
+}
+
 // ThemeItems are the item templates of a theme for the entries one response
 // shows. A list is rendered by one request, so it is not for several
 // goroutines.

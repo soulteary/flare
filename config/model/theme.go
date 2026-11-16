@@ -100,6 +100,11 @@ type Theme struct {
 	// where that is a theme below this one. It is empty where the image is
 	// among the assets of this theme, and for a theme without one.
 	BackgroundSource ThemeSource `json:"-"`
+	// Supports lists the layout options the theme says still work on pages
+	// written with its templates, in the order of the appearance page. It
+	// is nil for a theme that does not say, and empty for one that names
+	// none.
+	Supports []string `json:"-"`
 	// Templates are the templates the theme is shown with: those a theme
 	// that is a directory brings, and those of the themes below it for what
 	// it brings none for, the nearest first. Each compiled when the themes

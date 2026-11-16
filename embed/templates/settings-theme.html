@@ -55,7 +55,7 @@
                 </div>
                 <p class="theme-title">{{ .Title }}</p>
                 {{ if .About }}<p class="theme-about">{{ .About }}</p>{{ end }}
-                {{ if .Based }}<p class="theme-about">{{ .Based }}</p>{{ end }}{{ if .Layout }}<p class="theme-about">{{ .Layout }}</p>{{ end }}{{ if .Stylesheet }}<p class="theme-about">{{ T $.Locale "theme_stylesheet_note" }}</p>{{ end }}{{ if .Options }}<p class="theme-about">{{ T $.Locale "theme_options_note" }}</p>{{ end }}{{ if .Templates }}<p class="theme-about theme-templates-note">{{ .Templates }}</p>{{ end }}
+                {{ if .Based }}<p class="theme-about">{{ .Based }}</p>{{ end }}{{ if .Layout }}<p class="theme-about">{{ .Layout }}</p>{{ end }}{{ if .Stylesheet }}<p class="theme-about">{{ T $.Locale "theme_stylesheet_note" }}</p>{{ end }}{{ if .Options }}<p class="theme-about">{{ T $.Locale "theme_options_note" }}</p>{{ end }}{{ if .Templates }}<p class="theme-about theme-templates-note">{{ .Templates }}</p>{{ end }}{{ if .Unsupported }}<p class="theme-about">{{ .Unsupported }}</p>{{ end }}
                 <a class="theme-card-link theme-preview-link" href="/?theme-preview={{ .Name }}">{{ T $.Locale "theme_preview" }}</a>
                 <a class="theme-card-link theme-export-link" href="{{ $.ThemeExportPath }}?name={{ .Name }}">{{ T $.Locale "theme_export" }}</a>
             </div>
