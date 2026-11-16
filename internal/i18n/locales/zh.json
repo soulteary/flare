@@ -229,7 +229,7 @@
   "theme_install_templates_note": "这个主题带有模板。只有在整站允许主题模板、并确认该主题的模板之后，模板才会生效。",
   "theme_install_left_out": "压缩包里这些条目不是主题的文件，安装时会略去：{files}",
   "theme_install_changed": "这个地址现在返回的内容与页面显示的不同，没有安装。请重新获取并核对。",
-  "theme_install_refused_address": "地址必须是某个主机的 https 地址，不能带用户名或密码。没有获取任何内容。",
+  "theme_install_refused_address": "地址必须是以域名给出的主机的 https 地址，例如 https://example.org/zelda.zip，不能带用户名或密码。不会从用数字地址给出的主机获取内容。没有获取任何内容。",
   "theme_install_refused_name": "地址必须以 <名称>.yml 或 <名称>.zip 结尾，名称由小写字母、数字和单个连字符组成，不超过 32 个字符，且不与内置主题重名。没有获取任何内容。",
   "theme_install_refused_destination": "这个主机不在公网地址上。不会从本机、私有网络或保留地址获取内容。",
   "theme_install_refused_redirect": "这个地址跳转到了不被跟随的地址：超过 5 次，或者不是 https 地址。没有获取任何内容。",

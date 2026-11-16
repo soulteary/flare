@@ -701,6 +701,7 @@ theme with templates [what a template can do](theme-templates.md#what-the-check-
 | --- | --- |
 | Asked for by the administrator | The instance fetches a theme only when this form is submitted, never by itself, and it never fetches a theme again to update it |
 | `https` only | An `http` address is refused, and so is an address with a user name or a password |
+| A host by its name | The host is a name of several labels, such as `example.org`. An address with the number of a host, such as `https://192.0.2.1/…`, and a name of one label, such as `localhost`, are refused before anything is fetched |
 | The name is the last part of the address | `<name>.yml` or `<name>.zip`, with the rules of the name of a [theme file](#location-and-name). An address that ends otherwise is refused before anything is fetched |
 | Public addresses only | The host has to be reached at an address of the public internet. This machine, private networks, link-local and reserved addresses are refused. The address is checked where the connection is made, also for every address an answer leads on to, and no proxy is used |
 | Up to 5 times an answer can lead on | Each time to an `https` address |

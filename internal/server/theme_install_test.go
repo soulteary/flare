@@ -54,7 +54,7 @@ func serveThemes(t *testing.T, files map[string]string) *themeHost {
 	pool := x509.NewCertPool()
 	pool.AddCert(host.server.Certificate())
 	previous, offline := themefetch.Default, define.AppFlags.EnableOfflineMode
-	themefetch.Default = &themefetch.Fetcher{Allow: func(netip.Addr) bool { return true }, RootCAs: pool}
+	themefetch.Default = &themefetch.Fetcher{Allow: func(netip.Addr) bool { return true }, RootCAs: pool, AnyHost: true}
 	define.AppFlags.EnableOfflineMode = false
 	t.Cleanup(func() { themefetch.Default, define.AppFlags.EnableOfflineMode = previous, offline })
 	return host
@@ -246,7 +246,7 @@ func TestInstallThemeFromAnAddressRefusalsHTTP(t *testing.T) {
 
 	// Without the fetcher of this test, this machine is not reached at all.
 	strict := themefetch.Default
-	themefetch.Default = &themefetch.Fetcher{RootCAs: strict.RootCAs}
+	themefetch.Default = &themefetch.Fetcher{RootCAs: strict.RootCAs, AnyHost: true}
 	status, alert = fetch(base + "/tron2.yml")
 	themefetch.Default = strict
 	require.Equal(t, http.StatusBadRequest, status)
@@ -254,7 +254,17 @@ func TestInstallThemeFromAnAddressRefusalsHTTP(t *testing.T) {
 	require.Equal(t, before, host.requests.Load())
 
 	// A host whose certificate is not trusted is not fetched from.
-	themefetch.Default = &themefetch.Fetcher{Allow: strict.Allow}
+	themefetch.Default = &themefetch.Fetcher{Allow: strict.Allow, AnyHost: true}
+
+	// The fetcher of the application takes a host by its name only: the
+	// server of this test, which has a number for a host, is not asked.
+	previous := themefetch.Default
+	themefetch.Default = &themefetch.Fetcher{RootCAs: strict.RootCAs}
+	status, alert = fetch(base + "/tron2.yml")
+	themefetch.Default = previous
+	require.Equal(t, http.StatusBadRequest, status)
+	require.Equal(t, i18n.T("en", "theme_install_refused_address"), alert)
+	require.Equal(t, before, host.requests.Load())
 	status, alert = fetch(base + "/tron2.yml")
 	themefetch.Default = strict
 	require.Equal(t, http.StatusBadGateway, status)

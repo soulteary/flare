@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/netip"
 	"net/url"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -24,8 +25,9 @@ import (
 // Reasons a theme is not downloaded.
 var (
 	// ErrAddress reports an address that is not an https address of a
-	// host, or one that carries a user name or a password.
-	ErrAddress = errors.New("the address is not an https address of a host")
+	// host that is given by its name, or one that carries a user name or a
+	// password.
+	ErrAddress = errors.New("the address is not an https address of a host by its name")
 	// ErrName reports an address whose last part is not the name of a theme
 	// file or of an archive: <name>.yml or <name>.zip.
 	ErrName = errors.New("the address does not end in the name of a theme file or an archive")
@@ -55,6 +57,17 @@ const (
 	userAgent = "flare-theme-install"
 )
 
+// namedHost is the form of an address that is fetched: https, a host that
+// is given by a name of several labels and not by a number, an optional
+// port, and a path. A user name has no place in it, and neither has
+// whitespace. Whether the name leads to a public address is found where the
+// connection is made.
+var namedHost = regexp.MustCompile(`^(?i:https)://(?i:(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?)(?::[0-9]{1,5})?/[^\s#]*(?:#[^\s]*)?$`)
+
+// anyHost is the form for a fetcher that takes a host by its number as
+// well, which is for tests.
+var anyHost = regexp.MustCompile(`^(?i:https)://[^\s/@?#]+/[^\s]*$`)
+
 // Download is a theme as it was fetched.
 type Download struct {
 	// Name is the name of the theme: the last part of the address without
@@ -76,6 +89,9 @@ type Fetcher struct {
 	// RootCAs are the certificate authorities that are trusted, those of
 	// the system unless it is set, which is for tests.
 	RootCAs *x509.CertPool
+	// AnyHost takes a host that is given by its number or by a name of one
+	// label, which is for tests: their servers have no other.
+	AnyHost bool
 }
 
 // Default is the fetcher the application uses.
@@ -140,11 +156,20 @@ func ParseAddress(address string) (*url.URL, string, bool, error) {
 }
 
 // Fetch downloads the theme at an address, reading up to limit bytes of a
-// theme file and up to archiveLimit bytes of an archive. The connection is
+// theme file and up to archiveLimit bytes of an archive. The host is given
+// by a name of several labels: an address by number is not fetched from. The connection is
 // made to a public address only, also where the answer leads on to another
 // address, and no proxy is used: the address that is checked is the one
 // that is connected to.
 func (f *Fetcher) Fetch(ctx context.Context, address string, limit, archiveLimit int64) (Download, error) {
+	form := namedHost
+	if f.AnyHost {
+		form = anyHost
+	}
+	address = strings.TrimSpace(address)
+	if !form.MatchString(address) {
+		return Download{}, ErrAddress
+	}
 	target, name, archive, err := ParseAddress(address)
 	if err != nil {
 		return Download{}, err

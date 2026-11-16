@@ -229,7 +229,7 @@
   "theme_install_templates_note": "The theme brings templates. They are used only once templates are allowed for the site and those of the theme are confirmed.",
   "theme_install_left_out": "These entries of the archive are no files of a theme and will be left out: {files}",
   "theme_install_changed": "The address now answers with other content than the page showed. Nothing was installed. Fetch it again and compare.",
-  "theme_install_refused_address": "The address has to be an https address of a host, without a user name or a password. Nothing was fetched.",
+  "theme_install_refused_address": "The address has to be an https address of a host that is given by its name, such as https://example.org/zelda.zip, without a user name or a password. An address with the number of a host is not fetched from. Nothing was fetched.",
   "theme_install_refused_name": "The address has to end in <name>.yml or <name>.zip, with a name of lower-case letters, digits and single hyphens of at most 32 characters that no bundled theme has. Nothing was fetched.",
   "theme_install_refused_destination": "The host is not at a public address. Nothing is fetched from this machine, from a private network or from a reserved address.",
   "theme_install_refused_redirect": "The address leads on to an address that is not followed: more than 5 times, or to one that is not an https address. Nothing was fetched.",

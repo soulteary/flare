@@ -91,7 +91,7 @@ func serve(t *testing.T, handler http.HandlerFunc) (*httptest.Server, *Fetcher) 
 	t.Cleanup(server.Close)
 	pool := x509.NewCertPool()
 	pool.AddCert(server.Certificate())
-	return server, &Fetcher{Allow: func(netip.Addr) bool { return true }, RootCAs: pool}
+	return server, &Fetcher{Allow: func(netip.Addr) bool { return true }, RootCAs: pool, AnyHost: true}
 }
 
 func TestFetch(t *testing.T) {
@@ -142,6 +142,11 @@ func TestFetch(t *testing.T) {
 		require.Empty(t, headers.Get(header), header)
 	}
 
+	// Space around an address that was pasted is not part of it.
+	got, err = fetcher.Fetch(context.Background(), "  "+server.URL+"/themes/zelda.yml\n", 64, 128)
+	require.NoError(t, err)
+	require.Equal(t, content, string(got.Raw))
+
 	got, err = fetch("/zelda.zip")
 	require.NoError(t, err)
 	require.True(t, got.Archive)
@@ -188,26 +193,73 @@ func TestFetchReachesPublicAddressesOnly(t *testing.T) {
 			http.Redirect(w, r, "/zelda.yml", http.StatusFound)
 		}
 	})
-	strict := &Fetcher{RootCAs: trusting.RootCAs}
-	_, err := strict.Fetch(context.Background(), server.URL+"/zelda.yml", 64, 128)
-	require.ErrorIs(t, err, ErrDestination)
-	_, err = Default.Fetch(context.Background(), server.URL+"/zelda.yml", 64, 128)
-	require.ErrorIs(t, err, ErrDestination)
-	_, err = Default.Fetch(context.Background(), "https://localhost:"+server.URL[strings.LastIndex(server.URL, ":")+1:]+"/zelda.yml", 64, 128)
-	require.ErrorIs(t, err, ErrDestination)
+	port := server.URL[strings.LastIndex(server.URL, ":")+1:]
+	strict := &Fetcher{RootCAs: trusting.RootCAs, AnyHost: true}
+	for _, host := range []string{"127.0.0.1", "localhost", "[::1]"} {
+		_, err := strict.Fetch(context.Background(), "https://"+host+":"+port+"/zelda.yml", 64, 128)
+		require.ErrorIs(t, err, ErrDestination, host)
+	}
+	// The fetcher of the application does not take a host by its number
+	// or by a name of one label in the first place.
+	for _, host := range []string{"127.0.0.1", "localhost", "[::1]", "2130706433", "0x7f.0.0.1", "127.1"} {
+		_, err := Default.Fetch(context.Background(), "https://"+host+":"+port+"/zelda.yml", 64, 128)
+		require.ErrorIs(t, err, ErrAddress, host)
+	}
 	require.Zero(t, reached.Load())
+	var err error
 
 	// The address is checked for every connection: the first is allowed
 	// and the one it leads on to is not.
 	var connections atomic.Int32
-	once := &Fetcher{RootCAs: trusting.RootCAs, Allow: func(netip.Addr) bool { return connections.Add(1) == 1 }}
+	once := &Fetcher{RootCAs: trusting.RootCAs, AnyHost: true, Allow: func(netip.Addr) bool { return connections.Add(1) == 1 }}
 	_, err = once.Fetch(context.Background(), server.URL+"/inward.yml", 64, 128)
 	require.ErrorIs(t, err, ErrDestination)
 	require.EqualValues(t, 1, reached.Load())
 	require.EqualValues(t, 2, connections.Load())
 
 	// A certificate that is not trusted is not accepted.
-	open := &Fetcher{Allow: func(netip.Addr) bool { return true }}
+	open := &Fetcher{Allow: func(netip.Addr) bool { return true }, AnyHost: true}
 	_, err = open.Fetch(context.Background(), server.URL+"/zelda.yml", 64, 128)
 	require.ErrorIs(t, err, ErrFetch)
+}
+
+// The form of an address the application fetches: https, a host by a name
+// of several labels, and nothing that is read differently by different
+// readers of an address.
+func TestFetchTakesHostsByName(t *testing.T) {
+	for address, accepted := range map[string]bool{
+		"https://example.org/zelda.zip":                       true,
+		"https://themes.example.co.uk:8443/a/b/zelda.yml?x=1": true,
+		"HTTPS://Example.ORG/zelda.zip":                       true,
+		"https://xn--bcher-kva.example/zelda.zip":             true,
+		"https://a-b.example.org/zelda.zip#top":               true,
+		"https://127.0.0.1/zelda.zip":                         false,
+		"https://[::1]/zelda.zip":                             false,
+		"https://[2606:4700::1]/zelda.zip":                    false,
+		"https://2130706433/zelda.zip":                        false,
+		"https://0x7f000001/zelda.zip":                        false,
+		"https://127.1/zelda.zip":                             false,
+		"https://1.2.3.4.5/zelda.zip":                         false,
+		"https://localhost/zelda.zip":                         false,
+		"https://intranet/zelda.zip":                          false,
+		"https://example.org./zelda.zip":                      false,
+		"https://.example.org/zelda.zip":                      false,
+		"https://-a.example.org/zelda.zip":                    false,
+		"https://a_b.example.org/zelda.zip":                   false,
+		"https://example.org":                                 false,
+		"https://user@example.org/zelda.zip":                  false,
+		"https://example.org@127.0.0.1/zelda.zip":             false,
+		"https://example.org\\@127.0.0.1/zelda.zip":           false,
+		"https://example.org:port/zelda.zip":                  false,
+		"https://example.org/zel da.zip":                      false,
+		"https://example.org/zelda.zip\nHost: other":          false,
+		"http://example.org/zelda.zip":                        false,
+		"//example.org/zelda.zip":                             false,
+	} {
+		require.Equal(t, accepted, namedHost.MatchString(address), address)
+		if !accepted {
+			_, err := Default.Fetch(context.Background(), address, 64, 128)
+			require.ErrorIs(t, err, ErrAddress, address)
+		}
+	}
 }
