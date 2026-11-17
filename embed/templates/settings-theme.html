@@ -1,6 +1,7 @@
 {{ define "theme-choose-form" }}
     <form method="POST" action="{{ .SettingPages.Theme.Path }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
-        <h2>{{ T .Locale "settings_theme" }}</h2>
+        {{ if eq .PageName "ThemeLibrary" }}<h2>{{ T .Locale "nav_themes" }}</h2>
+        <p class="help-text settings-page-help">{{ T .Locale "settings_themes_help" }}</p>{{ else }}<h2>{{ T .Locale "settings_theme" }}</h2>{{ end }}
         {{ if .ThemeUnavailable }}<p class="theme-notice" role="alert">{{ .ThemeUnavailable }}</p>{{ end }}
         <div class="theme-groups clearfix">
             {{range .Themes}}

@@ -716,5 +716,6 @@
   "nav_theme_access": "主题授权",
   "settings_theme_more_library": "导入和安装主题在",
   "settings_theme_more_access": "；主题和访客可以做什么，在",
-  "settings_theme_access_help": "实例里的主题除了配色和样式之外还能带来什么，以及访客可以选用哪些主题。两者都会改变每个访客看到的页面，所以与选择主题分开设置。"
+  "settings_theme_access_help": "实例里的主题除了配色和样式之外还能带来什么，以及访客可以选用哪些主题。两者都会改变每个访客看到的页面，所以与选择主题分开设置。",
+  "settings_themes_help": "实例里的全部主题，每个都可以预览和下载；下面是带入主题的两种方式：从文件导入，或从地址安装。"
 }
