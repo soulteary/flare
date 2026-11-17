@@ -45,6 +45,10 @@
         {{ if eq .PageName "Others" }}
         {{ template "settings-others.html" . }}
         {{ end }}
+
+        {{ if eq .PageName "About" }}
+        {{ template "settings-about.html" . }}
+        {{ end }}
       </div>
 
       <div class="footer-container">

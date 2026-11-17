@@ -84,10 +84,18 @@ func getSettingPages() model.RouteMaps {
 			Path:  "/settings/appearance",
 		},
 
+		// Others is the account page. Its address is the one sign-in leads
+		// to and comes back to, so it keeps the address it always had.
 		Others: model.Page{
 			Name:  "Others",
-			Title: "其他",
+			Title: "账号",
 			Path:  "/settings/application",
+		},
+
+		About: model.Page{
+			Name:  "About",
+			Title: "关于",
+			Path:  "/settings/about",
 		},
 	}
 }

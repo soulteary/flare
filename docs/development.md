@@ -47,6 +47,7 @@ FLARE_BINARY=/tmp/flare node tests/security-browser/editor-transfer.cjs
 FLARE_BINARY=/tmp/flare node tests/editor/write-source.browser.cjs
 node tests/editor/icon-picker.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/mobile/browser.cjs
+FLARE_BINARY=/tmp/flare node tests/settings/menu.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/mobile/layout.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/mobile/category-navigation.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/mobile/readability.browser.cjs

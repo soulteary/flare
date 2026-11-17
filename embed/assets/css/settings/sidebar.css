@@ -1,33 +1,76 @@
+/* The menu of the settings: groups with a title, and under each the pages
+   of the group. An entry that leaves the settings is marked with an arrow. */
 #page-settings .sidebar {
   position: absolute;
   left: 0;
-  width: 100px;
-  list-style: none;
+  width: 160px;
+}
+
+#page-settings .sidebar-group {
+  margin-bottom: 16px;
+}
+
+#page-settings .sidebar-title {
+  padding-left: 10px;
+  font-size: 12px;
+  line-height: 24px;
+  color: var(--flare-muted);
 }
 
 #page-settings .sidebar a {
   padding-left: 7px;
   border-left: 3px solid transparent;
   display: block;
-  height: 40px;
-  line-height: 40px;
-  transition: all 0.3s;
+  min-height: 36px;
+  line-height: 36px;
+  overflow-wrap: anywhere;
+  transition: border-color 0.3s;
 }
 
 #page-settings .sidebar a.active {
   border-left: 3px solid var(--flare-primary);
-}
-
-#page-settings .sidebar:hover a.active {
-  border-left: 3px solid transparent;
+  font-weight: 700;
 }
 
 #page-settings .sidebar a:hover,
-#page-settings .sidebar a.active:hover {
+#page-settings .sidebar a:focus-visible {
   border-left: 3px solid var(--flare-primary);
 }
 
+#page-settings .sidebar a.sidebar-out::after {
+  content: " ↗";
+}
+
+/* The switch that opens the menu in a narrow window. In a wide one the menu
+   is always shown and the switch is not. */
+#page-settings .sidebar-toggle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+#page-settings .sidebar-current {
+  display: none;
+}
+
 @media (max-width: 768px) {
-  #page-settings .sidebar { position: static; float: none; width: 100%; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; }
-  #page-settings .sidebar a { min-height: 44px; height: auto; line-height: 1.5; padding: 10px; }
+  #page-settings .sidebar { position: static; float: none; width: 100%; margin-bottom: 20px; }
+  #page-settings .sidebar-current {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid var(--flare-border);
+    border-radius: var(--flare-radius);
+    color: var(--flare-primary);
+    cursor: pointer;
+  }
+  #page-settings .sidebar-toggle:focus-visible + .sidebar-current { outline: 2px solid var(--flare-focus); outline-offset: 2px; }
+  #page-settings .sidebar-menu::after { content: " ▾"; }
+  #page-settings .sidebar-toggle:checked + .sidebar-current .sidebar-menu::after { content: " ▴"; }
+  #page-settings .sidebar-groups { display: none; padding-top: 12px; }
+  #page-settings .sidebar-toggle:checked ~ .sidebar-groups { display: block; }
+  #page-settings .sidebar a { min-height: 44px; line-height: 1.5; padding: 11px 10px; }
 }

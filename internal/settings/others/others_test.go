@@ -35,7 +35,7 @@ func TestHideVersion(t *testing.T) {
 		saved, err := data.GetAllSettingsOptions()
 		require.NoError(t, err)
 		require.Equal(t, hidden, saved.HideVersion)
-		response, err := app.Test(httptest.NewRequest("GET", define.SettingPages.Others.Path, nil))
+		response, err := app.Test(httptest.NewRequest("GET", define.SettingPages.About.Path, nil))
 		require.NoError(t, err)
 		require.Equal(t, 200, response.StatusCode)
 		body, err := io.ReadAll(response.Body)

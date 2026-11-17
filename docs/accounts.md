@@ -197,7 +197,7 @@ administrator views them. Offline mode is not a browser network isolation policy
 
 ## Password ownership and account actions
 
-Open Settings → Application (`/settings/application`) for the account page.
+Open Settings → Account (`/settings/application`) for the account page.
 It shows the current password source, site/access diagnostics and account actions.
 
 `deployment` mode follows the effective deployment username/password source.
