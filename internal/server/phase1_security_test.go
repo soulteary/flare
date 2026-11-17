@@ -159,7 +159,7 @@ func TestPhase1SettingsFormsUseSessionCSRF(t *testing.T) {
 				require.NoError(t, e)
 				return res.StatusCode, string(raw)
 			}
-			for _, path := range []string{"/settings/theme", "/settings/appearance", "/settings/weather", "/settings/search"} {
+			for _, path := range []string{"/settings/theme", "/settings/layout", "/settings/weather", "/settings/search"} {
 				status, page := request("GET", path, nil, "")
 				require.Equal(t, 200, status, path)
 				match := regexp.MustCompile(`name="?csrf-token"? value="?([A-Za-z0-9_.-]+)`).FindStringSubmatch(page)
@@ -218,24 +218,24 @@ func TestDefaultStartupAllowsAnonymousEditingWithCSRF(t *testing.T) {
 		require.NoError(t, readErr)
 		return res.StatusCode, string(raw)
 	}
-	for _, path := range []string{"/", "/editor", "/settings/appearance"} {
+	for _, path := range []string{"/", "/editor", "/settings/layout"} {
 		status, _ := request("GET", path, nil, "")
 		require.Equal(t, 200, status, path)
 	}
-	status, page := request("GET", "/settings/appearance", nil, "")
+	status, page := request("GET", "/settings/layout", nil, "")
 	require.Equal(t, 200, status)
 	match := regexp.MustCompile(`name="?csrf-token"? value="?([A-Za-z0-9_.-]+)`).FindStringSubmatch(page)
 	require.Len(t, match, 2)
 	before, err := os.ReadFile("config.yml")
 	require.NoError(t, err)
-	status, _ = request("POST", "/settings/appearance", url.Values{"title": {"must not save"}}, "")
+	status, _ = request("POST", "/settings/layout", url.Values{"title": {"must not save"}}, "")
 	require.Equal(t, 403, status)
-	status, _ = request("POST", "/settings/appearance", url.Values{"csrf-token": {match[1]}, "title": {"must not save"}}, "https://evil.example")
+	status, _ = request("POST", "/settings/layout", url.Values{"csrf-token": {match[1]}, "title": {"must not save"}}, "https://evil.example")
 	require.Equal(t, 403, status)
 	after, err := os.ReadFile("config.yml")
 	require.NoError(t, err)
 	require.Equal(t, before, after)
-	status, _ = request("POST", "/settings/appearance", url.Values{"csrf-token": {match[1]}, "title": {"anonymous saved title"}}, "")
+	status, _ = request("POST", "/settings/layout", url.Values{"csrf-token": {match[1]}, "title": {"anonymous saved title"}}, "")
 	require.Equal(t, 200, status)
 	after, err = os.ReadFile("config.yml")
 	require.NoError(t, err)

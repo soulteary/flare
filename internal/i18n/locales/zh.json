@@ -17,9 +17,6 @@
   "nav_theme": "主题",
   "nav_weather": "天气",
   "nav_search": "搜索",
-  "nav_appearance": "界面",
-  "general_settings": "通用设置",
-  "module_settings": "模块设置",
   "custom_title": "自定义标题",
   "site_title_placeholder": "站点标题",
   "custom_footer": "自定义页脚",
@@ -703,5 +700,16 @@
   "nav_transfer": "导入与导出",
   "nav_account": "账号",
   "nav_about": "关于",
-  "nav_menu": "菜单"
+  "nav_menu": "菜单",
+  "nav_modules": "模块",
+  "nav_clock": "时钟",
+  "nav_links": "链接",
+  "nav_layout": "布局",
+  "nav_site": "基本信息",
+  "settings_modules_help": "首页显示哪些部分。",
+  "settings_modules_clock": "首页是否展示日期和时间，在时钟页设置：",
+  "settings_clock_help": "首页是否展示日期和时间，以及怎样展示。",
+  "settings_links_help": "应用和书签怎样打开、怎样显示文字和图标。",
+  "settings_layout_help": "首页、应用页和书签页怎样排布。",
+  "settings_site_help": "界面语言，以及页面的标题和页脚。"
 }

@@ -233,7 +233,7 @@ of the theme file changes the layout without anything to migrate. The card of
 a theme on the theme page names the options it sets, so this is known before
 the theme is selected. The bundled themes specify none.
 
-Settings → Appearance says next to each of these options what the selected
+Settings → Layout (in 0.7.0 and earlier, Settings → Appearance) says next to each of these options what the selected
 theme sets, and can turn the layout of the theme off:
 
 | On the page | Stored in `config.yml` | Effect |

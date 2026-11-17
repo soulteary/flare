@@ -222,7 +222,7 @@ func TestThemeFilesHTTP(t *testing.T) {
 	stored, err := os.ReadFile("config.yml")
 	require.NoError(t, err)
 	require.Contains(t, string(stored), "Theme: forest")
-	for _, path := range []string{"/", "/bookmarks", "/applications", "/help", "/settings/theme", "/settings/appearance"} {
+	for _, path := range []string{"/", "/bookmarks", "/applications", "/help", "/settings/theme", "/settings/layout"} {
 		require.Equal(t, forestThemeStyle, bodyStyle(t, getPage(t, handler, path)), path)
 	}
 	require.Contains(t, getPage(t, handler, "/"), `href="`+assets.FaviconURL()+`"`)
@@ -252,7 +252,7 @@ func TestThemeFilesHTTP(t *testing.T) {
 	// the colors of the stylesheet. The settings say which theme that is and
 	// what is wrong with its file.
 	writeThemeFile(t, "forest.yml", strings.Replace(forestThemeFile, "  primary: \"#e8f1e4\"\n", "", 1))
-	for _, path := range []string{"/", "/help", "/settings/appearance"} {
+	for _, path := range []string{"/", "/help", "/settings/layout"} {
 		require.Empty(t, bodyStyle(t, getPage(t, handler, path)), path)
 	}
 	raw = getPage(t, handler, "/settings/theme")

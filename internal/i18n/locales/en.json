@@ -17,9 +17,6 @@
   "nav_theme": "Theme",
   "nav_weather": "Weather",
   "nav_search": "Search",
-  "nav_appearance": "Appearance",
-  "general_settings": "General",
-  "module_settings": "Modules",
   "custom_title": "Custom Title",
   "site_title_placeholder": "Site title",
   "custom_footer": "Custom Footer",
@@ -703,5 +700,16 @@
   "nav_transfer": "Import and export",
   "nav_account": "Account",
   "nav_about": "About",
-  "nav_menu": "Menu"
+  "nav_menu": "Menu",
+  "nav_modules": "Modules",
+  "nav_clock": "Clock",
+  "nav_links": "Links",
+  "nav_layout": "Layout",
+  "nav_site": "Site details",
+  "settings_modules_help": "Which parts the home page shows.",
+  "settings_modules_clock": "Whether the home page shows the date and time is set with the clock:",
+  "settings_clock_help": "Whether the home page shows the date and time, and how.",
+  "settings_links_help": "How applications and bookmarks are opened, written and given an icon.",
+  "settings_layout_help": "How the home page, the application page and the bookmark page are laid out.",
+  "settings_site_help": "The language of the interface, and the title and the footer of the pages."
 }

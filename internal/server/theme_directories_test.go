@@ -114,7 +114,7 @@ func TestThemeDirectoriesHTTP(t *testing.T) {
 	stored, err := os.ReadFile("config.yml")
 	require.NoError(t, err)
 	require.Contains(t, string(stored), "Theme: zelda")
-	for _, path := range []string{"/", "/bookmarks", "/applications", "/help", "/settings/theme", "/settings/appearance"} {
+	for _, path := range []string{"/", "/bookmarks", "/applications", "/help", "/settings/theme", "/settings/layout"} {
 		require.Equal(t, zeldaStyle, bodyStyle(t, getPage(t, handler, path)), path)
 	}
 

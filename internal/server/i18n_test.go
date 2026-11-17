@@ -29,7 +29,7 @@ func TestSiteLocaleAcrossPagesAndSettings(t *testing.T) {
 		options.Locale = locale
 		require.True(t, data.UpdateAppearance(options))
 		for _, page := range []struct{ path, en, zh string }{
-			{"/settings/appearance", "General", "通用设置"},
+			{"/settings/site", "Site details", "基本信息"},
 			{"/editor", "Save changes", "保存更改"},
 			{"/editor/transfer", "Import", "导入"},
 		} {
@@ -48,7 +48,7 @@ func TestSiteLocaleAcrossPagesAndSettings(t *testing.T) {
 	}
 	for _, input := range []string{"en-US", "fr", "invalid"} {
 		form := url.Values{"locale": {input}}
-		req := httptest.NewRequest(http.MethodPost, "/settings/appearance", strings.NewReader(form.Encode()))
+		req := httptest.NewRequest(http.MethodPost, "/settings/layout", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)

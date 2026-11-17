@@ -56,7 +56,7 @@ func TestLayoutOptionsTheTemplatesOfTheThemeDoNotSupportHTTP(t *testing.T) {
 	handler := themeFilesRouter(t, "Locale: en\nTheme: zelda\nShowApps: true\nShowBookmarks: true\n", files)
 	unsupported := i18n.T("en", "theme_layout_unsupported")
 	sets := map[string]string{"title-size": note("theme_layout_note", "Compact")}
-	appearance := func() map[string]string { return layoutRemarks(t, getPage(t, handler, "/settings/appearance")) }
+	appearance := func() map[string]string { return layoutRemarks(t, getPage(t, handler, "/settings/layout")) }
 	confirm := func(theme string) {
 		t.Helper()
 		require.Equal(t, http.StatusOK, postThemeForm(t, handler, url.Values{"theme": {theme}}).Code)
@@ -83,7 +83,7 @@ func TestLayoutOptionsTheTemplatesOfTheThemeDoNotSupportHTTP(t *testing.T) {
 
 	confirm("zelda")
 	require.Contains(t, getPage(t, handler, "/"), `<div class="theme-shell"`)
-	raw := getPage(t, handler, "/settings/appearance")
+	raw := getPage(t, handler, "/settings/layout")
 	require.Equal(t, map[string]string{
 		"title-size": sets["title-size"], "mobile-bookmark-layout": unsupported, "hide-app-descriptions": unsupported, "bookmark-layout": unsupported,
 	}, layoutRemarks(t, raw))
@@ -96,7 +96,7 @@ func TestLayoutOptionsTheTemplatesOfTheThemeDoNotSupportHTTP(t *testing.T) {
 	}
 	// The setting is stored all the same.
 	require.Equal(t, http.StatusOK, appearanceRequest(handler, url.Values{"bookmark-layout": {"sections"}}).Code)
-	require.Equal(t, "sections", readLayoutPage(t, getPage(t, handler, "/settings/appearance")).selected["bookmark-layout"])
+	require.Equal(t, "sections", readLayoutPage(t, getPage(t, handler, "/settings/layout")).selected["bookmark-layout"])
 
 	// A theme above has the list of the theme below with its templates.
 	confirm("night")

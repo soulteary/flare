@@ -42,7 +42,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=req
  await page.goto(base+'/bookmarks?category=c1&search=Bookmark-0-99');assert.equal(await page.locator('a.bookmark').count(),0);
  await page.goto(base+'/bookmarks?search=Bookmark-0-99');assert.equal(await page.locator('a.bookmark').count(),1);
  if(process.env.FLARE_SCREENSHOT){await page.goto(base+'/bookmarks');await page.screenshot({path:process.env.FLARE_SCREENSHOT,fullPage:true});}
- await page.goto(base+'/settings/appearance');assert.equal(await page.locator('#bookmark-layout').inputValue(),'sections');
+ await page.goto(base+'/settings/layout');assert.equal(await page.locator('#bookmark-layout').inputValue(),'sections');
  // Change navigation using the real settings form, preserving unrelated fields.
  await page.locator('#category-navigation').selectOption('collapse');await Promise.all([page.waitForNavigation(),page.locator('#bookmark-layout').evaluate(el=>el.form.requestSubmit())]);
  await page.goto(base+'/bookmarks');const details=page.locator('details').first();assert.equal(await details.getAttribute('open'),null);assert.equal(await details.locator('ul').isVisible(),false);await details.locator('summary').click();assert.equal(await details.locator('ul').isVisible(),true);

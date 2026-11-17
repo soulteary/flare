@@ -61,7 +61,7 @@ const {spawn} = require('node:child_process');
      assert.equal(await page.locator('.bookmark-group-container').first().evaluate(el => getComputedStyle(el).float), 'none');
     }
    }
-   await page.goto(base + '/settings/appearance');
+   await page.goto(base + '/settings/layout');
    await fits('html'); await fits('#page-settings');
    assert.equal(await page.locator('.sidebar').evaluate(el => getComputedStyle(el).position), width <= 768 ? 'static' : 'absolute');
    await page.goto(base + '/editor'); await page.waitForFunction(()=>window.FlareEditorUI?.store); await fits('html');
@@ -100,7 +100,7 @@ const {spawn} = require('node:child_process');
   assert.deepEqual(saved.categories, pending.categories);
   if (process.env.MOBILE_SCREENSHOT_DIR) {
    await fs.mkdir(process.env.MOBILE_SCREENSHOT_DIR, {recursive:true});
-   for (const [name, url] of [['editor','/editor'],['settings','/settings/appearance'],['home','/']]) {
+   for (const [name, url] of [['editor','/editor'],['settings','/settings/layout'],['home','/']]) {
     await page.goto(base + url); await page.screenshot({path: path.join(process.env.MOBILE_SCREENSHOT_DIR, name + '.png'), fullPage:true});
    }
   }

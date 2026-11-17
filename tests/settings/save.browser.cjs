@@ -41,20 +41,26 @@ const {spawn} = require('node:child_process');
     const page = await browser.newPage();
     page.setDefaultTimeout(10000);
     for (const base of [direct, proxied]) {
-      await page.goto(base + '/settings/appearance');
+      // The title is on the page of the site and the layout on the page of
+      // the layout: each is saved by its own form, and neither save takes
+      // the other back.
       const name = base === direct ? 'Saved directly' : 'Saved through proxy';
+      await page.goto(base + '/settings/layout');
       assert.equal(await page.locator('#mobile-bookmark-layout').inputValue(), base === direct ? 'classic' : 'single-column');
-      await page.locator('#settings-title').fill(name);
-      await page.locator('#mobile-bookmark-layout').selectOption('compact');
-      const [saved] = await Promise.all([
-        page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/settings/appearance')),
-        page.locator('input.btn-submit').click(),
-      ]);
-      assert.equal(saved.status(), 200, await saved.text());
-      assert.equal(saved.request().headers().origin, base);
-      await page.waitForLoadState('load');
-      await page.reload();
+      for (const [route, change] of [['site', () => page.locator('#settings-title').fill(name)], ['layout', () => page.locator('#mobile-bookmark-layout').selectOption('compact')]]) {
+        await page.goto(base + '/settings/' + route);
+        await change();
+        const [saved] = await Promise.all([
+          page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/settings/' + route)),
+          page.locator('input.btn-submit').click(),
+        ]);
+        assert.equal(saved.status(), 200, await saved.text());
+        assert.equal(saved.request().headers().origin, base);
+        await page.waitForLoadState('load');
+      }
+      await page.goto(base + '/settings/site');
       assert.equal(await page.locator('#settings-title').inputValue(), name);
+      await page.goto(base + '/settings/layout');
       assert.equal(await page.locator('#mobile-bookmark-layout').inputValue(), 'compact');
       await page.locator('#mobile-bookmark-layout').selectOption('single-column');
       await Promise.all([page.waitForNavigation(), page.locator('input.btn-submit').click()]);
@@ -106,7 +112,7 @@ const {spawn} = require('node:child_process');
     // Fixing legitimate forms must not allow opaque or foreign origins to write.
     const before = await fs.readFile(dir + '/config.yml', 'utf8');
     for (const origin of ['null', 'https://attacker.example']) {
-      const response = await fetch(direct + '/settings/appearance', {method: 'POST',
+      const response = await fetch(direct + '/settings/site', {method: 'POST',
         headers: {'Origin': origin, 'Content-Type': 'application/x-www-form-urlencoded'}, body: 'title=Rejected'});
       assert.equal(response.status, 403);
       assert.equal((await response.json()).error.code, 'SOURCE_REJECTED');

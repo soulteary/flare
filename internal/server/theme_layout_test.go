@@ -131,7 +131,7 @@ func appearanceRequest(handler http.Handler, form url.Values) *httptest.Response
 	for name, values := range form {
 		body[name] = values
 	}
-	req := httptest.NewRequest(http.MethodPost, "/settings/appearance", strings.NewReader(body.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/settings/layout", strings.NewReader(body.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -159,7 +159,7 @@ func TestThemeLayoutHTTP(t *testing.T) {
 
 	// The appearance page keeps showing the settings of the site, and says
 	// next to each option what the theme sets instead.
-	page := readLayoutPage(t, getPage(t, handler, "/settings/appearance"))
+	page := readLayoutPage(t, getPage(t, handler, "/settings/layout"))
 	require.Equal(t, "apply", page.all)
 	require.Equal(t, "arranged", page.theme)
 	require.Equal(t, i18n.Format("en", "theme_layout_help", map[string]any{"options": "Homepage title size, Application descriptions, Bookmark category navigation, Desktop columns"}), page.summary)
@@ -244,7 +244,7 @@ func TestThemeLayoutHTTP(t *testing.T) {
 	for _, name := range []string{"plain", "blackboard"} {
 		require.Equal(t, http.StatusOK, themeRequest(handler, url.Values{"theme": {name}}).Code, name)
 		require.Equal(t, site, bodyClasses(t, getPage(t, handler, "/")), name)
-		page = readLayoutPage(t, getPage(t, handler, "/settings/appearance"))
+		page = readLayoutPage(t, getPage(t, handler, "/settings/layout"))
 		require.Empty(t, page.all, name)
 		require.Empty(t, page.notes, name)
 		require.Empty(t, page.theme, name)

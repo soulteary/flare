@@ -122,7 +122,7 @@ func TestPagesOfferTheThemesToChooseHTTP(t *testing.T) {
 	require.Equal(t, "/", readChoiceControl(t, page).back)
 
 	// The pages of the settings have no control.
-	for _, path := range []string{"/settings/theme", "/settings/appearance"} {
+	for _, path := range []string{"/settings/theme", "/settings/layout"} {
 		page, _ = getWithChoice(t, handler, path, "forest")
 		require.Nil(t, readChoiceControl(t, page), path)
 	}

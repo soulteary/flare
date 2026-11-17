@@ -32,7 +32,7 @@ func TestThemeExtendsHTTP(t *testing.T) {
 		"loop.yml":               "contract: 1\nextends: loop\n",
 	})
 	navigation := []string{"/", "/applications", "/bookmarks", "/help"}
-	settings := []string{"/settings/theme", "/settings/appearance", "/settings/search"}
+	settings := []string{"/settings/theme", "/settings/layout", "/settings/search"}
 	nightStyle := "--color-background:#10241b;--color-primary:#e8f1e4;--color-accent:#00ff88;--flare-radius:2px;"
 
 	// The navigation pages load the stylesheet of the theme two below and

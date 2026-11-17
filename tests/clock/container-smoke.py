@@ -23,7 +23,7 @@ actual = re.search(r'id=clock-time>(.*?)</span>', body).group(1)
 now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kathmandu"))
 expected = {(now - datetime.timedelta(seconds=i)).strftime("%H:%M:") for i in (0, 1, 2)}
 assert any(actual.startswith(value) for value in expected), actual
-with urllib.request.urlopen(base + "/settings/appearance", timeout=2) as response:
+with urllib.request.urlopen(base + "/settings/clock", timeout=2) as response:
     settings = response.read().decode()
 assert 'data-server-zone="America/New_York"' in settings
 print("Scratch-container acceptance passed: embedded server New York and custom Kathmandu zones.")

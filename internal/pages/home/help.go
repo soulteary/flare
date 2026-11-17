@@ -82,7 +82,7 @@ func GenerateHelpTemplate() template.HTML {
 		},
 		{
 			Name: "界面设置",
-			URL:  define.SettingPages.Appearance.Path,
+			URL:  define.SettingPages.Layout.Path,
 			Icon: "leafCircle",
 			Desc: "",
 		},

@@ -26,7 +26,7 @@ func TestFailedAppearanceSaveExplainsTheCause(t *testing.T) {
 			raw := []byte("Locale: " + locale + "\nTitle: &shared original\nFooter: *shared\n")
 			require.NoError(t, os.WriteFile("config.yml", raw, 0600))
 			app := fiber.New()
-			app.Post("/appearance", updateAppearanceOptions)
+			app.Post("/appearance", func(c fiber.Ctx) error { return updateAppearanceOptions(c, define.SettingPages.Site.Name) })
 			req := httptest.NewRequest(http.MethodPost, "/appearance", strings.NewReader("title=Changed"))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			res, err := app.Test(req, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})

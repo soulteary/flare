@@ -35,6 +35,11 @@ type RouteMaps struct {
 	Appearance Page `json:"Appearance"`
 	Others     Page `json:"Others"`
 	About      Page `json:"About"`
+	Modules    Page `json:"Modules"`
+	Clock      Page `json:"Clock"`
+	Links      Page `json:"Links"`
+	Layout     Page `json:"Layout"`
+	Site       Page `json:"Site"`
 
 	// Auth API
 	Login  API `json:"Login"`

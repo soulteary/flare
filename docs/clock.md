@@ -2,7 +2,7 @@
 
 ## Configure / 配置
 
-Open **Settings → Appearance → Module settings**. Keep “Show date and time” on,
+Open **Settings → Clock** (`/settings/clock`; in 0.7.0 and earlier, Settings → Appearance → Module settings). Keep “Show date and time” on,
 then choose **On page load** or **Live clock**, whether to show seconds, and a
 display time zone. The time-zone input provides searchable browser suggestions;
 you may also type any supported IANA geographical name or `UTC`. Preview updates
@@ -98,7 +98,7 @@ only their exact bytes; configuration is HTML-escaped in data attributes, never
 interpolated into JavaScript. No `unsafe-inline`, `eval`, CDN, date library or
 framework is needed. The default static home retains `script-src 'none'` and no
 script tag. The old homepage Escape listener, which default CSP already blocked,
-is removed; the Appearance page's existing Escape shortcut is included in its
+is removed; the Escape shortcut of the page with the clock settings is included in its
 explicitly authorized settings script. Other settings pages are unchanged.
 
 HTML minification recognizes Go template delimiters; production/debug HTTP tests
