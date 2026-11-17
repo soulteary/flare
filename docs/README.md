@@ -31,6 +31,7 @@ Merging changes does not itself publish an image or move `latest`.
 - [Clock and time zones](clock.md), [weather and location selection](weather.md)
 - [Category navigation](category-navigation.md), [mobile layout](mobile-layout.md), [desktop and category columns](desktop-columns-and-scale.md)
 - [Themes and custom colors](theme-colors.md), [theme files](theme-files.md), [theme stylesheets](theme-stylesheets.md), [theme templates](theme-templates.md) with a [guide to writing them](theme-template-guide.md), the [theme repository](theme-repository.md), [themes a visitor can choose](theme-choices.md), [style tokens](theme-tokens.md)
+- [The menu of the settings](settings-menu.md)
 - [Interface language](i18n.md)
 
 ## Develop and verify

@@ -18,7 +18,6 @@
   "nav_weather": "Weather",
   "nav_search": "Search",
   "nav_appearance": "Appearance",
-  "nav_others": "Others",
   "general_settings": "General",
   "module_settings": "Modules",
   "custom_title": "Custom Title",
@@ -695,5 +694,14 @@
   "theme_choices": "Themes visitors can choose",
   "theme_choices_help": "The pages are shown with the selected theme. A visitor can have them shown with one of the themes ticked here instead, with a control below the footer of each page. The choice is kept in a cookie in the browser of the visitor and changes nothing for anyone else. A theme with templates is shown with them only once its templates were confirmed while it was the selected theme.",
   "theme_choices_selected": "{name} (the selected theme, shown without a choice)",
-  "theme_choices_saved": "The themes visitors can choose were saved."
+  "theme_choices_saved": "The themes visitors can choose were saved.",
+  "nav_group_content": "Content",
+  "nav_group_home": "Home page",
+  "nav_group_look": "Look",
+  "nav_group_site": "Site",
+  "nav_editor": "Apps and bookmarks",
+  "nav_transfer": "Import and export",
+  "nav_account": "Account",
+  "nav_about": "About",
+  "nav_menu": "Menu"
 }

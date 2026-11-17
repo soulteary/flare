@@ -197,6 +197,12 @@ var templateFuncMap = template.FuncMap{
 	"HTMLLang":        i18n.HTMLLang,
 	"FaviconURL":      assets.FaviconURL,
 	"ThemeFaviconURL": assets.ThemeFaviconURL,
+	// LoginDisabled reports an instance that needs no sign-in, which has
+	// no account page to link to.
+	"LoginDisabled": func() bool { return define.AppFlags.DisableLoginMode },
+	// EditorEnabled reports an instance that has the editor, and with it
+	// the pages the menu of the settings links to for the content.
+	"EditorEnabled": func() bool { return define.AppFlags.EnableEditor },
 }
 
 // HomeComponents names the parts that the home page, the application page and

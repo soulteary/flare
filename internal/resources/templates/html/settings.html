@@ -14,4 +14,7 @@
 {{ end }}
 {{ if eq .PageName "Others" }}
 {{ template "settings-others.html" . }}
+{{ end }}
+{{ if eq .PageName "About" }}
+{{ template "settings-about.html" . }}
 {{ end }}</div><div class=footer-container>{{.OptionFooter}}</div></div></div>{{ if ne .PageName "Appearance" }}<script>document.addEventListener('keydown',function(e){if(e.key==='Escape')history.back();});</script>{{ end }}</body></html>

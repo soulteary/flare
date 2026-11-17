@@ -15,9 +15,27 @@ import (
 
 func RegisterRouting(e *fiber.App) {
 	e.Get(define.SettingPages.Others.Path, pageOthers)
+	e.Get(define.SettingPages.About.Path, auth.AuthRequired, pageAbout)
 }
 
+// pageOthers is the account page of an instance that signs in without a
+// security store: who is signed in, with the way out, or the form to sign
+// in. An instance that needs no sign-in has no account, and the address
+// leads to what it used to show besides, the page about the application.
 func pageOthers(c fiber.Ctx) error {
+	if define.AppFlags.DisableLoginMode {
+		return c.Redirect().Status(http.StatusFound).To(define.SettingPages.About.Path)
+	}
+	return renderOthers(c, define.SettingPages.Others.Name)
+}
+
+// pageAbout is the page about the application: what it is, where it comes
+// from, and its version unless the site hides that.
+func pageAbout(c fiber.Ctx) error {
+	return renderOthers(c, define.SettingPages.About.Name)
+}
+
+func renderOthers(c fiber.Ctx, page string) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
@@ -47,7 +65,7 @@ func pageOthers(c fiber.Ctx) error {
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["LoginURI"] = define.MiscPages.Login.Path
 	m["LogoutURI"] = define.MiscPages.Logout.Path
-	m["PageName"] = "Others"
+	m["PageName"] = page
 	m["SettingPages"] = define.SettingPages
 	m["OptionTitle"] = options.Title
 	m["OptionHideVersion"] = options.HideVersion

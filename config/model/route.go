@@ -34,6 +34,7 @@ type RouteMaps struct {
 	Search     Page `json:"Search"`
 	Appearance Page `json:"Appearance"`
 	Others     Page `json:"Others"`
+	About      Page `json:"About"`
 
 	// Auth API
 	Login  API `json:"Login"`

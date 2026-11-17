@@ -88,7 +88,7 @@ func GenerateHelpTemplate() template.HTML {
 		},
 		{
 			Name: "程序版本",
-			URL:  define.SettingPages.Others.Path,
+			URL:  define.SettingPages.About.Path,
 			Icon: "commaCircle",
 			Desc: "",
 		},

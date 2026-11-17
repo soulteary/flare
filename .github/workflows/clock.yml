@@ -43,6 +43,10 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/settings/save.browser.cjs
+      - name: Settings menu browser acceptance
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/settings/menu.browser.cjs
       - name: Compact mobile layout acceptance
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
