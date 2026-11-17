@@ -48,8 +48,8 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
    {name:'legacy-forwarded-only',base:proxied,mode:'forwarded-only',strip:true,status:403,reason:'ORIGIN_HOST_MISMATCH'},
   ]){
    mode=test.mode;strip=!!test.strip;const name=`Issue195-${test.name}`;
-   await page.goto(test.base+'/settings/appearance');await page.locator('#settings-title').fill(name);
-   const [settings]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/settings/appearance')),page.locator('input.btn-submit').click()]);
+   await page.goto(test.base+'/settings/site');await page.locator('#settings-title').fill(name);
+   const [settings]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/settings/site')),page.locator('input.btn-submit').click()]);
    assert.equal(settings.status(),test.status);
    assert.equal((await fs.readFile(path.join(dir,'config.yml'),'utf8')).includes(name),test.status===200);
    if(test.status===403){

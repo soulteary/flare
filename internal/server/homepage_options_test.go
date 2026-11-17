@@ -23,7 +23,7 @@ func TestHomepageLayoutHTTP(t *testing.T) {
 	require.NoError(t, err)
 	post := func(value string) *httptest.ResponseRecorder {
 		form := url.Values{"mobile-bookmark-layout": {value}, "title": {"Layout"}}
-		req := httptest.NewRequest(http.MethodPost, "/settings/appearance", strings.NewReader(form.Encode()))
+		req := httptest.NewRequest(http.MethodPost, "/settings/layout", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
@@ -63,7 +63,7 @@ func TestHomepageMobileLayoutDefaultHTTP(t *testing.T) {
 	}
 	post := func(value string) int {
 		form := url.Values{"mobile-bookmark-layout": {value}, "title": {"Legacy"}}
-		req := httptest.NewRequest(http.MethodPost, "/settings/appearance", strings.NewReader(form.Encode()))
+		req := httptest.NewRequest(http.MethodPost, "/settings/layout", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
@@ -88,7 +88,7 @@ func TestHomepageMobileLayoutDefaultHTTP(t *testing.T) {
 
 	// The stored legacy value renders the classic layout and is offered as such.
 	require.NotContains(t, layoutClasses("/"), "mobile-bookmarks-")
-	settings := get("/settings/appearance")
+	settings := get("/settings/layout")
 	require.Regexp(t, selected("classic"), settings)
 	require.NotRegexp(t, selected("single-column"), settings)
 	require.NotContains(t, settings, `value=single `)
@@ -106,11 +106,11 @@ func TestHomepageMobileLayoutDefaultHTTP(t *testing.T) {
 	for _, path := range []string{"/", "/bookmarks", "/applications"} {
 		require.Contains(t, layoutClasses(path), "mobile-bookmarks-single-column ")
 	}
-	require.Regexp(t, selected("single-column"), get("/settings/appearance"))
+	require.Regexp(t, selected("single-column"), get("/settings/layout"))
 
 	// A form rendered before the upgrade still submits the legacy value.
 	require.Equal(t, 200, post("single"))
 	require.Equal(t, "classic", stored())
 	require.NotContains(t, layoutClasses("/"), "mobile-bookmarks-")
-	require.Regexp(t, selected("classic"), get("/settings/appearance"))
+	require.Regexp(t, selected("classic"), get("/settings/layout"))
 }

@@ -44,7 +44,7 @@ func layoutApp(t *testing.T, config string) *fiber.App {
 	require.NoError(t, os.WriteFile("config.yml", []byte(config), 0600))
 	define.UpdatePagePalettes()
 	app := fiber.New(fiber.Config{Views: appearanceTestViews{}})
-	app.Post("/appearance", updateAppearanceOptions)
+	app.Post("/appearance", func(c fiber.Ctx) error { return updateAppearanceOptions(c, define.SettingPages.Layout.Name) })
 	return app
 }
 

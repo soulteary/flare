@@ -78,7 +78,7 @@ func TestThemeBackgroundHTTP(t *testing.T) {
 		"later/assets/a.png":          themeAssetPNG,
 	})
 	navigation := []string{"/", "/applications", "/bookmarks", "/help"}
-	settings := []string{"/settings/theme", "/settings/appearance", "/settings/search", "/settings/about", "/settings/weather"}
+	settings := []string{"/settings/theme", "/settings/layout", "/settings/search", "/settings/about", "/settings/weather"}
 
 	// The navigation pages have the rule after the styles of the application,
 	// with the address the image is served at. The settings take the colors

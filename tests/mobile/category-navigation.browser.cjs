@@ -57,7 +57,7 @@ const {spawn} = require('node:child_process');
       assert.equal(await page.locator('a.bookmark').count(), 32);
       await fits();
     }
-    const response = await browserAuth.post(page,base + '/settings/appearance', {form: {'category-navigation': 'collapse', 'show-apps': 'true', 'show-bookmarks': 'true', 'locale': 'en'}});
+    const response = await browserAuth.post(page,base + '/settings/layout', {form: {'category-navigation': 'collapse', 'show-apps': 'true', 'show-bookmarks': 'true', 'locale': 'en'}});
     assert.equal(response.status(), 200);
     for (const width of [320, 390, 768, 769, 1440]) {
       await page.setViewportSize({width, height: 900});

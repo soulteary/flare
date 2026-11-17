@@ -371,3 +371,7 @@
 #page-settings .form-group .theme-layout-note { margin-top: 6px; }
 #page-settings .form-group .theme-layout-choice { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 0 6px; min-height: 24px; font-size: inherit; cursor: pointer; }
 #page-settings .form-group .theme-layout-choice input { margin: 0; }
+
+/* The sentence under the title of a page of the settings that says what the
+   page is about. */
+#page-settings .settings-page-help { margin-bottom: 20px; }

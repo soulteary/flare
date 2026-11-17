@@ -276,15 +276,15 @@ const shape = () => {
     assert.deepEqual({themed: narrow.themed, column: narrow.column}, {themed: true, column: false});
     assert.equal(await page.locator('.harbor-column').isVisible(), false);
 
-    // The appearance page says which layout options the theme does not
+    // The page of the layout says which layout options the theme does not
     // support, and safe mode shows a page without the theme.
-    await page.goto(server.base + '/settings/appearance', {waitUntil: 'load'});
+    await page.goto(server.base + '/settings/layout', {waitUntil: 'load'});
     const unsupported = await page.locator('.theme-layout-note').evaluateAll(notes => notes.map(note => {
       let control = note.previousElementSibling;
       while (control && control.tagName !== 'SELECT') control = control.previousElementSibling;
       return [control ? control.name : '', note.textContent.trim()];
     }));
-    assert.deepEqual(unsupported.map(([name]) => name), ['mobile-bookmark-layout', 'bookmark-layout', 'desktop-columns']);
+    assert.deepEqual(unsupported.map(([name]) => name), ['desktop-columns', 'bookmark-layout', 'mobile-bookmark-layout']);
     for (const [, text] of unsupported) assert.match(text, /^The selected theme says its templates do not support this option/);
     builtin(await open('/?theme-safe-mode'));
 

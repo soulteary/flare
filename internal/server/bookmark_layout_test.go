@@ -21,7 +21,7 @@ func TestBookmarkLayoutHTTP(t *testing.T) {
 	handler, err := NewRouter(&model.Flags{Port: 5005, DisableLoginMode: true, EnableOfflineMode: true})
 	require.NoError(t, err)
 	postForm := func(form url.Values) *httptest.ResponseRecorder {
-		req := httptest.NewRequest(http.MethodPost, "/settings/appearance", strings.NewReader(form.Encode()))
+		req := httptest.NewRequest(http.MethodPost, "/settings/layout", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)

@@ -128,7 +128,7 @@ unauthenticated browser; do not infer protection from the settings UI alone.
 | `config.yml` `LoginFooter` | Current main: public login-page text/filtered HTTP(S) links | [Accounts](accounts.md); separate from internal Footer |
 
 `config.yml` also supports `HideVersion: true` (default: `false`), available in
-Settings → Appearance. It removes the application version, commit and build date
+Settings → Modules (in 0.7.0 and earlier, Settings → Appearance). It removes the application version, commit and build date
 from the About section for all visitors. Saving takes effect on subsequent requests.
 CLI version output and startup logs remain available for local diagnostics.
 

@@ -98,7 +98,7 @@ const layout = page => page.evaluate(() => {
     // The appearance page: the switch, and for each remark whether its box
     // is ticked, or null when it has none.
     const appearance = async () => {
-      await page.goto(server.base + '/settings/appearance', {waitUntil: 'load'});
+      await page.goto(server.base + '/settings/layout', {waitUntil: 'load'});
       return page.evaluate(() => ({
         all: document.querySelector('#theme-layout-all')?.value ?? null,
         boxes: Object.fromEntries(Array.from(document.querySelectorAll('.theme-layout-note'), note => {

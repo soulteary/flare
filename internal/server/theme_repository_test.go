@@ -23,7 +23,7 @@ func TestThemePageLinksToTheRepositoryHTTP(t *testing.T) {
 	require.Equal(t, 1, strings.Count(page, "flare-themes\""))
 	require.Contains(t, page, `<meta name=referrer content="same-origin">`)
 	// No other page has it, and nothing loads from it.
-	for _, path := range []string{"/", "/settings/appearance", "/help"} {
+	for _, path := range []string{"/", "/settings/layout", "/help"} {
 		require.NotContains(t, getPage(t, handler, path), "flare-themes", path)
 	}
 	require.Equal(t, 2, strings.Count(page, "github.com/soulteary/flare-themes"))

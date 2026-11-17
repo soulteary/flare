@@ -84,6 +84,39 @@ func getSettingPages() model.RouteMaps {
 			Path:  "/settings/appearance",
 		},
 
+		// The five pages below hold what the appearance page held. That
+		// page has no content of its own any more: its address leads to
+		// the layout, and still takes a form of the page as it was.
+		Modules: model.Page{
+			Name:  "Modules",
+			Title: "模块",
+			Path:  "/settings/modules",
+		},
+
+		Clock: model.Page{
+			Name:  "Clock",
+			Title: "时钟",
+			Path:  "/settings/clock",
+		},
+
+		Links: model.Page{
+			Name:  "Links",
+			Title: "链接",
+			Path:  "/settings/links",
+		},
+
+		Layout: model.Page{
+			Name:  "Layout",
+			Title: "布局",
+			Path:  "/settings/layout",
+		},
+
+		Site: model.Page{
+			Name:  "Site",
+			Title: "基本信息",
+			Path:  "/settings/site",
+		},
+
 		// Others is the account page. Its address is the one sign-in leads
 		// to and comes back to, so it keeps the address it always had.
 		Others: model.Page{

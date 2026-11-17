@@ -25,7 +25,7 @@ const (
 )
 
 // The pages that use the theme and are served with login disabled.
-var themedPages = []string{"/", "/bookmarks", "/applications", "/help", "/settings/theme", "/settings/appearance", "/settings/search", "/settings/weather"}
+var themedPages = []string{"/", "/bookmarks", "/applications", "/help", "/settings/theme", "/settings/layout", "/settings/search", "/settings/weather"}
 
 // modesRouter is themeFilesRouter with the site setting for light and dark
 // put back to its default afterwards.

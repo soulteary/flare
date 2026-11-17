@@ -77,7 +77,7 @@ func TestThemeStylesheetHTTP(t *testing.T) {
 		"markup/theme.css": `a { width: \3c img\20 src\3d x\3e (1) }`,
 	})
 	navigation := []string{"/", "/applications", "/bookmarks", "/help"}
-	settings := []string{"/settings/theme", "/settings/appearance"}
+	settings := []string{"/settings/theme", "/settings/layout"}
 
 	// A bundled theme has no stylesheet: the pages load what they loaded.
 	for _, path := range append(navigation, settings...) {

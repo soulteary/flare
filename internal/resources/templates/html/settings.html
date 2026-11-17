@@ -9,12 +9,24 @@
 {{ if eq .PageName "Search" }}
 {{ template "settings-search.html" . }}
 {{ end }}
-{{ if eq .PageName "Appearance" }}
-{{ template "settings-appearance.html" . }}
+{{ if eq .PageName "Modules" }}
+{{ template "settings-modules.html" . }}
+{{ end }}
+{{ if eq .PageName "Clock" }}
+{{ template "settings-clock.html" . }}
+{{ end }}
+{{ if eq .PageName "Links" }}
+{{ template "settings-links.html" . }}
+{{ end }}
+{{ if eq .PageName "Layout" }}
+{{ template "settings-layout.html" . }}
+{{ end }}
+{{ if eq .PageName "Site" }}
+{{ template "settings-site.html" . }}
 {{ end }}
 {{ if eq .PageName "Others" }}
 {{ template "settings-others.html" . }}
 {{ end }}
 {{ if eq .PageName "About" }}
 {{ template "settings-about.html" . }}
-{{ end }}</div><div class=footer-container>{{.OptionFooter}}</div></div></div>{{ if ne .PageName "Appearance" }}<script>document.addEventListener('keydown',function(e){if(e.key==='Escape')history.back();});</script>{{ end }}</body></html>
+{{ end }}</div><div class=footer-container>{{.OptionFooter}}</div></div></div>{{ if ne .PageName "Clock" }}<script>document.addEventListener('keydown',function(e){if(e.key==='Escape')history.back();});</script>{{ end }}</body></html>

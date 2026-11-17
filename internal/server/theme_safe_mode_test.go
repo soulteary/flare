@@ -92,7 +92,7 @@ func TestThemeSafeModeForOnePageHTTP(t *testing.T) {
 	require.Equal(t, themeFileStyle+"--flare-radius:12px;", bodyStyle(t, page))
 
 	// The settings are not what safe mode is about.
-	for _, path := range []string{"/settings/theme?theme-safe-mode", "/settings/appearance?theme-safe-mode"} {
+	for _, path := range []string{"/settings/theme?theme-safe-mode", "/settings/layout?theme-safe-mode"} {
 		page, _ = get(path)
 		require.Equal(t, themeFileStyle, bodyStyle(t, page), path)
 		require.Nil(t, readPreviewNotice(t, page), path)
@@ -172,7 +172,7 @@ func TestThemeSafeModeForTheInstanceHTTP(t *testing.T) {
 
 	// The pages have the colors of the stylesheet of the application and
 	// the layout of the site.
-	for _, path := range []string{"/", "/applications", "/bookmarks", "/help", "/settings/appearance"} {
+	for _, path := range []string{"/", "/applications", "/bookmarks", "/help", "/settings/layout"} {
 		page := getPage(t, handler, path)
 		require.Empty(t, bodyStyle(t, page), path)
 		require.Equal(t, []string{"style"}, pageStyles(t, page), path)

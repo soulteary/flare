@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/html"
 
+	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/model"
 	"github.com/soulteary/flare/internal/auth"
 	"github.com/soulteary/flare/internal/i18n"
@@ -71,7 +73,7 @@ func readSettingsMenu(t *testing.T, page string) *settingsMenu {
 
 func settingsMenuGroups(locale string, account, editor bool) [][]string {
 	text := func(key string) string { return i18n.T(locale, key) }
-	site := []string{text("nav_group_site")}
+	site := []string{text("nav_group_site"), text("nav_site") + " /settings/site"}
 	if account {
 		site = append(site, text("nav_account")+" /settings/application")
 	}
@@ -80,8 +82,9 @@ func settingsMenuGroups(locale string, account, editor bool) [][]string {
 		groups = append(groups, []string{text("nav_group_content"), text("nav_editor") + " /editor", text("nav_transfer") + " /editor/transfer"})
 	}
 	return append(groups, [][]string{
-		{text("nav_group_home"), text("nav_search") + " /settings/search", text("nav_weather") + " /settings/weather"},
-		{text("nav_group_look"), text("nav_theme") + " /settings/theme", text("nav_appearance") + " /settings/appearance"},
+		{text("nav_group_home"), text("nav_modules") + " /settings/modules", text("nav_search") + " /settings/search", text("nav_weather") + " /settings/weather",
+			text("nav_clock") + " /settings/clock", text("nav_links") + " /settings/links"},
+		{text("nav_group_look"), text("nav_theme") + " /settings/theme", text("nav_layout") + " /settings/layout"},
 		append(site, text("nav_about")+" /settings/about"),
 	}...)
 }
@@ -100,7 +103,7 @@ func TestSettingsMenuIsGroupedHTTP(t *testing.T) {
 			if editor {
 				out = []string{"/editor", "/editor/transfer"}
 			}
-			for _, path := range []string{"/settings/theme", "/settings/weather", "/settings/search", "/settings/appearance", "/settings/about"} {
+			for _, path := range []string{"/settings/modules", "/settings/search", "/settings/weather", "/settings/clock", "/settings/links", "/settings/theme", "/settings/layout", "/settings/site", "/settings/about"} {
 				page := getPage(t, handler, path)
 				menu := readSettingsMenu(t, page)
 				require.NotNil(t, menu, path)
@@ -133,7 +136,7 @@ func TestAboutPageHTTP(t *testing.T) {
 		require.Contains(t, page, text)
 	}
 	require.NotContains(t, page, `type=password`)
-	for _, path := range []string{"/settings/theme", "/settings/appearance"} {
+	for _, path := range []string{"/settings/theme", "/settings/layout"} {
 		require.NotContains(t, getPage(t, handler, path), i18n.T("en", "about_desc_1"), path)
 	}
 	rec := getResponse(handler, "/settings/application")
@@ -188,4 +191,28 @@ func TestSettingsMenuWithAccounts(t *testing.T) {
 	res, page = request("/login?return_to=%2Fsettings%2Fabout", false)
 	require.Equal(t, http.StatusOK, res.StatusCode)
 	require.Contains(t, page, `name="return_to" value="/settings/about"`)
+	// The pages that hold what the appearance page held need the session
+	// as that page did, to be read and to be saved, and signing in leads
+	// back to each.
+	for _, path := range []string{"/settings/modules", "/settings/clock", "/settings/links", "/settings/layout", "/settings/site"} {
+		res, page = request(path, true)
+		require.Equal(t, http.StatusOK, res.StatusCode, path)
+		require.Equal(t, []string{path}, readSettingsMenu(t, page).current, path)
+		res, page = request(path, false)
+		require.Equal(t, http.StatusFound, res.StatusCode, path)
+		require.Equal(t, "/login?return_to="+url.QueryEscape(path), res.Header.Get("Location"), path)
+		require.NotContains(t, page, "<form", path)
+		res, page = request("/login?return_to="+url.QueryEscape(path), false)
+		require.Equal(t, http.StatusOK, res.StatusCode, path)
+		require.Contains(t, page, `name="return_to" value="`+path+`"`, path)
+		post := httptest.NewRequest(http.MethodPost, "http://flare.test"+path, strings.NewReader("title=not+stored"))
+		post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		answer, e := app.Test(post, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
+		require.NoError(t, e)
+		answer.Body.Close()
+		require.NotEqual(t, http.StatusOK, answer.StatusCode, path)
+	}
+	stored, err := data.GetAllSettingsOptions()
+	require.NoError(t, err)
+	require.Empty(t, stored.Title)
 }

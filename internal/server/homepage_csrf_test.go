@@ -108,7 +108,7 @@ func testTrustedReadonlyPagesKeepManagementCSRF(t *testing.T, visible bool) {
 	require.Equal(t, http.StatusOK, response.StatusCode)
 	require.Empty(t, response.Header.Values("Set-Cookie"))
 	require.False(t, homepageCSRFField.Match(initialSearchBody))
-	response, err = client.Get(base + "/settings/appearance")
+	response, err = client.Get(base + "/settings/layout")
 	require.NoError(t, err)
 	body, err := io.ReadAll(response.Body)
 	response.Body.Close()
@@ -122,7 +122,7 @@ func testTrustedReadonlyPagesKeepManagementCSRF(t *testing.T, visible bool) {
 	require.NoError(t, err)
 	write := func(client *http.Client, value, origin string) int {
 		form := url.Values{"title": {"updated"}, "csrf-token": {value}}
-		request, requestErr := http.NewRequest(http.MethodPost, base+"/settings/appearance", strings.NewReader(form.Encode()))
+		request, requestErr := http.NewRequest(http.MethodPost, base+"/settings/layout", strings.NewReader(form.Encode()))
 		require.NoError(t, requestErr)
 		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		if origin != "" {

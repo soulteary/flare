@@ -20,12 +20,43 @@ import (
 	"github.com/soulteary/flare/internal/settings"
 )
 
-func RegisterRouting(e *fiber.App) {
-	e.Get(define.SettingPages.Appearance.Path, auth.AuthRequired, pageAppearance)
-	e.Post(define.SettingPages.Appearance.Path, auth.AuthRequired, updateAppearanceOptions)
+// pages are the pages the settings of the appearance are spread over. Each
+// shows its own fields, and each takes a form at its own address.
+func pages() []model.Page {
+	return []model.Page{define.SettingPages.Modules, define.SettingPages.Clock, define.SettingPages.Links, define.SettingPages.Layout, define.SettingPages.Site}
 }
 
-func updateAppearanceOptions(c fiber.Ctx) error {
+func RegisterRouting(e *fiber.App) {
+	for _, page := range pages() {
+		name := page.Name
+		e.Get(page.Path, auth.AuthRequired, func(c fiber.Ctx) error { return renderPage(c, name) })
+		e.Post(page.Path, auth.AuthRequired, func(c fiber.Ctx) error { return updateAppearanceOptions(c, name) })
+	}
+	// The address of the page that held all of them leads to the layout,
+	// which most of its fields were about. A form of that page, as an
+	// earlier release rendered it, is still taken there.
+	e.Get(define.SettingPages.Appearance.Path, auth.AuthRequired, func(c fiber.Ctx) error {
+		return c.Redirect().Status(http.StatusFound).To(define.SettingPages.Layout.Path)
+	})
+	e.Post(define.SettingPages.Appearance.Path, auth.AuthRequired, func(c fiber.Ctx) error {
+		return updateAppearanceOptions(c, define.SettingPages.Layout.Name)
+	})
+}
+
+// submitted reads a field that is yes or no, and keeps the stored value for
+// a form that does not have the field: a page has the fields of its own
+// subject only, and saving it changes nothing about the others.
+func submitted(c fiber.Ctx, field string, sent, stored bool) bool {
+	if formvalue.Has(c, field) {
+		return sent
+	}
+	return stored
+}
+
+// updateAppearanceOptions stores what a form submits and shows the page the
+// form came from again. Every field is optional: one that the form does not
+// have keeps its stored value.
+func updateAppearanceOptions(c fiber.Ctx, page string) error {
 	var body struct {
 		OptionTitle              string `form:"title"`
 		OptionFooter             string `form:"footer"`
@@ -56,6 +87,10 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		}
 		body.Locale = locale
 	}
+	existing, readErr := data.GetAllSettingsOptions()
+	if readErr != nil {
+		return c.Status(http.StatusInternalServerError).SendString("config error")
+	}
 	var update model.Application
 	if err := updateHomepageTypography(c, &update); err != nil {
 		return c.Status(err.Code).SendString(err.Message)
@@ -73,34 +108,35 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		return c.Status(err.Code).SendString(err.Message)
 	}
 
-	update.Title = body.OptionTitle
-	update.Footer = body.OptionFooter
-	update.OpenAppNewTab = body.OptionOpenAppNewTab
-	update.OpenBookmarkNewTab = body.OptionOpenBookmarkNewTab
-	update.ShowTitle = body.OptionShowTitle
-	update.Greetings = body.OptionGreetings
-	// The greetings field is rendered only while the title is shown. A form
-	// without it keeps the stored text; a submitted empty value clears it.
-	if !formvalue.Has(c, "greetings") {
-		existing, err := data.GetAllSettingsOptions()
-		if err != nil {
-			return c.Status(http.StatusInternalServerError).SendString("config error")
-		}
-		update.Greetings = existing.Greetings
+	// A text that is submitted empty is cleared; one that is not submitted
+	// stays. The greetings field is rendered only while the title is shown.
+	update.Title, update.Footer, update.Greetings = existing.Title, existing.Footer, existing.Greetings
+	if formvalue.Has(c, "title") {
+		update.Title = body.OptionTitle
 	}
-	update.ShowDateTime = body.OptionShowDateTime
-	update.ShowApps = body.OptionShowApps
-	update.ShowBookmarks = body.OptionShowBookmarks
-	update.HideSettingsButton = body.HideSettingsButton
-	update.HideHelpButton = body.HideHelpButton
-	update.HideVersion = body.HideVersion
-	update.EnableEncryptedLink = body.EnableEncryptedLink
-	update.KeepLetterCase = body.KeepLetterCase
-	requestIconMode := strings.ToUpper(body.IconMode)
-	if requestIconMode != "DEFAULT" && requestIconMode != "FILLING" {
-		update.IconMode = "DEFAULT"
-	} else {
-		update.IconMode = requestIconMode
+	if formvalue.Has(c, "footer") {
+		update.Footer = body.OptionFooter
+	}
+	if formvalue.Has(c, "greetings") {
+		update.Greetings = body.OptionGreetings
+	}
+	update.OpenAppNewTab = submitted(c, "open-app-newtab", body.OptionOpenAppNewTab, existing.OpenAppNewTab)
+	update.OpenBookmarkNewTab = submitted(c, "open-bookmark-newtab", body.OptionOpenBookmarkNewTab, existing.OpenBookmarkNewTab)
+	update.ShowTitle = submitted(c, "show-title", body.OptionShowTitle, existing.ShowTitle)
+	update.ShowDateTime = submitted(c, "show-datetime", body.OptionShowDateTime, existing.ShowDateTime)
+	update.ShowApps = submitted(c, "show-apps", body.OptionShowApps, existing.ShowApps)
+	update.ShowBookmarks = submitted(c, "show-bookmarks", body.OptionShowBookmarks, existing.ShowBookmarks)
+	update.HideSettingsButton = submitted(c, "hide-settings-button", body.HideSettingsButton, existing.HideSettingsButton)
+	update.HideHelpButton = submitted(c, "hide-help-button", body.HideHelpButton, existing.HideHelpButton)
+	update.HideVersion = submitted(c, "hide-version", body.HideVersion, existing.HideVersion)
+	update.EnableEncryptedLink = submitted(c, "enable-encrypted-link", body.EnableEncryptedLink, existing.EnableEncryptedLink)
+	update.KeepLetterCase = submitted(c, "keep-letter-case", body.KeepLetterCase, existing.KeepLetterCase)
+	update.IconMode = existing.IconMode
+	if formvalue.Has(c, "icon-mode") {
+		update.IconMode = strings.ToUpper(body.IconMode)
+		if update.IconMode != "DEFAULT" && update.IconMode != "FILLING" {
+			update.IconMode = "DEFAULT"
+		}
 	}
 	if body.Locale != "" {
 		update.Locale = body.Locale
@@ -116,16 +152,20 @@ func updateAppearanceOptions(c fiber.Ctx) error {
 		failure := settings.ExplainSaveFailure(saveErr)
 		return c.Status(failure.Status).SendString(failure.Text())
 	}
-	return pageAppearance(c)
+	return renderPage(c, page)
 }
 
-func pageAppearance(c fiber.Ctx) error {
+// renderPage shows one of the pages. Each is handed the values of all of
+// them, and its template shows those of its subject.
+func renderPage(c fiber.Ctx, page string) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
 	}
-	IconModeDefault := options.IconMode == "DEFAULT"
+	// A configuration that names no way, or one that is not known, is shown
+	// as the default, so that the field is always there to be set.
 	IconModeFilling := options.IconMode == "FILLING"
+	IconModeDefault := !IconModeFilling
 	m := pool.GetTemplateMap()
 	if auth.PersistentSecurity(c) {
 		m["SecurityCSRFToken"] = auth.CSRFToken(c)
@@ -133,7 +173,7 @@ func pageAppearance(c fiber.Ctx) error {
 	defer pool.PutTemplateMap(m)
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
-	m["PageName"] = "Appearance"
+	m["PageName"] = page
 	pageTheme := define.GetPageTheme()
 	m["PageAppearance"] = pageTheme.BodyStyle
 	m["PageThemeRules"] = pageTheme.Rules
@@ -175,7 +215,9 @@ func pageAppearance(c fiber.Ctx) error {
 	m["ClockTimezone"] = resolved.Options.Timezone
 	m["ClockServerZone"] = time.Local.String()
 	m["ClockServerTime"] = time.Now().Format("2006-01-02 15:04:05 MST")
-	if !define.AppFlags.DisableCSP {
+	// The page of the clock has a script, which previews the time, and the
+	// policy that allows that script and no other.
+	if page == define.SettingPages.Clock.Name && !define.AppFlags.DisableCSP {
 		c.Set("Content-Security-Policy", clock.SettingsPolicy())
 	}
 	m["OptionLocale"] = options.Locale

@@ -1,0 +1,27 @@
+{{ define "settings-links.html" }}<div class=setting-group-container><form method=POST action="{{ .SettingPages.Links.Path }}">{{ if .SecurityCSRFToken }}<input type=hidden name=csrf-token value="{{ .SecurityCSRFToken }}">{{ end }}<h2>{{ T .Locale "nav_links" }}</h2><p class="help-text settings-page-help">{{ T .Locale "settings_links_help" }}<div class=form-group><label for=settings-open-app-newtab>{{ T .Locale "open_app_newtab" }}</label>
+{{ if .OptionOpenAppNewTab }}
+<select name=open-app-newtab id=settings-open-app-newtab><option value=1 selected>{{ T .Locale "yes" }}<option value=0>{{ T .Locale "no" }}</select>
+{{ else }}
+<select name=open-app-newtab id=settings-open-app-newtab><option value=0 selected>{{ T .Locale "no" }}<option value=1>{{ T .Locale "yes" }}</select>
+{{ end }}</div><div class=form-group><label for=settings-open-bookmark-newtab>{{ T .Locale "open_bookmark_newtab" }}</label>
+{{ if .OptionOpenBookmarkNewTab }}
+<select name=open-bookmark-newtab id=settings-open-bookmark-newtab><option value=1 selected>{{ T .Locale "yes" }}<option value=0>{{ T .Locale "no" }}</select>
+{{ else }}
+<select name=open-bookmark-newtab id=settings-open-bookmark-newtab><option value=0 selected>{{ T .Locale "no" }}<option value=1>{{ T .Locale "yes" }}</select>
+{{ end }}</div><div class=form-group><label for=settings-enable-encrypted-link>{{ T .Locale "show_encrypted_link" }}</label>
+{{ if .OptionEnableEncryptedLink }}
+<select name=enable-encrypted-link id=settings-enable-encrypted-link><option value=1 selected>{{ T .Locale "yes" }}<option value=0>{{ T .Locale "no" }}</select>
+{{ else }}
+<select name=enable-encrypted-link id=settings-enable-encrypted-link><option value=0 selected>{{ T .Locale "no" }}<option value=1>{{ T .Locale "yes" }}</select>
+{{ end }}</div><div class=form-group><label for=settings-keep-letter-case>{{ T .Locale "keep_letter_case" }}</label>
+{{ if .OptionKeepLetterCase }}
+<select name=keep-letter-case id=settings-keep-letter-case><option value=1 selected>{{ T .Locale "yes" }}<option value=0>{{ T .Locale "no" }}</select>
+{{ else }}
+<select name=keep-letter-case id=settings-keep-letter-case><option value=0 selected>{{ T .Locale "no" }}<option value=1>{{ T .Locale "yes" }}</select>
+{{ end }}</div><div class=form-group><label for=settings-icon-mode>{{ T .Locale "icon_mode" }}</label>
+{{ if .OptionIconModeDefault }}
+<select name=icon-mode id=settings-icon-mode><option value=DEFAULT selected>{{ T .Locale "icon_mode_default" }}<option value=FILLING>{{ T .Locale "icon_mode_filling" }}</select>
+{{ end }}
+{{ if .OptionIconModeFilling }}
+<select name=icon-mode id=settings-icon-mode><option value=DEFAULT>{{ T .Locale "icon_mode_default" }}<option value=FILLING selected>{{ T .Locale "icon_mode_filling" }}</select>
+{{ end }}</div><div class=form-group><input class=btn-submit type=submit value="{{ T .Locale "save_changes" }}"></div></form></div>{{ end }}

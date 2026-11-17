@@ -186,7 +186,7 @@ func TestThemeOptionsHTTP(t *testing.T) {
 		"refused.yml":      themeFileColors + "options:\n  - id: density\n    type: enum\n",
 	})
 	navigation := []string{"/", "/applications", "/bookmarks", "/help"}
-	settings := []string{"/settings/theme", "/settings/appearance", "/settings/search"}
+	settings := []string{"/settings/theme", "/settings/layout", "/settings/search"}
 	post := func(form url.Values) *httptest.ResponseRecorder { return themeRequest(handler, form) }
 	// about returns a form of the options as the page of a theme has it:
 	// with the name of that theme.
@@ -227,7 +227,7 @@ func TestThemeOptionsHTTP(t *testing.T) {
 	}
 	// The theme sets no layout of its own, and the appearance page names
 	// none.
-	require.Empty(t, readLayoutPage(t, getPage(t, handler, "/settings/appearance")).notes)
+	require.Empty(t, readLayoutPage(t, getPage(t, handler, "/settings/layout")).notes)
 
 	// Values that are chosen are stored for the theme and applied: tokens
 	// on every themed page, layout and attributes on the navigation pages.
@@ -260,7 +260,7 @@ func TestThemeOptionsHTTP(t *testing.T) {
 	// The appearance page names the layout a value sets as it names the
 	// layout of a theme, with the box that turns it off.
 	require.Equal(t, map[string]string{note("theme_layout_note", "Hide"): "theme-layout-ignore-HideAppDescriptions"},
-		readLayoutPage(t, getPage(t, handler, "/settings/appearance")).notes)
+		readLayoutPage(t, getPage(t, handler, "/settings/layout")).notes)
 
 	// Only what differs from the defaults of the theme is stored: an option
 	// that is put back follows the theme again.

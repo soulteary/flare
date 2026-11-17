@@ -58,7 +58,7 @@ func TestGreetingsSurviveSavesWithoutTheField(t *testing.T) {
 			define.AppFlags.DisableLoginMode = true
 			require.NoError(t, os.WriteFile("config.yml", []byte("Title: Site\nShowTitle: true\nGreetings: stored greeting\n"), 0600))
 			app := fiber.New(fiber.Config{Views: appearanceTestViews{}})
-			app.Post("/appearance", updateAppearanceOptions)
+			app.Post("/appearance", func(c fiber.Ctx) error { return updateAppearanceOptions(c, define.SettingPages.Modules.Name) })
 			req := httptest.NewRequest(http.MethodPost, "/appearance", strings.NewReader(tc.body))
 			req.Header.Set("Content-Type", tc.contentType)
 			res, err := app.Test(req, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
@@ -81,7 +81,7 @@ func TestGreetingsLookupFailureDoesNotSave(t *testing.T) {
 	raw := []byte("Title: [invalid\n")
 	require.NoError(t, os.WriteFile("config.yml", raw, 0600))
 	app := fiber.New(fiber.Config{Views: appearanceTestViews{}})
-	app.Post("/appearance", updateAppearanceOptions)
+	app.Post("/appearance", func(c fiber.Ctx) error { return updateAppearanceOptions(c, define.SettingPages.Modules.Name) })
 	req := httptest.NewRequest(http.MethodPost, "/appearance", strings.NewReader("title=Site&show-title=0"))
 	req.Header.Set("Content-Type", fiber.MIMEApplicationForm)
 	res, err := app.Test(req, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})

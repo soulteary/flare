@@ -103,7 +103,7 @@ func (b *sourceBrowser) do(method, path string, form url.Values, headers http.He
 // the cookie that the token is bound to.
 func (b *sourceBrowser) token() string {
 	b.t.Helper()
-	page := b.do(http.MethodGet, define.SettingPages.Appearance.Path, nil, nil)
+	page := b.do(http.MethodGet, define.SettingPages.Layout.Path, nil, nil)
 	require.Equal(b.t, http.StatusOK, page.status, page.body)
 	match := sourceTestToken.FindStringSubmatch(page.body)
 	require.Len(b.t, match, 2, "management form must issue a token")
@@ -113,7 +113,7 @@ func (b *sourceBrowser) token() string {
 // save submits the appearance form with a title that identifies the attempt.
 func (b *sourceBrowser) save(token, title string, headers http.Header) sourceResponse {
 	b.t.Helper()
-	return b.do(http.MethodPost, define.SettingPages.Appearance.Path, url.Values{"csrf-token": {token}, "title": {title}}, headers)
+	return b.do(http.MethodPost, define.SettingPages.Layout.Path, url.Values{"csrf-token": {token}, "title": {title}}, headers)
 }
 
 func (b *sourceBrowser) saved(title string) bool {

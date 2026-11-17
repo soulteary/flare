@@ -166,7 +166,7 @@ func assertAuthSessionCookie(t *testing.T, response *http.Response, secure bool)
 // the application page, which returns a login form rather than another redirect.
 func assertAuthSessionPages(t *testing.T, client *http.Client, base string, loggedIn bool) {
 	t.Helper()
-	for _, path := range []string{"/settings/appearance", "/settings/search", "/settings/weather", "/settings/theme"} {
+	for _, path := range []string{"/settings/layout", "/settings/search", "/settings/weather", "/settings/theme"} {
 		response, err := client.Get(base + path)
 		require.NoError(t, err)
 		closeAuthSessionResponse(t, response)

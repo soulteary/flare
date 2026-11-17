@@ -11,9 +11,10 @@ const os = require('node:os');
 const path = require('node:path');
 const {spawn} = require('node:child_process');
 
-const PAGES = {'/settings/search': 'Home page › Search', '/settings/weather': 'Home page › Weather',
-  '/settings/theme': 'Look › Theme', '/settings/appearance': 'Look › Appearance', '/settings/about': 'Site › About'};
-const GROUPS = [['Content', 'Apps and bookmarks', 'Import and export'], ['Home page', 'Search', 'Weather'], ['Look', 'Theme', 'Appearance'], ['Site', 'About']];
+const PAGES = {'/settings/modules': 'Home page › Modules', '/settings/search': 'Home page › Search', '/settings/weather': 'Home page › Weather',
+  '/settings/clock': 'Home page › Clock', '/settings/links': 'Home page › Links', '/settings/theme': 'Look › Theme', '/settings/layout': 'Look › Layout',
+  '/settings/site': 'Site › Site details', '/settings/about': 'Site › About'};
+const GROUPS = [['Content', 'Apps and bookmarks', 'Import and export'], ['Home page', 'Modules', 'Search', 'Weather', 'Clock', 'Links'], ['Look', 'Theme', 'Layout'], ['Site', 'Site details', 'About']];
 
 async function start() {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'flare-settings-menu-'));
@@ -74,7 +75,7 @@ const shown = () => {
       const state = await wide.evaluate(shown);
       assert.deepEqual(state.groups, GROUPS, address);
       assert.deepEqual(state.current, [address], address);
-      assert.deepEqual([state.switch, state.beside, state.overflow, state.links.length], [null, true, false, 7], address);
+      assert.deepEqual([state.switch, state.beside, state.overflow, state.links.length], [null, true, false, 11], address);
     }
     // Every entry leads to a page, and the two of the content leave the
     // settings for the editor.
@@ -87,6 +88,10 @@ const shown = () => {
     // on an instance without sign-in.
     await wide.goto(server.base + '/settings/application');
     assert.equal(new URL(wide.url()).pathname, '/settings/about');
+    // The address of the page that held the settings of five of the pages
+    // leads to the layout.
+    await wide.goto(server.base + '/settings/appearance');
+    assert.equal(new URL(wide.url()).pathname, '/settings/layout');
 
     // In a narrow window the menu is closed above the page behind a switch
     // that names the group and the page. The switch opens it, by a click
@@ -101,7 +106,7 @@ const shown = () => {
         assert.match(await narrow.locator('.sidebar-current').innerText(), new RegExp('^' + label.replace('›', '›') + '\\s+Menu'), address);
         await narrow.locator('.sidebar-current').click();
         assert.equal(await links.first().isVisible(), true, address);
-        assert.equal(await links.count(), 7, address);
+        assert.equal(await links.count(), 11, address);
         const state = await read();
         if (state) {
           assert.deepEqual([state.above, state.overflow, state.current], [true, false, [address]], address);
