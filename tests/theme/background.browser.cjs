@@ -285,7 +285,7 @@ const measure = page => page.evaluate(() => {
 
     // A theme file with a background image is not imported: it would be a
     // theme of one file, and the image would not be there.
-    await page.goto(server.base + '/settings/theme', {waitUntil: 'load'});
+    await page.goto(server.base + '/settings/themes', {waitUntil: 'load'});
     await page.locator('#theme-import-file').setInputFiles({name: 'added.yml', mimeType: 'application/yaml', buffer: Buffer.from(COLORS + background(40))});
     const [response] = await Promise.all([
       page.waitForResponse(candidate => candidate.request().method() === 'POST'),

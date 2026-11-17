@@ -30,6 +30,14 @@
           {{ template "settings-theme.html" . }}
         {{ end }}
 
+        {{ if eq .PageName "ThemeLibrary" }}
+          {{ template "settings-themelibrary.html" . }}
+        {{ end }}
+
+        {{ if eq .PageName "ThemeAccess" }}
+          {{ template "settings-themeaccess.html" . }}
+        {{ end }}
+
         {{ if eq .PageName "Weather" }}
           {{ template "settings-weather.html" . }}
         {{ end }}

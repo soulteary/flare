@@ -711,5 +711,10 @@
   "settings_clock_help": "首页是否展示日期和时间，以及怎样展示。",
   "settings_links_help": "应用和书签怎样打开、怎样显示文字和图标。",
   "settings_layout_help": "首页、应用页和书签页怎样排布。",
-  "settings_site_help": "界面语言，以及页面的标题和页脚。"
+  "settings_site_help": "界面语言，以及页面的标题和页脚。",
+  "nav_themes": "主题库",
+  "nav_theme_access": "主题授权",
+  "settings_theme_more_library": "导入和安装主题在",
+  "settings_theme_more_access": "；主题和访客可以做什么，在",
+  "settings_theme_access_help": "实例里的主题除了配色和样式之外还能带来什么，以及访客可以选用哪些主题。两者都会改变每个访客看到的页面，所以与选择主题分开设置。"
 }

@@ -89,7 +89,7 @@ func TestThemeArchiveHTTP(t *testing.T) {
 
 	// The card of a directory has a download like the card of a file, and
 	// the form takes a theme file or an archive.
-	raw := getPage(t, handler, "/settings/theme")
+	raw := getPage(t, handler, "/settings/themes")
 	require.Equal(t, map[string][]string{
 		"plain": {"/?theme-preview=plain", "/settings/theme/export?name=plain"},
 		"zelda": {"/?theme-preview=zelda", "/settings/theme/export?name=zelda"},

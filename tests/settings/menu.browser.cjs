@@ -13,8 +13,9 @@ const {spawn} = require('node:child_process');
 
 const PAGES = {'/settings/modules': 'Home page › Modules', '/settings/search': 'Home page › Search', '/settings/weather': 'Home page › Weather',
   '/settings/clock': 'Home page › Clock', '/settings/links': 'Home page › Links', '/settings/theme': 'Look › Theme', '/settings/layout': 'Look › Layout',
+  '/settings/themes': 'Look › Theme library', '/settings/theme-access': 'Look › Theme access',
   '/settings/site': 'Site › Site details', '/settings/about': 'Site › About'};
-const GROUPS = [['Content', 'Apps and bookmarks', 'Import and export'], ['Home page', 'Modules', 'Search', 'Weather', 'Clock', 'Links'], ['Look', 'Theme', 'Layout'], ['Site', 'Site details', 'About']];
+const GROUPS = [['Content', 'Apps and bookmarks', 'Import and export'], ['Home page', 'Modules', 'Search', 'Weather', 'Clock', 'Links'], ['Look', 'Theme', 'Layout', 'Theme library', 'Theme access'], ['Site', 'Site details', 'About']];
 
 async function start() {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'flare-settings-menu-'));
@@ -75,7 +76,7 @@ const shown = () => {
       const state = await wide.evaluate(shown);
       assert.deepEqual(state.groups, GROUPS, address);
       assert.deepEqual(state.current, [address], address);
-      assert.deepEqual([state.switch, state.beside, state.overflow, state.links.length], [null, true, false, 11], address);
+      assert.deepEqual([state.switch, state.beside, state.overflow, state.links.length], [null, true, false, 13], address);
     }
     // Every entry leads to a page, and the two of the content leave the
     // settings for the editor.
@@ -106,7 +107,7 @@ const shown = () => {
         assert.match(await narrow.locator('.sidebar-current').innerText(), new RegExp('^' + label.replace('›', '›') + '\\s+Menu'), address);
         await narrow.locator('.sidebar-current').click();
         assert.equal(await links.first().isVisible(), true, address);
-        assert.equal(await links.count(), 11, address);
+        assert.equal(await links.count(), 13, address);
         const state = await read();
         if (state) {
           assert.deepEqual([state.above, state.overflow, state.current], [true, false, [address]], address);

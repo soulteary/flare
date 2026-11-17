@@ -203,7 +203,7 @@ func TestThemePageStoresTheThemesToChooseHTTP(t *testing.T) {
 
 	// The form has a box for every theme that can be selected, and none is
 	// ticked. The custom colors are not among them before any are stored.
-	page := getPage(t, handler, "/settings/theme")
+	page := getPage(t, handler, "/settings/theme-access")
 	fields, ticked := boxes(page)
 	require.Empty(t, ticked)
 	for _, theme := range define.ThemePalettes {
@@ -255,7 +255,7 @@ func TestThemePageStoresTheThemesToChooseHTTP(t *testing.T) {
 	// A name on the list that is no theme, as a file that went away leaves
 	// one, has no box and is taken off the list by saving the form.
 	require.NoError(t, data.SaveThemeChoices([]string{"gone", "tron"}))
-	fields, ticked = boxes(getPage(t, handler, "/settings/theme"))
+	fields, ticked = boxes(getPage(t, handler, "/settings/theme-access"))
 	require.Equal(t, []string{"tron"}, ticked)
 	require.NotContains(t, fields, "theme-choice-gone")
 	require.Equal(t, http.StatusOK, postThemeForm(t, handler, url.Values{"action": {"save-choices"}, "theme-choice-tron": {"1"}}).Code)
@@ -264,7 +264,7 @@ func TestThemePageStoresTheThemesToChooseHTTP(t *testing.T) {
 	// The custom colors have a box once colors are stored for them.
 	require.Equal(t, http.StatusOK, postThemeForm(t, handler, url.Values{"action": {"save-custom"}, "custom-background": {"#101010"}, "custom-primary": {"#f0f0f0"}, "custom-accent": {"#808080"}}).Code)
 	require.Equal(t, http.StatusOK, postThemeForm(t, handler, url.Values{"theme": {"blackboard"}}).Code)
-	fields, _ = boxes(getPage(t, handler, "/settings/theme"))
+	fields, _ = boxes(getPage(t, handler, "/settings/theme-access"))
 	require.Contains(t, fields, "theme-choice-custom")
 	require.Equal(t, http.StatusOK, postThemeForm(t, handler, url.Values{"action": {"save-choices"}, "theme-choice-custom": {"1"}}).Code)
 	require.Equal(t, []string{"custom"}, stored())
@@ -281,7 +281,7 @@ func TestThemeChoicesOfTheDirectoryOutlastSafeModeHTTP(t *testing.T) {
 	writeThemeFile(t, "forest.yml", previewForestFile)
 	handler, err := NewRouter(&model.Flags{Port: 5005, DisableLoginMode: true, EnableOfflineMode: true, ThemeSafeMode: true})
 	require.NoError(t, err)
-	fields, shown := templateForm(t, getPage(t, handler, "/settings/theme"), "theme-choices-form")
+	fields, shown := templateForm(t, getPage(t, handler, "/settings/theme-access"), "theme-choices-form")
 	require.True(t, shown)
 	require.NotContains(t, fields, "theme-choice-forest")
 	require.Equal(t, " checked", fields["theme-choice-tron"])

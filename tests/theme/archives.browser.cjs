@@ -167,7 +167,7 @@ async function filesOf(directory) {
     page.on('request', request => {
       if (!request.url().startsWith(server.base + '/') && !request.url().startsWith('data:')) elsewhere.push(request.url());
     });
-    const settings = () => page.goto(server.base + '/settings/theme', {waitUntil: 'load'});
+    const settings = () => page.goto(server.base + '/settings/themes', {waitUntil: 'load'});
     // Uploads a file through the form and returns the status of the
     // response and what the form says afterwards.
     const upload = async (name, buffer, replace = false) => {

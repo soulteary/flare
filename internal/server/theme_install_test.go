@@ -106,7 +106,7 @@ func TestInstallThemeFromAnAddressHTTP(t *testing.T) {
 
 	// The page has the form, with the address and the box, and no theme
 	// that is offered.
-	page := getPage(t, handler, "/settings/theme")
+	page := getPage(t, handler, "/settings/themes")
 	fields, shown := templateForm(t, page, "theme-install-form")
 	require.True(t, shown)
 	require.Equal(t, map[string]string{"action": "fetch-theme", "theme-address": "", "replace": "", "submit": i18n.T("en", "theme_install_fetch")}, fields)
@@ -283,7 +283,7 @@ func TestInstallThemeFromAnAddressIsUnavailableHTTP(t *testing.T) {
 		"theme_import_safe_mode": func(on bool) { define.AppFlags.ThemeSafeMode = on },
 	} {
 		set(true)
-		page := getPage(t, handler, "/settings/theme")
+		page := getPage(t, handler, "/settings/themes")
 		require.Contains(t, page, `<p class="theme-help theme-install-unavailable">`+i18n.T("en", key)+`</p>`, key)
 		fields, shown := templateForm(t, page, "theme-install-form")
 		require.True(t, shown, key)

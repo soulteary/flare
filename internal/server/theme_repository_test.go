@@ -17,7 +17,7 @@ import (
 func TestThemePageLinksToTheRepositoryHTTP(t *testing.T) {
 	handler := themeFilesRouter(t, "Locale: en\nTheme: blackboard\n", nil)
 	require.True(t, define.AppFlags.EnableOfflineMode)
-	page := getPage(t, handler, "/settings/theme")
+	page := getPage(t, handler, "/settings/themes")
 	link := `<a href="https://github.com/soulteary/flare-themes" target=_blank rel="noopener noreferrer">https://github.com/soulteary/flare-themes</a>`
 	require.Contains(t, page, `<p class="theme-help theme-repository">`+i18n.T("en", "theme_repository")+` `+link)
 	require.Equal(t, 1, strings.Count(page, "flare-themes\""))

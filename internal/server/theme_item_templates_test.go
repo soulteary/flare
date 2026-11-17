@@ -194,7 +194,7 @@ func TestEntriesAreRenderedWithTheItemTemplatesOfTheThemeHTTP(t *testing.T) {
 	require.Contains(t, getPage(t, handler, "/?theme-preview=zelda"), `class="t-app"`)
 	require.Contains(t, getPage(t, handler, "/bookmarks?theme-preview=zelda"), `class="t-mark"`)
 	// The form of the theme lists the item templates with the others.
-	fields, shown := templateForm(t, getPage(t, handler, "/settings/theme"), "theme-templates-confirm-form")
+	fields, shown := templateForm(t, getPage(t, handler, "/settings/theme-access"), "theme-templates-confirm-form")
 	require.True(t, shown)
 	require.Equal(t, "app.html,bookmark.html,group.html", fields["theme-templates-files"])
 	require.Equal(t, http.StatusOK, postThemeForm(t, handler, url.Values{"action": {"confirm-templates"}, "theme-templates-theme": {"zelda"}, "theme-templates-files": {"app.html,bookmark.html,group.html"}}).Code)

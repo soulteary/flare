@@ -104,7 +104,7 @@ func TestThemeImportAndExportHTTP(t *testing.T) {
 	require.NoError(t, err)
 
 	// The page has the form and a download link for every theme.
-	page := readImportPage(t, getPage(t, handler, "/settings/theme"))
+	page := readImportPage(t, getPage(t, handler, "/settings/themes"))
 	require.Equal(t, "multipart/form-data", page.encoding)
 	require.Equal(t, map[string]string{"action": "hidden", "theme-file": "file", "replace": "checkbox", "": "submit"}, page.form)
 	require.Empty(t, page.alerts)
@@ -251,7 +251,7 @@ func TestThemeImportAndExportRequireTheAdministrator(t *testing.T) {
 	}
 
 	// The token of the import form.
-	status, page := send(httptest.NewRequest(http.MethodGet, "http://flare.test/settings/theme", nil), true)
+	status, page := send(httptest.NewRequest(http.MethodGet, "http://flare.test/settings/themes", nil), true)
 	require.Equal(t, http.StatusOK, status)
 	document, err := html.Parse(strings.NewReader(page))
 	require.NoError(t, err)

@@ -711,5 +711,10 @@
   "settings_clock_help": "Whether the home page shows the date and time, and how.",
   "settings_links_help": "How applications and bookmarks are opened, written and given an icon.",
   "settings_layout_help": "How the home page, the application page and the bookmark page are laid out.",
-  "settings_site_help": "The language of the interface, and the title and the footer of the pages."
+  "settings_site_help": "The language of the interface, and the title and the footer of the pages.",
+  "nav_themes": "Theme library",
+  "nav_theme_access": "Theme access",
+  "settings_theme_more_library": "Themes are imported and installed in the",
+  "settings_theme_more_access": ". What themes and visitors are allowed is set under",
+  "settings_theme_access_help": "What the themes of the instance may bring beside colors and styles, and which themes a visitor may choose. Both change what every visitor is shown, so they are set apart from choosing a theme."
 }

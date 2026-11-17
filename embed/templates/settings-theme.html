@@ -1,5 +1,4 @@
-{{ define "settings-theme.html" }}
-<div class="setting-group-container">
+{{ define "theme-choose-form" }}
     <form method="POST" action="{{ .SettingPages.Theme.Path }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <h2>{{ T .Locale "settings_theme" }}</h2>
         {{ if .ThemeUnavailable }}<p class="theme-notice" role="alert">{{ .ThemeUnavailable }}</p>{{ end }}
@@ -70,55 +69,10 @@
         </ul>
         {{ end }}
     </form>
-    <form method="POST" action="{{ .SettingPages.Theme.Path }}" enctype="multipart/form-data" class="theme-import-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
-        <input type="hidden" name="action" value="{{ .ThemeImportAction }}">
-        <h2>{{ T .Locale "theme_import" }}</h2>
-        {{ if .ThemeImportRefused }}<p class="theme-notice" role="alert">{{ .ThemeImportRefused }}</p>{{ end }}
-        {{ if .ThemeImported }}<p class="theme-notice" role="status">{{ .ThemeImported }}</p>{{ end }}{{ if .ThemeImportLeftOut }}<p class="theme-notice theme-import-left-out" role="status">{{ .ThemeImportLeftOut }}</p>{{ end }}{{ if .ThemeImportWithdrawn }}<p class="theme-notice theme-import-withdrawn" role="status">{{ .ThemeImportWithdrawn }}</p>{{ end }}
-        <p class="theme-help">{{ T .Locale "theme_import_help" }}</p>
-        <p class="theme-help theme-repository">{{ T .Locale "theme_repository" }} <a href="{{ .ThemeRepository }}" target="_blank" rel="noopener noreferrer">{{ .ThemeRepository }}</a></p>
-        <div class="form-group">
-            <label for="theme-import-file">{{ T .Locale "theme_import_file" }}</label>
-            <input type="file" id="theme-import-file" name="theme-file" accept=".yml,.zip">
-        </div>
-        <div class="form-group">
-            <label class="theme-import-replace"><input type="checkbox" name="replace" value="1"> {{ T .Locale "theme_import_replace" }}</label>
-        </div>
-        <div class="form-group">
-            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_import_submit" }}" />
-        </div>
-    </form>
-    <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-install-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
-        <input type="hidden" name="action" value="{{ .ThemeInstall.Action }}">
-        <h2>{{ T .Locale "theme_install" }}</h2>
-        {{ if .ThemeInstall.Refused }}<p class="theme-notice" role="alert">{{ .ThemeInstall.Refused }}</p>{{ end }}
-        <p class="theme-help">{{ T .Locale "theme_install_help" }}</p>
-        {{ if .ThemeInstall.Unavailable }}<p class="theme-help theme-install-unavailable">{{ .ThemeInstall.Unavailable }}</p>{{ else }}
-        <div class="form-group">
-            <label for="theme-install-address">{{ T .Locale "theme_install_address" }}</label>
-            <input type="url" class="option-input" id="theme-install-address" name="{{ .ThemeInstall.AddressField }}" value="{{ .ThemeInstall.Address }}" placeholder="https://" autocomplete="off" spellcheck="false" required>
-        </div>
-        <div class="form-group">
-            <label class="theme-import-replace"><input type="checkbox" name="{{ .ThemeInstall.ReplaceField }}" value="1"{{ if .ThemeInstall.Replace }} checked{{ end }}> {{ T .Locale "theme_import_replace" }}</label>
-        </div>
-        <div class="form-group">
-            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_install_fetch" }}" />
-        </div>
-        {{ end }}
-    </form>{{ if .ThemeInstall.Offer }}<form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-install-confirm-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
-        <input type="hidden" name="action" value="{{ .ThemeInstall.Offer.Action }}">
-        <input type="hidden" name="{{ .ThemeInstall.AddressField }}" value="{{ .ThemeInstall.Address }}">
-        <input type="hidden" name="{{ .ThemeInstall.Offer.HashField }}" value="{{ .ThemeInstall.Offer.Hash }}">
-        {{ if .ThemeInstall.Replace }}<input type="hidden" name="{{ .ThemeInstall.ReplaceField }}" value="1">{{ end }}
-        <p class="theme-notice" role="status">{{ T .Locale "theme_install_offer" }}</p>
-        <ul class="theme-file-lines theme-install-lines">
-            {{ range .ThemeInstall.Offer.Lines }}<li>{{ . }}</li>
-            {{ end }}{{ if .ThemeInstall.Offer.Templates }}<li>{{ .ThemeInstall.Offer.Templates }}</li>{{ end }}{{ if .ThemeInstall.Offer.LeftOut }}<li>{{ .ThemeInstall.Offer.LeftOut }}</li>{{ end }}
-        </ul>
-        <div class="form-group">
-            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_install_submit" }}" />
-        </div>
-    </form>{{ end }}
+{{ end }}
+{{ define "settings-theme.html" }}
+<div class="setting-group-container">
+    {{ template "theme-choose-form" . }}
     {{ if .ThemeModeChoice }}
     <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-mode-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <input type="hidden" name="action" value="{{ .ThemeModeAction }}">
@@ -173,49 +127,7 @@
         <div class="form-group">
             <input class="btn-submit" type="submit" value="{{ T .Locale "theme_options_reset" }}" />
         </div>
-    </form>{{ end }}{{ if .ThemeTemplates }}<form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-templates-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
-        <input type="hidden" name="action" value="{{ .ThemeTemplates.Action }}">
-        <h2>{{ T .Locale "theme_templates" }}</h2>
-        {{ if .ThemeTemplates.Saved }}<p class="theme-notice" role="status">{{ T .Locale "theme_templates_saved" }}</p>{{ end }}
-        <p class="theme-help">{{ T .Locale "theme_templates_help" }}</p>
-        {{ if .ThemeTemplates.Unavailable }}<p class="theme-notice theme-templates-unavailable" role="status">{{ .ThemeTemplates.Unavailable }}</p>{{ else }}
-        <div class="form-group">
-            <label class="theme-import-replace"><input type="checkbox" name="{{ .ThemeTemplates.Field }}" value="1"{{ if .ThemeTemplates.Allowed }} checked{{ end }}> {{ T .Locale "theme_templates_allow" }}</label>
-        </div>
-        <div class="form-group">
-            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_custom_save" }}" />
-        </div>
-        {{ end }}
-    </form>{{ end }}{{ if .ThemeTemplatesConfirm }}<form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-templates-confirm-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
-        <input type="hidden" name="action" value="{{ .ThemeTemplatesConfirm.Action }}">
-        <input type="hidden" name="{{ .ThemeTemplatesConfirm.ThemeField }}" value="{{ .ThemeTemplatesConfirm.Theme }}">
-        <input type="hidden" name="{{ .ThemeTemplatesConfirm.FilesField }}" value="{{ .ThemeTemplatesConfirm.Files }}">
-        <h2>{{ .ThemeTemplatesConfirm.Title }}</h2>
-        {{ if .ThemeTemplatesConfirm.Notice }}<p class="theme-notice" role="status">{{ .ThemeTemplatesConfirm.Notice }}</p>{{ end }}
-        <p class="theme-help theme-templates-files">{{ .ThemeTemplatesConfirm.Listed }}</p>
-        <p class="theme-help">{{ T .Locale "theme_templates_confirm_help" }}</p>
-        {{ if .ThemeTemplatesConfirm.Confirmed }}<p class="theme-help theme-templates-in-use">{{ T .Locale "theme_templates_in_use" }}</p>{{ end }}
-        <div class="form-group">
-            <input class="btn-submit" type="submit" value="{{ .ThemeTemplatesConfirm.Submit }}" />
-        </div>
-    </form>{{ if .ThemeTemplatesConfirm.Preview }}<form method="GET" action="{{ .ThemeTemplatesConfirm.Preview }}" class="theme-templates-preview-form">
-        <input type="hidden" name="{{ .ThemeTemplatesConfirm.PreviewField }}" value="{{ .ThemeTemplatesConfirm.Theme }}">
-        <div class="form-group">
-            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_templates_preview" }}" />
-        </div>
-    </form>{{ end }}{{ end }}
-    <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-choices-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
-        <input type="hidden" name="action" value="{{ .ThemeChoices.Action }}">
-        <h2>{{ T .Locale "theme_choices" }}</h2>
-        {{ if .ThemeChoices.Saved }}<p class="theme-notice" role="status">{{ T .Locale "theme_choices_saved" }}</p>{{ end }}
-        <p class="theme-help">{{ T .Locale "theme_choices_help" }}</p>
-        {{ range .ThemeChoices.Boxes }}<div class="form-group">
-            <label class="theme-import-replace"><input type="checkbox" name="{{ .Field }}" value="1"{{ if .Checked }} checked{{ end }}> {{ .Title }}</label>
-        </div>{{ end }}
-        <div class="form-group">
-            <input class="btn-submit" type="submit" value="{{ T .Locale "theme_custom_save" }}" />
-        </div>
-    </form>
+    </form>{{ end }}
     <form method="POST" action="{{ .SettingPages.Theme.Path }}" class="theme-custom-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <input type="hidden" name="action" value="{{ .ThemeCustomAction }}">
         <h2>{{ T .Locale "theme_custom" }}</h2>
@@ -240,5 +152,6 @@
             <input class="btn-submit" type="submit" value="{{ T .Locale "theme_custom_save" }}" />
         </div>
     </form>
+    <p class="theme-help theme-more">{{ T .Locale "settings_theme_more_library" }} <a href="{{ .SettingPages.ThemeLibrary.Path }}">{{ T .Locale "nav_themes" }}</a>{{ T .Locale "settings_theme_more_access" }} <a href="{{ .SettingPages.ThemeAccess.Path }}">{{ T .Locale "nav_theme_access" }}</a></p>
 </div>
 {{ end }}

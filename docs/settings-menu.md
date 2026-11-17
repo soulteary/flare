@@ -15,8 +15,10 @@ its pages.
 | Home page | Weather | `/settings/weather` | The weather of the home page |
 | Home page | Clock | `/settings/clock` | Whether the home page shows the date and time, and the [clock](clock.md) |
 | Home page | Links | `/settings/links` | Opening applications and bookmarks in a new window, encrypted links, the letter case of names, and where icons come from |
-| Look | Theme | `/settings/theme` | [Themes and custom colors](theme-colors.md) |
+| Look | Theme | `/settings/theme` | Choosing a theme, with its preview; light and dark; the options of the selected theme; [custom colors](theme-colors.md) |
 | Look | Layout | `/settings/layout` | The layout of a theme, the desktop columns, the bookmark layout, the category navigation, the phone and tablet layout, the text and title sizes, and the descriptions of applications |
+| Look | Theme library | `/settings/themes` | The themes with their downloads and the remarks about [theme files](theme-files.md) that are not used; importing a theme; [installing one from an address](theme-files.md#installing-from-an-address); the link to the [theme repository](theme-repository.md) |
+| Look | Theme access | `/settings/theme-access` | Whether themes may use [templates](theme-templates.md) and the confirmation of those of the selected theme; the [themes a visitor can choose](theme-choices.md) |
 | Site | Site details | `/settings/site` | The language of the interface, the title and the footer |
 | Site | Account | `/settings/application` | Sign-in, sign-out and the [account](accounts.md) |
 | Site | About | `/settings/about` | What the application is, its project page and its version |
@@ -48,6 +50,28 @@ setting was added or removed, and `config.yml` has the same keys.
   settings it turns on. The page of the modules says so and links there.
 - The field for the way icons are fetched is always shown. A configuration
   that names no way shows the default.
+
+## The three pages about themes
+
+The theme page held eleven forms. Choosing a theme stayed on it, with what
+belongs to the selected theme. What is done now and then, and changes what
+every visitor is shown or what the instance stores, stands on two pages of
+its own.
+
+- The theme page and the theme library both list every theme, with its
+  preview and its download, and both say which theme files are not used
+  and why. A theme is selected from either list; the theme page is shown
+  afterwards.
+- Each form submits to the page it stands on, and that page is shown again
+  with what the form led to.
+- Every one of the three addresses takes every form about themes. Which
+  page is shown afterwards follows from the form, not from the address, so
+  a form of the theme page as an earlier release rendered it is still
+  taken at `/settings/theme`.
+- The theme page links to the two others.
+- Other pages of this documentation that were written before speak of "the
+  theme page" for forms that stand on the theme library or under theme
+  access now.
 
 ## In a narrow window
 
@@ -83,6 +107,14 @@ The help page links to `/settings/about` for the version.
   field of another page; what a page refuses; the address of the appearance
   page and a whole form sent to it; the policy for scripts, which only the
   page of the clock has.
+- `internal/server`, for the three pages about themes: the forms of each
+  page and the address each submits to; that no form is on two pages apart
+  from the one that chooses a theme; the cards and the remarks on the two
+  pages that list themes; the links of the theme page; and for seven kinds
+  of form sent to each of the three addresses, the page that is shown
+  afterwards.
+- The browser scripts under `tests/theme`, in Chromium, with their forms on
+  the pages they stand on now.
 - `tests/settings/save.browser.cjs` and `tests/clock/browser.cjs`, in
   Chromium: the title and the layout saved by their own forms, directly and
   through a proxy; the settings of the clock on their page.

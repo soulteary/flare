@@ -84,7 +84,8 @@ func settingsMenuGroups(locale string, account, editor bool) [][]string {
 	return append(groups, [][]string{
 		{text("nav_group_home"), text("nav_modules") + " /settings/modules", text("nav_search") + " /settings/search", text("nav_weather") + " /settings/weather",
 			text("nav_clock") + " /settings/clock", text("nav_links") + " /settings/links"},
-		{text("nav_group_look"), text("nav_theme") + " /settings/theme", text("nav_layout") + " /settings/layout"},
+		{text("nav_group_look"), text("nav_theme") + " /settings/theme", text("nav_layout") + " /settings/layout",
+			text("nav_themes") + " /settings/themes", text("nav_theme_access") + " /settings/theme-access"},
 		append(site, text("nav_about")+" /settings/about"),
 	}...)
 }
@@ -103,7 +104,7 @@ func TestSettingsMenuIsGroupedHTTP(t *testing.T) {
 			if editor {
 				out = []string{"/editor", "/editor/transfer"}
 			}
-			for _, path := range []string{"/settings/modules", "/settings/search", "/settings/weather", "/settings/clock", "/settings/links", "/settings/theme", "/settings/layout", "/settings/site", "/settings/about"} {
+			for _, path := range []string{"/settings/modules", "/settings/search", "/settings/weather", "/settings/clock", "/settings/links", "/settings/theme", "/settings/layout", "/settings/themes", "/settings/theme-access", "/settings/site", "/settings/about"} {
 				page := getPage(t, handler, path)
 				menu := readSettingsMenu(t, page)
 				require.NotNil(t, menu, path)
@@ -194,7 +195,7 @@ func TestSettingsMenuWithAccounts(t *testing.T) {
 	// The pages that hold what the appearance page held need the session
 	// as that page did, to be read and to be saved, and signing in leads
 	// back to each.
-	for _, path := range []string{"/settings/modules", "/settings/clock", "/settings/links", "/settings/layout", "/settings/site"} {
+	for _, path := range []string{"/settings/modules", "/settings/clock", "/settings/links", "/settings/layout", "/settings/site", "/settings/themes", "/settings/theme-access"} {
 		res, page = request(path, true)
 		require.Equal(t, http.StatusOK, res.StatusCode, path)
 		require.Equal(t, []string{path}, readSettingsMenu(t, page).current, path)
