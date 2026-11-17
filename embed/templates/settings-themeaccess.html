@@ -1,5 +1,6 @@
 {{ define "settings-themeaccess.html" }}
 <div class="setting-group-container">
+    <h2>{{ T .Locale "nav_theme_access" }}</h2>
     <p class="help-text settings-page-help">{{ T .Locale "settings_theme_access_help" }}</p>
     {{ if .ThemeTemplates }}<form method="POST" action="{{ .SettingPages.ThemeAccess.Path }}" class="theme-templates-form">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <input type="hidden" name="action" value="{{ .ThemeTemplates.Action }}">

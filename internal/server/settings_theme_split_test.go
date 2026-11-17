@@ -92,6 +92,22 @@ func TestSettingsOfThemesAreOnThreePagesHTTP(t *testing.T) {
 	require.Regexp(t, regexp.QuoteMeta(i18n.T("en", "settings_theme_more_library"))+` <a href="?/settings/themes"?>`+i18n.T("en", "nav_themes")+`</a>`+
 		regexp.QuoteMeta(i18n.T("en", "settings_theme_more_access"))+` <a href="?/settings/theme-access"?>`+i18n.T("en", "nav_theme_access")+`</a>`, page)
 	require.Contains(t, getPage(t, handler, "/settings/theme-access"), i18n.T("en", "settings_theme_access_help"))
+	// Each page begins with a title of its own: that of the theme page for
+	// choosing a theme, and for the two others their entry of the menu with
+	// a sentence about the page.
+	first := regexp.MustCompile(`<div class="?setting-group-container"?>\s*(?:<form[^>]*>\s*(?:<input[^>]*>\s*)*)?<h2>([^<]*)</h2>(?:\s*<p class="help-text settings-page-help">([^<]*))?`)
+	for path, want := range map[string][2]string{
+		"/settings/theme":        {i18n.T("en", "settings_theme"), ""},
+		"/settings/themes":       {i18n.T("en", "nav_themes"), i18n.T("en", "settings_themes_help")},
+		"/settings/theme-access": {i18n.T("en", "nav_theme_access"), i18n.T("en", "settings_theme_access_help")},
+	} {
+		found := first.FindStringSubmatch(getPage(t, handler, path))
+		require.NotNil(t, found, path)
+		require.Equal(t, want, [2]string{found[1], found[2]}, path)
+	}
+	require.NotContains(t, getPage(t, handler, "/settings/theme"), i18n.T("en", "settings_themes_help"))
+	require.Equal(t, 1, strings.Count(getPage(t, handler, "/settings/themes"), "<h2>"+i18n.T("en", "nav_themes")+"</h2>"))
+	require.NotContains(t, getPage(t, handler, "/settings/themes"), "<h2>"+i18n.T("en", "settings_theme")+"</h2>")
 	// The link to the repository of themes stands with the import.
 	require.NotContains(t, page, define.ThemeRepositoryURL)
 	require.Contains(t, getPage(t, handler, "/settings/themes"), define.ThemeRepositoryURL)
