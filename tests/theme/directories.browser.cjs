@@ -185,7 +185,7 @@ const measure = page => page.evaluate(() => {
     // with the box for replacing ticked or not.
     await fs.rm(file);
     for (const replace of [false, true]) {
-      await settings();
+      await page.goto(server.base + '/settings/themes', {waitUntil: 'load'});
       await page.locator('#theme-import-file').setInputFiles({name: 'zelda.yml', mimeType: 'application/yaml',
         buffer: Buffer.from(theme('#402020', '6px'))});
       if (replace) await page.locator('.theme-import-form input[name="replace"]').check();

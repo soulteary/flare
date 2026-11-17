@@ -60,7 +60,7 @@ func TestLayoutOptionsTheTemplatesOfTheThemeDoNotSupportHTTP(t *testing.T) {
 	confirm := func(theme string) {
 		t.Helper()
 		require.Equal(t, http.StatusOK, postThemeForm(t, handler, url.Values{"theme": {theme}}).Code)
-		fields, shown := templateForm(t, getPage(t, handler, "/settings/theme"), "theme-templates-confirm-form")
+		fields, shown := templateForm(t, getPage(t, handler, "/settings/theme-access"), "theme-templates-confirm-form")
 		require.True(t, shown, theme)
 		rec := postThemeForm(t, handler, url.Values{"action": {"confirm-templates"}, "theme-templates-theme": {theme}, "theme-templates-files": {fields["theme-templates-files"]}})
 		require.Equal(t, http.StatusOK, rec.Code, theme)

@@ -48,7 +48,7 @@ async function start() {
   try {
     const page = await browser.newPage({viewport: {width: 1280, height: 900}});
     page.setDefaultTimeout(10000);
-    const settings = () => page.goto(server.base + '/settings/theme', {waitUntil: 'load'});
+    const settings = () => page.goto(server.base + '/settings/themes', {waitUntil: 'load'});
     const download = async selector => {
       const [file] = await Promise.all([page.waitForEvent('download'), page.locator(selector).click()]);
       return {name: file.suggestedFilename(), content: await fs.readFile(await file.path(), 'utf8')};

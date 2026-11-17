@@ -84,6 +84,21 @@ func getSettingPages() model.RouteMaps {
 			Path:  "/settings/appearance",
 		},
 
+		// The two pages below hold what the theme page held beside choosing
+		// a theme: the files of the themes of the instance, and what the
+		// administrator allows themes and visitors.
+		ThemeLibrary: model.Page{
+			Name:  "ThemeLibrary",
+			Title: "主题库",
+			Path:  "/settings/themes",
+		},
+
+		ThemeAccess: model.Page{
+			Name:  "ThemeAccess",
+			Title: "主题授权",
+			Path:  "/settings/theme-access",
+		},
+
 		// The five pages below hold what the appearance page held. That
 		// page has no content of its own any more: its address leads to
 		// the layout, and still takes a form of the page as it was.

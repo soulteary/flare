@@ -64,10 +64,42 @@ const (
 // exportPath is where a theme is handed out as a theme file, by its name.
 const exportPath = "/export"
 
+// pages are the pages the settings of themes are spread over: choosing a
+// theme, the files of the themes of the instance, and what themes and
+// visitors are allowed.
+func pages() []model.Page {
+	return []model.Page{define.SettingPages.Theme, define.SettingPages.ThemeLibrary, define.SettingPages.ThemeAccess}
+}
+
 func RegisterRouting(e *fiber.App) {
-	e.Get(define.SettingPages.Theme.Path, auth.AuthRequired, pageTheme)
-	e.Post(define.SettingPages.Theme.Path, auth.AuthRequired, updateThemes)
+	// Each page takes every form. Which page is shown afterwards follows
+	// from the form, so a form of the theme page as an earlier release
+	// rendered it, with everything on one page, is still taken there.
+	for _, page := range pages() {
+		e.Get(page.Path, auth.AuthRequired, pageTheme)
+		e.Post(page.Path, auth.AuthRequired, updateThemes)
+	}
 	e.Get(define.SettingPages.Theme.Path+exportPath, auth.AuthRequired, exportTheme)
+}
+
+// shownPage names the page a response shows: the one that was asked for,
+// and after a form the one that has the form.
+func shownPage(c fiber.Ctx) string {
+	if c.Method() != http.MethodPost {
+		for _, page := range pages() {
+			if c.Path() == page.Path {
+				return page.Name
+			}
+		}
+		return define.SettingPages.Theme.Name
+	}
+	switch formvalue.Get(c, "action") {
+	case actionImport, actionFetch, actionInstall:
+		return define.SettingPages.ThemeLibrary.Name
+	case actionSaveTemplates, actionConfirmTemplates, actionWithdrawTemplates, actionSaveChoices:
+		return define.SettingPages.ThemeAccess.Name
+	}
+	return define.SettingPages.Theme.Name
 }
 
 var updateMu sync.Mutex
@@ -676,7 +708,7 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	m["PageAppearance"] = pageTheme.BodyStyle
 	m["PageThemeRules"] = pageTheme.Rules
 	m["SettingsURI"] = define.RegularPages.Settings.Path
-	m["PageName"] = "Theme"
+	m["PageName"] = shownPage(c)
 	m["SettingPages"] = define.SettingPages
 	m["Themes"] = themes
 	m["OptionTitle"] = options.Title

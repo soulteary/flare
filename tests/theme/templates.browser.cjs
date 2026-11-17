@@ -131,7 +131,7 @@ const shape = () => {
       await page.goto(server.base + address, {waitUntil: 'load'});
       return page.evaluate(shape);
     };
-    const settings = () => page.goto(server.base + '/settings/theme', {waitUntil: 'load'});
+    const settings = (address = '/settings/theme') => page.goto(server.base + address, {waitUntil: 'load'});
     // Submits a form of the theme page and waits for the page it answers with.
     const submit = async (form, status = 200) => {
       const [response] = await Promise.all([
@@ -172,6 +172,7 @@ const shape = () => {
       assert.ok(line, name);
       assert.match(line, reason);
     }
+    await settings('/settings/theme-access');
     assert.equal(await page.locator('.theme-templates-form input[type="checkbox"]').isChecked(), false);
     assert.equal(await page.locator('.theme-templates-confirm-form').count(), 0);
     builtin(await open('/'));
@@ -179,7 +180,7 @@ const shape = () => {
 
     // The site allows templates. The preview of the theme shows them before
     // the theme is selected or anything is confirmed.
-    await settings();
+    await settings('/settings/theme-access');
     await page.locator('.theme-templates-form input[type="checkbox"]').check();
     await submit('.theme-templates-form');
     assert.equal(await page.locator('.theme-templates-form input[type="checkbox"]').isChecked(), true);
@@ -192,14 +193,14 @@ const shape = () => {
     // are the application's, and the form lists what is to be confirmed.
     await select('harbor');
     builtin(await open('/'));
-    await settings();
+    await settings('/settings/theme-access');
     assert.equal(await page.locator('.theme-templates-confirm-form input[name="theme-templates-files"]').inputValue(), 'home.html,app.html,bookmark.html,group.html');
     assert.match(await page.locator('.theme-templates-files').textContent(), /home\.html, app\.html, bookmark\.html, group\.html/);
     // The administrator looks at the page with the templates first.
     await Promise.all([page.waitForNavigation({waitUntil: 'load'}), page.locator('.theme-templates-preview-form input.btn-submit').click()]);
     assert.equal(new URL(page.url()).search, '?theme-preview=harbor');
     assert.equal((await page.evaluate(shape)).themed, true);
-    await settings();
+    await settings('/settings/theme-access');
     await submit('.theme-templates-confirm-form');
     assert.equal(await page.locator('.theme-templates-in-use').count(), 1);
 
@@ -302,7 +303,7 @@ const shape = () => {
     // brings none for, and its own confirmation.
     await select('night');
     builtin(await open('/'));
-    await settings();
+    await settings('/settings/theme-access');
     assert.equal(await page.locator('.theme-templates-confirm-form input[name="theme-templates-files"]').inputValue(), 'bookmark.html,harbor/home.html,harbor/app.html,harbor/group.html');
     await submit('.theme-templates-confirm-form');
     const night = await open('/');
@@ -319,7 +320,7 @@ const shape = () => {
     const archive = await fs.readFile(await file.path());
     assert.deepEqual(unpack(archive).map(([name]) => name), ['harbor/theme.yml', 'harbor/theme.css', 'harbor/templates/home.html',
       'harbor/templates/applications.html', 'harbor/templates/bookmarks.html', 'harbor/templates/app.html', 'harbor/templates/bookmark.html', 'harbor/templates/group.html']);
-    await settings();
+    await settings('/settings/themes');
     await page.locator('#theme-import-file').setInputFiles({name: 'harbor.zip', mimeType: 'application/zip', buffer: archive});
     await page.locator('.theme-import-form input[name="replace"]').check();
     await submit('.theme-import-form');
@@ -329,20 +330,20 @@ const shape = () => {
     assert.match(said[1], /have to be confirmed again.*: Harbor, Night\.$/);
     assert.deepEqual((await fs.readdir(path.join(server.themes, 'harbor', 'templates'))).sort(), ['app.html', 'applications.html', 'bookmark.html', 'bookmarks.html', 'group.html', 'home.html']);
     builtin(await open('/'));
-    await settings();
+    await settings('/settings/theme-access');
     assert.equal(await page.locator('.theme-templates-in-use').count(), 0);
     await submit('.theme-templates-confirm-form');
     assert.equal((await open('/')).themed, true);
 
     // The confirmation is withdrawn, and then the setting of the site: the
     // pages are the application's again each time.
-    await settings();
+    await settings('/settings/theme-access');
     await submit('.theme-templates-confirm-form');
     builtin(await open('/'));
-    await settings();
+    await settings('/settings/theme-access');
     await submit('.theme-templates-confirm-form');
     assert.equal((await open('/')).themed, true);
-    await settings();
+    await settings('/settings/theme-access');
     await page.locator('.theme-templates-form input[type="checkbox"]').uncheck();
     await submit('.theme-templates-form');
     builtin(await open('/'));

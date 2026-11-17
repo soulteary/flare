@@ -539,7 +539,7 @@ func safeReturn(value string) string {
 	}
 	// Only navigation pages are valid destinations; auth/redirect/API endpoints
 	// cannot become a second action after a successful login.
-	allowed := map[string]bool{"/": true, "/settings": true, "/editor": true, "/settings/about": true, "/settings/appearance": true, "/settings/application": true, "/settings/bookmark": true, "/settings/clock": true, "/settings/layout": true, "/settings/links": true, "/settings/modules": true, "/settings/search": true, "/settings/site": true, "/settings/theme": true, "/settings/weather": true, "/applications": true, "/bookmarks": true, "/help": true, "/guide": true, "/icons": true}
+	allowed := map[string]bool{"/": true, "/settings": true, "/editor": true, "/settings/about": true, "/settings/appearance": true, "/settings/application": true, "/settings/bookmark": true, "/settings/clock": true, "/settings/layout": true, "/settings/links": true, "/settings/modules": true, "/settings/search": true, "/settings/site": true, "/settings/theme": true, "/settings/theme-access": true, "/settings/themes": true, "/settings/weather": true, "/applications": true, "/bookmarks": true, "/help": true, "/guide": true, "/icons": true}
 	if !allowed[value] {
 		return "/"
 	}

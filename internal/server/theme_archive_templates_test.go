@@ -78,7 +78,7 @@ func TestImportedTemplatesAreConfirmedAgainHTTP(t *testing.T) {
 
 	// Confirmed again, the theme above is shown with the template that was
 	// imported.
-	fields, shown := templateForm(t, getPage(t, handler, "/settings/theme"), "theme-templates-confirm-form")
+	fields, shown := templateForm(t, getPage(t, handler, "/settings/theme-access"), "theme-templates-confirm-form")
 	require.True(t, shown)
 	require.Equal(t, "confirm-templates", fields["action"])
 	require.Equal(t, "zelda/home.html", fields["theme-templates-files"])

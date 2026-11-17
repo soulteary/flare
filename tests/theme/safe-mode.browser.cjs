@@ -142,7 +142,7 @@ const look = page => page.evaluate(() => {
 
         // The theme page lists nothing of the directory, also not the file
         // that is not usable, and says that safe mode is on.
-        await page.goto(server.base + '/settings/theme', {waitUntil: 'load'});
+        await page.goto(server.base + '/settings/themes', {waitUntil: 'load'});
         assert.equal(await page.locator('.theme-file').count(), 0, how);
         assert.equal(await page.locator('.theme-file-lines li').count(), 0, how);
         assert.match(await page.locator('.theme-safe-mode').textContent(), /^Safe mode is on: the themes directory is not read/, how);

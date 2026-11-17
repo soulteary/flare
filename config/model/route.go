@@ -28,18 +28,20 @@ type RouteMaps struct {
 	Preview      Page `json:"Preview"`
 
 	// Settings Pages
-	Settings   Page `json:"Settings"`
-	Theme      Page `json:"Theme"`
-	Weather    Page `json:"Weather"`
-	Search     Page `json:"Search"`
-	Appearance Page `json:"Appearance"`
-	Others     Page `json:"Others"`
-	About      Page `json:"About"`
-	Modules    Page `json:"Modules"`
-	Clock      Page `json:"Clock"`
-	Links      Page `json:"Links"`
-	Layout     Page `json:"Layout"`
-	Site       Page `json:"Site"`
+	Settings     Page `json:"Settings"`
+	Theme        Page `json:"Theme"`
+	Weather      Page `json:"Weather"`
+	Search       Page `json:"Search"`
+	Appearance   Page `json:"Appearance"`
+	Others       Page `json:"Others"`
+	About        Page `json:"About"`
+	ThemeLibrary Page `json:"ThemeLibrary"`
+	ThemeAccess  Page `json:"ThemeAccess"`
+	Modules      Page `json:"Modules"`
+	Clock        Page `json:"Clock"`
+	Links        Page `json:"Links"`
+	Layout       Page `json:"Layout"`
+	Site         Page `json:"Site"`
 
 	// Auth API
 	Login  API `json:"Login"`

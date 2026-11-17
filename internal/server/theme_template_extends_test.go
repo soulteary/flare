@@ -28,7 +28,7 @@ func TestThemeIsShownWithTheTemplatesOfTheThemeBelowHTTP(t *testing.T) {
 	itemEntries(t, true)
 	const listed = "applications.html, bookmark.html, zelda/home.html, zelda/app.html"
 
-	page := getPage(t, handler, "/settings/theme")
+	page := getPage(t, handler, "/settings/theme") + getPage(t, handler, "/settings/theme-access")
 	require.Contains(t, page, `<p class="theme-about theme-templates-note">`+strings.ReplaceAll(i18n.T("en", "theme_templates_note_unconfirmed"), "{files}", listed)+`</p>`)
 	require.Contains(t, page, strings.ReplaceAll(i18n.T("en", "theme_templates_note_unconfirmed"), "{files}", "home.html, applications.html, app.html"), "the card of the theme below lists its own")
 	fields, shown := templateForm(t, page, "theme-templates-confirm-form")
@@ -49,7 +49,7 @@ func TestThemeIsShownWithTheTemplatesOfTheThemeBelowHTTP(t *testing.T) {
 	confirm := url.Values{"action": {"confirm-templates"}, "theme-templates-theme": {"night"}, "theme-templates-files": {fields["theme-templates-files"]}}
 	rec := postThemeForm(t, handler, confirm)
 	require.Equal(t, http.StatusOK, rec.Code)
-	require.Contains(t, rec.Body.String(), strings.ReplaceAll(i18n.T("en", "theme_templates_note_used"), "{files}", listed))
+	require.Contains(t, rec.Body.String()+getPage(t, handler, "/settings/theme"), strings.ReplaceAll(i18n.T("en", "theme_templates_note_used"), "{files}", listed))
 
 	home := getPage(t, handler, "/")
 	require.Contains(t, home, `<div class="theme-shell" data-kind="home">`)

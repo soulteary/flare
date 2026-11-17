@@ -95,7 +95,7 @@ const shown = () => {
     };
     const admin = await visitor(), first = await visitor(), second = await visitor();
     const tick = async names => {
-      await admin.page.goto(server.base + '/settings/theme');
+      await admin.page.goto(server.base + '/settings/theme-access');
       const form = admin.page.locator('form.theme-choices-form');
       for (const box of await form.locator('input[type="checkbox"]').all()) {
         await box.setChecked(names.includes((await box.getAttribute('name')).replace('theme-choice-', '')));
@@ -115,7 +115,7 @@ const shown = () => {
 
     // The administrator ticks three themes. The form lists every theme that
     // can be selected and names the selected one.
-    await admin.page.goto(server.base + '/settings/theme');
+    await admin.page.goto(server.base + '/settings/theme-access');
     assert.match(await admin.page.locator('form.theme-choices-form').innerText(), /blackboard \(the selected theme, shown without a choice\)/);
     await tick(['tron', 'forest', 'sky']);
     const offered = [['', 'blackboard (theme of the site)'], ['tron', 'tron'], ['forest', 'Forest & <dusk>'], ['sky', 'Sky']];

@@ -129,7 +129,7 @@ func TestThemeTemplatesAreUsedOnceAllowedAndConfirmedHTTP(t *testing.T) {
 
 	// Nothing is allowed: the page offers the switch, turned off, and no
 	// form about a theme.
-	page := getPage(t, handler, "/settings/theme")
+	page := getPage(t, handler, "/settings/theme") + getPage(t, handler, "/settings/theme-access")
 	require.True(t, note(page, "theme_templates_note"))
 	fields, shown := templateForm(t, page, "theme-templates-form")
 	require.True(t, shown)
@@ -148,7 +148,7 @@ func TestThemeTemplatesAreUsedOnceAllowedAndConfirmedHTTP(t *testing.T) {
 	// its templates and confirms them; until then the pages are unchanged.
 	rec := postThemeForm(t, handler, url.Values{"action": {"save-templates"}, "theme-templates-allowed": {"1"}})
 	require.Equal(t, http.StatusOK, rec.Code)
-	page = rec.Body.String()
+	page = rec.Body.String() + getPage(t, handler, "/settings/theme")
 	require.Contains(t, page, `<p class=theme-notice role=status>`+i18n.T("en", "theme_templates_saved")+`</p>`)
 	require.True(t, note(page, "theme_templates_note_unconfirmed"))
 	fields, _ = templateForm(t, page, "theme-templates-form")
@@ -190,7 +190,7 @@ func TestThemeTemplatesAreUsedOnceAllowedAndConfirmedHTTP(t *testing.T) {
 
 	rec = postThemeForm(t, handler, url.Values{"action": {"confirm-templates"}, "theme-templates-theme": {"zelda"}, "theme-templates-files": {"home.html"}})
 	require.Equal(t, http.StatusOK, rec.Code)
-	page = rec.Body.String()
+	page = rec.Body.String() + getPage(t, handler, "/settings/theme")
 	require.Contains(t, page, `<p class=theme-notice role=status>`+i18n.T("en", "theme_templates_confirm_done")+`</p>`)
 	require.True(t, note(page, "theme_templates_note_used"))
 	require.Contains(t, page, i18n.T("en", "theme_templates_in_use"))
@@ -254,7 +254,7 @@ func TestThemeTemplatesAreUsedOnceAllowedAndConfirmedHTTP(t *testing.T) {
 	rec = postThemeForm(t, handler, url.Values{"action": {"withdraw-templates"}, "theme-templates-theme": {"zelda"}})
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Contains(t, rec.Body.String(), i18n.T("en", "theme_templates_withdraw_done"))
-	require.True(t, note(rec.Body.String(), "theme_templates_note_unconfirmed"))
+	require.True(t, note(getPage(t, handler, "/settings/theme"), "theme_templates_note_unconfirmed"))
 	for _, path := range navigation {
 		require.False(t, themed(path), path)
 	}
@@ -262,7 +262,7 @@ func TestThemeTemplatesAreUsedOnceAllowedAndConfirmedHTTP(t *testing.T) {
 	require.True(t, themed("/"))
 	rec = postThemeForm(t, handler, url.Values{"action": {"save-templates"}})
 	require.Equal(t, http.StatusOK, rec.Code)
-	require.True(t, note(rec.Body.String(), "theme_templates_note"))
+	require.True(t, note(getPage(t, handler, "/settings/theme"), "theme_templates_note"))
 	_, shown = templateForm(t, rec.Body.String(), "theme-templates-confirm-form")
 	require.False(t, shown)
 	for _, path := range append(navigation, "/?theme-preview=zelda") {
@@ -290,7 +290,7 @@ func TestThemeTemplatesAreNotUsedWithoutThePolicyHTTP(t *testing.T) {
 		require.NotContains(t, page, "theme-shell", path)
 		require.Contains(t, page, "id=hero-container", path)
 	}
-	page := getPage(t, handler, "/settings/theme")
+	page := getPage(t, handler, "/settings/theme") + getPage(t, handler, "/settings/theme-access")
 	require.Contains(t, page, `<p class="theme-notice theme-templates-unavailable" role=status>`+i18n.T("en", "theme_templates_unavailable_csp")+`</p>`)
 	require.Contains(t, page, strings.ReplaceAll(i18n.T("en", "theme_templates_note_unavailable"), "{files}", "home.html"))
 	require.NotContains(t, page, "theme-templates-allowed")
@@ -308,7 +308,7 @@ func TestThemeTemplatesAreNotUsedWithoutThePolicyHTTP(t *testing.T) {
 
 	define.AppFlags.ThemeSafeMode = true
 	t.Cleanup(func() { define.AppFlags.ThemeSafeMode = false })
-	page = getPage(t, handler, "/settings/theme")
+	page = getPage(t, handler, "/settings/theme") + getPage(t, handler, "/settings/theme-access")
 	require.Contains(t, page, `<p class="theme-notice theme-templates-unavailable" role=status>`+i18n.T("en", "theme_templates_unavailable_safe_mode")+`</p>`)
 	require.NotContains(t, page, "theme-templates-allowed")
 	require.Equal(t, http.StatusBadRequest, postThemeForm(t, handler, url.Values{"action": {"save-templates"}, "theme-templates-allowed": {"1"}}).Code)
