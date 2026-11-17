@@ -115,7 +115,7 @@ and with `home.html` and `app.html` of `zelda`. Its bookmark page takes
 
 ## Turning templates on
 
-Two things are needed, both on Settings → Theme:
+Two things are needed, both on Settings → Theme access (`/settings/theme-access`):
 
 1. **Allow themes to use templates.** One setting for the site, off by
    default. It is `ThemeTemplates` in `config.yml`.
@@ -158,7 +158,7 @@ ThemeSettings:
 
 | Case | Effect |
 | --- | --- |
-| The instance runs with `FLARE_DISABLE_CSP` | No template of a theme is used, and the theme page says so in place of the setting. That a template runs no script is finally enforced by the Content-Security-Policy of the navigation pages; without it only the check below remains. Tokens, stylesheets and layout of themes are not affected |
+| The instance runs with `FLARE_DISABLE_CSP` | No template of a theme is used, and the page for theme access says so in place of the setting. That a template runs no script is finally enforced by the Content-Security-Policy of the navigation pages; without it only the check below remains. Tokens, stylesheets and layout of themes are not affected |
 | [Safe mode](theme-files.md#safe-mode) for the instance | The themes directory is not read, so there are no templates |
 | Safe mode for one page | That response has the markup of the application |
 | The help page and the guide | Always the markup of the application, for the page and for the entries: the help page describes the default interface, and the script of the guide finds its elements by it |
@@ -381,7 +381,7 @@ an import stores them.
 
 ## Layout options and templates
 
-The layout options of the appearance settings are made for the markup of
+The layout options of the layout settings are made for the markup of
 the application. With the templates of a theme, some of them have no effect
 any more. A theme lists the options that work with its templates under
 `supports` in `theme.yml`, by the names they have under
@@ -399,7 +399,7 @@ supports:
   - HideAppDescriptions
 ```
 
-While the templates of the selected theme are in use, the appearance page
+While the templates of the selected theme are in use, the page of the layout
 says of every other layout option that the theme does not support it. The
 names are `MobileBookmarkLayout`, `TitleSize`, `HideAppDescriptions`,
 `CategoryNavigation`, `BookmarkLayout` and `DesktopColumns`.
@@ -532,7 +532,7 @@ Covered by Go tests:
   counts; templates that are not accepted in the theme, in the theme below,
   and only with the options of the theme above.
 - Layout options: the ways to write `supports`, names of another release,
-  what a theme on another has; the remarks of the appearance page with
+  what a theme on another has; the remarks of the page of the layout with
   templates turned off, allowed, confirmed and withdrawn.
 - Archives: an archive with the six templates and other entries of that
   directory; templates that are not accepted and templates that cannot be
@@ -558,7 +558,7 @@ goes the way of the administrator with the example theme of the guide:
   entries that match, inside the page of the theme.
 - The application page and the bookmark page take the template of the home
   page. Nothing of the templates that are not accepted runs.
-- The option of the theme changes the page, the appearance page names the
+- The option of the theme changes the page, the page of the layout names the
   layout options that are not supported, and safe mode shows the page of
   the application.
 - An edit of a template is read by the next page.

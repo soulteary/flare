@@ -41,7 +41,7 @@ of the selected theme leaves the selection without a theme.
   only reported. A theme file can have up to 64 KiB.
 
 The directory is optional. Files in it are read, and nothing is written to it
-except by an [import](#import-and-export) on the theme page.
+except by an [import](#import-and-export) in the theme library.
 
 ### A theme as a directory
 
@@ -139,7 +139,7 @@ described there, so three colors make a complete theme.
   load fonts.
 - `font-scale` multiplies the text sizes of the navigation pages; `1.25`
   makes the text a quarter larger. What it applies to, and how it combines
-  with the text size of the appearance page, is described with the
+  with the text size of the layout settings, is described with the
   [style tokens](theme-tokens.md#details).
 - No other form of value is accepted: no color names or functions, no other
   units, no `var()` and no `url()`. The values are written into the style
@@ -559,9 +559,10 @@ directory out, for one page or for the whole instance. It changes neither
 
 ## Import and export
 
-The theme page hands a theme out as a file and takes one in: a theme file, or
-an archive for a theme that is a directory. Both are for the administrator,
-and neither selects a theme.
+The theme library hands a theme out as a file and takes one in: a theme file,
+or an archive for a theme that is a directory. Both are for the
+administrator, and neither selects a theme. The download is also on the
+theme page, next to each theme. In 0.7.0 both stand on the theme page.
 
 **Download** next to a theme sends a file:
 
@@ -676,7 +677,7 @@ An import takes an archive made this way, and one made by hand:
 
 ### Installing from an address
 
-In releases after 0.7.0, the theme page can fetch a theme from an address
+In releases after 0.7.0, the theme library can fetch a theme from an address
 and install it. This is the same import as an upload, with the file coming
 from a host instead of the device of the administrator. It is for a theme
 its author publishes as a file.
@@ -723,7 +724,7 @@ theme with templates [what a template can do](theme-templates.md#what-the-check-
   theme is then downloaded on another machine and imported as a file.
 - There is no list of themes in the application and no search. The address
   comes from wherever the theme is published, such as the
-  [theme repository](theme-repository.md), which the theme page links to.
+  [theme repository](theme-repository.md), which the theme library links to.
 
 ### Text documents
 
@@ -868,5 +869,5 @@ in safe mode and goes back to the settings from its notice, and starts an
 instance in safe mode.
 `FLARE_BINARY=/absolute/path/to/flare node tests/theme/layout.browser.cjs`
 selects a theme that specifies layout, turns single options and the whole
-layout off and on again on the appearance page, and checks the home page
+layout off and on again on the page of the layout, and checks the home page
 after each step.

@@ -64,7 +64,7 @@ theme. The bundled themes and custom colors set these three; a
   page, the application and bookmark pages and the help page. The height of
   an application grows with it, so that its two lines are not cut off, and
   does not shrink with it; icons keep their size. The larger sizes of
-  **Navigation text size** on the appearance page are the choice of the
+  **Navigation text size** in the layout settings are the choice of the
   administrator for readability: a scale above 1 enlarges them further, and a
   scale below 1 does not make them smaller.
 

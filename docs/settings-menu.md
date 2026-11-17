@@ -69,9 +69,6 @@ its own.
   a form of the theme page as an earlier release rendered it is still
   taken at `/settings/theme`.
 - The theme page links to the two others.
-- Other pages of this documentation that were written before speak of "the
-  theme page" for forms that stand on the theme library or under theme
-  access now.
 
 ## In a narrow window
 

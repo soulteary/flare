@@ -73,8 +73,8 @@ supports:
 - The tokens are required of every theme; see [theme files](theme-files.md).
 - The option is the theme's own setting. The administrator chooses its
   value on the theme page, and the templates below branch on it.
-- `supports` lists the layout options of the appearance settings that still
-  work with these templates. The appearance page says of the others that
+- `supports` lists the layout options of the layout settings that still
+  work with these templates. The page of the layout says of the others that
   the theme does not support them; see
   [layout options and templates](theme-templates.md#layout-options-and-templates).
 
@@ -213,18 +213,18 @@ supports:
 1. Put the directory into `themes/` beside `config.yml`. The theme is listed
    on Settings → Theme without a restart. Its card says which templates it
    brings.
-2. Turn on **Allow themes to use templates** on that page. This is one
+2. Turn on **Allow themes to use templates** under Settings → Theme access. This is one
    setting for the site, off by default.
 3. Look first: the preview of a theme that is not selected shows its
    templates before anything is confirmed. Add `?theme-preview=harbor` to
    the address of the home page, or use the preview link of the card.
-4. Select the theme. The page then has a form that lists the template files
+4. Select the theme. Settings → Theme access then has a form that lists the template files
    and confirms them. Until it is submitted, visitors get the pages without
    the templates.
 5. Open the home page, the application page and the bookmark page.
 
 Templates are not used on an instance that runs with `FLARE_DISABLE_CSP`,
-and the theme page says so in place of the setting. See
+and the page for theme access says so in place of the setting. See
 [where no template is used](theme-templates.md#where-no-template-is-used).
 
 ## Working on a template
@@ -246,7 +246,7 @@ and the theme page says so in place of the setting. See
   category navigation, a search with results and without.
 - **Getting back.** A template can leave a page hard to use. Adding
   `?theme-safe-mode` to the address shows that page without the theme, and
-  withdrawing the confirmation on the theme page shows every page without
+  withdrawing the confirmation under theme access shows every page without
   the templates. See [safe mode](theme-files.md#safe-mode).
 
 ## What the application keeps

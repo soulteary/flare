@@ -1,6 +1,6 @@
 # The theme repository
 
-> Availability: not in a release yet. The link on the theme page and the
+> Availability: not in a release yet. The link in the theme library and the
 > tool described here are in the source after 0.7.0.
 
 Themes for Flare are listed in a repository of their own:
@@ -20,7 +20,8 @@ Read this page for:
 
 ## What the application does with it
 
-The theme page links to the repository. That is all:
+The theme library, Settings → Theme library (`/settings/themes`), links to
+the repository. That is all:
 
 - The application never contacts the repository. It does not read the
   index, does not list or search themes, and does not look for newer
@@ -36,7 +37,7 @@ The theme page links to the repository. That is all:
 
 1. Find the theme in the repository. Its entry in the index names its file,
    its size and its SHA-256.
-2. Either download the file and upload it on the theme page, or enter the
+2. Either download the file and upload it in the theme library, or enter the
    address of the file under **Install a theme from an address**. The
    repository says where its files are; for a file kept under `themes` it
    is an address of this form:
@@ -45,7 +46,7 @@ The theme page links to the repository. That is all:
    https://raw.githubusercontent.com/soulteary/flare-themes/main/themes/harbor.zip
    ```
 
-3. The theme page shows the SHA-256 of what it fetched before anything is
+3. The theme library shows the SHA-256 of what it fetched before anything is
    installed. Compare it with the one in the index.
 4. A theme with templates is used with them only after templates are
    allowed for the site and those of the theme are confirmed; see
@@ -154,7 +155,7 @@ the one that is stored.
 | `name` | The name the theme is installed under |
 | `file` | The name of the file: `<name>.yml` or `<name>.zip` |
 | `size` | The size of the file in bytes |
-| `sha256` | The SHA-256 of the file in hexadecimal digits, which the theme page shows before it installs a theme from an address |
+| `sha256` | The SHA-256 of the file in hexadecimal digits, which the theme library shows before it installs a theme from an address |
 | `title`, `version`, `author`, `license` | What the theme file says; `title` is its `name` in English, or in the language it has |
 | `requires` | The first release the theme works with, where the theme file names one |
 | `extends` | The bundled theme the theme is based on, where it is based on one |
@@ -189,7 +190,7 @@ before:
   [guide](theme-template-guide.md), packed as an archive, meets the rules.
 - `tools/themecheck`: the report and the three exit statuses, the index in
   either order of the files, and that nothing is left beside the files.
-- `internal/server`: the theme page has the link, opened in a new window
+- `internal/server`: the theme library has the link, opened in a new window
   without a referrer, also on an instance in offline mode.
 - The repository itself, its checks and its files are not part of this
   source and are not covered here.

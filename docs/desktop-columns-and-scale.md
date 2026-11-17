@@ -2,7 +2,7 @@
 
 > Availability: included in Flare 0.6.5 and later; not included in 0.6.4.
 
-Homepage appearance settings retain the existing layout by default. The optional
+The layout settings retain the existing layout by default. The optional
 Automatic mode fits readable columns to the available width. Explicit 4/5/6/8
 choices are maximum counts, not a promise to squeeze that many columns into every
 window. Columns use a minimum 11.25rem width and reduce their count as space runs
@@ -79,7 +79,7 @@ reuse checks remain mandatory.
 
 ## Columns within bookmark categories (since 0.6.7)
 
-Appearance settings now offer `Homepage.BookmarkLayout: sections`. The default
+The layout settings now offer `Homepage.BookmarkLayout: sections`. The default
 (empty or `groups`) retains categories side by side. In `sections` each category
 spans the content width and its bookmarks fill rows left to right in stored order.
 This shortens large categories without JavaScript, changing saved data, or moving
