@@ -104,7 +104,7 @@ is not guessed or retroactively relabeled. Later changes still rotate `latest.ba
 
 All configuration settings pages now preserve unknown YAML fields and use the
 same version guard and backup policy. The first write after an upgrade creates a
-permanent backup even when it originates from the theme or appearance page.
+permanent backup even when it originates from another page of the settings.
 Configuration reads bypass the old byte cache so manual version changes are
 visible immediately. Search forms carry a revision of the document they displayed;
 a stale form is rejected with its submitted values retained. Old forms without a

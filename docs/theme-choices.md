@@ -11,7 +11,7 @@ visitor. Nothing about it is stored on the instance.
 Read this page for:
 
 - [Which themes can be chosen](#which-themes-can-be-chosen): the form of
-  the theme page, and the list in `config.yml`.
+  the page for theme access, and the list in `config.yml`.
 - [The control of the pages](#the-control-of-the-pages) a visitor chooses
   with.
 - [What a choice changes](#what-a-choice-changes), and what it does not.
@@ -20,8 +20,8 @@ Read this page for:
 
 ## Which themes can be chosen
 
-The theme page has a form, **Themes visitors can choose**, with a box for
-every theme that can be selected: the bundled themes, the custom colors once
+Settings → Theme access (`/settings/theme-access`) has a form, **Themes
+visitors can choose**, with a box for every theme that can be selected: the bundled themes, the custom colors once
 colors are stored for them, and the themes of the themes directory. The
 ticked themes are stored, and the pages offer them from the next page load.
 
@@ -110,14 +110,14 @@ What a choice does not change:
   the same under every theme.
 - Any setting. A choice selects no theme and writes nothing to `config.yml`.
 
-The templates of a theme are confirmed on the theme page while the theme is
+The templates of a theme are confirmed under theme access while the theme is
 selected. To let visitors choose a theme with its templates, select it once,
 confirm its templates, and select the theme of the site again: the
 confirmation is stored for the theme and stays.
 
 A theme of the themes directory that is edited while the instance runs is
 followed at once while it is the selected theme. As a choice it is read
-again when the theme page is opened, when the themes directory is read for
+again when a page of the theme settings is opened, when the themes directory is read for
 another reason, and at a restart.
 
 For the administrator, a [preview](theme-files.md#preview) and
@@ -197,7 +197,7 @@ was rendered for the theme of another.
   a confirmation is withdrawn; safe mode for the instance; a preview and
   safe mode for one page before a choice; a site shown to the administrator
   only.
-- `internal/server`, for the control and the form of the theme page: the
+- `internal/server`, for the control and the form under theme access: the
   control on the four pages with its entries, the marked one and the page it
   leads back to; a name of a theme with markup in it; pages without a
   choice; a page of a theme with templates; the token on a site shown to

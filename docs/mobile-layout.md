@@ -36,7 +36,7 @@ Versions 0.6.5 through 0.6.14 wrote `MobileBookmarkLayout: single` whenever the
 appearance form was saved, whether or not the choice had been changed. A stored
 `single` therefore cannot be told apart from an untouched default: it is read as
 `classic` and replaced by `classic` the next time the appearance form is saved.
-To keep the single-column layout, select "Single column" in Appearance settings;
+To keep the single-column layout, select "Single column" in the layout settings;
 it is stored as `single-column`.
 
 Classic differs from 0.6.3 in three details. Categories in a row are aligned at
@@ -51,7 +51,7 @@ more than density.
 
 ## 0.6.6 layout
 
-Appearance settings offer a sequential single-column layout (the default) and
+The layout settings offer a sequential single-column layout (the default) and
 opt-in compact columns on 360–599 CSS-pixel phone viewports. Compact columns read down
 the first column and then down the second; a bookmark group is kept together.
 Below 360px the layout falls back to a single column. Neither option changes the
@@ -103,7 +103,7 @@ Physical iPad/Safari verification remains required.
 
 ## Readability
 
-Appearance settings can enlarge navigation text (`standard`, `larger`, `large`),
+The layout settings can enlarge navigation text (`standard`, `larger`, `large`),
 choose a greeting title size (`compact`, `standard`, `prominent`) and hide app
 descriptions. Defaults retain the existing presentation. Navigation text and
 application descriptions apply to the homepage, bookmarks and applications pages;
