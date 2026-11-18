@@ -402,3 +402,14 @@
 /* The sentence under the title of a page of the settings that says what the
    page is about. */
 #page-settings .settings-page-help { margin-bottom: 20px; }
+
+/* The pages for the content, the editor and import and export, stand in the
+   frame of the settings with a wider column: they hold lists and tables,
+   where the other pages hold forms. */
+@media (min-width: 1201px) {
+  #page-settings.settings-wide.pageview .container {
+    width: 100%;
+    max-width: 1500px;
+    padding: 50px 40px;
+  }
+}

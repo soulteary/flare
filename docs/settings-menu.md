@@ -8,8 +8,8 @@ its pages.
 
 | Group | Entry | Address | What it is |
 | --- | --- | --- | --- |
-| Content | Apps and bookmarks | `/settings/content` | The editor. It is a page of its own, outside the settings |
-| Content | Import and export | `/settings/transfer` | Import and export of the content, also a page of its own |
+| Content | Apps and bookmarks | `/settings/content` | The [editor](editor.md) of the applications and the bookmarks |
+| Content | Import and export | `/settings/transfer` | [Import and export](bookmark-transfer.md) of the content |
 | Home page | Modules | `/settings/modules` | Which parts the home page shows: the title with the greeting, the applications, the bookmarks, the buttons for the settings and the help, and the version |
 | Home page | Search | `/settings/search` | The search of the home page |
 | Home page | Weather | `/settings/weather` | The weather of the home page |
@@ -24,9 +24,13 @@ its pages.
 | Site | About | `/settings/about` | What the application is, its project page and its version |
 
 - The entry of the page that is shown is marked.
-- The two entries of the content are marked with an arrow, because they
-  leave the settings. An instance without the editor (`FLARE_EDITOR`) has no
-  such group.
+- The two pages for the content stand in the same frame as the others, with
+  the menu beside them and in the colors of the selected theme. Their column
+  is wider, because they hold lists and tables where the other pages hold
+  forms. An instance without the editor (`FLARE_EDITOR`) has no such group.
+- Leaving the editor by the menu or by the way back asks first while there
+  are changes that are not saved. The escape key, which leaves the other
+  pages, does not leave the editor.
 - An instance that needs no sign-in (`FLARE_DISABLE_LOGIN`) has no account
   and no entry for it. The address of the account leads to the page about
   the application there.
@@ -127,6 +131,12 @@ The help page links to `/settings/about` for the version.
 - `tests/settings/save.browser.cjs` and `tests/clock/browser.cjs`, in
   Chromium: the title and the layout saved by their own forms, directly and
   through a proxy; the settings of the clock on their page.
+- For the two pages for the content: that they stand in the frame with
+  their entry marked, in a wider column and in the colors of the theme,
+  and stay inside a window 360 pixels wide (`tests/settings/menu.browser.cjs`);
+  the scripts and unit tests of the editor under `tests/editor`, which
+  pass unchanged apart from the fixture that serves the page without the
+  frame.
 - `tests/settings/menu.browser.cjs`, in Chromium: the menu beside the page
   in a wide window; the pages its entries lead to; in a window 360 pixels
   wide, the switch by a click and from the keyboard, with and without

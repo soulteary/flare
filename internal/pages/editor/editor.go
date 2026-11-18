@@ -53,6 +53,26 @@ func render(c fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return c.Status(http.StatusOK).Render("editor.html", fiber.Map{"EditorAssetVersion": version, "Locale": editorLocale(), "EditorMessages": editorMessageJSON(editorLocale()), "CSRFToken": auth.CSRFToken(c), "TrustedMode": define.AppFlags.DisableLoginMode})
+	m := settingsFrame("Content")
+	m["EditorAssetVersion"], m["EditorMessages"] = version, editorMessageJSON(editorLocale())
+	m["CSRFToken"], m["TrustedMode"] = auth.CSRFToken(c), define.AppFlags.DisableLoginMode
+	return c.Status(http.StatusOK).Render("editor.html", m)
 
+}
+
+// settingsFrame is what a page for the content hands the frame of the
+// settings it stands in: the menu with the entry of the page marked, and
+// the colors of the selected theme.
+func settingsFrame(page string) fiber.Map {
+	theme := define.GetPageTheme()
+	options, err := data.GetAllSettingsOptions()
+	title := ""
+	if err == nil {
+		title = options.Title
+	}
+	return fiber.Map{
+		"Locale": editorLocale(), "PageName": page, "SettingPages": define.SettingPages, "OptionTitle": title,
+		"DebugMode": define.AppFlags.DebugMode, "PageInlineStyle": define.GetPageInlineStyle(),
+		"PageAppearance": theme.BodyStyle, "PageThemeRules": theme.Rules,
+	}
 }

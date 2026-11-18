@@ -9,18 +9,22 @@ import (
 	"testing"
 	"unicode"
 
+	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/bookmarks"
 	"github.com/soulteary/flare/internal/i18n"
 )
 
 func TestTransferTemplateLanguagesAndClientSyntax(t *testing.T) {
-	tmpl, err := template.New("transfer.html").Funcs(template.FuncMap{"T": i18n.T}).ParseFiles("../../../embed/templates/transfer.html")
+	// The page stands in the frame of the settings, whose header and menu
+	// are templates of their own.
+	funcs := template.FuncMap{"T": i18n.T, "LoginDisabled": func() bool { return false }, "EditorEnabled": func() bool { return true }}
+	tmpl, err := template.New("transfer.html").Funcs(funcs).ParseFiles("../../../embed/templates/transfer.html", "../../../embed/templates/settings-header.html", "../../../embed/templates/settings-sidebar.html")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, locale := range []string{"zh", "en"} {
 		var output bytes.Buffer
-		if err := tmpl.Execute(&output, map[string]string{"Locale": locale, "HTMLLang": i18n.HTMLLang(locale)}); err != nil {
+		if err := tmpl.Execute(&output, map[string]any{"Locale": locale, "HTMLLang": i18n.HTMLLang(locale), "PageName": "Transfer", "SettingPages": define.SettingPages}); err != nil {
 			t.Fatal(err)
 		}
 		body := output.String()

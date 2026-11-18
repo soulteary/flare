@@ -3,13 +3,15 @@
 <head><meta name="csrf-token" content="{{.CSRFToken}}">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Flare · {{ T .Locale "transfer.title" }}</title>
+{{ if .DebugMode }}<link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/settings/sidebar.css"><link rel="stylesheet" href="/assets/css/settings/layout.css">{{ else }}<style type="text/css">{{.PageInlineStyle}}</style>{{ end }}{{ if .PageThemeRules }}<style type="text/css">{{.PageThemeRules}}</style>{{ end }}
 <style>
-:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#161719;color:#eee}body{max-width:1120px;margin:36px auto;padding:0 20px}a{color:#acd5ff}h1{font-size:28px}section{background:#222428;border:1px solid #393c42;border-radius:12px;padding:22px;margin:20px 0}label{display:inline-block;margin:8px 18px 8px 0}input,select,button{font:inherit;padding:9px;border-radius:6px;border:1px solid #666;background:#292d33;color:#fff}input[type=checkbox]{accent-color:#acd5ff}button{cursor:pointer}button:disabled{opacity:.45;cursor:default}.primary{background:#acd5ff;color:#111;border-color:#acd5ff}.hint{color:#b4bbc5;font-size:14px;line-height:1.7}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:10px;border-bottom:1px solid #444;overflow-wrap:anywhere;min-width:90px;max-width:320px}th{color:#acd5ff}#status{white-space:pre-wrap;padding:12px 0;line-height:1.6}#status[data-error=true]{color:#ffb3ad}#summary{font-size:18px;line-height:1.7}.pager{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0}[hidden]{display:none!important}@media(max-width:600px){body{margin:18px auto;padding:0 12px}section{padding:16px}label{display:block}input[type=text],select{max-width:100%;box-sizing:border-box}}
+body{--editor-back:var(--flare-background,#f5f7fb);--editor-fore:var(--flare-primary,#1c293d);--bg:var(--editor-back);--surface:color-mix(in srgb,var(--editor-fore) 6%,var(--editor-back));--text:var(--editor-fore);--muted:color-mix(in srgb,var(--editor-fore) 86%,var(--editor-back));--line:color-mix(in srgb,var(--editor-fore) 28%,var(--editor-back));--accent:var(--editor-fore);--danger:color-mix(in srgb,#e5484d 62%,var(--editor-fore));--soft:color-mix(in srgb,var(--editor-fore) 14%,var(--editor-back))}.transfer{color:var(--text);font-size:16px;line-height:1.5;min-width:0}.transfer input,.transfer select,.transfer button{max-width:100%;box-sizing:border-box}.transfer p,.transfer h2{margin:0 0 10px}.transfer a{color:var(--accent);text-decoration:underline}.transfer .page-title{font-size:23px;margin:0 0 10px}.transfer section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px;margin:20px 0}.transfer label{display:inline-block;margin:8px 18px 8px 0}.transfer input,.transfer select,.transfer button{font:inherit;padding:9px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--text)}.transfer input[type=checkbox]{accent-color:var(--text)}.transfer button{cursor:pointer}.transfer button:disabled{opacity:.45;cursor:default}.transfer .primary{background:var(--text);color:var(--bg);border-color:var(--text)}.transfer .hint{color:var(--muted);font-size:14px;line-height:1.7}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);overflow-wrap:anywhere;min-width:90px;max-width:320px}th{color:var(--text)}#status{white-space:pre-wrap;padding:12px 0;line-height:1.6}#status[data-error=true]{color:var(--danger)}#summary{font-size:18px;line-height:1.7}.pager{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0}[hidden]{display:none!important}@media(max-width:600px){.transfer section{padding:16px}.transfer label{display:block}input[type=text],select{max-width:100%;box-sizing:border-box}}
 </style>
 </head>
-<body>
-<nav><a href="/settings/content">{{ T .Locale "transfer.back_to_editor" }}</a> · <a href="/">{{ T .Locale "transfer.home" }}</a></nav>
-<h1>{{ T .Locale "transfer.title" }}</h1>
+<body style="{{.PageAppearance}}" class="content-page">
+<div class="pageview settings-wide" id="page-settings"><div class="container">{{ template "settings-header.html" . }}<div class="main-container clearfix">{{ template "settings-sidebar.html" . }}<div class="setting-group-container">
+<div class="transfer">
+<h2 class="page-title">{{ T .Locale "nav_transfer" }}</h2>
 <p class="hint">{{ T .Locale "transfer.intro" }}</p>
 <section>
 <h2>{{ T .Locale "transfer.choose_data" }}</h2>
@@ -43,6 +45,8 @@
 <div class="table-wrap"><table><thead><tr><th>{{ T .Locale "transfer.source_folder" }}</th><th>{{ T .Locale "transfer.target_folder" }}</th><th>{{ T .Locale "transfer.name" }}</th><th>URL</th><th>{{ T .Locale "transfer.result" }}</th></tr></thead><tbody id="rows"></tbody></table></div>
 <div class="actions"><button class="primary" id="commit" type="button"></button><button id="report" type="button">{{ T .Locale "transfer.download_report" }}</button></div>
 </section>
+</div>
+</div></div></div></div>
 <script>
 'use strict';
 const format=(message,...args)=>message.replace(/\{(\d+)\}/g,(_,i)=>String(args[Number(i)]??''));
