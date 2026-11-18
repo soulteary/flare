@@ -79,8 +79,13 @@ async function start() {
     };
 
     // A bundled theme is downloaded as a theme file, under a name it can be
-    // imported under. Nothing is written by a download.
+    // imported under. Nothing is written by a download. The bundled themes
+    // are on the theme page; the theme library, which has the form to
+    // import, lists the themes of the instance only and says so.
     await settings();
+    assert.equal(await page.locator('.theme-tron').count(), 0);
+    assert.equal(await page.locator('.theme-bundled-elsewhere a').getAttribute('href'), '/settings/theme');
+    await page.goto(server.base + '/settings/theme', {waitUntil: 'load'});
     const copy = await download('.theme-tron .theme-export-link');
     assert.equal(copy.name, 'tron-copy.yml');
     assert.match(copy.content, /^contract: 1$/m);

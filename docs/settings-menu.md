@@ -17,7 +17,7 @@ its pages.
 | Home page | Links | `/settings/links` | Opening applications and bookmarks in a new window, encrypted links, the letter case of names, and where icons come from |
 | Look | Theme | `/settings/theme` | Choosing a theme, with its preview; light and dark; the options of the selected theme; [custom colors](theme-colors.md) |
 | Look | Layout | `/settings/layout` | The layout of a theme, the desktop columns, the bookmark layout, the category navigation, the phone and tablet layout, the text and title sizes, and the descriptions of applications |
-| Look | Theme library | `/settings/themes` | The themes with their downloads and the remarks about [theme files](theme-files.md) that are not used; importing a theme; [installing one from an address](theme-files.md#installing-from-an-address); the link to the [theme repository](theme-repository.md) |
+| Look | Theme library | `/settings/themes` | The themes the instance brings itself, with their downloads, and the remarks about [theme files](theme-files.md) that are not used; importing a theme; [installing one from an address](theme-files.md#installing-from-an-address); the link to the [theme repository](theme-repository.md) |
 | Look | Theme access | `/settings/theme-access` | Whether themes may use [templates](theme-templates.md) and the confirmation of those of the selected theme; the [themes a visitor can choose](theme-choices.md) |
 | Site | Site details | `/settings/site` | The language of the interface, the title and the footer |
 | Site | Account | `/settings/application` | Sign-in, sign-out and the [account](accounts.md) |
@@ -58,10 +58,15 @@ belongs to the selected theme. What is done now and then, and changes what
 every visitor is shown or what the instance stores, stands on two pages of
 its own.
 
-- The theme page and the theme library both list every theme, with its
-  preview and its download, and both say which theme files are not used
-  and why. A theme is selected from either list; the theme page is shown
-  afterwards.
+- The theme page lists every theme, with its preview and its download:
+  the bundled themes, the custom colors and the themes the instance brings
+  itself.
+- The theme library lists the themes the instance brings itself, those of
+  the themes directory, and says that the others are on the theme page. A
+  bundled theme is downloaded there, for example to import it under
+  another name.
+- Both say which theme files are not used and why. A theme is selected
+  from either list; the theme page is shown afterwards.
 - Each form submits to the page it stands on, and that page is shown again
   with what the form led to.
 - Every one of the three addresses takes every form about themes. Which

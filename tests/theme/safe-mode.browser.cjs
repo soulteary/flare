@@ -163,6 +163,7 @@ const look = page => page.evaluate(() => {
         await assert.rejects(fs.stat(path.join(server.dir, 'themes', 'added.yml')));
 
         // A bundled theme is selected and applied as always.
+        await page.goto(server.base + '/settings/theme', {waitUntil: 'load'});
         const [saved] = await Promise.all([
           page.waitForResponse(candidate => candidate.request().method() === 'POST'),
           page.locator('.theme-blackboard input').click(),
