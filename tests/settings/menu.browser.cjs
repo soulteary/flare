@@ -23,7 +23,7 @@ async function start() {
   await new Promise(resolve => listener.listen(0, '127.0.0.1', resolve));
   const port = listener.address().port;
   await new Promise(resolve => listener.close(resolve));
-  await fs.writeFile(path.join(dir, 'config.yml'), 'Locale: en\nTitle: Site\nTheme: blackboard\nShowWeather: false\n');
+  await fs.writeFile(path.join(dir, 'config.yml'), 'Locale: en\nTitle: Site\nTheme: blackboard\nShowWeather: false\nFooter: <p>Powered by <a href="https://example.org/">an example</a></p>\n');
   const child = spawn(process.env.FLARE_BINARY, [], {cwd: dir, env: {...process.env,
     FLARE_PORT: String(port), FLARE_DISABLE_LOGIN: 'true', FLARE_OFFLINE: 'true', FLARE_EDITOR: 'true', FLARE_BASELINE: '1'}});
   let log = '';
@@ -49,6 +49,14 @@ const shown = () => {
     current: [...menu.querySelectorAll('a[aria-current="page"]')].map(link => new URL(link.href).pathname),
     links: [...menu.querySelectorAll('a')].filter(visible).map(link => [new URL(link.href).pathname, link.offsetHeight]),
     switch: visible(menu.querySelector('.sidebar-current')) ? menu.querySelector('.sidebar-current span').textContent.trim() : null,
+    // Where the footer of the site stands: below the menu and the page,
+    // touching neither, and in which column.
+    footer: (footer => ({
+      below: footer.top >= menu.getBoundingClientRect().bottom && footer.top >= main.getBoundingClientRect().bottom,
+      text: document.querySelector('.footer-container').textContent.trim(),
+      withPage: Math.abs(footer.left - main.getBoundingClientRect().left) < 1,
+      inside: footer.left >= 0 && footer.right <= document.documentElement.clientWidth,
+    }))(document.querySelector('.footer-container').getBoundingClientRect()),
     beside: menu.getBoundingClientRect().right <= main.getBoundingClientRect().left,
     above: menu.getBoundingClientRect().bottom <= main.getBoundingClientRect().top,
     overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -77,6 +85,19 @@ const shown = () => {
       assert.deepEqual(state.groups, GROUPS, address);
       assert.deepEqual(state.current, [address], address);
       assert.deepEqual([state.switch, state.beside, state.overflow, state.links.length], [null, true, false, 13], address);
+    }
+    // The footer of the site stands below the menu and the page on every
+    // page, the short ones among them, at every width, in line with the
+    // page.
+    for (const width of [1440, 1280, 1024, 900, 769, 768, 600, 360]) {
+      const sized = await open({viewport: {width, height: 800}});
+      for (const address of [...Object.keys(PAGES), '/settings/application']) {
+        await sized.goto(server.base + address);
+        const state = await sized.evaluate(shown);
+        assert.deepEqual(state.footer, {below: true, text: 'Powered by an example', withPage: true, inside: true}, `${address} at ${width}`);
+        assert.equal(state.overflow, false, `${address} at ${width}`);
+      }
+      await sized.context().close();
     }
     // Every entry leads to a page, and the two of the content leave the
     // settings for the editor.

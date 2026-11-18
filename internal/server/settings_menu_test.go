@@ -127,6 +127,20 @@ func TestSettingsMenuIsGroupedHTTP(t *testing.T) {
 	}
 }
 
+// The footer of the site stands under every page of the settings, once,
+// after the menu and the page.
+func TestSettingsPagesShowTheFooterHTTP(t *testing.T) {
+	handler := customThemeRouter(t, "Locale: en\nTheme: blackboard\nFooter: <p>Powered by <b>an example</b></p>\n")
+	for _, path := range []string{"/settings/modules", "/settings/search", "/settings/weather", "/settings/clock", "/settings/links", "/settings/theme", "/settings/layout", "/settings/themes", "/settings/theme-access", "/settings/about"} {
+		page := getPage(t, handler, path)
+		footer := `<p>Powered by <b>an example</b></p>`
+		require.Equal(t, 1, strings.Count(page, footer), path)
+		require.Regexp(t, `<div class="?footer-container"?>\s*<p>Powered by`, page, path)
+		require.Greater(t, strings.Index(page, footer), strings.Index(page, "setting-group-container"), path)
+		require.Greater(t, strings.Index(page, footer), strings.Index(page, "sidebar-groups"), path)
+	}
+}
+
 // The page about the application holds what the page at the address of the
 // account used to show beside the sign-in, and that address leads to it on
 // an instance without sign-in.

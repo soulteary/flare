@@ -210,6 +210,8 @@ func renderForm(c fiber.Ctx, testResult string, status int, submitted *weatherFo
 	m["SettingPages"] = define.SettingPages
 	m["SettingsURI"] = define.RegularPages.Settings.Path
 	m["OptionTitle"] = options.Title
+	// The footer of the site stands under every page of the settings.
+	m["OptionFooter"] = template.HTML(options.Footer)
 	m["SettingPagesAPI"] = define.SettingPagesAPI
 	m["Location"] = options.Location
 	m["Offline"] = define.AppFlags.EnableOfflineMode

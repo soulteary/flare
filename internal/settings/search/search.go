@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
@@ -111,6 +112,8 @@ func renderSettings(c fiber.Ctx, options model.Application, message string, save
 	m["ShowSearchComponent"] = options.ShowSearchComponent
 	m["DisabledSearchAutoFocus"] = options.DisabledSearchAutoFocus
 	m["OptionTitle"] = options.Title
+	// The footer of the site stands under every page of the settings.
+	m["OptionFooter"] = template.HTML(options.Footer)
 	opts := searchcore.Normalize(options.Search)
 	upgraded := false
 	// Submitted forms are working state, not legacy persisted configuration.

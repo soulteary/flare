@@ -53,8 +53,35 @@
   position: relative;
 }
 
-#page-settings .main-container .setting-group-container {
-  margin-left: 180px;
+/* The menu and the page stand side by side, and the container is as tall as
+   the taller of the two: what follows it, the footer of the site, stands
+   below both, also on a page that is shorter than the menu. */
+@media (min-width: 769px) {
+  #page-settings .main-container {
+    display: flex;
+    align-items: flex-start;
+    column-gap: 20px;
+  }
+  #page-settings .main-container::after { display: none; }
+  #page-settings .main-container .setting-group-container {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  #page-settings .footer-container { margin-left: 180px; }
+}
+
+/* The footer of the site under a page of the settings: in line with the
+   page, and quieter than the settings above it. */
+#page-settings .footer-container {
+  margin-top: 30px;
+  font-size: 12px;
+  opacity: 0.6;
+  overflow-wrap: anywhere;
+}
+
+#page-settings .footer-container:hover,
+#page-settings .footer-container:focus-within {
+  opacity: 1;
 }
 
 #page-settings.pageview .container {
