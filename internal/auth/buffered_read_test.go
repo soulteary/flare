@@ -250,7 +250,7 @@ func TestBufferedReadNonSuccessStillChecksAuthority(t *testing.T) {
 
 func TestBufferedReadEligibilityExcludesOnlineHomeAndMutations(t *testing.T) {
 	_, browser, _ := identityFixture(t)
-	paths := []string{"/", "/applications", "/bookmarks", "/login", "/account/cookie-check", "/editor", "/editor/transfer/export", "/icons/example.svg"}
+	paths := []string{"/", "/applications", "/bookmarks", "/login", "/account/cookie-check", "/settings/content", "/settings/transfer/export", "/icons/example.svg"}
 	browser.app.Use(func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"eligible": bufferedReadEligible(c)})
 	})

@@ -87,12 +87,12 @@ Search:
       assert.equal((await anonymous.post('/login', {form: {username: 'release-fixture', password: 'wrong'}, maxRedirects: 0})).status(), 400);
     } finally { await anonymous.dispose(); }
     if (login) assert.equal((await client.post('/login', {form: {username: 'release-fixture', password: 'temporary-release-fixture'}, maxRedirects: 0})).status(), 302);
-    for (const route of ['/', '/applications', '/bookmarks', '/editor', '/settings/search', '/settings/weather']) {
+    for (const route of ['/', '/applications', '/bookmarks', '/settings/content', '/settings/search', '/settings/weather']) {
       assert.equal((await client.get(route, {maxRedirects: 0})).status(), 200, route);
     }
     evidence.phases.push({phase, private_auth: true, invalid_login_rejected: true, session_retained: !login, data_sha256: await hashes(data)});
   }
-  const document = async () => (await client.get('/editor/document')).json();
+  const document = async () => (await client.get('/settings/content/document')).json();
   try {
     await start(process.env.FLARE_OLD_BINARY);
     await authentication('published-0.6.5', true);
@@ -125,9 +125,9 @@ Search:
     assert.deepEqual(await fs.readFile(firstBackup), await fs.readFile(path.join(backup, 'config.yml')));
     const stale = await document(), changed = structuredClone(stale);
     changed.apps[0].Name = 'Application saved after upgrade';
-    assert.equal((await client.post('/editor/document', {headers: {'X-Flare-Editor': '1'}, data: changed})).status(), 200);
+    assert.equal((await client.post('/settings/content/document', {headers: {'X-Flare-Editor': '1'}, data: changed})).status(), 200);
     stale.apps[0].Name = 'Stale overwrite';
-    assert.equal((await client.post('/editor/document', {headers: {'X-Flare-Editor': '1'}, data: stale})).status(), 409);
+    assert.equal((await client.post('/settings/content/document', {headers: {'X-Flare-Editor': '1'}, data: stale})).status(), 409);
     const committed = await document();
     assert.equal(committed.apps[0].Private, true);
     assert.deepEqual(committed.bookmarks, originalDoc.bookmarks);

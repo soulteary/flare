@@ -32,7 +32,7 @@ func TestPhase1StartupGuardBlocksAllBusinessSurfaces(t *testing.T) {
 	for _, status := range []string{"new", "attention_required", "faulted", "migrating"} {
 		app, e := NewFiberApp(&model.Flags{StartupStatus: status, StartupMessage: "INTERNAL-DIAGNOSTIC-SENTINEL", EnableEditor: true, EnableOfflineMode: true})
 		require.NoError(t, e)
-		for _, path := range []string{"/", "/login", "/editor", "/settings/others", "/search?keyword=DO-NOT-LEAK-SENTINEL", "/health", "/bookmarks.yml", "/logout"} {
+		for _, path := range []string{"/", "/login", "/settings/content", "/settings/others", "/search?keyword=DO-NOT-LEAK-SENTINEL", "/health", "/bookmarks.yml", "/logout"} {
 			response, e := app.Test(httptest.NewRequest("GET", "http://flare.test"+path, nil))
 			require.NoError(t, e)
 			raw, e := io.ReadAll(response.Body)
@@ -106,7 +106,7 @@ func TestPhase1PersistentStoreAuthorizationAndRevocation(t *testing.T) {
 	require.NoError(t, store.RevokeAll())
 	_, raw = request("/", token)
 	require.NotContains(t, raw, "PRIVATE-ITEM-SENTINEL")
-	status, _ = request("/editor", token)
+	status, _ = request("/settings/content", token)
 	require.Equal(t, 401, status)
 }
 
@@ -218,7 +218,7 @@ func TestDefaultStartupAllowsAnonymousEditingWithCSRF(t *testing.T) {
 		require.NoError(t, readErr)
 		return res.StatusCode, string(raw)
 	}
-	for _, path := range []string{"/", "/editor", "/settings/layout"} {
+	for _, path := range []string{"/", "/settings/content", "/settings/layout"} {
 		status, _ := request("GET", path, nil, "")
 		require.Equal(t, 200, status, path)
 	}

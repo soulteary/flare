@@ -48,7 +48,7 @@
     $('batch-categories').onclick=()=>{if(adapter.flush())$('manage-categories').click();};
     $('batch-reset').onclick=()=>{if(!adapter.dirty||confirm(t('editor.discard_table_edits_not_yet_synchronized_changes_already_in')))adapter.refresh();};
     $('batch-table').addEventListener('input',notify);
-    if(location.pathname==='/editor/batch'||new URLSearchParams(location.search).get('view')==='batch')enter();
+    if(location.pathname==='/settings/content/batch'||new URLSearchParams(location.search).get('view')==='batch')enter();
   }
   document.addEventListener('flare-editor-ready',init,{once:true});if(window.FlareEditorUI?.store)init();
 })();

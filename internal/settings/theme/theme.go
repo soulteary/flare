@@ -73,9 +73,8 @@ func pages() []model.Page {
 }
 
 func RegisterRouting(e *fiber.App) {
-	// Each page takes every form. Which page is shown afterwards follows
-	// from the form, so a form of the theme page as an earlier release
-	// rendered it, with everything on one page, is still taken there.
+	// Each page takes the forms that stand on it. The form that chooses a
+	// theme stands on the library as well and is sent to the theme page.
 	for _, page := range pages() {
 		e.Get(page.Path, auth.AuthRequired, pageTheme)
 		e.Post(page.Path, auth.AuthRequired, updateThemes)
@@ -84,7 +83,8 @@ func RegisterRouting(e *fiber.App) {
 }
 
 // shownPage names the page a response shows: the one that was asked for,
-// and after a form the one that has the form.
+// and after a form the one that has the form, which is the one the form
+// has to be sent to.
 func shownPage(c fiber.Ctx) string {
 	if c.Method() != http.MethodPost {
 		for _, page := range pages() {
@@ -106,6 +106,12 @@ func shownPage(c fiber.Ctx) string {
 var updateMu sync.Mutex
 
 func updateThemes(c fiber.Ctx) error {
+	// A form is taken at the address of the page it stands on.
+	for _, page := range pages() {
+		if page.Name == shownPage(c) && page.Path != c.Path() {
+			return c.Status(http.StatusBadRequest).SendString("This form does not belong to this page")
+		}
+	}
 	updateMu.Lock()
 	defer updateMu.Unlock()
 	var body struct {

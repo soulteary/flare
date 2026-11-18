@@ -47,9 +47,21 @@ func TestThemePageTemplatesHTTP(t *testing.T) {
 	}
 }
 
+// themeFormAddress is the address of the page a form about themes stands
+// on, by the action it submits: the form is taken there and nowhere else.
+func themeFormAddress(action string) string {
+	switch action {
+	case "import", "fetch-theme", "install-theme":
+		return "/settings/themes"
+	case "save-templates", "confirm-templates", "withdraw-templates", "save-choices":
+		return "/settings/theme-access"
+	}
+	return "/settings/theme"
+}
+
 func postThemeForm(t *testing.T, handler http.Handler, fields url.Values) *httptest.ResponseRecorder {
 	t.Helper()
-	req := httptest.NewRequest(http.MethodPost, "/settings/theme", strings.NewReader(fields.Encode()))
+	req := httptest.NewRequest(http.MethodPost, themeFormAddress(fields.Get("action")), strings.NewReader(fields.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)

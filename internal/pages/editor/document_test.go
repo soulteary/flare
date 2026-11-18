@@ -28,7 +28,7 @@ func TestEditorDocumentHTTP(t *testing.T) {
 	post := func(doc any, header bool) *httptest.ResponseRecorder {
 		b, marshalErr := json.Marshal(doc)
 		require.NoError(t, marshalErr)
-		req := httptest.NewRequest(http.MethodPost, "/editor/document", bytes.NewReader(b))
+		req := httptest.NewRequest(http.MethodPost, "/settings/content/document", bytes.NewReader(b))
 		req.Header.Set("Content-Type", "application/json")
 		if header {
 			req.Header.Set("X-Flare-Editor", "1")
@@ -48,7 +48,7 @@ func TestEditorDocumentHTTP(t *testing.T) {
 	require.Equal(t, 422, rec.Code)
 	require.Contains(t, rec.Body.String(), "bookmarks.0.Category")
 	define.AppFlags.DisableLoginMode = false
-	req := httptest.NewRequest(http.MethodGet, "/editor/document", nil)
+	req := httptest.NewRequest(http.MethodGet, "/settings/content/document", nil)
 	rec = httptest.NewRecorder()
 	serveTransferHTTP(t, app, rec, req)
 	require.NotEqual(t, 200, rec.Code)
@@ -94,7 +94,7 @@ func TestEditorTrustedRejectsPrivateAndPublicChangesDetected(t *testing.T) {
 	snapshot.Apps[0].Private = true
 	raw, err := json.Marshal(snapshot)
 	require.NoError(t, err)
-	req := httptest.NewRequest(http.MethodPost, "/editor/document", bytes.NewReader(raw))
+	req := httptest.NewRequest(http.MethodPost, "/settings/content/document", bytes.NewReader(raw))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Flare-Editor", "1")
 	rec := httptest.NewRecorder()

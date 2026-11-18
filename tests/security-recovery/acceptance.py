@@ -83,7 +83,7 @@ with tempfile.TemporaryDirectory(prefix='flare-recovery-') as tmp:
   d=root/'trusted';d.mkdir();fixture(d,False);env={'FLARE_DISABLE_LOGIN':'true'}
   for binary in (OLD,NEW,NEW):
    s=Server(binary,d,env,port)
-   try:assert 'PUBLIC-SENTINEL' in request(browser(),s.base)[1];assert request(browser(),s.base,'/editor')[0]==200
+   try:assert 'PUBLIC-SENTINEL' in request(browser(),s.base)[1];assert request(browser(),s.base,'/settings/content')[0]==200
    finally:s.stop()
   assert json.loads((d/'.flare-security/installation.json').read_text())['committed']
  record('trusted-old-to-new-restart',trusted)
@@ -91,7 +91,7 @@ with tempfile.TemporaryDirectory(prefix='flare-recovery-') as tmp:
   d=root/'missing-password';d.mkdir();fixture(d)
   before=hashes(d);s=Server(NEW,d,{'FLARE_DISABLE_LOGIN':'false'},port)
   try:
-   for path in ('/','/editor','/health'):
+   for path in ('/','/settings/content','/health'):
     code,body=request(browser(),s.base,path);assert code==503,(path,code);assert 'PRIVATE-SENTINEL' not in body
    assert hashes(d)==before
   finally:s.stop()
@@ -102,7 +102,7 @@ with tempfile.TemporaryDirectory(prefix='flare-recovery-') as tmp:
   d=root/'trusted-private-content';d.mkdir();fixture(d)
   before=hashes(d);s=Server(NEW,d,{'FLARE_DISABLE_LOGIN':'true'},port)
   try:
-   for path,want in (('/',200),('/bookmarks',200),('/applications',200),('/editor/document',409),('/editor/transfer/export?collection=bookmarks&format=yaml',409),('/ping',200)):
+   for path,want in (('/',200),('/bookmarks',200),('/applications',200),('/settings/content/document',409),('/settings/transfer/export?collection=bookmarks&format=yaml',409),('/ping',200)):
     code,body=request(browser(),s.base,path);assert code==want,(path,code)
     assert 'PRIVATE-SENTINEL' not in body and 'PUBLIC-SENTINEL' not in body,path
    assert hashes(d)==before

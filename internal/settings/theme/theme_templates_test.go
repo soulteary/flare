@@ -152,6 +152,7 @@ func TestThemeTemplatesAreNotAllowedOrConfirmedForARevokedSession(t *testing.T) 
 	}
 
 	guarded := newRevocableTheme(t)
+	guarded.page = define.SettingPages.ThemeAccess.Path
 	submit := func(form url.Values, revoked bool) (int, string) {
 		t.Helper()
 		return guarded.post(func(csrf string) (io.Reader, string) {

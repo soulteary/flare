@@ -24,6 +24,7 @@ func TestThemeArchiveIsNotStoredForARevokedSession(t *testing.T) {
 	isolateTheme(t)
 	t.Cleanup(func() { _ = os.RemoveAll(define.UserThemeDirectory) })
 	guarded := newRevocableTheme(t)
+	guarded.page = define.SettingPages.ThemeLibrary.Path
 	var packed bytes.Buffer
 	archive := zip.NewWriter(&packed)
 	part, err := archive.Create("theme.yml")

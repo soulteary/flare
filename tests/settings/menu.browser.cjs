@@ -104,16 +104,18 @@ const shown = () => {
     for (const [address] of (await wide.evaluate(shown)).links) {
       const response = await wide.goto(server.base + address);
       assert.equal(response.status(), 200, address);
-      assert.equal(await wide.locator('nav.sidebar').count(), address.startsWith('/editor') ? 0 : 1, address);
+      assert.equal(await wide.locator('nav.sidebar').count(), ['/settings/content', '/settings/transfer'].includes(address) ? 0 : 1, address);
     }
     // The address of the account leads to the page about the application
     // on an instance without sign-in.
     await wide.goto(server.base + '/settings/application');
     assert.equal(new URL(wide.url()).pathname, '/settings/about');
-    // The address of the page that held the settings of five of the pages
-    // leads to the layout.
-    await wide.goto(server.base + '/settings/appearance');
-    assert.equal(new URL(wide.url()).pathname, '/settings/layout');
+    // The addresses the editor had, and the page that held the settings of
+    // five of the pages, are gone: nothing leads on from them.
+    for (const gone of ['/editor', '/editor/transfer', '/settings/appearance']) {
+      const response = await wide.request.get(server.base + gone, {maxRedirects: 0});
+      assert.equal(response.status(), 404, gone);
+    }
 
     // In a narrow window the menu is closed above the page behind a switch
     // that names the group and the page. The switch opens it, by a click

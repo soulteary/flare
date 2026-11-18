@@ -107,7 +107,7 @@ func TestEditorIconSearchHTTP(t *testing.T) {
 	registerEditorIcon(app)
 	request := func(query string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		serveTransferHTTP(t, app, rec, httptest.NewRequest(http.MethodGet, "/editor/icons"+query, nil))
+		serveTransferHTTP(t, app, rec, httptest.NewRequest(http.MethodGet, "/settings/content/icons"+query, nil))
 		return rec
 	}
 	first := request("")
@@ -133,7 +133,7 @@ func TestEditorIconSearchHTTP(t *testing.T) {
 	require.NoError(t, auth.RequestHandle(protected))
 	registerEditorIcon(protected)
 	rec := httptest.NewRecorder()
-	serveTransferHTTP(t, protected, rec, httptest.NewRequest(http.MethodGet, "/editor/icons?q=server", nil))
+	serveTransferHTTP(t, protected, rec, httptest.NewRequest(http.MethodGet, "/settings/content/icons?q=server", nil))
 	require.Equal(t, http.StatusFound, rec.Code)
 	require.NotContains(t, rec.Body.String(), "names")
 }

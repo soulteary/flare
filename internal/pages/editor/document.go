@@ -23,12 +23,12 @@ import (
 const privateContentCode = "PRIVATE_CONTENT_REQUIRES_LOGIN"
 
 func registerEditorDocument(e *fiber.App) {
-	e.Get("/editor/csrf", auth.AuthRequired, func(c fiber.Ctx) error {
+	e.Get("/settings/content/csrf", auth.AuthRequired, func(c fiber.Ctx) error {
 		c.Set("Cache-Control", "private, no-store")
 		return c.JSON(fiber.Map{"csrfToken": auth.CSRFToken(c)})
 	})
-	e.Get("/editor/document", auth.AuthRequired, getEditorDocument)
-	e.Post("/editor/document", auth.AuthRequired, saveEditorDocument)
+	e.Get("/settings/content/document", auth.AuthRequired, getEditorDocument)
+	e.Post("/settings/content/document", auth.AuthRequired, saveEditorDocument)
 }
 func getEditorDocument(c fiber.Ctx) error {
 	c.Set("Cache-Control", "no-store")

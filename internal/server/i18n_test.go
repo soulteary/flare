@@ -30,8 +30,8 @@ func TestSiteLocaleAcrossPagesAndSettings(t *testing.T) {
 		require.True(t, data.UpdateAppearance(options))
 		for _, page := range []struct{ path, en, zh string }{
 			{"/settings/site", "Site details", "基本信息"},
-			{"/editor", "Save changes", "保存更改"},
-			{"/editor/transfer", "Import", "导入"},
+			{"/settings/content", "Save changes", "保存更改"},
+			{"/settings/transfer", "Import", "导入"},
 		} {
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, page.path, nil))

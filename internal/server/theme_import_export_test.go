@@ -48,7 +48,7 @@ func importBody(t *testing.T, filename, content, token string, replace bool) (*b
 func importFile(t *testing.T, handler http.Handler, filename, content string, replace bool) *httptest.ResponseRecorder {
 	t.Helper()
 	body, contentType := importBody(t, filename, content, "", replace)
-	req := httptest.NewRequest(http.MethodPost, "/settings/theme", body)
+	req := httptest.NewRequest(http.MethodPost, "/settings/themes", body)
 	req.Header.Set("Content-Type", contentType)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -247,7 +247,7 @@ func TestThemeImportAndExportRequireTheAdministrator(t *testing.T) {
 	}
 	upload := func(csrf string, signedIn bool, origin string) int {
 		body, contentType := importBody(t, "forest.yml", themeFileColors, csrf, false)
-		req := httptest.NewRequest(http.MethodPost, "http://flare.test/settings/theme", body)
+		req := httptest.NewRequest(http.MethodPost, "http://flare.test/settings/themes", body)
 		req.Header.Set("Content-Type", contentType)
 		if origin != "" {
 			req.Header.Set("Origin", origin)

@@ -10,12 +10,12 @@ const assert=require('node:assert/strict'), fs=require('node:fs/promises'), path
   const page=await browser.newPage({viewport:{width:1440,height:1080}});
   await page.route('http://flare.test/**',async route=>{
    const url=new URL(route.request().url());
-   if(url.pathname==='/editor/document')return route.fulfill({contentType:'application/json',body:JSON.stringify(document)});
-   const file=url.pathname==='/editor'?path.join(root,'embed/templates/editor.html'):url.pathname.startsWith('/assets/editor-ui/')?path.join(root,'internal/pages/editor/client',path.basename(url.pathname)):null;
+   if(url.pathname==='/settings/content/document')return route.fulfill({contentType:'application/json',body:JSON.stringify(document)});
+   const file=url.pathname==='/settings/content'?path.join(root,'embed/templates/editor.html'):url.pathname.startsWith('/assets/editor-ui/')?path.join(root,'internal/pages/editor/client',path.basename(url.pathname)):null;
    if(!file)return route.fulfill({status:404,body:''});
-   return route.fulfill({contentType:file.endsWith('.html')?'text/html':file.endsWith('.css')?'text/css':'application/javascript',body:url.pathname==='/editor'?fixture.html:await fs.readFile(file,'utf8')});
+   return route.fulfill({contentType:file.endsWith('.html')?'text/html':file.endsWith('.css')?'text/css':'application/javascript',body:url.pathname==='/settings/content'?fixture.html:await fs.readFile(file,'utf8')});
   });
-  await page.goto('http://flare.test/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);
+  await page.goto('http://flare.test/settings/content');await page.waitForFunction(()=>window.FlareEditorUI?.store);
   const measurements=[],cdp=await page.context().newCDPSession(page);
   for(const count of [1000,5000,10000]){
    const result=await page.evaluate(count=>{

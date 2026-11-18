@@ -8,8 +8,8 @@ its pages.
 
 | Group | Entry | Address | What it is |
 | --- | --- | --- | --- |
-| Content | Apps and bookmarks | `/editor` | The editor. It is a page of its own, outside the settings |
-| Content | Import and export | `/editor/transfer` | Import and export of the content, also a page of its own |
+| Content | Apps and bookmarks | `/settings/content` | The editor. It is a page of its own, outside the settings |
+| Content | Import and export | `/settings/transfer` | Import and export of the content, also a page of its own |
 | Home page | Modules | `/settings/modules` | Which parts the home page shows: the title with the greeting, the applications, the bookmarks, the buttons for the settings and the help, and the version |
 | Home page | Search | `/settings/search` | The search of the home page |
 | Home page | Weather | `/settings/weather` | The weather of the home page |
@@ -68,11 +68,9 @@ its own.
 - Both say which theme files are not used and why. A theme is selected
   from either list; the theme page is shown afterwards.
 - Each form submits to the page it stands on, and that page is shown again
-  with what the form led to.
-- Every one of the three addresses takes every form about themes. Which
-  page is shown afterwards follows from the form, not from the address, so
-  a form of the theme page as an earlier release rendered it is still
-  taken at `/settings/theme`.
+  with what the form led to. A form sent to another of the three addresses
+  is refused and stores nothing. The form that chooses a theme stands in
+  the library as well, and is sent to the theme page from there.
 - The theme page links to the two others.
 
 ## In a narrow window
@@ -85,13 +83,22 @@ entry of the menu leads to its page with the menu closed again.
 
 ## Addresses
 
-No address of a page of the settings went away:
+Addresses that are gone answer with `404`. Nothing leads on from them: a
+bookmark or a script that names one has to be changed.
+
+| Address in 0.7.0 and earlier | Now |
+| --- | --- |
+| `/editor`, the editor | `/settings/content` |
+| `/editor/batch`, the editor with its table | `/settings/content/batch` |
+| `/editor/transfer`, import and export | `/settings/transfer` |
+| `/editor/document`, `/editor/csrf`, `/editor/icon`, `/editor/icons`, which the editor calls | The same names under `/settings/content/` |
+| `/editor/transfer/preview`, `commit`, `export`, `backup`, which import and export call | The same names under `/settings/transfer/` |
+| `/settings/appearance`, the page with the settings of five pages | `/settings/modules`, `/settings/clock`, `/settings/links`, `/settings/layout`, `/settings/site` |
 
 | Address | Before | Now |
 | --- | --- | --- |
-| `/settings/application` | Sign-in or account; without accounts in a security store also what the application is | Sign-in or account. Without sign-in it leads to `/settings/about` |
+| `/settings/application` | Sign-in or account; without accounts in a security store also what the application is | Sign-in or account, at the address sign-in leads to and comes back to. Without sign-in it leads to `/settings/about` |
 | `/settings/about` | — | What the application is |
-| `/settings/appearance` | The page with the settings of five of the pages above | Leads to `/settings/layout`. A form of the page as an earlier release rendered it is still taken there |
 
 The help page links to `/settings/about` for the version.
 
@@ -106,15 +113,15 @@ The help page links to `/settings/about` for the version.
   none is on two; that a page stores what it submits; that saving a page
   as it is shown changes no setting, with every setting other than its
   default; single fields, a text that is cleared, and a form that names a
-  field of another page; what a page refuses; the address of the appearance
-  page and a whole form sent to it; the policy for scripts, which only the
-  page of the clock has.
+  field of another page; what a page refuses; the addresses that are gone,
+  which answer with `404` and store nothing; the policy for scripts, which
+  only the page of the clock has.
 - `internal/server`, for the three pages about themes: the forms of each
   page and the address each submits to; that no form is on two pages apart
   from the one that chooses a theme; the cards and the remarks on the two
   pages that list themes; the links of the theme page; and for seven kinds
-  of form sent to each of the three addresses, the page that is shown
-  afterwards.
+  of form, that each is taken at the address of its page, with that page
+  shown afterwards, and refused at the two others.
 - The browser scripts under `tests/theme`, in Chromium, with their forms on
   the pages they stand on now.
 - `tests/settings/save.browser.cjs` and `tests/clock/browser.cjs`, in

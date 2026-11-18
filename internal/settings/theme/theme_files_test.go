@@ -432,7 +432,7 @@ func importRequest(t *testing.T, filename, content string, replace bool) *http.R
 	if err := writer.Close(); err != nil {
 		t.Fatal(err)
 	}
-	req := httptest.NewRequest(http.MethodPost, define.SettingPages.Theme.Path, &body)
+	req := httptest.NewRequest(http.MethodPost, define.SettingPages.ThemeLibrary.Path, &body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	return req
 }

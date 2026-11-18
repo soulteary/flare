@@ -59,10 +59,10 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
     assert.ok(requestID);assert.ok(rejected.includes(requestID));assert.ok(rejected.includes(test.reason));assert.match(rejected,/proxy_set_header Host|\$http_host/);
     assert.doesNotMatch(rejected,/<script|127\.0\.0\.1/);
    }
-   await page.goto(test.base+'/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);
+   await page.goto(test.base+'/settings/content');await page.waitForFunction(()=>window.FlareEditorUI?.store);
    await page.locator('#new-entry').click();await page.locator('#entry-name').fill(name);await page.locator('#entry-url').fill('https://example.com/'+test.name);
    await page.locator('#entry-location').selectOption('apps');await page.locator('#entry-form .dialog-actions button.primary').click();
-   const [saved]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/editor/document')),page.locator('#save-changes').click()]);
+   const [saved]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/settings/content/document')),page.locator('#save-changes').click()]);
    assert.equal(saved.status(),test.status);
    await page.waitForFunction(()=>document.querySelector('#workspace').getAttribute('aria-busy')==='false');
    const message=await page.locator('#save-status').textContent();

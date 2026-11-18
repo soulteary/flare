@@ -57,7 +57,7 @@ func TestPersistentTransferRequiresConfirmationAndCSRF(t *testing.T) {
 	for _, path := range []string{"preview", "commit"} {
 		require.Equal(t, 403, request("POST", transferPath+"/"+path, []byte(`{}`), map[string]string{"X-Flare-Transfer": "1"}).Code)
 	}
-	require.Equal(t, 403, request("POST", "/editor/document", []byte(`{}`), map[string]string{"X-Flare-Editor": "1"}).Code)
+	require.Equal(t, 403, request("POST", "/settings/content/document", []byte(`{}`), map[string]string{"X-Flare-Editor": "1"}).Code)
 	for _, path := range []string{"export?collection=bookmarks&format=yaml", "backup?collection=bookmarks"} {
 		require.Equal(t, 409, request("GET", transferPath+"/"+path, nil, nil).Code)
 	}
@@ -71,18 +71,18 @@ func TestPersistentTransferRequiresConfirmationAndCSRF(t *testing.T) {
 	raw, err := json.Marshal(snapshot)
 	require.NoError(t, err)
 	headers := map[string]string{"Content-Type": "application/json", "X-Flare-Editor": "1", "X-CSRF-Token": csrf}
-	rec = request("POST", "/editor/document", raw, headers)
+	rec = request("POST", "/settings/content/document", raw, headers)
 	require.Equal(t, 200, rec.Code, rec.Body.String())
 	snapshot, err = data.EditorSnapshot()
 	require.NoError(t, err)
 	snapshot.Apps[0].Private = false
 	raw, err = json.Marshal(snapshot)
 	require.NoError(t, err)
-	rec = request("POST", "/editor/document", raw, headers)
+	rec = request("POST", "/settings/content/document", raw, headers)
 	require.Equal(t, 409, rec.Code)
 	require.Contains(t, rec.Body.String(), "PUBLIC_CONFIRMATION_REQUIRED")
 	headers["X-Flare-Confirm-Public"] = "1"
-	rec = request("POST", "/editor/document", raw, headers)
+	rec = request("POST", "/settings/content/document", raw, headers)
 	require.Equal(t, 200, rec.Code, rec.Body.String())
 	// Public imports use a session-bound preview and recheck authorization in the commit.
 	app.Get("/test-binding", func(c fiber.Ctx) error { return c.SendString(auth.SessionBinding(c)) })
@@ -112,14 +112,14 @@ func TestEditorDocumentRejectsInvalidRequests(t *testing.T) {
 	app := fiber.New()
 	registerEditorDocument(app)
 	for _, raw := range []string{`{`, `{"unknown":true}`, `{} {}`} {
-		req := httptest.NewRequest("POST", "/editor/document", strings.NewReader(raw))
+		req := httptest.NewRequest("POST", "/settings/content/document", strings.NewReader(raw))
 		req.Header.Set("X-Flare-Editor", "1")
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		serveTransferHTTP(t, app, rec, req)
 		require.Equal(t, 400, rec.Code)
 	}
-	res, err := app.Test(httptest.NewRequest("GET", "/editor/csrf", nil))
+	res, err := app.Test(httptest.NewRequest("GET", "/settings/content/csrf", nil))
 	require.NoError(t, err)
 	defer res.Body.Close()
 	raw, err := io.ReadAll(res.Body)

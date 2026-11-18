@@ -32,15 +32,6 @@ func RegisterRouting(e *fiber.App) {
 		e.Get(page.Path, auth.AuthRequired, func(c fiber.Ctx) error { return renderPage(c, name) })
 		e.Post(page.Path, auth.AuthRequired, func(c fiber.Ctx) error { return updateAppearanceOptions(c, name) })
 	}
-	// The address of the page that held all of them leads to the layout,
-	// which most of its fields were about. A form of that page, as an
-	// earlier release rendered it, is still taken there.
-	e.Get(define.SettingPages.Appearance.Path, auth.AuthRequired, func(c fiber.Ctx) error {
-		return c.Redirect().Status(http.StatusFound).To(define.SettingPages.Layout.Path)
-	})
-	e.Post(define.SettingPages.Appearance.Path, auth.AuthRequired, func(c fiber.Ctx) error {
-		return updateAppearanceOptions(c, define.SettingPages.Layout.Name)
-	})
 }
 
 // submitted reads a field that is yes or no, and keeps the stored value for

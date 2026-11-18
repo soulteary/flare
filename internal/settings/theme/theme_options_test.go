@@ -29,6 +29,9 @@ type revocableTheme struct {
 	app    *fiber.App
 	store  *security.Store
 	revoke atomic.Bool
+	// page is the page the forms of the test stand on, which they are sent
+	// to: the theme page unless a test names another.
+	page string
 }
 
 // newRevocableTheme puts the handler behind sessions. It follows isolateTheme,
@@ -52,14 +55,17 @@ func newRevocableTheme(t *testing.T) *revocableTheme {
 		t.Fatal(err)
 	}
 	guarded.app.Get("/token", auth.AuthRequired, func(c fiber.Ctx) error { return c.SendString(auth.CSRFToken(c)) })
-	guarded.app.Post(define.SettingPages.Theme.Path, auth.AuthRequired, func(c fiber.Ctx) error {
-		if guarded.revoke.Load() {
-			if e := store.RevokeAll(); e != nil {
-				return e
+	guarded.page = define.SettingPages.Theme.Path
+	for _, page := range pages() {
+		guarded.app.Post(page.Path, auth.AuthRequired, func(c fiber.Ctx) error {
+			if guarded.revoke.Load() {
+				if e := store.RevokeAll(); e != nil {
+					return e
+				}
 			}
-		}
-		return c.Next()
-	}, updateThemes)
+			return c.Next()
+		}, updateThemes)
+	}
 	return guarded
 }
 
@@ -95,7 +101,7 @@ func (guarded *revocableTheme) post(body func(csrf string) (io.Reader, string), 
 		guarded.t.Fatalf("token of the session: %d %q", status, csrf)
 	}
 	content, kind := body(csrf)
-	req = httptest.NewRequest(http.MethodPost, "http://flare.test"+define.SettingPages.Theme.Path, content)
+	req = httptest.NewRequest(http.MethodPost, "http://flare.test"+guarded.page, content)
 	req.Header.Set("Content-Type", kind)
 	req.AddCookie(session)
 	guarded.revoke.Store(revoked)

@@ -64,7 +64,7 @@ def run(args):
                         assert private==authenticated,(path,authenticated,private)
                     result['requests'].append({'authenticated':authenticated,'method':method,'path':path,'status':status,'body_bytes':len(body),'body_sha256':hashlib.sha256(body).hexdigest(),'private_card_present':private,'counts':counts})
         # Same explicit current-session revocation and stale-cookie replay as load probes.
-        code,raw,_=admin.request('/editor/csrf');assert code==200
+        code,raw,_=admin.request('/settings/content/csrf');assert code==200
         csrf=json.loads(raw)['csrfToken'];replay=acceptance.Client(args.port);replay.cookies=admin.cookies.copy()
         before=counters(args.control_port)
         status,_,_=admin.request('/logout',acceptance.urllib.parse.urlencode({'csrf-token':csrf}),{'Content-Type':'application/x-www-form-urlencoded','Origin':f'http://127.0.0.1:{args.port}'})

@@ -60,9 +60,9 @@ func TestEditorAndTransferRefusePrivateContentWithoutLogin(t *testing.T) {
 		}
 	}
 
-	refused(serve(httptest.NewRequest(http.MethodGet, "/editor/document", nil)), "document")
+	refused(serve(httptest.NewRequest(http.MethodGet, "/settings/content/document", nil)), "document")
 
-	save := httptest.NewRequest(http.MethodPost, "/editor/document", bytes.NewReader([]byte(`{"version":"any","categories":[],"apps":[],"bookmarks":[]}`)))
+	save := httptest.NewRequest(http.MethodPost, "/settings/content/document", bytes.NewReader([]byte(`{"version":"any","categories":[],"apps":[],"bookmarks":[]}`)))
 	save.Header.Set("Content-Type", "application/json")
 	save.Header.Set("X-Flare-Editor", "1")
 	refused(serve(save), "save")

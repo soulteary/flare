@@ -14,7 +14,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error(log);try{if((await fetch(base+'/ping')).ok)break}catch{}await new Promise(r=>setTimeout(r,100));}
   browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
   const page=await browser.newPage();async function screenshot(name){if(process.env.EDITOR_SCREENSHOT_DIR){await fs.mkdir(process.env.EDITOR_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.EDITOR_SCREENSHOT_DIR,name),fullPage:true});}}const errors=[];page.on('pageerror',error=>errors.push(error.message));
-  await browserAuth.login(page,base);await page.goto(base+'/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);
+  await browserAuth.login(page,base);await page.goto(base+'/settings/content');await page.waitForFunction(()=>window.FlareEditorUI?.store);
   assert.equal(await page.locator('html').getAttribute('lang'),'en');assert.equal(await page.title(),'Manage navigation · Flare');
   assert.equal(await page.locator('#save-changes').textContent(),'Save changes');assert.equal(await page.locator('#entry-search').getAttribute('placeholder'),'Search names, addresses and descriptions');
   assert.match(await page.locator('#recovery-warning').textContent(),/Server recovery copies.*save-interrupted/);

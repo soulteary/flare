@@ -88,7 +88,7 @@ func TestNotReadyResponseShowsDiagnosticWithoutStartupMessage(t *testing.T) {
 		StartupDiagnostic: diagnostic,
 	})
 	require.NoError(t, err)
-	for _, path := range []string{"/", "/ping", "/login", "/editor"} {
+	for _, path := range []string{"/", "/ping", "/login", "/settings/content"} {
 		response, err := app.Test(httptest.NewRequest("GET", "http://flare.test"+path, nil))
 		require.NoError(t, err)
 		raw, err := io.ReadAll(response.Body)
