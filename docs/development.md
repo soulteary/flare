@@ -41,6 +41,7 @@ node tests/mobile/desktop-columns.browser.cjs
 node tests/editor/scale.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/clock/browser.cjs
 FLARE_BINARY=/tmp/flare node tests/editor/browser.cjs
+FLARE_BINARY=/tmp/flare node tests/editor/list.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/editor/legacy.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/editor/reliability.browser.cjs
 FLARE_BINARY=/tmp/flare node tests/security-browser/editor-transfer.cjs

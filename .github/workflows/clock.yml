@@ -86,6 +86,10 @@ jobs:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
           EDITOR_SCREENSHOT_DIR: ${{ runner.temp }}/flare-editor-screenshots
         run: node tests/editor/browser.cjs
+      - name: Editor list rows, tabs and tools
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/editor/list.browser.cjs
       - name: Authenticated editor and import privacy controls
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
