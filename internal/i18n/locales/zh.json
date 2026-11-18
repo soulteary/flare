@@ -720,5 +720,6 @@
   "settings_themes_help": "这个实例自己带来的主题，每个都可以预览和下载；下面是带入主题的两种方式：从文件导入，或从地址安装。",
   "settings_themes_bundled": "内置主题和自定义配色在这一页选择和下载：",
   "editor.all_entries": "全部",
-  "editor.entry_kind": "条目类型"
+  "editor.entry_kind": "条目类型",
+  "transfer.export": "导出"
 }

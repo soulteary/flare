@@ -3,9 +3,17 @@
 > Scope: transfer is available since 0.6.2. The privacy and persistent-session
 > requirements marked below apply to stable 0.6.8 and current main.
 
-Enable the existing editor (`--enable_editor`, enabled by default), open `/settings/content`,
-and select **导入 / 导出浏览器书签与 Flare YAML**. Save any pending editor changes
-before opening the tool; return to a fresh editor page after importing.
+Enable the existing editor (`--enable_editor`, enabled by default) and open
+**Import and export** in the menu of the settings, `/settings/transfer`. In
+0.7.0 and earlier the page is `/editor/transfer`, reached from the editor.
+Save any pending editor changes before opening the page; return to a fresh
+editor page after importing.
+
+After 0.7.0 the page stands in the frame of the settings and is laid out in
+sections, each with a title: **Choose data**, with the collection the page
+works on; **Export**, with the two exports and the backup of the last import;
+**Import bookmarks**, with the file and its options, each under a label; and,
+once a file was read, **Review**. What each control does is unchanged.
 
 ## Import
 
