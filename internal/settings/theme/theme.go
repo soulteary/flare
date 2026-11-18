@@ -2,6 +2,7 @@ package theme
 
 import (
 	"errors"
+	"html/template"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -712,6 +713,8 @@ func renderTheme(c fiber.Ctx, status int, notice themeNotice) error {
 	m["SettingPages"] = define.SettingPages
 	m["Themes"] = themes
 	m["OptionTitle"] = options.Title
+	// The footer of the site stands under every page of the settings.
+	m["OptionFooter"] = template.HTML(options.Footer)
 	fileThemes, problems, notices := define.UserThemes()
 	m["ThemeFiles"] = themeFileCards(locale, fileThemes, options)
 	if selected, _ := define.ThemeSnapshot(); selected != "" {

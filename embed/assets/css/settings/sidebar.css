@@ -1,8 +1,8 @@
 /* The menu of the settings: groups with a title, and under each the pages
    of the group. An entry that leaves the settings is marked with an arrow. */
 #page-settings .sidebar {
-  position: absolute;
-  left: 0;
+  float: none;
+  flex: 0 0 160px;
   width: 160px;
 }
 
@@ -55,7 +55,7 @@
 }
 
 @media (max-width: 768px) {
-  #page-settings .sidebar { position: static; float: none; width: 100%; margin-bottom: 20px; }
+  #page-settings .sidebar { width: 100%; margin-bottom: 20px; }
   #page-settings .sidebar-current {
     display: flex;
     justify-content: space-between;

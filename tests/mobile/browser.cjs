@@ -63,7 +63,7 @@ const {spawn} = require('node:child_process');
    }
    await page.goto(base + '/settings/layout');
    await fits('html'); await fits('#page-settings');
-   assert.equal(await page.locator('.sidebar').evaluate(el => getComputedStyle(el).position), width <= 768 ? 'static' : 'absolute');
+   assert.equal(await page.locator('.sidebar').evaluate(el => getComputedStyle(el).position), 'static');
    await page.goto(base + '/editor'); await page.waitForFunction(()=>window.FlareEditorUI?.store); await fits('html');
    // Forms must remain reachable on both sides of the editor's own 640px
    // breakpoint, independently of the homepage's 768px breakpoint.
