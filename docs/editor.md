@@ -82,6 +82,30 @@ Cancel leaves the document unchanged. Category deletion requires an explicit
 migration destination for nonempty groups; entry deletion offers single-action
 undo. Category ordering has up/down controls and never changes category IDs.
 
+### The list (after 0.7.0)
+
+- **One line to an entry.** In a window wider than 640 pixels an entry is
+  one line of about 43 pixels with four columns: the name, the address, the
+  place and the two actions. A name or an address that is too long for its
+  column is cut, and is whole in the title of the element. Before, an entry
+  took about 80 pixels.
+- **A phone** keeps the entry of several lines. Its targets, and those of a
+  wide window that is used by touch, are 44 pixels high.
+- **Tabs.** Above the list stand three tabs: all entries, the applications,
+  the bookmarks, each with the number of its entries. A tab narrows the list
+  like the search and the filter do: no entry leaves the working document.
+  The address names the open tab, `/settings/content#apps` or `#bookmarks`,
+  so that a tab can be opened directly and come back to.
+- The filter of places lists the categories of bookmarks. It is not offered
+  while the applications are open, which are one place; choosing the
+  applications as the place while the bookmarks are open opens all entries.
+- **The tools stay.** The tabs, the search, the filter and the buttons stay
+  at the top of the window while the list moves under them. On a phone they
+  move with the page, which has too little height to keep them.
+
+`node tests/editor/list.browser.cjs` checks this with the same variables as
+the other scripts.
+
 Actual data comparison clears dirty state when values are restored. Save errors
 preserve the working document; conflicts expose a JSON draft download and an
 explicit reload action. The JSON draft is an editor-state export, not a browser

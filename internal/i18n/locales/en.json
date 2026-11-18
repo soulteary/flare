@@ -718,5 +718,7 @@
   "settings_theme_more_access": ". What themes and visitors are allowed is set under",
   "settings_theme_access_help": "What the themes of the instance may bring beside colors and styles, and which themes a visitor may choose. Both change what every visitor is shown, so they are set apart from choosing a theme.",
   "settings_themes_help": "The themes this instance brings itself, each with its preview and its download, and below them the forms that bring a theme in: from a file, or from an address.",
-  "settings_themes_bundled": "The bundled themes and the custom colors are chosen and downloaded on the page"
+  "settings_themes_bundled": "The bundled themes and the custom colors are chosen and downloaded on the page",
+  "editor.all_entries": "All",
+  "editor.entry_kind": "Kind of entry"
 }

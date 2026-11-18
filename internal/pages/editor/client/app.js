@@ -6,6 +6,7 @@
   const $ = id => document.getElementById(id);
   let filterTimer;
  const trusted=document.querySelector('meta[name=trusted-mode]')?.content==='true';
+  let kind=['apps','bookmarks'].includes(window.location.hash.slice(1))?window.location.hash.slice(1):'all';
   let store, saving=false, editingKey=null, formStart='', lastLocation='', undo=null, migrationID=null, conflict=false, recoveryRequired=false, focusBeforeDialog=null, batch=null;
   const entryDialog=$('entry-dialog'), categoryDialog=$('categories-dialog');
   const fields={Name:'entry-name',URL:'entry-url',Category:'entry-location'};
@@ -49,13 +50,18 @@
     const filter=$('location-filter').value, query=$('entry-search').value.trim().toLocaleLowerCase();
     locations($('location-filter'),filter,true);
     const entries=store.viewEntries();
-    const shown=entries.filter(({item,location})=>(filter==='all'||filter===location||(location==='category:'&&filter==='category:'+store.working.categories[0]?.ID)) && [item.Name,item.URL,item.Desc].some(value=>String(value||'').toLocaleLowerCase().includes(query)));
+    // The tabs narrow the list to the applications or to the bookmarks; the
+    // number each shows is that of all its entries, whatever is searched for.
+    const ofKind=location=>kind==='all'||(kind==='apps')===(location==='apps');
+    const appCount=entries.reduce((count,{location})=>count+(location==='apps'?1:0),0);
+    for(const tab of $('kind-tabs').children){const count={all:entries.length,apps:appCount,bookmarks:entries.length-appCount}[tab.dataset.kind];tab.lastElementChild.textContent=String(count);tab.setAttribute('aria-pressed',String(tab.dataset.kind===kind));}
+    const shown=entries.filter(({item,location})=>ofKind(location) && (filter==='all'||filter===location||(location==='category:'&&filter==='category:'+store.working.categories[0]?.ID)) && [item.Name,item.URL,item.Desc].some(value=>String(value||'').toLocaleLowerCase().includes(query)));
     $('total-count').textContent=t('editor.entry_count',{count:entries.length});
-    $('result-count').textContent=(query||filter!=='all')?t('editor.search_result_count',{shown:shown.length,total:entries.length}):t('editor.entry_count',{count:entries.length});
+    $('result-count').textContent=(query||filter!=='all'||kind!=='all')?t('editor.search_result_count',{shown:shown.length,total:entries.length}):t('editor.entry_count',{count:entries.length});
     const list=$('entry-list'),rowCache=new Map();
     for(let row=list.firstElementChild;row;row=row.nextElementSibling)if(row.dataset.key)rowCache.set(row.dataset.key,row);
     const rows=[],categoryLabels=new Map(store.working.categories.map(category=>['category:'+category.ID,category.Name]));categoryLabels.set('apps',t('editor.applications'));categoryLabels.set('category:',categoryName('category:'));
-    if(!shown.length){const empty=el('div',undefined,'empty');empty.append(el('p',entries.length?t('editor.no_matching_entries'):t('editor.no_entries_yet_add_or_import_an_entry')));empty.append(button(entries.length?t('editor.clear_filters'):t('editor.new_entry'),()=>{if(entries.length){$('entry-search').value='';$('location-filter').value='all';render();}else openEntry();}));rows.push(empty);}
+    if(!shown.length){const empty=el('div',undefined,'empty');empty.append(el('p',entries.length?t('editor.no_matching_entries'):t('editor.no_entries_yet_add_or_import_an_entry')));empty.append(button(entries.length?t('editor.clear_filters'):t('editor.new_entry'),()=>{if(entries.length){$('entry-search').value='';$('location-filter').value='all';setKind('all');}else openEntry();}));rows.push(empty);}
     for(const {item,location} of shown){
       let row=rowCache.get(item._key);
       if(!row){
@@ -65,7 +71,7 @@
         row.append(main,place,actions);
       }
       const {Name,URL}=item,name=row.firstElementChild.firstElementChild,address=name.nextElementSibling,place=row.firstElementChild.nextElementSibling;
-      if(name.textContent!==Name)name.textContent=Name;
+      if(name.textContent!==Name){name.textContent=Name;name.title=Name;}
       if(address.textContent!==URL){address.textContent=URL;address.title=URL;}
       const label=categoryLabels.get(location) || t('editor.missing_category',{location:location});if(place.textContent!==label)place.textContent=label;
       rows.push(row);
@@ -154,7 +160,21 @@
   function closeCategories() {if(categoryDialog.querySelector('[aria-invalid="true"]')){categoryDialog.querySelector('[aria-invalid="true"]').focus();return;}if($('new-category-name').value.trim()&&!confirm(t('editor.discard_the_new_category_name_that_has_not_been')))return;$('new-category-name').value='';close(categoryDialog);batch?.refresh();}
   $('close-categories').onclick=closeCategories;categoryDialog.addEventListener('cancel',event=>{event.preventDefault();closeCategories();});
   $('entry-list').addEventListener('click',event=>{const button=event.target.closest('[data-entry-action]'),row=button?.closest('[data-key]');if(!row)return;if(button.dataset.entryAction==='delete')removeEntry(row.dataset.key);else openEntry(row.dataset.key);});
-  $('entry-search').oninput=()=>{if(store){clearTimeout(filterTimer);filterTimer=setTimeout(render,100);}};$('location-filter').onchange=()=>{if(store)render();};
+  $('entry-search').oninput=()=>{if(store){clearTimeout(filterTimer);filterTimer=setTimeout(render,100);}};$('location-filter').onchange=()=>{if(!store)return;if($('location-filter').value==='apps'&&kind==='bookmarks')setKind('all');else render();};
+    // The tabs: all entries, the applications, or the bookmarks. The address
+    // names the tab that is open, so that it can be come back to.
+    function setKind(next) {
+      kind=['apps','bookmarks'].includes(next)?next:'all';
+      const filter=$('location-filter');
+      // The applications are one place; the list of places is for bookmarks.
+      if(kind!=='all'&&(kind==='apps'||filter.value==='apps'))filter.value='all';
+      filter.disabled=kind==='apps';
+      const address=window.location.pathname+window.location.search+(kind==='all'?'':'#'+kind);
+      if(address!==window.location.pathname+window.location.search+window.location.hash)history.replaceState(history.state,'',address);
+      if(store)render();
+    }
+    for(const tab of $('kind-tabs').children)tab.onclick=()=>setKind(tab.dataset.kind);
+    window.addEventListener('hashchange',()=>setKind(window.location.hash.slice(1)));
   function busy(value) {saving=value;$('workspace').inert=value;$('workspace').setAttribute('aria-busy',String(value));document.querySelectorAll('.save-actions button').forEach(b=>b.disabled=value);if(!value)syncStatus();}
   function validateDocument() {
     const names=new Set(),ids=new Set();
