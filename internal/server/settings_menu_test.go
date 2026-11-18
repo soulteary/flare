@@ -26,9 +26,6 @@ import (
 type settingsMenu struct {
 	groups  [][]string
 	current []string
-	// out are the addresses of the entries that are marked as leaving the
-	// settings.
-	out []string
 }
 
 func readSettingsMenu(t *testing.T, page string) *settingsMenu {
@@ -59,9 +56,6 @@ func readSettingsMenu(t *testing.T, page string) *settingsMenu {
 						menu.current = append(menu.current, address)
 					} else {
 						require.False(t, nodeHasClass(part, "active"), address)
-					}
-					if nodeHasClass(part, "sidebar-out") {
-						menu.out = append(menu.out, address)
 					}
 				}
 			})
@@ -100,17 +94,18 @@ func TestSettingsMenuIsGroupedHTTP(t *testing.T) {
 			// An instance that needs no sign-in has no account page to
 			// list, and one without the editor no pages for the content.
 			groups := settingsMenuGroups(locale, false, editor)
-			var out []string
+			pages := []string{"/settings/modules", "/settings/search", "/settings/weather", "/settings/clock", "/settings/links", "/settings/theme", "/settings/layout", "/settings/themes", "/settings/theme-access", "/settings/site", "/settings/about"}
 			if editor {
-				out = []string{"/settings/content", "/settings/transfer"}
+				// The pages for the content stand in the same frame.
+				pages = append(pages, "/settings/content", "/settings/transfer")
 			}
-			for _, path := range []string{"/settings/modules", "/settings/search", "/settings/weather", "/settings/clock", "/settings/links", "/settings/theme", "/settings/layout", "/settings/themes", "/settings/theme-access", "/settings/site", "/settings/about"} {
+			for _, path := range pages {
 				page := getPage(t, handler, path)
 				menu := readSettingsMenu(t, page)
 				require.NotNil(t, menu, path)
 				require.Equal(t, groups, menu.groups, path)
 				require.Equal(t, []string{path}, menu.current, path)
-				require.Equal(t, out, menu.out, path)
+				require.NotContains(t, page, "sidebar-out", path)
 				// The switch of the menu, for a narrow window, names the
 				// group of the page.
 				require.Contains(t, page, `id=settings-nav-toggle`, path)

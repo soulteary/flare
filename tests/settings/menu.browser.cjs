@@ -99,13 +99,71 @@ const shown = () => {
       }
       await sized.context().close();
     }
-    // Every entry leads to a page, and the two of the content leave the
-    // settings for the editor.
+    // Every entry leads to a page that stands in the frame of the
+    // settings, with its entry marked and no other. The two pages for the
+    // content are among them, in a wider column, in the colors of the theme.
+    await wide.goto(server.base + '/settings/theme');
+    const column = await wide.locator('.setting-group-container').evaluate(element => element.getBoundingClientRect().width);
     for (const [address] of (await wide.evaluate(shown)).links) {
       const response = await wide.goto(server.base + address);
       assert.equal(response.status(), 200, address);
-      assert.equal(await wide.locator('nav.sidebar').count(), ['/settings/content', '/settings/transfer'].includes(address) ? 0 : 1, address);
+      assert.equal(await wide.locator('nav.sidebar').count(), 1, address);
+      assert.deepEqual(await wide.locator('nav.sidebar a[aria-current="page"]').evaluateAll(links => links.map(link => new URL(link.href).pathname)), [address], address);
+      assert.equal(await wide.locator('#page-settings .header h1').count(), 1, address);
+      assert.equal(await wide.locator('h1').count(), 1, address);
     }
+    for (const [address, label] of [['/settings/content', 'Content › Apps and bookmarks'], ['/settings/transfer', 'Content › Import and export']]) {
+      await wide.goto(server.base + address);
+      const frame = await wide.evaluate(() => {
+        const menu = document.querySelector('nav.sidebar').getBoundingClientRect(), page = document.querySelector('.setting-group-container').getBoundingClientRect();
+        return {beside: menu.right <= page.left, width: page.width, background: getComputedStyle(document.body).backgroundColor,
+          text: getComputedStyle(document.querySelector('.page-title')).color, overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth};
+      });
+      assert.deepEqual([frame.beside, frame.background, frame.text, frame.overflow], [true, 'rgb(26, 26, 26)', 'rgb(255, 253, 234)', false], address);
+      assert.ok(frame.width > column + 300, `${address}: ${frame.width} beside ${column}`);
+      // What the page draws its text and its surfaces with are the colors
+      // of the theme, not colors of its own.
+      const palette = await wide.evaluate(() => {
+        const style = getComputedStyle(document.body), read = name => style.getPropertyValue(name).trim().toLowerCase();
+        return [read('--text'), read('--flare-primary'), read('--bg'), read('--flare-background')];
+      });
+      assert.ok(palette[0] !== '' && palette[2] !== '', address);
+      assert.deepEqual([palette[0], palette[2]], [palette[1], palette[3]], address);
+      const narrow = await open({viewport: {width: 360, height: 700}});
+      await narrow.goto(server.base + address);
+      assert.match(await narrow.locator('.sidebar-current').innerText(), new RegExp('^' + label + '\\s+Menu'), address);
+      assert.equal(await narrow.locator('nav.sidebar a').first().isVisible(), false, address);
+      assert.equal(await narrow.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), false, address);
+      await narrow.context().close();
+    }
+    // The editor asks before it is left with changes that are not saved,
+    // by the links it has itself and by those of the frame; and the escape
+    // key, which leaves the other pages, does not leave it.
+    await wide.goto(server.base + '/settings/content');
+    await wide.waitForFunction(() => window.FlareEditorUI?.store);
+    const guarded = await wide.evaluate(() => ['#page-settings .header a', '#page-settings nav.sidebar a'].map(selector => [...document.querySelectorAll(selector)].every(link => typeof link.onclick === 'function')));
+    assert.deepEqual(guarded, [true, true]);
+    // An entry that is being written counts as a change that is not saved.
+    await wide.locator('#new-entry').click();
+    await wide.locator('#entry-name').fill('Pending');
+    const leave = () => wide.evaluate(() => document.querySelector('nav.sidebar a[href="/settings/about"]').click());
+    const asked = [];
+    wide.once('dialog', dialog => {asked.push(dialog.type()); dialog.dismiss();});
+    await leave();
+    assert.deepEqual(asked, ['confirm']);
+    assert.equal(new URL(wide.url()).pathname, '/settings/content');
+    assert.equal(await wide.locator('#entry-name').inputValue(), 'Pending');
+    const accept = dialog => dialog.accept();
+    wide.on('dialog', accept);
+    await Promise.all([wide.waitForURL(server.base + '/settings/about'), leave()]);
+    wide.off('dialog', accept);
+    // Without a change nothing is asked, and the escape key leaves the
+    // editor no more than it did.
+    await wide.goto(server.base + '/settings/content');
+    await wide.waitForFunction(() => window.FlareEditorUI?.store);
+    await wide.keyboard.press('Escape');
+    assert.equal(new URL(wide.url()).pathname, '/settings/content');
+    await Promise.all([wide.waitForURL(server.base + '/settings/about'), wide.getByRole('link', {name: 'About', exact: true}).click()]);
     // The address of the account leads to the page about the application
     // on an instance without sign-in.
     await wide.goto(server.base + '/settings/application');

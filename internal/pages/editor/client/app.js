@@ -219,7 +219,7 @@
       store.working=FlareEditorState.normalize(next);batch?.refresh();undo=null;$('location-filter').value='all';render();setStatus(t('editor.draft_restored_to_pending_edits_review_it_before_saving'));
     }catch(error){setStatus(t('editor.draft_restore_error',{error:error.message}),true);}finally{event.target.value='';}
   };
-  document.querySelectorAll('[data-leave]').forEach(link=>link.onclick=event=>{if(saving||(hasUnsavedChanges()&&!confirm(t('editor.you_have_unsaved_changes_leave_this_page'))))event.preventDefault();});
+  document.querySelectorAll('[data-leave], #page-settings .header a, #page-settings nav.sidebar a').forEach(link=>link.onclick=event=>{if(saving||(hasUnsavedChanges()&&!confirm(t('editor.you_have_unsaved_changes_leave_this_page'))))event.preventDefault();});
   window.addEventListener('beforeunload',event=>{if(saving||hasUnsavedChanges()){event.preventDefault();event.returnValue='';}});
   // The lazy batch adapter attaches to this single working store.
   window.FlareEditorUI={get store(){return store;},get saving(){return saving;},render,setStatus,syncStatus,validateDocument,locateError,registerBatch(adapter){batch=adapter;},get hasOpenDialog(){return entryDialog.open||categoryDialog.open;}};

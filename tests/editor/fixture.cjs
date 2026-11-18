@@ -15,6 +15,9 @@ async function editorFixture(root = path.resolve(__dirname, '../..'), locale = '
    assert.ok(Object.hasOwn(messages, key), `Missing editor fixture message: ${key}`);
    return escapeHTML(messages[key]);
   }).replace(/\{\{HTMLLang \.Locale\}\}/g, locale === 'zh' ? 'zh-CN' : 'en')
+   // The frame of the settings the page stands in is not part of the fixture.
+   .replace(/\{\{ if \.DebugMode \}\}.*?\{\{ end \}\}\{\{ if \.PageThemeRules \}\}.*?\{\{ end \}\}\n/s, '')
+   .replace(/\{\{ template "[^"]+" \. \}\}/g, '').replace(/\{\{\.PageAppearance\}\}/g, '')
    .replace(/\{\{\.EditorAssetVersion\}\}/g, 'test')
    .replace(/\{\{\.EditorMessages\}\}/g, escapeHTML(JSON.stringify(messages)));
  }

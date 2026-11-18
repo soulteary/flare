@@ -37,10 +37,6 @@
   border-left: 3px solid var(--flare-primary);
 }
 
-#page-settings .sidebar a.sidebar-out::after {
-  content: " ↗";
-}
-
 /* The switch that opens the menu in a narrow window. In a wide one the menu
    is always shown and the switch is not. */
 #page-settings .sidebar-toggle {

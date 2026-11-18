@@ -46,7 +46,9 @@ type transferTicket struct {
 
 func registerTransfers(e *fiber.App) {
 	e.Get(transferPath, auth.AuthRequired, func(c fiber.Ctx) error {
-		return c.Status(http.StatusOK).Render("transfer.html", fiber.Map{"Locale": editorLocale(), "HTMLLang": i18n.HTMLLang(editorLocale()), "CSRFToken": auth.CSRFToken(c), "TrustedMode": define.AppFlags.DisableLoginMode})
+		m := settingsFrame("Transfer")
+		m["HTMLLang"], m["CSRFToken"], m["TrustedMode"] = i18n.HTMLLang(editorLocale()), auth.CSRFToken(c), define.AppFlags.DisableLoginMode
+		return c.Status(http.StatusOK).Render("transfer.html", m)
 	})
 	e.Post(transferPath+"/preview", auth.AuthRequired, transferRequest, previewTransfer)
 	e.Post(transferPath+"/commit", auth.AuthRequired, transferRequest, commitTransfer)
