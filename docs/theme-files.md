@@ -561,8 +561,10 @@ directory out, for one page or for the whole instance. It changes neither
 
 The theme library hands a theme out as a file and takes one in: a theme file,
 or an archive for a theme that is a directory. Both are for the
-administrator, and neither selects a theme. The download is also on the
-theme page, next to each theme. In 0.7.0 both stand on the theme page.
+administrator, and neither selects a theme. The library lists the themes of
+the themes directory; the download of a bundled theme and of the custom
+colors is on the theme page, which lists every theme. In 0.7.0 both stand
+on the theme page.
 
 **Download** next to a theme sends a file:
 

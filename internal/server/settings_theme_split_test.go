@@ -77,9 +77,19 @@ func TestSettingsOfThemesAreOnThreePagesHTTP(t *testing.T) {
 	}
 	require.Len(t, seen, 9)
 
-	// The two pages with the themes list every theme with its preview and
-	// its download, and the remarks about files that are not used. The page
-	// of what is allowed lists no theme to choose.
+	// The theme page lists every theme. The theme library lists those the
+	// instance brings itself, and says where the others are: a bundled
+	// theme and the custom colors have no card there.
+	bundled := regexp.MustCompile(`class="?pull-left theme theme-[a-z]+"?`)
+	require.Len(t, bundled.FindAllString(getPage(t, handler, "/settings/theme"), -1), len(define.ThemePalettes))
+	library := getPage(t, handler, "/settings/themes")
+	require.Empty(t, bundled.FindAllString(library, -1))
+	require.NotContains(t, library, "export?name="+define.ThemePalettes[0].Name)
+	require.Regexp(t, `<p class="theme-help theme-bundled-elsewhere">`+regexp.QuoteMeta(i18n.T("en", "settings_themes_bundled"))+` <a href="?/settings/theme"?>`+i18n.T("en", "nav_theme")+`</a>`, library)
+	require.NotContains(t, getPage(t, handler, "/settings/theme"), "theme-bundled-elsewhere\"")
+	// Both list the themes of the instance with preview and download, and
+	// the remarks about files that are not used. The page of what is
+	// allowed lists no theme to choose.
 	cards := themeCardLinks(t, getPage(t, handler, "/settings/theme"))
 	require.Contains(t, cards, "zelda")
 	require.Equal(t, cards, themeCardLinks(t, getPage(t, handler, "/settings/themes")))

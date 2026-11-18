@@ -3,6 +3,7 @@
         {{ if eq .PageName "ThemeLibrary" }}<h2>{{ T .Locale "nav_themes" }}</h2>
         <p class="help-text settings-page-help">{{ T .Locale "settings_themes_help" }}</p>{{ else }}<h2>{{ T .Locale "settings_theme" }}</h2>{{ end }}
         {{ if .ThemeUnavailable }}<p class="theme-notice" role="alert">{{ .ThemeUnavailable }}</p>{{ end }}
+        {{ if eq .PageName "ThemeLibrary" }}<p class="theme-help theme-bundled-elsewhere">{{ T .Locale "settings_themes_bundled" }} <a href="{{ .SettingPages.Theme.Path }}">{{ T .Locale "nav_theme" }}</a></p>{{ else }}
         <div class="theme-groups clearfix">
             {{range .Themes}}
             <div class="pull-left theme theme-{{.Name}}">
@@ -37,6 +38,7 @@
             </div>
             {{ end }}
         </div>
+        {{ end }}
         <h2 class="theme-files-title">{{ T .Locale "theme_files" }}</h2>
         <p class="theme-help">{{ T .Locale "theme_files_help" }}</p>{{ if .ThemeSafeMode }}<p class="theme-notice theme-safe-mode" role="status">{{ .ThemeSafeMode }}</p>{{ end }}{{ if .ThemeFiles }}
         <div class="theme-groups theme-groups-files">

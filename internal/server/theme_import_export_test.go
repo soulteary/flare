@@ -103,17 +103,22 @@ func TestThemeImportAndExportHTTP(t *testing.T) {
 	stored, err := os.ReadFile("config.yml")
 	require.NoError(t, err)
 
-	// The page has the form and a download link for every theme.
+	// The theme library has the form, and a download for every theme the
+	// instance brings itself: none yet. The bundled themes have theirs on
+	// the theme page, which has no form to import.
 	page := readImportPage(t, getPage(t, handler, "/settings/themes"))
 	require.Equal(t, "multipart/form-data", page.encoding)
 	require.Equal(t, map[string]string{"action": "hidden", "theme-file": "file", "replace": "checkbox", "": "submit"}, page.form)
 	require.Empty(t, page.alerts)
 	require.Empty(t, page.status)
+	require.Empty(t, page.downloads)
 	downloads := make([]string, 0, len(define.ThemePalettes))
 	for _, theme := range define.ThemePalettes {
 		downloads = append(downloads, "/settings/theme/export?name="+theme.Name)
 	}
-	require.Equal(t, downloads, page.downloads)
+	chooser := readImportPage(t, getPage(t, handler, "/settings/theme"))
+	require.Equal(t, downloads, chooser.downloads)
+	require.Empty(t, chooser.form)
 
 	// A bundled theme is downloaded as a theme file and imported under the
 	// name the download has. The page then lists it; nothing is selected.
@@ -129,7 +134,8 @@ func TestThemeImportAndExportHTTP(t *testing.T) {
 	page = readImportPage(t, imported.Body.String())
 	require.Equal(t, []string{i18n.Format("en", "theme_import_done", map[string]any{"name": "tron-copy"})}, page.status)
 	require.Empty(t, page.alerts)
-	require.Equal(t, append(downloads, "/settings/theme/export?name=tron-copy"), page.downloads)
+	require.Equal(t, []string{"/settings/theme/export?name=tron-copy"}, page.downloads)
+	require.Equal(t, append(downloads, "/settings/theme/export?name=tron-copy"), readImportPage(t, getPage(t, handler, "/settings/theme")).downloads)
 	cards := readThemeFilePage(t, imported.Body.String()).cards
 	require.Len(t, cards, 1)
 	require.Equal(t, "tron-copy", cards[0].value)
