@@ -6,7 +6,7 @@ async function login(page,base){
  await Promise.all([page.waitForURL(base+'/'),page.getByRole('button',{name:'Login / 登录',exact:true}).click()]);
 }
 async function post(page,url,options={}){
- const base=new URL(url).origin,response=await page.request.get(base+'/editor/csrf');assert.equal(response.status(),200);
+ const base=new URL(url).origin,response=await page.request.get(base+'/settings/content/csrf');assert.equal(response.status(),200);
  const {csrfToken}=await response.json();assert(csrfToken);
  return page.request.post(url,{...options,headers:{Origin:base,'X-CSRF-Token':csrfToken,'X-Flare-Confirm-Public':'1',...options.headers}});
 }

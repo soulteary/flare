@@ -64,7 +64,7 @@ const {spawn} = require('node:child_process');
    await page.goto(base + '/settings/layout');
    await fits('html'); await fits('#page-settings');
    assert.equal(await page.locator('.sidebar').evaluate(el => getComputedStyle(el).position), 'static');
-   await page.goto(base + '/editor'); await page.waitForFunction(()=>window.FlareEditorUI?.store); await fits('html');
+   await page.goto(base + '/settings/content'); await page.waitForFunction(()=>window.FlareEditorUI?.store); await fits('html');
    // Forms must remain reachable on both sides of the editor's own 640px
    // breakpoint, independently of the homepage's 768px breakpoint.
    await page.locator('#new-entry').click();
@@ -80,27 +80,27 @@ const {spawn} = require('node:child_process');
   // A dropped connection must retain the exact pending document. A subsequent
   // successful save must use that same document, including untouched entries.
   await page.setViewportSize({width:390,height:844});
-  await page.goto(base + '/editor'); await page.waitForFunction(()=>window.FlareEditorUI?.store);
+  await page.goto(base + '/settings/content'); await page.waitForFunction(()=>window.FlareEditorUI?.store);
   const original = await page.evaluate(()=>window.FlareEditorUI.store.toJSON());
   await page.locator('.entry').first().getByRole('button', {name:'编辑',exact:true}).click();
   await page.locator('#entry-name').fill('Network failure keeps this edit');
   await page.locator('#entry-form').getByRole('button', {name:'完成',exact:true}).click();
   const pending = await page.evaluate(()=>window.FlareEditorUI.store.toJSON());
-  await page.route('**/editor/document', route => route.request().method()==='POST' ? route.abort('connectionreset') : route.continue());
+  await page.route('**/settings/content/document', route => route.request().method()==='POST' ? route.abort('connectionreset') : route.continue());
   page.once('dialog',d=>d.accept());await page.locator('#save-changes').click();
   await page.waitForFunction(()=>!document.getElementById('save-changes').disabled && document.querySelector('.savebar').dataset.error==='true');
   assert.deepEqual(await page.evaluate(()=>window.FlareEditorUI.store.toJSON()), pending);
   assert.equal(await page.evaluate(()=>window.FlareEditorUI.store.dirty), true);
-  assert.deepEqual(await (await page.request.get(base+'/editor/document')).json(), original);
-  await page.unroute('**/editor/document');
+  assert.deepEqual(await (await page.request.get(base+'/settings/content/document')).json(), original);
+  await page.unroute('**/settings/content/document');
   page.once('dialog',d=>d.accept());await page.locator('#save-changes').click();
   await page.waitForFunction(()=>!window.FlareEditorUI.store.dirty);
-  const saved = await (await page.request.get(base+'/editor/document')).json();
+  const saved = await (await page.request.get(base+'/settings/content/document')).json();
   assert.deepEqual(saved.apps, pending.apps); assert.deepEqual(saved.bookmarks, pending.bookmarks);
   assert.deepEqual(saved.categories, pending.categories);
   if (process.env.MOBILE_SCREENSHOT_DIR) {
    await fs.mkdir(process.env.MOBILE_SCREENSHOT_DIR, {recursive:true});
-   for (const [name, url] of [['editor','/editor'],['settings','/settings/layout'],['home','/']]) {
+   for (const [name, url] of [['editor','/settings/content'],['settings','/settings/layout'],['home','/']]) {
     await page.goto(base + url); await page.screenshot({path: path.join(process.env.MOBILE_SCREENSHOT_DIR, name + '.png'), fullPage:true});
    }
   }
@@ -108,7 +108,7 @@ const {spawn} = require('node:child_process');
   for (const width of [1024, 1440, 1920]) {
    await desktop.setViewportSize({width, height:1080}); await desktop.goto(base);
    assert.equal(await desktop.locator('#search[autofocus]').count(), 1);
-   await desktop.goto(base + '/editor');
+   await desktop.goto(base + '/settings/content');
    const size = await desktop.locator('html').evaluate(el => ({s:el.scrollWidth,w:el.clientWidth}));
    assert.ok(size.s <= size.w + 1);
   }

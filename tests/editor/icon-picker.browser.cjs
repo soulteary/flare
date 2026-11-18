@@ -12,18 +12,18 @@ const fs=require('node:fs/promises'),path=require('node:path'),assert=require('n
    if(url.pathname==='/')return route.fulfill({contentType:'text/html',body:fixture.html});
    if(url.pathname.startsWith('/assets/editor-ui/'))return route.fulfill({contentType:url.pathname.endsWith('.css')?'text/css':'application/javascript',body:await fs.readFile(path.join(__dirname,'../../internal/pages/editor/client',path.basename(url.pathname)),'utf8')});
    if(url.pathname==='/color.svg')return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#e02080" d="M0 0h24v24H0z"/></svg>'});
-   if(url.pathname==='/editor/document')return route.fulfill({contentType:'application/json',body:JSON.stringify({version:'one',categories:[{ID:'group',Name:'Group'}],apps:[{Name:'Existing',URL:'http://nas'}],bookmarks:[]})});
-   if(url.pathname==='/editor/icons'){
+   if(url.pathname==='/settings/content/document')return route.fulfill({contentType:'application/json',body:JSON.stringify({version:'one',categories:[{ID:'group',Name:'Group'}],apps:[{Name:'Existing',URL:'http://nas'}],bookmarks:[]})});
+   if(url.pathname==='/settings/content/icons'){
     requests.push(url.searchParams.toString());
     if(fail)return route.fulfill({status:500,body:'failure'});
     const offset=Number(url.searchParams.get('offset')),q=url.searchParams.get('q');
     const names=q==='empty'?[]:q==='server'?['servernetwork']:offset?['zebra']:['abacus','home'];
     return route.fulfill({contentType:'application/json',body:JSON.stringify({names,total:q==='empty'?0:q==='server'?1:49,offset,limit:48})});
    }
-   if(url.pathname==='/editor/icon' && url.searchParams.get('name')==='login')return route.fulfill({contentType:'text/html',body:'<html>Sign in</html>'});
-   if(url.pathname==='/editor/icon' && url.searchParams.get('name')==='broken')return route.fulfill({contentType:'image/svg+xml',body:'invalid SVG'});
-   if(url.pathname==='/editor/icon' && (url.searchParams.get('name')==='missing'||missingHome&&url.searchParams.get('name')==='home'))return route.fulfill({status:404,body:''});
-   if(url.pathname==='/editor/icon'){iconRequests.push(url.searchParams.get('name'));return route.fulfill({contentType:'image/svg+xml',body:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${iconColor}" d="M4 4h16v16H4z"/></svg>`});}
+   if(url.pathname==='/settings/content/icon' && url.searchParams.get('name')==='login')return route.fulfill({contentType:'text/html',body:'<html>Sign in</html>'});
+   if(url.pathname==='/settings/content/icon' && url.searchParams.get('name')==='broken')return route.fulfill({contentType:'image/svg+xml',body:'invalid SVG'});
+   if(url.pathname==='/settings/content/icon' && (url.searchParams.get('name')==='missing'||missingHome&&url.searchParams.get('name')==='home'))return route.fulfill({status:404,body:''});
+   if(url.pathname==='/settings/content/icon'){iconRequests.push(url.searchParams.get('name'));return route.fulfill({contentType:'image/svg+xml',body:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${iconColor}" d="M4 4h16v16H4z"/></svg>`});}
    return route.fulfill({status:404,body:''});
   });
   await page.goto('http://picker.test/');await page.getByRole('button',{name:'Existing',exact:true}).click();

@@ -46,7 +46,7 @@ func getRegularPages() model.RouteMaps {
 		Editor: model.Page{
 			Name:  "Editor",
 			Title: "Editor",
-			Path:  "/editor",
+			Path:  "/settings/content",
 		},
 		// MDI
 		Icons: model.Page{
@@ -78,12 +78,6 @@ func getSettingPages() model.RouteMaps {
 			Path:  "/settings/search",
 		},
 
-		Appearance: model.Page{
-			Name:  "Appearance",
-			Title: "界面",
-			Path:  "/settings/appearance",
-		},
-
 		// The two pages below hold what the theme page held beside choosing
 		// a theme: the files of the themes of the instance, and what the
 		// administrator allows themes and visitors.
@@ -99,9 +93,8 @@ func getSettingPages() model.RouteMaps {
 			Path:  "/settings/theme-access",
 		},
 
-		// The five pages below hold what the appearance page held. That
-		// page has no content of its own any more: its address leads to
-		// the layout, and still takes a form of the page as it was.
+		// The five pages below hold what one page, the appearance page,
+		// held before.
 		Modules: model.Page{
 			Name:  "Modules",
 			Title: "模块",

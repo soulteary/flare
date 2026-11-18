@@ -16,7 +16,7 @@
 <div id="editor-messages" data-messages="{{.EditorMessages}}" hidden></div>
 <div class="shell">
 <header class="page-header"><div><a href="/" data-leave>{{T .Locale "editor.home"}}</a><h1>{{T .Locale "editor.manage_navigation"}} <small id="total-count"></small></h1></div>
-<details class="menu"><summary>{{T .Locale "editor.more"}}</summary><nav><a href="/editor/transfer" data-leave>{{T .Locale "editor.import_export"}}</a><button id="open-batch" type="button">{{T .Locale "editor.batch_editing"}}</button>
+<details class="menu"><summary>{{T .Locale "editor.more"}}</summary><nav><a href="/settings/transfer" data-leave>{{T .Locale "editor.import_export"}}</a><button id="open-batch" type="button">{{T .Locale "editor.batch_editing"}}</button>
 <button id="restore-draft" type="button">{{T .Locale "editor.restore_editor_draft"}}</button><input id="draft-file" type="file" accept="application/json,.json" hidden><a href="/help" data-leave>{{T .Locale "editor.help"}}</a></nav></details></header>
 <aside id="recovery-warning" role="alert" hidden></aside>
 <main id="workspace" aria-busy="true">

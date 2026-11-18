@@ -10,7 +10,7 @@
    image.onload=()=>{icon.style.setProperty('--editor-icon-url',`url("${image.src}")`);icon.dataset.loaded='true';};
    image.onerror=()=>onerror(icon);
    icon.append(image);
-   fetch('/editor/icon?name='+encodeURIComponent(name),{cache:'no-store'})
+   fetch('/settings/content/icon?name='+encodeURIComponent(name),{cache:'no-store'})
     .then(response=>{
      if(!response.ok || response.redirected || !(response.headers.get('content-type')||'').includes('image/svg+xml'))throw Error('Invalid icon response');
      return response.text();

@@ -199,7 +199,7 @@ def run_one(binary, identity, kind, args, output, label, round_number):
             if identity == "authenticated":
                 replay = Client(port, warm.cookies)
                 clients.append(replay)
-                code, body, _ = warm.request("/editor/csrf")
+                code, body, _ = warm.request("/settings/content/csrf")
                 if code != 200:
                     raise RuntimeError("CSRF fetch failed")
                 token = json.loads(body)["csrfToken"]

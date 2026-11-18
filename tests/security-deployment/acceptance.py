@@ -179,10 +179,10 @@ try:
         port = start(conflict)
         status,_,body = request(port, '/')
         assert status == 200 and 'PRIVATE-ACCEPTANCE' not in body and 'PUBLIC-ACCEPTANCE' not in body
-        for path in ('/applications', '/editor/document', '/editor/transfer/export?collection=apps&format=yaml'):
+        for path in ('/applications', '/settings/content/document', '/settings/transfer/export?collection=apps&format=yaml'):
             status,_,body = request(port, path)
             assert 'PRIVATE-ACCEPTANCE' not in body and 'PUBLIC-ACCEPTANCE' not in body, path
-        assert request(port, '/editor/document')[0] == 409
+        assert request(port, '/settings/content/document')[0] == 409
         assert request(port, '/ping')[0] == 200
         record('trusted-mode/private content is withheld while the instance stays up')
         # Real filesystem faults in the Linux kernel, not injected Go errors.

@@ -10,12 +10,12 @@ import (
 	"github.com/soulteary/flare/internal/resources/mdi"
 )
 
-const iconPreviewPath = "/editor/icon"
+const iconPreviewPath = "/settings/content/icon"
 
 // registerEditorIcon keeps on-demand previews behind the editor's authentication.
 func registerEditorIcon(e *fiber.App) {
 	e.Get(iconPreviewPath, auth.AuthRequired, getEditorIcon)
-	e.Get("/editor/icons", auth.AuthRequired, searchEditorIcons)
+	e.Get("/settings/content/icons", auth.AuthRequired, searchEditorIcons)
 }
 
 // getEditorIcon resolves bundled names directly, including icons that have never

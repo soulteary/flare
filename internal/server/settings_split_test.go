@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"regexp"
-	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -233,26 +232,22 @@ func TestSavingOnePageOfTheSettingsLeavesTheOthersHTTP(t *testing.T) {
 	}
 }
 
-// The address of the page that held these settings leads to the layout, and
-// a form of that page, with all of its fields, is still taken.
-func TestAddressOfTheAppearancePageHTTP(t *testing.T) {
-	handler := customThemeRouter(t, "Theme: blackboard\n")
-	rec := getResponse(handler, "/settings/appearance")
-	require.Equal(t, http.StatusFound, rec.Code)
-	require.Equal(t, "/settings/layout", rec.Header().Get("Location"))
-	whole := url.Values{}
-	for _, fields := range splitValues {
-		for name, values := range fields {
-			whole[name] = slices.Clone(values)
-		}
+// The page that held these settings is gone, and so are the addresses the
+// editor had: nothing leads from them to the pages that took their place.
+func TestAddressesThatAreGoneHTTP(t *testing.T) {
+	customThemeDirectory(t, "Theme: blackboard\n")
+	handler, err := NewRouter(&model.Flags{Port: 5005, DisableLoginMode: true, EnableOfflineMode: true, EnableEditor: true})
+	require.NoError(t, err)
+	before := storedSettings(t)
+	for _, path := range []string{"/settings/appearance", "/editor", "/editor/batch", "/editor/transfer", "/editor/document", "/editor/csrf", "/editor/icons"} {
+		rec := getResponse(handler, path)
+		require.Equal(t, http.StatusNotFound, rec.Code, path)
+		require.Empty(t, rec.Header().Get("Location"), path)
+		require.NotEqual(t, http.StatusOK, postSettingsForm(t, handler, path, url.Values{"title": {"not stored"}}).Code, path)
 	}
-	rec = postSettingsForm(t, handler, "/settings/appearance", whole)
-	require.Equal(t, http.StatusOK, rec.Code)
-	action, shown := readSettingsForm(t, rec.Body.String())
-	require.Equal(t, "/settings/layout", action)
-	require.Equal(t, splitValues["/settings/layout"], shown)
-	for path, fields := range splitValues {
-		_, shown = readSettingsForm(t, getPage(t, handler, path))
-		require.Equal(t, fields, shown, path)
+	require.Equal(t, before, storedSettings(t))
+	// The pages that took their place.
+	for _, path := range []string{"/settings/layout", "/settings/content", "/settings/content/batch", "/settings/transfer"} {
+		require.Equal(t, http.StatusOK, getResponse(handler, path).Code, path)
 	}
 }

@@ -35,7 +35,7 @@ class AdministratorPressureTest(unittest.TestCase):
             def login(self): return 303,b"",1
             def request(self,path="/",body=None,headers=None):
                 time.sleep(.001)
-                if path=="/editor/csrf": return 200,b'{"csrfToken":"test"}',1
+                if path=="/settings/content/csrf": return 200,b'{"csrfToken":"test"}',1
                 if path=="/logout": return 303,b"",1
                 return 200,b"PUBLIC Entry 19998",1
         with patch.object(mod,"Client",MissingPrivateClient):

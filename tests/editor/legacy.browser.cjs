@@ -11,14 +11,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error(log);try{if((await fetch(base+'/ping')).ok)break}catch{}await new Promise(r=>setTimeout(r,100));}
   browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
   const page=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});page.setDefaultTimeout(8000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  const document=async()=>await(await page.request.get(base+'/editor/document')).json();
-  async function load(){await page.goto(base+'/editor');await page.waitForFunction(()=>window.FlareEditorUI?.store);}
+  const document=async()=>await(await page.request.get(base+'/settings/content/document')).json();
+  async function load(){await page.goto(base+'/settings/content');await page.waitForFunction(()=>window.FlareEditorUI?.store);}
   async function save(){page.once('dialog',d=>d.accept());await page.locator('#save-changes').click();await page.waitForFunction(()=>window.document.getElementById('save-status').textContent==='所有更改已保存');}
   async function edit(name,newName,location){await page.getByRole('button',{name,exact:true}).click();assert.equal(await page.locator('#entry-location').inputValue(),location);await page.locator('#entry-name').fill(newName);await page.locator('#entry-form').getByRole('button',{name:'完成',exact:true}).click();await save();}
   async function standaloneSave() {
     if(await page.evaluate(()=>!!window.FlareEditorBatch))return;
     const before=await document();
-    await page.goto(base+'/editor/batch');await page.waitForFunction(()=>!!window.document.querySelector('#container-bookmarks .handsontable'));
+    await page.goto(base+'/settings/content/batch');await page.waitForFunction(()=>!!window.document.querySelector('#container-bookmarks .handsontable'));
     await page.locator('.update-data').first().click();await page.waitForFunction(()=>window.document.getElementById('save-status').textContent==='全部数据已保存');
     const after=await document();assert.deepEqual(after.apps,before.apps);assert.deepEqual(after.bookmarks,before.bookmarks);assert.deepEqual(after.categories,before.categories);
     await load();
@@ -29,7 +29,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   await page.locator('#location-filter').selectOption('category:');await edit('Implicit bookmark','Implicit renamed','category:');doc=await document();const implicit=doc.bookmarks.find(b=>b.Name==='Implicit renamed');assert.equal(implicit.Category,'');assert.equal(implicit.Private,true);await standaloneSave();doc=await document();
   // Removing all named groups remains a valid legacy document when its links
   // are implicit. An application-only edit must not force reclassification.
-  const response=await browserAuth.post(page,base+'/editor/document',{headers:{'X-Flare-Editor':'1'},data:{...doc,categories:[],bookmarks:[implicit]}});assert.equal(response.status(),200);
+  const response=await browserAuth.post(page,base+'/settings/content/document',{headers:{'X-Flare-Editor':'1'},data:{...doc,categories:[],bookmarks:[implicit]}});assert.equal(response.status(),200);
   await load();await edit('Application','Application changed','apps');await edit('Implicit renamed','Still uncategorized','category:');doc=await document();assert.equal(doc.categories?.length||0,0);assert.equal(doc.apps.length,1);assert.equal(doc.bookmarks.length,1);assert.equal(doc.bookmarks[0].Category,'');assert.equal(doc.bookmarks[0].Private,true);
   await page.locator('#location-filter').selectOption('category:');await page.locator('#new-entry').click();assert.equal(await page.locator('#entry-location').inputValue(),'category:');await page.locator('#entry-name').fill('New uncategorized');await page.locator('#entry-url').fill('custom://nas/new?q=1#x');await page.locator('#entry-form').getByRole('button',{name:'完成',exact:true}).click();await save();
   doc=await document();assert.equal(doc.apps.length,1);assert.equal(doc.bookmarks.length,2);assert.ok(doc.bookmarks.every(b=>b.Category===''));
@@ -40,7 +40,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
   }
   await standaloneSave();doc=await document();
   // Nonempty missing IDs are still rejected; compatibility is not a blanket bypass.
-  doc.bookmarks[0].Category='missing';const invalid=await browserAuth.post(page,base+'/editor/document',{headers:{'X-Flare-Editor':'1'},data:doc});assert.equal(invalid.status(),422);
+  doc.bookmarks[0].Category='missing';const invalid=await browserAuth.post(page,base+'/settings/content/document',{headers:{'X-Flare-Editor':'1'},data:doc});assert.equal(invalid.status(),422);
   const yaml=await fs.readFile(path.join(dir,'bookmarks.yml'),'utf8');assert.equal(/\n\s+category:/.test(yaml),false);
   // With login disabled, a collection holding private entries is withheld: the
   // editor explains why instead of loading it, and the homepage shows no entry.
@@ -54,8 +54,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=r
    for(let i=0;i<100;i++){if(trusted.exitCode!==null)throw Error(trustedLog);try{if((await fetch(trustedBase+'/ping')).ok)break}catch{}await new Promise(r=>setTimeout(r,100));}
    const withheld=await browser.newPage();withheld.on('pageerror',e=>errors.push(e.message));const notice='Private entries exist while login is disabled. Enable login, or remove the private flags from the YAML files.';
    await withheld.goto(trustedBase+'/');const home=await withheld.locator('body').innerText();assert.ok(home.toLowerCase().includes(notice.toLowerCase()));assert.ok(home.toLowerCase().includes('visible bookmark'));assert.equal(home.toLowerCase().includes('withheld application'),false);
-   const refused=await withheld.request.get(trustedBase+'/editor/document');assert.equal(refused.status(),409);assert.equal((await refused.json()).code,'PRIVATE_CONTENT_REQUIRES_LOGIN');
-   await withheld.goto(trustedBase+'/editor');await withheld.waitForFunction(text=>window.document.getElementById('save-status').textContent===text,notice);
+   const refused=await withheld.request.get(trustedBase+'/settings/content/document');assert.equal(refused.status(),409);assert.equal((await refused.json()).code,'PRIVATE_CONTENT_REQUIRES_LOGIN');
+   await withheld.goto(trustedBase+'/settings/content');await withheld.waitForFunction(text=>window.document.getElementById('save-status').textContent===text,notice);
    assert.equal(await withheld.locator('#workspace').evaluate(element=>element.inert),true);assert.equal((await withheld.locator('body').innerText()).includes('Withheld application'),false);
    assert.match(trustedLog,/private navigation entries exist while login is disabled/);await withheld.close();
   }finally{trusted.kill();await fs.rm(trustedDir,{recursive:true,force:true});}

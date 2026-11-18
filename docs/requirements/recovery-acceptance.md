@@ -21,7 +21,7 @@ GOCACHE=/tmp/flare-phase1-go-cache GOFLAGS=-buildvcs=false go test -race ./cmd .
 1. **旧公开站点自动升级**：旧0.6.7 + DEFAULT + 开启管理登录 + 短密码 short，旧首页可见 private 标记条目。新版本自动建立 deployment 管理员，不改三个 YAML 字节；匿名与旧 Cookie 均看不到私有条目，新登录后可见；正常重启保持新会话。
 2. **旧整站私有自动升级**：同上但 PRIVATE，升级前后匿名均无私有内容；旧弱密码照常迁移，不突然要求用户改密，不需要迁移命令。
 3. **可信免登录升级**：显式 FLARE_DISABLE_LOGIN=true、无私有标记，旧→新→新重启均可匿名浏览和进入编辑器；新状态已持久提交，保持原可信使用方式。
-4. **兼容边界阻止公开回退**：旧内容 + 登录开启但无持久密码，以及免登录 + private 标记，两组新版本均在 `/`、`/editor`、`/health` 返回503；响应无私有哨兵，YAML摘要不变。
+4. **兼容边界阻止公开回退**：旧内容 + 登录开启但无持久密码，以及免登录 + private 标记，两组新版本均在 `/`、`/settings/content`、`/health` 返回503；响应无私有哨兵，YAML摘要不变。
 5. **本地恢复和来源切换**：deployment 默认 reset-password 拒绝（退出码2）；显式 --take-local-control 成功，旧 FLARE_PASS 仍存在也不覆盖本地新密码。新密码通过真实 HTTP 登录。
 6. **损坏和完整恢复**：分别损坏 state.json、complete、installation.json、commit.json；分别删除 complete、installation.json，及同时删除 state.json+complete；每次均503，无自动重新建库。停止进程后恢复完整目录，可重新登录。
 7. **Secret 来源故障与锁**：FLARE_PASS_FILE 正常迁移后，空文件/文件消失均503；恢复原文件后原有效会话和账号仍可用，没有把错误空密码写入库。运行中执行 maintenance revoke-all 退出码3，不能并发获取实例锁。

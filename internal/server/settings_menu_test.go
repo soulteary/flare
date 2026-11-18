@@ -79,7 +79,7 @@ func settingsMenuGroups(locale string, account, editor bool) [][]string {
 	}
 	groups := [][]string{}
 	if editor {
-		groups = append(groups, []string{text("nav_group_content"), text("nav_editor") + " /editor", text("nav_transfer") + " /editor/transfer"})
+		groups = append(groups, []string{text("nav_group_content"), text("nav_editor") + " /settings/content", text("nav_transfer") + " /settings/transfer"})
 	}
 	return append(groups, [][]string{
 		{text("nav_group_home"), text("nav_modules") + " /settings/modules", text("nav_search") + " /settings/search", text("nav_weather") + " /settings/weather",
@@ -102,7 +102,7 @@ func TestSettingsMenuIsGroupedHTTP(t *testing.T) {
 			groups := settingsMenuGroups(locale, false, editor)
 			var out []string
 			if editor {
-				out = []string{"/editor", "/editor/transfer"}
+				out = []string{"/settings/content", "/settings/transfer"}
 			}
 			for _, path := range []string{"/settings/modules", "/settings/search", "/settings/weather", "/settings/clock", "/settings/links", "/settings/theme", "/settings/layout", "/settings/themes", "/settings/theme-access", "/settings/site", "/settings/about"} {
 				page := getPage(t, handler, path)

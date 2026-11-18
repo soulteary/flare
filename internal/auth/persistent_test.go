@@ -287,7 +287,7 @@ func TestSafeReturnOnlyNavigationPages(t *testing.T) {
 	for _, unsafe := range []string{"https://evil.test", "//evil.test", "/\\evil.test", "/%2fevil.test", "/%252fevil.test", "/settings?token=secret", "/login", "/logout", "/account/password", "/redir/url", "/\x00", "/\n"} {
 		require.Equal(t, "/", safeReturn(unsafe), unsafe)
 	}
-	for _, safe := range []string{"/", "/editor", "/settings", "/settings/search"} {
+	for _, safe := range []string{"/", "/settings/content", "/settings", "/settings/search"} {
 		require.Equal(t, safe, safeReturn(safe))
 	}
 }
@@ -307,11 +307,11 @@ func TestPersistentLoginEmptyFieldsAndCookieHandshake(t *testing.T) {
 		require.Equal(t, 400, b.request("POST", "/login", values, nil).StatusCode)
 	}
 	b.login()
-	check := b.request("GET", "/account/cookie-check?return_to=/editor", nil, nil)
+	check := b.request("GET", "/account/cookie-check?return_to=/settings/content", nil, nil)
 	require.Equal(t, 303, check.StatusCode)
-	require.Equal(t, "/editor", check.Header.Get("Location"))
+	require.Equal(t, "/settings/content", check.Header.Get("Location"))
 	noCookies := &persistentBrowser{t, b.app, make(map[string]*http.Cookie)}
-	check = noCookies.request("GET", "/account/cookie-check?return_to=/editor", nil, nil)
+	check = noCookies.request("GET", "/account/cookie-check?return_to=/settings/content", nil, nil)
 	require.Equal(t, 503, check.StatusCode)
 	require.Empty(t, check.Header.Get("Location"))
 	body, _ := io.ReadAll(check.Body)

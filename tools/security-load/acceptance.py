@@ -125,7 +125,7 @@ def measure_import(port, directory, baseline=False):
         status, _, login_ms = client.login()
         if status != 303:
             raise RuntimeError(f"import login failed: HTTP {status}")
-        status, raw, _ = client.request("/editor/csrf")
+        status, raw, _ = client.request("/settings/content/csrf")
         if status != 200:
             raise RuntimeError(f"import CSRF failed: HTTP {status}")
         token = json.loads(raw)["csrfToken"]
@@ -156,14 +156,14 @@ def measure_import(port, directory, baseline=False):
         "Origin": f"http://127.0.0.1:{port}",
     }
     status, raw, preview_ms = client.request(
-        "/editor/transfer/preview", b"".join(parts), headers
+        "/settings/transfer/preview", b"".join(parts), headers
     )
     if status != 200:
         raise RuntimeError(f"import preview failed: HTTP {status}: {raw[:200]!r}")
     preview = json.loads(raw)
     headers["Content-Type"] = "application/json"
     status, raw, commit_ms = client.request(
-        "/editor/transfer/commit", json.dumps({"token": preview["token"]}), headers
+        "/settings/transfer/commit", json.dumps({"token": preview["token"]}), headers
     )
     if status != 200:
         raise RuntimeError(f"import commit failed: HTTP {status}: {raw[:200]!r}")
@@ -273,7 +273,7 @@ def administrator_pressure(port, duration):
             try:
                 code, _, milliseconds = client.login()
                 status, private, _ = client.request(paths[1][1])
-                status, raw, _ = client.request("/editor/csrf")
+                status, raw, _ = client.request("/settings/content/csrf")
                 csrf = json.loads(raw)["csrfToken"]
                 replay = Client(port)
                 replay.cookies = client.cookies.copy()

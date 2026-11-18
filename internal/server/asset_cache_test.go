@@ -135,13 +135,13 @@ func TestPersistentStorePublicAssetCacheAndPrivateResponses(t *testing.T) {
 				}
 			}
 			if mode.disabled || mode.authenticated {
-				preview := request(http.MethodGet, "/editor/icon?name=server", nil)
+				preview := request(http.MethodGet, "/settings/content/icon?name=server", nil)
 				require.Equal(t, http.StatusOK, preview.Code)
 				require.Equal(t, "no-store", preview.Header().Get("Cache-Control"))
 			}
-			for _, path := range []string{"/editor", "/editor/csrf", "/editor/document"} {
+			for _, path := range []string{"/settings/content", "/settings/content/csrf", "/settings/content/document"} {
 				page := request(http.MethodGet, path, map[string]string{"If-None-Match": "*"})
-				if mode.disabled && path == "/editor/document" {
+				if mode.disabled && path == "/settings/content/document" {
 					require.Equal(t, http.StatusConflict, page.Code, path)
 					require.NotContains(t, page.Body.String(), "PRIVATE-CACHE-SENTINEL", path)
 				} else if mode.disabled || mode.authenticated {
@@ -180,7 +180,7 @@ func TestEditorAssetsUseVersionedURLsAndRevalidate(t *testing.T) {
 		handler.ServeHTTP(rec, req)
 		return rec
 	}
-	page := request(http.MethodGet, "/editor", "")
+	page := request(http.MethodGet, "/settings/content", "")
 	require.Equal(t, http.StatusOK, page.Code)
 	references := regexp.MustCompile(`/assets/editor-ui/[a-zA-Z0-9._-]+`).FindAllString(page.Body.String(), -1)
 	paths := regexp.MustCompile(`/assets/editor-ui/[a-zA-Z0-9._-]+\?v=[a-f0-9]{64}`).FindAllString(page.Body.String(), -1)
@@ -219,7 +219,7 @@ func TestEditorAssetsUseVersionedURLsAndRevalidate(t *testing.T) {
 		require.Equal(t, "public, max-age=0, must-revalidate", get.Header().Get("Cache-Control"), path)
 		require.NotEmpty(t, get.Header().Get("ETag"), path)
 	}
-	preview := request(http.MethodGet, "/editor/icon?name=server", "")
+	preview := request(http.MethodGet, "/settings/content/icon?name=server", "")
 	require.Equal(t, http.StatusOK, preview.Code)
 	require.Equal(t, "no-store", preview.Header().Get("Cache-Control"), "theme-dependent previews must not survive a theme change")
 }

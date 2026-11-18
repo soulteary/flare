@@ -28,7 +28,7 @@ import (
 	"github.com/soulteary/flare/internal/yamlutil"
 )
 
-const transferPath = "/editor/transfer"
+const transferPath = "/settings/transfer"
 
 var transferKey [32]byte
 var transferKeyOnce sync.Once

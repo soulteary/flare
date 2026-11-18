@@ -3,7 +3,7 @@
 > Scope: transfer is available since 0.6.2. The privacy and persistent-session
 > requirements marked below apply to stable 0.6.8 and current main.
 
-Enable the existing editor (`--enable_editor`, enabled by default), open `/editor`,
+Enable the existing editor (`--enable_editor`, enabled by default), open `/settings/content`,
 and select **导入 / 导出浏览器书签与 Flare YAML**. Save any pending editor changes
 before opening the tool; return to a fresh editor page after importing.
 

@@ -127,7 +127,7 @@ func TestUndecodableApplicationsKeepInstanceAndBookmarksAvailable(t *testing.T) 
 	status, _, body = contentErrorRequest(t, app, http.MethodPost, "/search/suggest", "search=healthy")
 	require.Equal(t, http.StatusInternalServerError, status)
 	require.NotContains(t, body, "broken-apps-sentinel")
-	status, _, body = contentErrorRequest(t, app, http.MethodGet, "/editor/document", "")
+	status, _, body = contentErrorRequest(t, app, http.MethodGet, "/settings/content/document", "")
 	require.Equal(t, http.StatusInternalServerError, status)
 	require.NotContains(t, body, "broken-apps-sentinel")
 	require.NotContains(t, body, "HEALTHY-BOOKMARK-SENTINEL")
@@ -216,20 +216,20 @@ func TestPrivateEntriesAreWithheldWhileLoginIsDisabled(t *testing.T) {
 	require.Equal(t, http.StatusFound, status)
 	require.Equal(t, "https://public-app.example.com/", headers.Get("Location"))
 
-	status, _, body = contentErrorRequest(t, app, http.MethodGet, "/editor/document", "")
+	status, _, body = contentErrorRequest(t, app, http.MethodGet, "/settings/content/document", "")
 	require.Equal(t, http.StatusConflict, status)
 	require.Contains(t, body, `"code":"PRIVATE_CONTENT_REQUIRES_LOGIN"`)
-	absent(body, "/editor/document")
+	absent(body, "/settings/content/document")
 	require.NotContains(t, body, "PUBLIC-APP-SENTINEL", "the editor document is refused as a whole")
 
 	for _, format := range []string{"yaml", "html"} {
-		path := "/editor/transfer/export?collection=bookmarks&format=" + format
+		path := "/settings/transfer/export?collection=bookmarks&format=" + format
 		status, _, body = contentErrorRequest(t, app, http.MethodGet, path, "")
 		require.Equal(t, http.StatusConflict, status, path)
 		require.Contains(t, body, `"code":"PRIVATE_CONTENT_REQUIRES_LOGIN"`, path)
 		absent(body, path)
 	}
-	status, _, body = contentErrorRequest(t, app, http.MethodGet, "/editor/transfer/export?collection=apps&format=yaml", "")
+	status, _, body = contentErrorRequest(t, app, http.MethodGet, "/settings/transfer/export?collection=apps&format=yaml", "")
 	require.Equal(t, http.StatusOK, status)
 	require.Contains(t, body, "PUBLIC-APP-SENTINEL")
 

@@ -167,7 +167,7 @@
     if(collection==='categories'){renderCategories();open(categoryDialog);const input=categoryDialog.querySelectorAll('[data-category]')[Number(index)];if(input){input.setAttribute('aria-invalid','true');input.focus();}}
     else {const item=store.working[collection]?.[Number(index)];if(item){openEntry(item._key);fieldError(field,result.error);}}
   }
-  async function refreshCSRF(){const response=await fetch('/editor/csrf',{cache:'no-store',redirect:'error'});if(!response.ok)throw Error(t('privacy.verify_retry'));return(await response.json()).csrfToken;}
+  async function refreshCSRF(){const response=await fetch('/settings/content/csrf',{cache:'no-store',redirect:'error'});if(!response.ok)throw Error(t('privacy.verify_retry'));return(await response.json()).csrfToken;}
   async function save() {
     if(!store||saving||recoveryRequired||entryDialog.open||categoryDialog.open)return;
     if(batch?.active && !batch.flush())return;
@@ -177,7 +177,7 @@
     if(!confirm(t('privacy.save_confirm'))){syncStatus();return;}
     busy(true);setStatus(t('editor.saving'));let message=t('editor.all_changes_saved'),error=false, responseParsed=false, serverInvalid=null;
     try {
- const response=await fetch('/editor/document',{method:'POST',headers:{'Content-Type':'application/json','X-Flare-Editor':'1','X-CSRF-Token':await refreshCSRF(),'X-Flare-Confirm-Public':'1'},body:JSON.stringify(store.toJSON()),signal:AbortSignal.timeout(30000)});
+ const response=await fetch('/settings/content/document',{method:'POST',headers:{'Content-Type':'application/json','X-Flare-Editor':'1','X-CSRF-Token':await refreshCSRF(),'X-Flare-Confirm-Public':'1'},body:JSON.stringify(store.toJSON()),signal:AbortSignal.timeout(30000)});
       if(response.redirected)throw Error(t('editor.your_session_may_have_expired_sign_in_in_another'));
       if(!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('editor.unexpected_save_response',{status:response.status}));
       const result=await response.json();responseParsed=true;
@@ -223,7 +223,7 @@
   window.addEventListener('beforeunload',event=>{if(saving||hasUnsavedChanges()){event.preventDefault();event.returnValue='';}});
   // The lazy batch adapter attaches to this single working store.
   window.FlareEditorUI={get store(){return store;},get saving(){return saving;},render,setStatus,syncStatus,validateDocument,locateError,registerBatch(adapter){batch=adapter;},get hasOpenDialog(){return entryDialog.open||categoryDialog.open;}};
-  try {const response=await fetch('/editor/document',{cache:'no-store'});const json=(response.headers.get('content-type')||'').includes('application/json');
+  try {const response=await fetch('/settings/content/document',{cache:'no-store'});const json=(response.headers.get('content-type')||'').includes('application/json');
    // A document withheld because login is disabled carries the server's explanation.
    if(response.status===409&&json&&!response.redirected){const failure=await response.json();if(failure.code==='PRIVATE_CONTENT_REQUIRES_LOGIN'&&typeof failure.error==='string'&&failure.error)throw Error(failure.error);throw Error(t('editor.cannot_load_navigation_data_sign_in_again_or_check'));}
    if(!response.ok||response.redirected||!json)throw Error(t('editor.cannot_load_navigation_data_sign_in_again_or_check'));const serverDoc=await response.json();store=new FlareEditorState.Store(serverDoc);if(serverDoc.recoveryPaths?.length){const warning=$('recovery-warning');warning.hidden=false;warning.textContent=t('editor.recovery_paths_warning',{paths:serverDoc.recoveryPaths.join(', ')});}$('workspace').setAttribute('aria-busy','false');render();document.dispatchEvent(new Event('flare-editor-ready'));}

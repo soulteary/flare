@@ -12,8 +12,8 @@ import (
 func TestLegacyEditorCannotOverwriteWithoutVersion(t *testing.T) {
 	t.Chdir(t.TempDir())
 	app := fiber.New()
-	app.Post("/editor", updateData)
-	req := httptest.NewRequest(http.MethodPost, "/editor", strings.NewReader("categories=&bookmarks="))
+	app.Post("/settings/content", updateData)
+	req := httptest.NewRequest(http.MethodPost, "/settings/content", strings.NewReader("categories=&bookmarks="))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 	serveTransferHTTP(t, app, rec, req)

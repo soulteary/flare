@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/html"
 
+	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/i18n"
 )
@@ -123,9 +124,9 @@ func TestSettingsOfThemesAreOnThreePagesHTTP(t *testing.T) {
 	require.Contains(t, getPage(t, handler, "/settings/themes"), define.ThemeRepositoryURL)
 }
 
-// After a form, the page that has the form is shown, whichever of the three
-// addresses the form was sent to: a form of the theme page as an earlier
-// release rendered it, with everything on one page, is still taken.
+// A form is taken at the address of the page it stands on, and that page is
+// shown afterwards. Sent to another of the three addresses it is refused,
+// and nothing is stored.
 func TestFormsAboutThemesShowThePageTheyStandOnHTTP(t *testing.T) {
 	handler := themeFilesRouter(t, splitThemeConfig, splitThemeFiles())
 	forms := map[string]struct {
@@ -150,16 +151,28 @@ func TestFormsAboutThemesShowThePageTheyStandOnHTTP(t *testing.T) {
 	for _, name := range names {
 		form := forms[name]
 		for _, address := range []string{"/settings/theme", "/settings/themes", "/settings/theme-access"} {
+			if address != current[form.page] {
+				selected, _ := define.ThemeSnapshot()
+				rec := postSettingsForm(t, handler, address, form.fields)
+				require.Equal(t, http.StatusBadRequest, rec.Code, "%s sent to %s", name, address)
+				now, _ := define.ThemeSnapshot()
+				require.Equal(t, selected, now, "%s sent to %s", name, address)
+				continue
+			}
 			rec := postSettingsForm(t, handler, address, form.fields)
 			if form.status != 0 {
 				require.Equal(t, form.status, rec.Code, "%s sent to %s", name, address)
 			}
 			menu := readSettingsMenu(t, rec.Body.String())
 			require.NotNil(t, menu, "%s sent to %s", name, address)
-			require.Equal(t, []string{current[form.page]}, menu.current, "%s sent to %s", name, address)
+			require.Equal(t, []string{address}, menu.current, "%s sent to %s", name, address)
 		}
 	}
-	// What the forms stored is the same whichever address took them.
+	options, err := data.GetAllSettingsOptions()
+	require.NoError(t, err)
+	require.True(t, options.ThemeTemplates)
+	require.Equal(t, []string{"tron"}, options.ThemeChoices)
+	// The forms that were taken stored what they submit.
 	selected, _ := define.ThemeSnapshot()
 	require.Equal(t, "custom", selected)
 }

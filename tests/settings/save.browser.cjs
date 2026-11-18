@@ -105,7 +105,7 @@ const {spawn} = require('node:child_process');
     assert.equal(await page.locator('.theme-notice[role="alert"]').count(), 1);
     assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('h2')).color), 'rgb(232, 241, 228)');
     // The shared document policy covers every settings form, including search actions.
-    for (const route of ['theme', 'weather', 'search', 'appearance', 'application']) {
+    for (const route of ['theme', 'themes', 'theme-access', 'weather', 'search', 'modules', 'clock', 'links', 'layout', 'site', 'about', 'application']) {
       await page.goto(proxied + '/settings/' + route);
       assert.equal(await page.evaluate(() => document.referrerPolicy || document.querySelector('meta[name="referrer"]')?.content), 'same-origin');
     }

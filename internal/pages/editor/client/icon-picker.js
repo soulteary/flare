@@ -21,7 +21,7 @@
  async function load(){
   const current=++request;controller?.abort();controller=new AbortController();grid.replaceChildren();prev.disabled=true;next.disabled=true;status.textContent=t('editor.loading_icons');
   try{
-   const response=await fetch('/editor/icons?'+new URLSearchParams({q:search.value,offset:String(offset)}),{signal:controller.signal,cache:'no-store'});
+   const response=await fetch('/settings/content/icons?'+new URLSearchParams({q:search.value,offset:String(offset)}),{signal:controller.signal,cache:'no-store'});
    if(!response.ok||response.redirected||!(response.headers.get('content-type')||'').includes('application/json'))throw Error(t('editor.cannot_load_icons_check_your_session_and_retry'));
    const result=await response.json();if(current!==request)return;
    status.textContent=result.total ? t('editor.icon_result_count',{total:result.total,start:offset+1,end:offset+result.names.length}):t('editor.no_icons_found_try_another_english_keyword');

@@ -39,7 +39,7 @@ func RegisterRouting(e *fiber.App) {
 		e.Use(_ASSETS_WEB_URI, assets.StaticFS(introAssets, _ASSETS_WEB_URI))
 	}
 	e.Get(define.RegularPages.Editor.Path, auth.AuthRequired, render)
-	e.Get("/editor/batch", auth.AuthRequired, render)
+	e.Get("/settings/content/batch", auth.AuthRequired, render)
 	e.Post(define.RegularPages.Editor.Path, auth.AuthRequired, updateData)
 }
 

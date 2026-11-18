@@ -5,7 +5,7 @@
 
 ## State and persistence
 
-The editor loads `/editor/document` with a revision covering the exact on-disk
+The editor loads `/settings/content/document` with a revision covering the exact on-disk
 bytes of both `apps.yml` and `bookmarks.yml`. All views share a working document;
 search/filter operations must never remove hidden entries from that document.
 Category IDs survive renaming and reordering. Session entry keys do not enter YAML.
@@ -37,7 +37,7 @@ and the files must be corrected, or login enabled, first.
 
 Saving requires the current session/browser-bound CSRF token in addition to
 `X-Flare-Editor: 1` and the document revision. Programmatic clients can GET
-`/editor/csrf` with their authenticated cookies and send `X-CSRF-Token` on saves.
+`/settings/content/csrf` with their authenticated cookies and send `X-CSRF-Token` on saves.
 Do not use a token from another session or put it in a URL.
 
 Making resources public requires password verification within the last 10 minutes
