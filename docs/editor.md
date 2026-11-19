@@ -106,6 +106,10 @@ undo. Category ordering has up/down controls and never changes category IDs.
 `node tests/editor/list.browser.cjs` checks this with the same variables as
 the other scripts.
 
+The dialogs of the page, for an entry, for the categories and for choosing an
+icon, open in the middle of the window. `node tests/editor/dialogs.browser.cjs`
+checks this on the page as it is served, in the frame of the settings.
+
 Actual data comparison clears dirty state when values are restored. Save errors
 preserve the working document; conflicts expose a JSON draft download and an
 explicit reload action. The JSON draft is an editor-state export, not a browser
