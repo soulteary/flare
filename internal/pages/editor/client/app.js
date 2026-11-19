@@ -90,16 +90,28 @@
   function hasUnsavedChanges() {return store?.dirty || batch?.dirty || (entryDialog.open && formValue()!==formStart);}
   function clearErrors() {for(const name of ['name','url','location']){$('error-'+name).textContent='';$(fields[name==='name'?'Name':name==='url'?'URL':'Category']).removeAttribute('aria-invalid');}}
   function fieldError(name,message) {const id=name==='Name'?'name':name==='URL'?'url':'location';$('error-'+id).textContent=message;$(fields[name]).setAttribute('aria-invalid','true');$(fields[name]).focus();}
+  // The positions an entry can take in the chosen place: where it is, when
+  // it stays in its place, the end, the start, or after another entry.
+  function positions() {
+    const list=$('entry-position'), location=$('entry-location').value, entry=editingKey?store.find(editingKey):null;
+    list.replaceChildren();
+    const known=location==='apps'||location==='category:'||store.working.categories.some(c=>'category:'+c.ID===location);
+    list.disabled=!known;if(!known)return;
+    const add=(value,text)=>{const option=el('option',text);option.value=value;list.append(option);};
+    if(entry && entry.location===location)add('keep',t('editor.position_keep'));
+    add('end',t('editor.position_end'));add('start',t('editor.position_start'));
+    for(const other of store.siblings(location,editingKey))add('after:'+other.key,t('editor.position_after',{name:other.name}));
+  }
   function openEntry(key=null) {
     if(saving)return;editingKey=key;const entry=key?store.find(key):null;
     $('entry-form').reset();clearErrors();$('entry-options').open=false;
     $('entry-dialog-title').textContent=entry?t('editor.edit_entry'):t('editor.new_entry');
     for(const name of ['Name','URL','Icon','Desc'])$('entry-form').elements[name].value=entry?.item[name]||'';
     const selected=entry?.location || ($('location-filter').value!=='all'?$('location-filter').value:lastLocation);
-    locations($('entry-location'),selected);$('entry-private').checked=entry?!!entry.item.Private:(!trusted && (!selected||selected==='apps'||selected==='category:'));privacyHint();formStart=formValue();iconPreview();open(entryDialog);
+    locations($('entry-location'),selected);positions();$('entry-private').checked=entry?!!entry.item.Private:(!trusted && (!selected||selected==='apps'||selected==='category:'));privacyHint();formStart=formValue();iconPreview();open(entryDialog);
   }
   function privacyHint(){const loc=$('entry-location').value, cat=store.working.categories.find(c=>'category:'+c.ID===loc);$('privacy-hint').textContent=cat?.Private?t('privacy.inherited'):$('entry-private').checked?t('privacy.admin_only'):t('privacy.public_hint');}
- $('entry-private').onchange=privacyHint;$('entry-location').addEventListener('change',()=>{if(!editingKey)$('entry-private').checked=!trusted&&['apps','category:',''].includes($('entry-location').value);privacyHint();});
+ $('entry-private').onchange=privacyHint;$('entry-location').addEventListener('change',()=>{positions();if(!editingKey)$('entry-private').checked=!trusted&&['apps','category:',''].includes($('entry-location').value);privacyHint();});
  function cancelEntry() {if(formValue()!==formStart && !confirm(t('editor.discard_changes_in_this_form')))return;close(entryDialog);}
   function iconPreview() {
     const value=$('entry-icon').value.trim(), preview=$('icon-preview');preview.replaceChildren();
@@ -119,7 +131,7 @@
     if(values.Location!=='apps' && values.Location!=='category:' && !store.working.categories.some(c=>'category:'+c.ID===values.Location))return fieldError('Category',t('editor.choose_a_valid_location'));
     const existed=editingKey && store.find(editingKey);
     const item={Name:values.Name.trim(),URL:values.URL.trim(),Icon:values.Icon,Desc:values.Desc,Private:$('entry-private').checked};
-    try{editingKey=store.put(item,values.Location,editingKey);}catch(error){setStatus(stateErrorText(error),true);return;}lastLocation=values.Location;undo=null;close(entryDialog);render();
+    try{editingKey=store.put(item,values.Location,editingKey,values.Position);}catch(error){setStatus(stateErrorText(error),true);return;}lastLocation=values.Location;undo=null;close(entryDialog);render();
     focusEntry(editingKey);
     if(existed && $('location-filter').value!=='all' && $('location-filter').value!==values.Location)setStatus(t('editor.move_success',{location:categoryName(values.Location)}));
   });

@@ -73,14 +73,34 @@
       const doc=rawTargets.get(this.working);
       for(const collection of ['apps','bookmarks']){const index=doc[collection].findIndex(item=>item._key===entryKey);if(index>=0){const item=this.working[collection][index];return{item,location:collection==='apps'?'apps':'category:'+item.Category};}}
     }
-    put(item, location, entryKey) {
+    put(item, location, entryKey, position) {
       const current=entryKey && this.find(entryKey);
       if (entryKey && !current) throw Object.assign(Error('entry_not_found'),{code:'entry_not_found'});
       const next={...(current ? current.item : {}), ...item, _key:entryKey || key(), Category:location==='apps' ? '' : location.slice('category:'.length)};
-      if (current && current.location===location) { Object.assign(current.item,next); return next._key; }
+      if (current && current.location===location && (!position || position==='keep')) { Object.assign(current.item,next); return next._key; }
       if (current) this.remove(entryKey);
-      (location==='apps' ? this.working.apps : this.working.bookmarks).push(next);
+      const collection=location==='apps' ? 'apps' : 'bookmarks';
+      this.working[collection].splice(this.placeAt(collection,next.Category,position),0,next);
       return next._key;
+    }
+    // placeAt is where an entry goes among those of its place: after one of
+    // them, before the first, or, without a position, after the last. The
+    // applications are one place and a category of the bookmarks is one. An
+    // entry that is the first of its place goes to the end of the list.
+    placeAt(collection, category, position) {
+      const list=rawTargets.get(this.working)[collection], same=item=>collection==='apps' || item.Category===category;
+      if (typeof position==='string' && position.startsWith('after:')) {
+        const index=list.findIndex(item=>item._key===position.slice('after:'.length) && same(item));
+        if (index>=0) return index+1;
+      }
+      if (position==='start') { const index=list.findIndex(same); if (index>=0) return index; }
+      for (let index=list.length-1; index>=0; index--) if (same(list[index])) return index+1;
+      return list.length;
+    }
+    // siblings are the other entries of a place, in their order.
+    siblings(location, entryKey) {
+      const doc=rawTargets.get(this.working), category=location.slice('category:'.length);
+      return (location==='apps' ? doc.apps : doc.bookmarks.filter(item=>item.Category===category)).filter(item=>item._key!==entryKey).map(item=>({key:item._key,name:item.Name}));
     }
     remove(entryKey) {
       const doc=rawTargets.get(this.working);for(const collection of ['apps','bookmarks']) {const index=doc[collection].findIndex(item=>item._key===entryKey);if(index>=0){const item=doc[collection].splice(index,1)[0];this._revision++;return {collection,index,item};}}
