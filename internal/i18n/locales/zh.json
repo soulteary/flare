@@ -516,6 +516,7 @@
   "editor.delete_the_selected": "删除选中的 ",
   "editor.rows_save_changes_to_apply": " 行？保存后生效。",
   "editor.discard_table_edits_not_yet_synchronized_changes_already_in": "放弃进入表格后尚未同步的修改？已加入工作数据的更改仍保留。",
+  "editor.browse_all_icons": "查看全部图标（在新窗口打开）",
   "editor.choose_icon": "选择图标",
   "editor.choose_a_built_in_icon": "选择内置图标",
   "editor.search_icon_names_english_keywords": "搜索图标名称（英文关键词）",

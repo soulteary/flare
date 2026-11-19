@@ -110,6 +110,9 @@ The dialogs of the page, for an entry, for the categories and for choosing an
 icon, open in the middle of the window. `node tests/editor/dialogs.browser.cjs`
 checks this on the page as it is served, in the frame of the settings.
 
+The entry form has, below the icon, a link to the page of all icons at
+`/icons/`. It opens in a window of its own, so the form stays as it is.
+
 Actual data comparison clears dirty state when values are restored. Save errors
 preserve the working document; conflicts expose a JSON draft download and an
 explicit reload action. The JSON draft is an editor-state export, not a browser
