@@ -1,4 +1,4 @@
-{{ define "settings-clock.html" }}<div class=setting-group-container><form method=POST action="{{ .SettingPages.Clock.Path }}">{{ if .SecurityCSRFToken }}<input type=hidden name=csrf-token value="{{ .SecurityCSRFToken }}">{{ end }}<h2>{{ T .Locale "nav_clock" }}</h2><p class="help-text settings-page-help">{{ T .Locale "settings_clock_help" }}<div class=form-group><label for=settings-show-datetime>{{ T .Locale "show_datetime" }}</label>
+{{ define "settings-clock.html" }}<div class=setting-group-container><form method=POST action="{{ .SettingPages.Clock.Path }}">{{ if .SecurityCSRFToken }}<input type=hidden name=csrf-token value="{{ .SecurityCSRFToken }}">{{ end }}<h2>{{ T .Locale "nav_clock" }}</h2><p class="help-text settings-page-help">{{ T .Locale "settings_clock_help" }}</p>{{ if .SettingsSaved }}<p class=settings-notice role=status>{{ T .Locale "settings_saved" }}</p>{{ end }}<div class=form-group><label for=settings-show-datetime>{{ T .Locale "show_datetime" }}</label>
 {{ if .OptionShowDateTime }}
 <select name=show-datetime id=settings-show-datetime><option value=1 selected>{{ T .Locale "yes" }}<option value=0>{{ T .Locale "no" }}</select>
 {{ else }}

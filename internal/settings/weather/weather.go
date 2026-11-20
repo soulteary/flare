@@ -155,8 +155,11 @@ func updateWeatherOptions(c fiber.Ctx) error {
 		return renderSaveFailure(c, saveErr, &body)
 	}
 
+	c.Locals(weatherSavedKey{}, true)
 	return render(c, "")
 }
+
+type weatherSavedKey struct{}
 
 // renderSaveFailure keeps the submitted form. The page's own notice says that
 // nothing was saved; the cause is shown in the message slot below the form.
@@ -218,6 +221,9 @@ func renderForm(c fiber.Ctx, testResult string, status int, submitted *weatherFo
 	m["NeedsSelection"] = options.WeatherLocation == nil
 	m["LocationKey"] = location
 	m["TestResult"] = testResult
+	if saved, ok := c.Locals(weatherSavedKey{}).(bool); ok {
+		m["SettingsSaved"] = saved
+	}
 	if value, ok := c.Locals(weatherTestKey{}).(model.Weather); ok {
 		m["WeatherTest"] = value
 		m["WeatherTestTime"] = value.ExternalLastUpdate

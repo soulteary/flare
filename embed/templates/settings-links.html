@@ -4,6 +4,7 @@
     <form method="POST" action="{{ .SettingPages.Links.Path }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <h2>{{ T .Locale "nav_links" }}</h2>
         <p class="help-text settings-page-help">{{ T .Locale "settings_links_help" }}</p>
+        {{ if .SettingsSaved }}<p class="settings-notice" role="status">{{ T .Locale "settings_saved" }}</p>{{ end }}
         <div class="form-group">
             <label for="settings-open-app-newtab">{{ T .Locale "open_app_newtab" }}</label>
             {{ if .OptionOpenAppNewTab }}

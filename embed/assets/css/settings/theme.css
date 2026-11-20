@@ -173,7 +173,8 @@
   color: var(--flare-primary);
 }
 
-.setting-group-container .theme-notice {
+.setting-group-container .theme-notice,
+.setting-group-container .settings-notice {
   font-size: 13px;
   line-height: 1.8;
   margin: 0 0 16px;
