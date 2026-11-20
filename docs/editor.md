@@ -113,6 +113,15 @@ checks this on the page as it is served, in the frame of the settings.
 The entry form has, below the icon, a link to the page of all icons at
 `/icons/`. It opens in a window of its own, so the form stays as it is.
 
+**The position of an entry.** The home page shows the bookmarks a category at
+a time, in the order of the file; the list of the editor and the table show
+the file in its order. A new entry, and one that is moved to another place,
+therefore stands after the last entry of its place, the applications or the
+category, and not at the end of the file. The form has a list for the
+position: at the end, at the start, or after another entry of the place. An
+entry that is edited stays where it is unless a position is chosen. The first
+entry of a category has no other to stand by and ends the file.
+
 Actual data comparison clears dirty state when values are restored. Save errors
 preserve the working document; conflicts expose a JSON draft download and an
 explicit reload action. The JSON draft is an editor-state export, not a browser
