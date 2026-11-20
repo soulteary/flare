@@ -116,6 +116,7 @@ func NewFiberApp(appFlags *model.Flags, stores ...*security.Store) (*fiber.App, 
 	}
 	// Recover inside the access logger so panics are recorded as failed requests.
 	e.Use(recover.New())
+	registerCompression(e)
 
 	if len(stores) > 0 {
 		guard, err := NewWriteSourceProtection()

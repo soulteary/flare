@@ -174,6 +174,30 @@ Use Compose mapping syntax (`FLARE_DISABLE_LOGIN: "true"`); list syntax such as
 `- FLARE_DISABLE_LOGIN="true"` includes literal quotes, which releases through
 0.6.14 reject as invalid. Current source ignores one pair of surrounding quotes.
 
+## Compressed responses (after 0.7.0)
+
+Flare sends a response in a coding the client accepts: Brotli, Zstandard,
+gzip or deflate, as `Accept-Encoding` weighs them. A proxy passes such a
+response on as it is; it needs no compression of its own for Flare.
+
+- **What is coded.** Pages, scripts, styles, JSON and SVG of 1024 bytes or
+  more. Smaller responses, ICO icons, partial content for a `Range` request
+  and answers to `HEAD` are sent as they are.
+- **What is not.** A page that can hold a secret of the visitor: one with a
+  CSRF token in it, and any page asked for with a session cookie. With a
+  compressed body, the length of the response tells how much of the secret a
+  chosen part of the address repeats. Files that name themselves `public`
+  hold no such secret and are coded for everyone. Pages of the settings and
+  every page of a signed-in administrator are therefore sent as they are.
+- **Do not add what Flare left out.** A proxy that compresses on its own,
+  such as nginx with `gzip on`, also compresses the pages Flare sent as they
+  are. Leave compression of proxied responses off, or limit it to the paths
+  under `/assets/`.
+- **Validators.** A coded file carries the validator of the file as a weak
+  one, `W/"…"`. Flare answers `304` to either form.
+- A response that was served without an error carries `Vary: Accept-Encoding`
+  on a line of its own, coded or not.
+
 ## Verify
 
 1. Check the actual binary version, public URL, Host/port and Secure policy.
