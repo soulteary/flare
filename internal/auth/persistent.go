@@ -28,6 +28,7 @@ import (
 
 type persistentKey struct{}
 type preauthKey struct{}
+type tokenIssuedKey struct{}
 type requestIdentityKey struct{}
 
 // requestIdentity is confined to one Fiber request. The proof has a durable
@@ -349,6 +350,7 @@ func securityError(c fiber.Ctx, err error) error {
 func (a *persistentAuth) csrf(c fiber.Ctx) string {
 	// Bind the token to the opaque session, or to a separate random browser
 	// state before login. The signing key never reaches the browser.
+	c.Locals(tokenIssuedKey{}, true)
 	binding := a.token(c)
 	if binding == "" {
 		name := a.name + "_preauth"
@@ -397,6 +399,24 @@ func (a *persistentAuth) validCSRF(c fiber.Ctx) bool {
 
 // ValidateCSRF protects content writes using the same session/browser binding.
 func ValidateCSRF(c fiber.Ctx) bool { a := persistent(c); return a != nil && a.validCSRF(c) }
+
+// CarriesVisitorSecret reports whether the response of this request can hold a
+// value bound to the visitor: a CSRF token was made for it, or the request
+// came with a session cookie, valid or not. Such a response must not be
+// compressed, because its length would then depend on how much of the secret
+// a chosen part of the request repeats.
+func CarriesVisitorSecret(c fiber.Ctx) bool {
+	if issued, ok := c.Locals(tokenIssuedKey{}).(bool); ok && issued {
+		return true
+	}
+	if a := persistent(c); a != nil {
+		return c.Cookies(a.name) != ""
+	}
+	if configured, ok := c.Locals(sessionStoreKey{}).(*cookieStore); ok {
+		return c.Cookies(configured.name) != ""
+	}
+	return false
+}
 func CSRFToken(c fiber.Ctx) string {
 	if a := persistent(c); a != nil {
 		return a.csrf(c)
