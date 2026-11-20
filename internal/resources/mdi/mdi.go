@@ -154,8 +154,9 @@ func GetIconByName(name string) string {
 			log.Println("缓存内置图标出错:", err)
 			return _EMPTY_ICON
 		}
-		// The version bypasses a previously cached file after an icon-library
-		// update. The query is not an access-control or immutable guarantee.
+		// The version is the hash of the file, so the address names its bytes
+		// and a browser keeps it without asking; after an icon-library update
+		// the page asks for another address. It is not an access control.
 		version := fmt.Sprintf("%x", sha256.Sum256([]byte(content)))
 		markup = `<svg class="icon-ref" viewBox="0 0 24 24" width="68" height="68" style="fill: var(--flare-icon);" aria-hidden="true"><use href="/` + svgFile + `?v=` + version + `#` + iconFragment + `"></use></svg>`
 	}

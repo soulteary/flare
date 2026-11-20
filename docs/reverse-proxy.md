@@ -198,6 +198,23 @@ response on as it is; it needs no compression of its own for Flare.
 - A response that was served without an error carries `Vary: Accept-Encoding`
   on a line of its own, coded or not.
 
+## Files a browser keeps (after 0.7.0)
+
+The pages ask for the bundled icons, the icon of the site and the files of
+the editor under an address with a version, `?v=<hash>`. Where that version
+stands for the bytes that are served, the answer is
+`Cache-Control: public, max-age=31536000, immutable`, and a browser uses its
+copy without asking again. The version stands for the bytes when it is the
+SHA-256 of the file, or the one version of the editor, a hash over all its
+files.
+
+The same file under any other address, without a version or with the version
+an older page still names, is answered `public, max-age=0, must-revalidate`
+as before, with a validator. A release that changes a file changes the
+address the pages ask for, so a copy kept from an older release is not used.
+A proxy may cache by the whole address, query included; it must not drop the
+query from its cache key.
+
 ## Verify
 
 1. Check the actual binary version, public URL, Host/port and Secure policy.

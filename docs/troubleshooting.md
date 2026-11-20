@@ -36,6 +36,8 @@ emulation does not close these reports without real-device evidence.
 
 
 Since 0.6.5, editor, favicon and generated MDI references use content versions to
-bypass old fresh browser entries. Other unchanged unversioned guide assets may
+bypass old fresh browser entries. After 0.7.0 an address whose version
+names its bytes is kept by the browser for a year; see
+[files a browser keeps](reverse-proxy.md#files-a-browser-keeps-after-070). Other unchanged unversioned guide assets may
 still need one hard refresh if a pre-fix one-year response is already cached;
 new revalidation headers cannot retroactively expire that existing entry.

@@ -20,6 +20,11 @@ func registerEditorClient(e *fiber.App) {
 		panic(err)
 	}
 	e.Use("/assets/editor-ui", resources.StaticFS(assets, "/assets/editor-ui"))
+	// The page asks for every file of the editor with the one version below,
+	// which covers them all, so such an address can be kept without asking.
+	if version, err := editorAssetVersion(); err == nil {
+		resources.TrustVersion("/assets/editor-ui/", version)
+	}
 }
 
 var editorVersionOnce sync.Once
@@ -27,8 +32,8 @@ var editorVersion string
 var editorVersionErr error
 
 // One content version covers both the default editor and its lazy batch assets.
-// A new document therefore cannot reuse a previously fresh one-year cache entry
-// from an older release, before the revalidation policy has reached that browser.
+// A new document therefore cannot reuse a cache entry of an older release: the
+// files of another release have another version and so another address.
 func editorAssetVersion() (string, error) {
 	editorVersionOnce.Do(func() {
 		hash := sha256.New()
