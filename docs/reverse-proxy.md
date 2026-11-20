@@ -176,10 +176,19 @@ Use Compose mapping syntax (`FLARE_DISABLE_LOGIN: "true"`); list syntax such as
 
 ## Compressed responses (after 0.7.0)
 
-Flare sends a response in a coding the client accepts: Brotli, Zstandard,
-gzip or deflate, as `Accept-Encoding` weighs them. A proxy passes such a
-response on as it is; it needs no compression of its own for Flare.
+Flare sends a response in a coding the client accepts: gzip or deflate, as
+`Accept-Encoding` weighs them. A proxy passes such a response on as it is;
+it needs no compression of its own for Flare.
 
+- **The codings.** `FLARE_COMPRESSION` or `--compression` selects them.
+  `gzip`, the default, sends gzip and deflate. `all` adds Brotli and
+  Zstandard, which the client then gets before gzip at equal weight; their
+  coders stay in memory after a large page. In one measurement, on a
+  home page of 875 KB with 100 applications and 2000 bookmarks, the process
+  held 20 to 30 MB more after Brotli and about 35 MB more after Zstandard,
+  and about 1 MB more after gzip; the response was 28 KB in Brotli and
+  43 KB in gzip. `off` sends every response as it is, for an instance whose
+  proxy does the work.
 - **What is coded.** Pages, scripts, styles, JSON and SVG of 1024 bytes or
   more. Smaller responses, ICO icons, partial content for a `Range` request
   and answers to `HEAD` are sent as they are.

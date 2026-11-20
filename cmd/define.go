@@ -6,6 +6,8 @@ const (
 
 	_KEY_ACCESS_LOG = "access_log"
 
+	_KEY_COMPRESSION = "compression"
+
 	_KEY_MINI_REQUEST       = "mini_request"
 	_KEY_MINI_REQUEST_SHORT = "m"
 	_KEY_MINI_REQUEST_OLD   = "mr"

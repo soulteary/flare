@@ -6,6 +6,8 @@ type Flags struct {
 	ShowVersion bool
 	ShowHelp    bool
 	AccessLog   string
+	// Compression selects the codings of responses: gzip, all or off.
+	Compression string
 	// RuntimeInputs captures explicit security settings before env parsing consumes secrets.
 	RuntimeInputs  map[string]string
 	InputSources   map[string]string
@@ -48,7 +50,8 @@ type Flags struct {
 
 // Application Envs Data Model
 type Envs struct {
-	AccessLog string `env:"FLARE_ACCESS_LOG"`
+	AccessLog   string `env:"FLARE_ACCESS_LOG"`
+	Compression string `env:"FLARE_COMPRESSION"`
 
 	Port                   int  `env:"FLARE_PORT"`
 	EnableGuide            bool `env:"FLARE_GUIDE"`
@@ -72,7 +75,8 @@ type Envs struct {
 
 // Application Envfile Data Model
 type EnvFile struct {
-	AccessLog string `ini:"FLARE_ACCESS_LOG,omitempty"`
+	AccessLog   string `ini:"FLARE_ACCESS_LOG,omitempty"`
+	Compression string `ini:"FLARE_COMPRESSION,omitempty"`
 
 	Port                   int  `ini:"FLARE_PORT,omitempty"`
 	EnableGuide            bool `ini:"FLARE_GUIDE,omitempty"`

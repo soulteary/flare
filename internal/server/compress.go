@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/compress"
 
+	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/internal/auth"
 )
 
@@ -38,7 +39,17 @@ var compressible = []string{
 // A response stays as it is when it is small or of a packed type, and when it can hold a secret of the visitor: with a compressed body the
 // length tells how much of that secret a chosen part of the request repeats.
 // A response that names itself public holds none.
+//
+// The option of the instance selects the codings. "gzip", the default, sends
+// gzip and deflate: their coders hold little memory. "all" adds Brotli and
+// Zstandard, whose coders stay in memory after a large page, some tens of
+// megabytes. "off" registers nothing.
 func registerCompression(e *fiber.App) {
+	mode := strings.ToLower(strings.TrimSpace(define.AppFlags.Compression))
+	if mode == "off" {
+		return
+	}
+	lean := mode != "all"
 	e.Use(func(c fiber.Ctx) error {
 		err := c.Next()
 		ownVaryLine(c)
@@ -67,6 +78,11 @@ func registerCompression(e *fiber.App) {
 		if !mayCompress(c) {
 			c.Set(fiber.HeaderContentEncoding, "identity")
 			return nil
+		}
+		if lean {
+			// Fiber chooses among all its codings by what the request accepts,
+			// so the request is shown to accept the lean ones only.
+			c.Request().Header.Set(fiber.HeaderAcceptEncoding, leanCodings(c.AcceptEncoding()))
 		}
 		if tag := c.GetRespHeader(fiber.HeaderETag); tag != "" && !strings.HasPrefix(tag, "W/") {
 			c.Locals(plainETagKey{}, tag)
@@ -134,4 +150,35 @@ func ownVaryLine(c fiber.Ctx) {
 		header.Add(fiber.HeaderVary, line)
 	}
 	header.Add(fiber.HeaderVary, fiber.HeaderAcceptEncoding)
+}
+
+// leanCodings rewrites Accept-Encoding so that it accepts gzip and deflate
+// with the weights the client gave them, and nothing else. A wildcard stands
+// for gzip when the client did not name gzip itself. Whether a weight refuses
+// a coding is left to Fiber, which reads the result.
+func leanCodings(accept string) string {
+	var kept []string
+	wildcard, named := "", false
+	for _, element := range strings.Split(accept, ",") {
+		element = strings.TrimSpace(element)
+		token, params, _ := strings.Cut(element, ";")
+		token = strings.ToLower(strings.TrimSpace(token))
+		switch token {
+		case "gzip":
+			named = true
+			kept = append(kept, element)
+		case "deflate":
+			kept = append(kept, element)
+		case "*":
+			wildcard = "gzip"
+			if params != "" {
+				wildcard += ";" + params
+			}
+		}
+	}
+	if wildcard != "" && !named {
+		kept = append(kept, wildcard)
+	}
+	// An empty list accepts no coding Fiber knows, and it then codes nothing.
+	return strings.Join(kept, ", ")
 }

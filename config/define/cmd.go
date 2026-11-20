@@ -18,6 +18,9 @@ const (
 	DEFAULT_THEME_SAFE_MODE          = false
 	// DEFAULT_ACCESS_LOG records failed requests while keeping successful access quiet.
 	DEFAULT_ACCESS_LOG = "errors"
+	// DEFAULT_COMPRESSION sends gzip and deflate, whose coders hold little
+	// memory. Brotli and Zstandard are for instances that can spare it.
+	DEFAULT_COMPRESSION = "gzip"
 
 	DEFAULT_COOKIE_NAME   = "flare"
 	DEFAULT_COOKIE_SECRET = "secret"
@@ -29,6 +32,7 @@ const (
 func GetDefaultEnvVars() model.Envs {
 	return model.Envs{
 		AccessLog:              DEFAULT_ACCESS_LOG,
+		Compression:            DEFAULT_COMPRESSION,
 		Port:                   DEFAULT_PORT,
 		EnableGuide:            DEFAULT_ENABLE_GUIDE,
 		EnableDeprecatedNotice: DEFAULT_ENABLE_DEPRECATED_NOTICE,
