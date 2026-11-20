@@ -29,7 +29,7 @@ func pages() []model.Page {
 func RegisterRouting(e *fiber.App) {
 	for _, page := range pages() {
 		name := page.Name
-		e.Get(page.Path, auth.AuthRequired, func(c fiber.Ctx) error { return renderPage(c, name) })
+		e.Get(page.Path, auth.AuthRequired, func(c fiber.Ctx) error { return renderPage(c, name, false) })
 		e.Post(page.Path, auth.AuthRequired, func(c fiber.Ctx) error { return updateAppearanceOptions(c, name) })
 	}
 }
@@ -143,12 +143,12 @@ func updateAppearanceOptions(c fiber.Ctx, page string) error {
 		failure := settings.ExplainSaveFailure(saveErr)
 		return c.Status(failure.Status).SendString(failure.Text())
 	}
-	return renderPage(c, page)
+	return renderPage(c, page, true)
 }
 
-// renderPage shows one of the pages. Each is handed the values of all of
+// renderPage shows one of the pages, saved after its form was stored. Each is handed the values of all of
 // them, and its template shows those of its subject.
-func renderPage(c fiber.Ctx, page string) error {
+func renderPage(c fiber.Ctx, page string, saved bool) error {
 	options, err := data.GetAllSettingsOptions()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("config error")
@@ -165,6 +165,9 @@ func renderPage(c fiber.Ctx, page string) error {
 	m["DebugMode"] = define.AppFlags.DebugMode
 	m["PageInlineStyle"] = define.GetPageInlineStyle()
 	m["PageName"] = page
+	// A form that was stored says so: the page it comes back to looks as it
+	// did before, and nothing else tells that the values were taken.
+	m["SettingsSaved"] = saved
 	pageTheme := define.GetPageTheme()
 	m["PageAppearance"] = pageTheme.BodyStyle
 	m["PageThemeRules"] = pageTheme.Rules

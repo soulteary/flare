@@ -2,6 +2,7 @@
 <div class="setting-group-container weather-settings">
 <header class="weather-heading"><h2>{{ T .Locale "settings_weather" }}</h2><p>{{ T .Locale "weather_intro" }}</p></header>
 {{ if .SaveFailed }}<p class="weather-notice" role="alert">{{ T .Locale "weather_save_failed" }}</p>{{ end }}
+{{ if .SettingsSaved }}<p class="settings-notice" role="status">{{ T .Locale "settings_saved" }}</p>{{ end }}
 <form id="weather-form" method="POST" action="{{ .SettingPages.Weather.Path }}" data-detect-failed="{{ T .Locale "weather_detect_failed" }}" data-loading="{{ T .Locale "weather_loading" }}" data-choose="{{ T .Locale "weather_choose" }}" data-empty="{{ T .Locale "weather_empty" }}" data-failed="{{ T .Locale "weather_search_failed" }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
 <fieldset class="weather-fields" {{ if .Offline }}disabled{{ end }}>
 <section class="weather-card weather-enable form-group">

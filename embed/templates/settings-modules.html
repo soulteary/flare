@@ -4,6 +4,7 @@
     <form method="POST" action="{{ .SettingPages.Modules.Path }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <h2>{{ T .Locale "nav_modules" }}</h2>
         <p class="help-text settings-page-help">{{ T .Locale "settings_modules_help" }}</p>
+        {{ if .SettingsSaved }}<p class="settings-notice" role="status">{{ T .Locale "settings_saved" }}</p>{{ end }}
         <div class="form-group">
             <label for="settings-show-title">{{ T .Locale "show_title_component" }}</label>
             {{ if .OptionShowTitle }}

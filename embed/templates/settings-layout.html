@@ -5,6 +5,7 @@
     <form method="POST" action="{{ .SettingPages.Layout.Path }}">{{ if .SecurityCSRFToken }}<input type="hidden" name="csrf-token" value="{{ .SecurityCSRFToken }}">{{ end }}
         <h2>{{ T .Locale "nav_layout" }}</h2>
         <p class="help-text settings-page-help">{{ T .Locale "settings_layout_help" }}</p>
+        {{ if .SettingsSaved }}<p class="settings-notice" role="status">{{ T .Locale "settings_saved" }}</p>{{ end }}
         {{ if .ThemeLayout }}
         <div class="form-group">
             <label for="theme-layout-all">{{ T .Locale "theme_layout" }}</label>

@@ -61,6 +61,9 @@ func TestWeatherSaveFailurePreservesInputAndReportsError(t *testing.T) {
 	if view.values["SaveFailed"] != true || view.values["Location"] != "Pending city" || view.values["ShowWeather"] != true {
 		t.Fatalf("submitted input lost: %+v", view.values)
 	}
+	if view.values["SettingsSaved"] == true {
+		t.Fatal("a form that was not stored is said to be stored")
+	}
 	if got, want := view.values["TestResult"], i18n.T("zh", "settings_save_failed_config_unreadable"); got != want {
 		t.Fatalf("cause not explained: %q", got)
 	}
@@ -108,10 +111,48 @@ func TestWeatherSaveFailureExplainsTheCause(t *testing.T) {
 	if view.values["SaveFailed"] != true || view.values["Location"] != "Saved city" || view.values["ShowWeather"] != false {
 		t.Fatalf("submitted input lost: %+v", view.values)
 	}
+	if view.values["SettingsSaved"] == true {
+		t.Fatal("a form that was not stored is said to be stored")
+	}
 	if got, want := view.values["TestResult"], i18n.T("en", "settings_save_failed_yaml_aliases"); got != want {
 		t.Fatalf("cause not explained: %q", got)
 	}
 	if after, readErr := os.ReadFile("config.yml"); readErr != nil || string(after) != raw {
 		t.Fatalf("failed save changed the configuration: %q %v", after, readErr)
+	}
+}
+
+func TestWeatherSaveSaysThatItWasStored(t *testing.T) {
+	t.Chdir(t.TempDir())
+	flags := define.AppFlags
+	defer func() { define.AppFlags = flags }()
+	define.AppFlags.DisableLoginMode = true
+	if !data.UpdateWeatherAndLocation(true, "Saved city") {
+		t.Fatal("initialize config")
+	}
+	view := &capturedWeatherView{}
+	app := fiber.New(fiber.Config{Views: view})
+	app.Get("/weather", pageHome)
+	app.Post("/weather", updateWeatherOptions)
+	opened, err := app.Test(httptest.NewRequest(http.MethodGet, "/weather", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer opened.Body.Close()
+	if opened.StatusCode != http.StatusOK || view.values["SettingsSaved"] == true {
+		t.Fatalf("the page as it is opened: %d %v", opened.StatusCode, view.values["SettingsSaved"])
+	}
+	request := httptest.NewRequest(http.MethodPost, "/weather", strings.NewReader("location=Saved+city&show=0"))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	response, err := app.Test(request, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("save reported %d", response.StatusCode)
+	}
+	if view.values["SettingsSaved"] != true || view.values["SaveFailed"] == true || view.values["ShowWeather"] != false {
+		t.Fatalf("the stored form is not said to be stored: %+v", view.values)
 	}
 }
