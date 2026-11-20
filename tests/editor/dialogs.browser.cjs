@@ -2,7 +2,9 @@
 // The dialogs of the editor on the page as it is served, in the frame of the
 // settings and with the stylesheet of the application: each dialog stands in
 // the middle of the window and inside it, and the checkbox of the entry form
-// stands beside its name.
+// stands beside its name. The lists draw their arrow as far from the edge as
+// their text is, and the entry form links to the page of all icons, which
+// opens in a window of its own and leaves the form as it is.
 const {chromium} = require(require.resolve('playwright', {paths: [__dirname + '/../clock']}));
 const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
@@ -64,8 +66,19 @@ const placed = selector => {
         assert.ok(Math.abs(at.top - at.bottom) <= 2, `${name}: ${what} is in the middle from top to bottom: ${JSON.stringify(at)}`);
       };
 
+      // The arrow of a list is drawn by the page, 12 pixels from the edge, and
+      // the text ends before it.
+      const arrow = selector => page.evaluate(sel => {
+        const style = getComputedStyle(document.querySelector(sel));
+        return [style.appearance, parseFloat(style.paddingRight) >= 30, (style.backgroundImage.match(/linear-gradient/g) || []).length, style.backgroundPosition, style.backgroundRepeat.split(', ')[0]];
+      }, selector);
+      const drawn = ['none', true, 2, 'calc(100% - 18px) 50%, calc(100% - 12px) 50%', 'no-repeat'];
+      assert.deepEqual(await arrow('#location-filter'), drawn, name);
+      assert.ok(await page.locator('#location-filter').evaluate(list => list.offsetHeight) >= 44, name);
+
       await page.locator('#new-entry').click();
       await centered('#entry-dialog', 'the entry form');
+      assert.deepEqual(await arrow('#entry-location'), drawn, name);
       // The checkbox is a box beside its name, on a line a finger can hit.
       const box = await page.evaluate(() => {
         const input = document.querySelector('#entry-private'), label = input.closest('label');
@@ -78,18 +91,33 @@ const placed = selector => {
       assert.ok(box.line >= 44 && box.beside, `${name}: ${JSON.stringify(box)}`);
 
       await page.locator('#entry-options summary').click();
+      // Below the icon is the way to the page of all icons. It opens in a
+      // window of its own, and what was typed into the form stays.
+      await page.locator('#entry-name').fill('Kept while looking');
+      const link = page.locator('#entry-dialog a#all-icons');
+      assert.deepEqual([await link.getAttribute('href'), await link.getAttribute('target'), await link.getAttribute('rel'), await link.isVisible()], ['/icons/', '_blank', 'noopener', true], name);
+      assert.ok(await link.evaluate(a => a.getBoundingClientRect().top > document.querySelector('#entry-icon').getBoundingClientRect().bottom), name);
+      const [icons] = await Promise.all([page.context().waitForEvent('page'), link.click()]);
+      await icons.waitForLoadState('domcontentloaded');
+      assert.equal(new URL(icons.url()).pathname, '/icons/', name);
+      assert.equal((await icons.request.get(icons.url())).status(), 200, name);
+      await icons.close();
+      assert.deepEqual([await page.locator('#entry-dialog').evaluate(dialog => dialog.open), await page.locator('#entry-name').inputValue()], [true, 'Kept while looking'], name);
       await page.locator('#choose-icon').click();
       await page.waitForSelector('#icon-picker .icon-choice');
       await centered('#icon-picker', 'the icon picker');
       await page.locator('#icon-picker .icon-picker-pages button').last().click();
+      // Leaving a form something was typed into asks first.
+      page.once('dialog', question => question.accept());
       await page.locator('#cancel-entry').click();
+      await page.waitForFunction(() => !document.querySelector('#entry-dialog').open);
 
       await page.locator('#manage-categories').click();
       await centered('#categories-dialog', 'the categories');
       await page.locator('#close-categories').click();
     }
     assert.deepEqual(errors, []);
-    console.log('PASS: the dialogs of the editor stand in the middle of the window in the frame of the settings, and the checkbox of the entry form beside its name');
+    console.log('PASS: the dialogs of the editor stand in the middle of the window in the frame of the settings, the lists draw their arrow, and the entry form links to the page of all icons');
   } finally {
     await server.stop();
     await browser.close();

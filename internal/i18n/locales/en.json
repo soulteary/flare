@@ -516,6 +516,7 @@
   "editor.delete_the_selected": "Delete the selected ",
   "editor.rows_save_changes_to_apply": " rows? Save changes to apply.",
   "editor.discard_table_edits_not_yet_synchronized_changes_already_in": "Discard table edits not yet synchronized? Changes already in the working document are retained.",
+  "editor.browse_all_icons": "Browse all icons (opens in a new window)",
   "editor.choose_icon": "Choose icon",
   "editor.choose_a_built_in_icon": "Choose a built-in icon",
   "editor.search_icon_names_english_keywords": "Search icon names (English keywords)",

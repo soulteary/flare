@@ -13,6 +13,9 @@ body{--editor-back:var(--flare-background,#f5f7fb);--editor-fore:var(--flare-pri
 /* Keep the last entry clear of a wrapped status message or enlarged controls. */
 .shell{padding-bottom:calc(var(--savebar-height,210px) + 24px)}
 dialog{max-height:calc(var(--editor-viewport-height,100dvh) - 32px);scroll-padding-bottom:80px;overflow-wrap:anywhere}
+/* The arrow of a list is drawn here, as far from the edge as the text is: the one a browser draws ignores the padding. */
+.shell select,dialog select{-webkit-appearance:none;appearance:none;padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+.icon-hint{margin:6px 0 0}
 /* The page of the settings takes the margins of every element away, and with them what puts a dialog in the middle of the window and parts a checkbox from its name. */
 dialog{margin:auto}dialog input[type=checkbox]{width:22px;height:22px;min-height:0;margin:0 10px 0 0;vertical-align:middle;accent-color:var(--accent)}dialog label:has(>input[type=checkbox]){display:flex;align-items:center;min-height:44px}
 .dialog-actions{flex-wrap:wrap}.dialog-actions button{min-width:0;overflow-wrap:anywhere}
