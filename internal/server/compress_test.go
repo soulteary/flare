@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gofiber/fiber/v3"
 	"github.com/soulteary/flare/config/data"
 	"github.com/soulteary/flare/config/define"
 	"github.com/soulteary/flare/config/model"
@@ -92,10 +93,30 @@ func TestResponsesAreCompressedUnlessTheyCanHoldASecret(t *testing.T) {
 		require.Less(t, packed.Body.Len(), plain.Body.Len()/2)
 		require.Equal(t, plain.Body.String(), unpack(packed.Body))
 
-		for _, coding := range []string{"br", "zstd", "deflate"} {
-			other := request(http.MethodGet, "/bookmarks", false, accept(coding))
-			require.Equal(t, coding, other.Header().Get("Content-Encoding"))
-			require.Less(t, other.Body.Len(), plain.Body.Len()/2, coding)
+		// By default gzip and deflate are sent, whatever else the client accepts.
+		for accepted, coding := range map[string]string{
+			"deflate":                    "deflate",
+			"gzip, deflate, br, zstd":    "gzip",
+			"br;q=1.0, gzip;q=0.5":       "gzip",
+			"*":                          "gzip",
+			"br, *;q=0.3":                "gzip",
+			"deflate, gzip;q=0.2, *":     "deflate",
+			"br":                         "",
+			"zstd, br":                   "",
+			"gzip;q=0, br":               "",
+			"gzip;q=0.0, deflate;q=0, *": "",
+			"*;q=0":                      "",
+			"identity":                   "",
+		} {
+			other := request(http.MethodGet, "/bookmarks", false, accept(accepted))
+			require.Equal(t, http.StatusOK, other.Code, accepted)
+			require.Equal(t, coding, other.Header().Get("Content-Encoding"), accepted)
+			if coding == "" {
+				require.Equal(t, plain.Body.String(), other.Body.String(), accepted)
+			} else {
+				require.Less(t, other.Body.Len(), plain.Body.Len()/2, accepted)
+			}
+			require.Contains(t, other.Header().Values("Vary"), "Accept-Encoding", accepted)
 		}
 		refused := request(http.MethodGet, "/bookmarks", false, accept("gzip;q=0, identity"))
 		require.Empty(t, refused.Header().Get("Content-Encoding"))
@@ -206,4 +227,53 @@ func TestResponsesAreCompressedUnlessTheyCanHoldASecret(t *testing.T) {
 		require.Equal(t, http.StatusOK, response.StatusCode)
 		require.Equal(t, "gzip", response.Header.Get("Content-Encoding"), "a page without a token")
 	})
+}
+
+func TestTheOptionSelectsTheCodings(t *testing.T) {
+	original := define.AppFlags
+	t.Cleanup(func() { define.AppFlags = original })
+	t.Chdir(t.TempDir())
+	t.Setenv("FLARE_BASELINE", "1")
+	get := func(app interface {
+		Test(*http.Request, ...fiber.TestConfig) (*http.Response, error)
+	}, coding string) (*http.Response, int) {
+		req := httptest.NewRequest(http.MethodGet, "http://flare.test/help", nil)
+		req.Header.Set("Accept-Encoding", coding)
+		response, err := app.Test(req)
+		require.NoError(t, err)
+		defer response.Body.Close()
+		body, err := io.ReadAll(response.Body)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, response.StatusCode)
+		return response, len(body)
+	}
+	build := func(mode string) *fiber.App {
+		app, err := NewFiberApp(&model.Flags{Port: 5005, DisableLoginMode: true, EnableOfflineMode: true, Compression: mode})
+		require.NoError(t, err)
+		return app
+	}
+	_, plain := get(build("off"), "identity")
+	require.Greater(t, plain, compressMinimum)
+
+	for _, mode := range []string{"", "gzip", " GZip ", "unknown"} {
+		app := build(mode)
+		for accepted, coding := range map[string]string{"gzip, br, zstd": "gzip", "br, zstd": "", "deflate, br": "deflate"} {
+			response, size := get(app, accepted)
+			require.Equal(t, coding, response.Header.Get("Content-Encoding"), mode+": "+accepted)
+			require.Equal(t, coding == "", size == plain, mode+": "+accepted)
+		}
+	}
+	all := build("all")
+	for accepted, coding := range map[string]string{"gzip, br, zstd": "br", "zstd, gzip": "zstd", "zstd": "zstd", "br": "br", "gzip": "gzip", "deflate": "deflate", "*": "br"} {
+		response, size := get(all, accepted)
+		require.Equal(t, coding, response.Header.Get("Content-Encoding"), accepted)
+		require.Less(t, size, plain/2, accepted)
+	}
+	off := build("off")
+	for _, accepted := range []string{"gzip", "gzip, br, zstd", "*"} {
+		response, size := get(off, accepted)
+		require.Empty(t, response.Header.Get("Content-Encoding"), accepted)
+		require.Equal(t, plain, size, accepted)
+		require.NotContains(t, response.Header.Values("Vary"), "Accept-Encoding", accepted)
+	}
 }

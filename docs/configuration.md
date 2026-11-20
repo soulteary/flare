@@ -51,6 +51,7 @@ credentials or initialization, and invalid security inputs still block startup.
 | `FLARE_COOKIE_SECURE` | `--cookie_secure` | `false` | Boolean; force HTTPS-only cookies behind TLS termination, after which pages opened over HTTP cannot sign in or save; direct TLS is secure automatically. Current source no longer needs it for writes behind TLS termination; 0.6.8–0.6.14 do |
 | `FLARE_DEBUG` | — | Unset | Environment-only application log level; literal `on` enables DEBUG; independent of development assets |
 | `FLARE_ACCESS_LOG` | `--access_log` | `errors` | `errors`, `all`, `off`; since 0.6.4; invalid mode warns and uses errors |
+| `FLARE_COMPRESSION` | `--compression` | `gzip` | `gzip` (gzip and deflate), `all` (also Brotli and Zstandard, which hold more memory), `off`; after 0.7.0; invalid mode warns and uses gzip; see [compressed responses](reverse-proxy.md#compressed-responses-after-070) |
 
 Releases through 0.6.14 accept only the standard true/false and 1/0 forms from
 the environment and the command line, and treat a quoted environment value as

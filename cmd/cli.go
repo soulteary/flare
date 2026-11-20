@@ -25,6 +25,7 @@ func GetCliFlags() (*model.Flags, *flags.FlagSet) {
 	// port
 	options.IntVarP(&cliFlags.Port, _KEY_PORT, _KEY_PORT_SHORT, define.DEFAULT_PORT, "指定监听端口")
 	options.StringVar(&cliFlags.AccessLog, _KEY_ACCESS_LOG, define.DEFAULT_ACCESS_LOG, "访问日志模式：errors（仅失败请求）、all（保留健康检查和静态资源过滤）、off（关闭）")
+	options.StringVar(&cliFlags.Compression, _KEY_COMPRESSION, define.DEFAULT_COMPRESSION, "响应压缩：gzip（gzip 与 deflate）、all（另加 Brotli 与 Zstandard，占用更多内存）、off（关闭）")
 	// guide
 	boolVarP(options, &cliFlags.EnableGuide, _KEY_ENABLE_GUIDE, _KEY_ENABLE_GUIDE_SHORT, define.DEFAULT_ENABLE_GUIDE, "启用应用向导")
 	// visibility
@@ -130,6 +131,9 @@ func parseCLI(baseFlags model.Flags) model.Flags {
 	baseFlags.Port = port
 	if fs.Changed(_KEY_ACCESS_LOG) {
 		baseFlags.AccessLog = normalizeAccessLog(cliFlags.AccessLog, "--"+_KEY_ACCESS_LOG)
+	}
+	if fs.Changed(_KEY_COMPRESSION) {
+		baseFlags.Compression = normalizeCompression(cliFlags.Compression, "--"+_KEY_COMPRESSION)
 	}
 
 	// Canonical/deprecated spellings share a pflag destination. Use its final

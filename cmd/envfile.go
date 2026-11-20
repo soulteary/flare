@@ -110,6 +110,9 @@ func ParseEnvFile(baseFlags model.Flags) model.Flags {
 	if envs.Section("").HasKey("FLARE_ACCESS_LOG") {
 		baseFlags.AccessLog = normalizeAccessLog(envs.Section("").Key("FLARE_ACCESS_LOG").String(), ".env FLARE_ACCESS_LOG")
 	}
+	if envs.Section("").HasKey("FLARE_COMPRESSION") {
+		baseFlags.Compression = normalizeCompression(envs.Section("").Key("FLARE_COMPRESSION").String(), ".env FLARE_COMPRESSION")
+	}
 
 	return baseFlags
 }

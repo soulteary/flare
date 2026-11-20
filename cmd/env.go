@@ -103,6 +103,10 @@ func ParseEnvVars() (stor model.Flags) {
 		defaults.AccessLog = value
 	}
 	stor.AccessLog = normalizeAccessLog(defaults.AccessLog, "FLARE_ACCESS_LOG")
+	if value, ok := os.LookupEnv("FLARE_COMPRESSION"); ok {
+		defaults.Compression = value
+	}
+	stor.Compression = normalizeCompression(defaults.Compression, "FLARE_COMPRESSION")
 	stor.Port = defaults.Port
 	stor.EnableGuide = defaults.EnableGuide
 	stor.EnableDeprecatedNotice = defaults.EnableDeprecatedNotice
@@ -127,5 +131,15 @@ func normalizeAccessLog(value, source string) string {
 	default:
 		logger.GetLogger().Warn(fmt.Sprintf("%s 的访问日志模式无效，使用 errors；可选值：errors、all、off。", source))
 		return define.DEFAULT_ACCESS_LOG
+	}
+}
+
+func normalizeCompression(value, source string) string {
+	switch mode := strings.ToLower(strings.TrimSpace(value)); mode {
+	case "gzip", "all", "off":
+		return mode
+	default:
+		logger.GetLogger().Warn(fmt.Sprintf("%s 的响应压缩模式无效，使用 gzip；可选值：gzip、all、off。", source))
+		return define.DEFAULT_COMPRESSION
 	}
 }
