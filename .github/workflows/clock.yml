@@ -90,6 +90,10 @@ jobs:
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
         run: node tests/editor/list.browser.cjs
+      - name: Editor dialogs in the frame of the settings
+        env:
+          FLARE_BINARY: ${{ runner.temp }}/flare-clock
+        run: node tests/editor/dialogs.browser.cjs
       - name: Authenticated editor and import privacy controls
         env:
           FLARE_BINARY: ${{ runner.temp }}/flare-clock
