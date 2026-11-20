@@ -86,6 +86,14 @@
   .toolbar-btn-bg { width: 44px; height: 44px; opacity: 1; }
 }
 
+/* On a phone the buttons follow the content. Fixed in the corner they stood
+   over the first column of the bookmarks, whatever the layout. */
+@media (max-width: 768px) {
+  #page-home .toolbar-container { position: static; display: flex; width: auto; gap: 8px; justify-content: flex-end; margin: 16px 0; }
+  #page-home .toolbar-btn-settings { margin: 0; }
+  #page-home.pageview .container { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+}
+
 /* Shown at the top of a page while the administrator previews a theme: what
    is previewed, and the two ways on. It takes its colors from the previewed
    theme, like the rest of the page. */
