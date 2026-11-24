@@ -16,3 +16,7 @@ Only the same pinned release CLIs are installed, with mandatory SHA256 checks.
 Report generation, result enforcement and writeback scripts remain upstream
 implementations. Path validation still delegates to GTR's validate-paths command.
 Review upstream changes explicitly when upgrading.
+
+The reviewed CLI pins are GTR v1.1.3 and Go Report Card v1.1.7.
+The wrapper source attribution above identifies the original adapted scripts;
+CLI upgrades preserve their command interfaces and checksum enforcement.
