@@ -10,8 +10,8 @@ import tempfile
 import urllib.request
 
 TOOLS = {
-    'gtr': ('soulteary/go-test-report-action', 'v1.1.2', 'gtr'),
-    'goreportcard': ('soulteary/goreportcard-action', 'v1.1.3', 'goreportcard'),
+    'gtr': ('soulteary/go-test-report-action', 'v1.1.3', 'gtr'),
+    'goreportcard': ('soulteary/goreportcard-action', 'v1.1.7', 'goreportcard'),
 }
 
 

@@ -35,7 +35,7 @@ def tar_bytes(files):
 
 
 class InstallerTests(unittest.TestCase):
-    def install(self, archive, checksum=None, tool='gtr', version='v1.1.2'):
+    def install(self, archive, checksum=None, tool='gtr', version='v1.1.3'):
         arch = 'amd64'
         prefix = 'gtr' if tool == 'gtr' else 'goreportcard'
         asset = f'{prefix}_{version}_linux_{arch}.tar.gz'
@@ -52,7 +52,7 @@ class InstallerTests(unittest.TestCase):
         archive = tar_bytes([('release/goreportcard-cli', b'cli', 0o755),
                              ('release/misspell', b'linter', 0o755),
                              ('README', b'docs', 0o644)])
-        self.assertEqual(self.install(archive, tool='goreportcard', version='v1.1.3'),
+        self.assertEqual(self.install(archive, tool='goreportcard', version='v1.1.7'),
                          {'goreportcard-cli': b'cli', 'misspell': b'linter'})
 
     def test_checksum_failure_is_fatal(self):
