@@ -9,13 +9,13 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/soulteary/cli-kit v1.9.4
 	github.com/soulteary/funny-china-weather v0.4.0
-	github.com/soulteary/i18n-kit/v4 v4.0.6
+	github.com/soulteary/i18n-kit/v4 v4.0.7
 	github.com/soulteary/memfs-kit v1.1.2
-	github.com/soulteary/version-kit/v4 v4.0.5
+	github.com/soulteary/version-kit/v4 v4.0.6
 	github.com/spf13/pflag v1.1.0
 	github.com/stretchr/testify v1.12.1
 	github.com/tdewolff/minify/v2 v2.25.0
-	github.com/valyala/fasthttp v1.79.0
+	github.com/valyala/fasthttp v1.80.0
 	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/crypto v0.59.0
 	golang.org/x/net v0.63.0
@@ -24,16 +24,16 @@ require (
 )
 
 require (
-	github.com/gofiber/schema v1.9.3 // indirect
-	github.com/gofiber/utils/v2 v2.6.4 // indirect
+	github.com/gofiber/schema v1.10.2 // indirect
+	github.com/gofiber/utils/v2 v2.6.5 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
-	github.com/klauspost/compress v1.20.4 // indirect
+	github.com/klauspost/compress v1.20.5 // indirect
 	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/molecule-man/go-brrr v1.3.1 // indirect
 	github.com/philhofer/fwd v1.2.1 // indirect
-	github.com/stretchr/objx v0.5.3 // indirect
+	github.com/stretchr/objx v0.8.0 // indirect
 	github.com/tdewolff/parse/v2 v2.25.0 // indirect
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

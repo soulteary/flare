@@ -9,7 +9,7 @@ RUN export VERSION=$(cat RELEASE_VERSION) && \
 RUN upx -9 -o flare.minify flare && mv flare.minify flare
 
 
-FROM arm64v8/alpine:3.16
+FROM arm64v8/alpine:3.24.4@sha256:00fb1397b8422e5c1ba5df39d6d206bbb84f15ad8ac288435023f4186660a6ff
 COPY --from=Builder /app/flare /bin/flare
 ENV TZ=Asia/Shanghai
 RUN apk add tzdata && \

@@ -5,5 +5,5 @@
     "test": "node --test clock.test.cjs",
     "browser": "node browser.cjs"
   },
-  "devDependencies": { "playwright": "1.62.1" }
+  "devDependencies": { "playwright": "1.65.1" }
 }
