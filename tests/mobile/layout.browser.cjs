@@ -40,7 +40,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=req
  // Without a layout class the classic default applies: one line per link (28px
  // line height, slightly taller with an inline icon), groups side by side on
  // phones and desktop-sized app cards.
+ // On a phone the utility buttons follow the content in this layout too.
+ const clear=async layout=>{if(width>768)return;const toolbar=await page.locator('.toolbar-container').boundingBox(),content=await page.locator('#container-bookmarks').boundingBox();assert.ok(toolbar.y>=content.y+content.height,`utility buttons must not cover bookmarks: ${layout} at ${width}`);assert.equal(await page.locator('.toolbar-container').evaluate(el=>getComputedStyle(el).position),'static',`${layout} at ${width}`);for(const id of ['#btn-open-settings','#btn-open-help']){const box=await page.locator(id).boundingBox();assert.ok(box.width>=44&&box.height>=44,`${id} is a touch target: ${layout} at ${width}`);}};
+ await clear('single column');
  await page.locator('body').evaluate(el=>el.classList.remove('mobile-bookmarks-single-column'));
+ await clear('classic');
  const classic=await measureDensity();
  if(width<=768){
   assert.ok(classic.row>=28&&classic.row<30,JSON.stringify({width,classic}));
